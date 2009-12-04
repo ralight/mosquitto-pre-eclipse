@@ -1,0 +1,5 @@
+mosquitto (0.1-0~ppa1) karmic; urgency=low
+
+  * Initial release
+
+ -- Roger A. Light <roger@atchoo.org>  Thu, 03 Dec 2009 12:35:36 +0000
