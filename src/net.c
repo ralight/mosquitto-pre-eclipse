@@ -29,6 +29,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <arpa/inet.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <ifaddrs.h>
 #include <netinet/in.h>
 #include <stdint.h>
@@ -112,6 +113,11 @@ int _mqtt3_socket_listen(struct sockaddr *addr)
 
 	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
+	/* Set non-blocking */
+	opt = fcntl(sock, F_GETFL, 0);
+	if(opt < 0) return -1;
+	if(fcntl(sock, F_SETFL, opt | O_NONBLOCK) < 0) return -1;
+
 	if(bind(sock, addr, sizeof(struct sockaddr_in)) == -1){
 		mqtt3_log_printf(MQTT3_LOG_ERR, "Error: %s", strerror(errno));
 		close(sock);
@@ -171,14 +177,101 @@ int mqtt3_socket_listen_if(const char *iface, uint16_t port)
 	return -1;
 }
 
+int mqtt3_net_read(mqtt3_context *context)
+{
+	uint8_t byte;
+	uint32_t read_length;
+
+	if(!context || context->sock == -1) return 1;
+	/* This gets called if pselect() indicates that there is network data
+	 * available - ie. at least one byte.  What we do depends on what data we
+	 * already have.
+	 * If we've not got a command, attempt to read one and save it. This should
+	 * always work because it's only a single byte.
+	 * Then try to read the remaining length. This may fail because it is may
+	 * be more than one byte - will need to save data pending next read if it
+	 * does fail.
+	 * Then try to read the remaining payload, where 'payload' here means the
+	 * combined variable header and actual payload. This is the most likely to
+	 * fail due to longer length, so save current data and current position.
+	 * After all data is read, send to mqtt3_handle_packet() to deal with.
+	 * Finally, free the memory and reset everything to starting conditions.
+	 */
+	if(!context->packet.command){
+		/* FIXME - check command and fill in expected length if we know it.
+		 * This means we can check the client is sending valid data some times.
+		 */
+		read_length = read(context->sock, &byte, 1);
+		if(read_length == 1){
+			context->packet.command = byte;
+		}else{
+			if(read_length == 0) return 1; /* EOF */
+			if(errno == EAGAIN || errno == EWOULDBLOCK){
+				return 0;
+			}else{
+				return 1;
+			}
+		}
+	}
+	if(!context->packet.have_remaining){
+		/* Read remaining
+		 * Algorithm for decoding taken from pseudo code at
+		 * http://publib.boulder.ibm.com/infocenter/wmbhelp/v6r0m0/topic/com.ibm.etools.mft.doc/ac10870_.htm
+		 */
+		do{
+			read_length = read(context->sock, &byte, 1);
+			if(read_length == 1){
+				context->packet.remaining_length += (byte & 127) * context->packet.remaining_mult;
+				context->packet.remaining_mult *= 128;
+			}else{
+				if(read_length == 0) return 1; /* EOF */
+				if(errno == EAGAIN || errno == EWOULDBLOCK){
+					return 0;
+				}else{
+					return 1;
+				}
+			}
+		}while((byte & 128) != 0);
+
+		if(context->packet.remaining_length > 0){
+			context->packet.payload = mqtt3_malloc(context->packet.remaining_length*sizeof(uint8_t));
+			if(!context->packet.payload) return 1;
+			context->packet.to_read = context->packet.remaining_length;
+		}
+		context->packet.have_remaining = 1;
+	}
+	if(context->packet.to_read>0){
+		read_length = read(context->sock, &(context->packet.payload[context->packet.pos]), context->packet.to_read);
+		if(read_length > 0){
+			context->packet.to_read -= read_length;
+			context->packet.pos += read_length;
+			if(context->packet.to_read == 0){
+				/* All data for this packet is read. */
+				context->packet.pos = 0;
+				mqtt3_packet_handle(context);
+
+				/* Free data and reset values */
+				mqtt3_context_packet_cleanup(context);
+			}
+		}else{
+			if(errno == EAGAIN || errno == EWOULDBLOCK){
+				return 0;
+			}else{
+				return 1;
+			}
+		}
+	}
+	context->last_msg_in = time(NULL);
+	return 0;
+}
+
 int mqtt3_read_byte(mqtt3_context *context, uint8_t *byte)
 {
-	if(read(context->sock, byte, 1) == 1){
-		context->last_msg_in = time(NULL);
-		return 0;
-	}else{
-		return 1;
-	}
+	/* FIXME - error checking. */
+	*byte = context->packet.payload[context->packet.pos];
+	context->packet.pos++;
+
+	return 0;
 }
 
 int mqtt3_write_byte(mqtt3_context *context, uint8_t byte)
@@ -192,12 +285,11 @@ int mqtt3_write_byte(mqtt3_context *context, uint8_t byte)
 
 int mqtt3_read_bytes(mqtt3_context *context, uint8_t *bytes, uint32_t count)
 {
-	if(read(context->sock, bytes, count) == count){
-		context->last_msg_in = time(NULL);
-		return 0;
-	}else{
-		return 1;
-	}
+	/* FIXME - error checking. */
+	memcpy(bytes, &(context->packet.payload[context->packet.pos]), count);
+	context->packet.pos += count;
+
+	return 0;
 }
 
 int mqtt3_write_bytes(mqtt3_context *context, const uint8_t *bytes, uint32_t count)
@@ -207,24 +299,6 @@ int mqtt3_write_bytes(mqtt3_context *context, const uint8_t *bytes, uint32_t cou
 	}else{
 		return 1;
 	}
-}
-
-int mqtt3_read_remaining_length(mqtt3_context *context, uint32_t *remaining)
-{
-	uint32_t multiplier = 1;
-	uint8_t digit;
-
-	/* Algorithm for decoding taken from pseudo code at
-	 * http://publib.boulder.ibm.com/infocenter/wmbhelp/v6r0m0/topic/com.ibm.etools.mft.doc/ac10870_.htm
-	 */
-	(*remaining) = 0;
-	do{
-		if(mqtt3_read_byte(context, &digit)) return 1;
-		(*remaining) += (digit & 127) * multiplier;
-		multiplier *= 128;
-	}while((digit & 128) != 0);
-
-	return 0;
 }
 
 int mqtt3_write_remaining_length(mqtt3_context *context, uint32_t length)
@@ -252,17 +326,19 @@ int mqtt3_read_string(mqtt3_context *context, char **str)
 	uint8_t msb, lsb;
 	uint16_t len;
 
-	if(mqtt3_read_byte(context, &msb)) return 1;
-	if(mqtt3_read_byte(context, &lsb)) return 1;
+	msb = context->packet.payload[context->packet.pos];
+	context->packet.pos++;
+	lsb = context->packet.payload[context->packet.pos];
+	context->packet.pos++;
 
 	len = (msb<<8) + lsb;
 
 	*str = mqtt3_calloc(len+1, sizeof(char));
 	if(*str){
-		if(mqtt3_read_bytes(context, (uint8_t *)*str, len)){
-			mqtt3_free(*str);
-			return 1;
-		}
+		memcpy(*str, &(context->packet.payload[context->packet.pos]), len);
+		context->packet.pos += len;
+	}else{
+		return 1;
 	}
 
 	return 0;
@@ -280,8 +356,10 @@ int mqtt3_read_uint16(mqtt3_context *context, uint16_t *word)
 {
 	uint8_t msb, lsb;
 
-	if(mqtt3_read_byte(context, &msb)) return 1;
-	if(mqtt3_read_byte(context, &lsb)) return 1;
+	msb = context->packet.payload[context->packet.pos];
+	context->packet.pos++;
+	lsb = context->packet.payload[context->packet.pos];
+	context->packet.pos++;
 
 	*word = (msb<<8) + lsb;
 

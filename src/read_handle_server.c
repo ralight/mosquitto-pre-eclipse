@@ -41,7 +41,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 int mqtt3_handle_connect(mqtt3_context *context)
 {
-	uint32_t remaining_length;
 	char *protocol_name;
 	uint8_t protocol_version;
 	uint8_t connect_flags;
@@ -50,7 +49,6 @@ int mqtt3_handle_connect(mqtt3_context *context)
 	uint8_t will, will_retain, will_qos, clean_start;
 	
 	mqtt3_log_printf(MQTT3_LOG_DEBUG, "Received CONNECT");
-	if(mqtt3_read_remaining_length(context, &remaining_length)) return 1;
 	if(mqtt3_read_string(context, &protocol_name)) return 1;
 	if(!protocol_name){
 		mqtt3_context_cleanup(context);
@@ -106,10 +104,7 @@ int mqtt3_handle_connect(mqtt3_context *context)
 
 int mqtt3_handle_disconnect(mqtt3_context *context)
 {
-	uint32_t remaining_length;
-
 	mqtt3_log_printf(MQTT3_LOG_DEBUG, "Received DISCONNECT");
-	if(mqtt3_read_remaining_length(context, &remaining_length)) return 1;
 	return mqtt3_socket_close(context);
 }
 
@@ -117,7 +112,6 @@ int mqtt3_handle_disconnect(mqtt3_context *context)
 int mqtt3_handle_subscribe(mqtt3_context *context)
 {
 	int rc = 0;
-	uint32_t remaining_length;
 	uint16_t mid;
 	char *sub;
 	uint8_t qos;
@@ -133,20 +127,16 @@ int mqtt3_handle_subscribe(mqtt3_context *context)
 	/* FIXME - plenty of potential for memory leaks here */
 	if(!context) return 1;
 
-	if(mqtt3_read_remaining_length(context, &remaining_length)) return 1;
 	if(mqtt3_read_uint16(context, &mid)) return 1;
-	remaining_length -= 2;
 
-	while(remaining_length){
+	while(context->packet.pos < context->packet.remaining_length){
 		sub = NULL;
 		if(mqtt3_read_string(context, &sub)){
 			if(sub) mqtt3_free(sub);
 			return 1;
 		}
 
-		remaining_length -= strlen(sub) + 2;
 		if(mqtt3_read_byte(context, &qos)) return 1;
-		remaining_length -= 1;
 		if(sub){
 			mqtt3_db_sub_insert(context->id, sub, qos);
 	
@@ -196,25 +186,21 @@ int mqtt3_handle_subscribe(mqtt3_context *context)
 
 int mqtt3_handle_unsubscribe(mqtt3_context *context)
 {
-	uint32_t remaining_length;
 	uint16_t mid;
 	char *sub;
 
 	mqtt3_log_printf(MQTT3_LOG_DEBUG, "Received UNSUBSCRIBE");
 	if(!context) return 1;
 
-	if(mqtt3_read_remaining_length(context, &remaining_length)) return 1;
 	if(mqtt3_read_uint16(context, &mid)) return 1;
-	remaining_length -= 2;
 
-	while(remaining_length){
+	while(context->packet.pos < context->packet.remaining_length){
 		sub = NULL;
 		if(mqtt3_read_string(context, &sub)){
 			if(sub) mqtt3_free(sub);
 			return 1;
 		}
 
-		remaining_length -= strlen(sub) + 2;
 		if(sub){
 			mqtt3_db_sub_delete(context->id, sub);
 			mqtt3_free(sub);
