@@ -79,6 +79,16 @@ POSSIBILITY OF SUCH DAMAGE.
 #define MQTT3_LOG_ERR 0x08
 #define MQTT3_LOG_DEBUG 0x10
 
+struct _mqtt3_packet{
+	uint8_t command;
+	uint8_t have_remaining;
+	uint32_t remaining_mult;
+	uint32_t remaining_length;
+	uint32_t to_read;
+	uint32_t pos;
+	uint8_t *payload;
+};
+
 typedef struct _mqtt3_context{
 	int sock;
 	time_t last_msg_in;
@@ -86,6 +96,7 @@ typedef struct _mqtt3_context{
 	uint16_t keepalive;
 	bool clean_start;
 	char *id;
+	struct _mqtt3_packet packet;
 } mqtt3_context;
 
 typedef enum {
@@ -173,10 +184,10 @@ int mqtt3_socket_close(mqtt3_context *context);
 int mqtt3_socket_listen(uint16_t port);
 int mqtt3_socket_listen_if(const char *iface, uint16_t port);
 
+int mqtt3_net_read(mqtt3_context *context);
 int mqtt3_read_byte(mqtt3_context *context, uint8_t *byte);
 int mqtt3_read_bytes(mqtt3_context *context, uint8_t *bytes, uint32_t count);
 int mqtt3_read_string(mqtt3_context *context, char **str);
-int mqtt3_read_remaining_length(mqtt3_context *context, uint32_t *remaining);
 int mqtt3_read_uint16(mqtt3_context *context, uint16_t *word);
 
 int mqtt3_write_byte(mqtt3_context *context, uint8_t byte);
@@ -188,6 +199,7 @@ int mqtt3_write_uint16(mqtt3_context *context, uint16_t word);
 /* ============================================================
  * Read handling functions
  * ============================================================ */
+int mqtt3_packet_handle(mqtt3_context *context);
 int mqtt3_handle_connack(mqtt3_context *context);
 int mqtt3_handle_connect(mqtt3_context *context);
 int mqtt3_handle_disconnect(mqtt3_context *context);
@@ -253,6 +265,7 @@ void mqtt3_db_sys_update(int interval, time_t start_time);
  * ============================================================ */
 mqtt3_context *mqtt3_context_init(int sock);
 void mqtt3_context_cleanup(mqtt3_context *context);
+void mqtt3_context_packet_cleanup(mqtt3_context *context);
 
 /* ============================================================
  * Memory functions
