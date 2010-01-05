@@ -1,0 +1,57 @@
+0.4 - 201001xx
+==============
+
+- Added support for wildcard subscriptions using + and #.
+- All network operations are now non-blocking and can cope with partial
+  packets, meaning that networking should be a lot more reliable.
+- Total messsages/bytes sent/received are now available in $SYS.
+- Improved logging information - use client ip address and id instead of
+  socket number.
+- Broker build timestamp is available in $SYS.
+- Keepalive==0 is now correctly treated as "never disconnect".
+- Fixed manpage installation.
+- Fixed incorrect $SYS hierarchy locations in documentation and code.
+- Debug type log messages are no longer sent to "topics".
+- Default logging destination no longer includes "topics" to prevent possible
+  error logging to the db before it is initialised.
+- Periodic $SYS messages can now be disabled.
+- stdout and stderr are flushed when logging to them to give more timely
+  updates.
+- dup is now set correctly when resending messages.
+- Database format bumped due to topic column naming fix.
+
+0.3 - 20091217
+==============
+
+- The port option in the configuration file and --port command line argument
+  may now be given any number of times to make mosquitto listen on multiple
+  sockets.
+- Add new config file and command line option "interface" to specify an
+  interface to listen on, rather than all interfaces.
+- Added host access control through tcp-wrappers support.
+- Set SO_REUSEADDR on the listening socket so restart is much quicker.
+- Added support for tracking current heap memory usage - this is published on
+  the topic "$SYS/broker/heap/current size"
+- Added code for logging to stderr, stdout, syslog and topics. 
+- Added logging to numerous places - still plenty of scope for more.
+
+0.2 - 20091204
+==============
+
+- Replaced the command line option --foreground with --daemon, swapping the
+  default behaviour.
+- Added the command line option --config-file, to specify a config file to
+  load.  If this is not given, no config file is load and the default options
+  are used.
+- Added the command line option --port for specifying the port to listen on.
+  This overrides values in the config file.
+- Don't use persistence by default.
+- Default behaviour is now more sane when run by a normal user with no command
+  line options (combination of above changes).
+- Added option user to config file, defaulting to a value of mosquitto. If
+  this value isn't blank and mosquitto is started by root, then it will drop
+  privileges by changing to the user and its primary group. This replaces the
+  current behaviour of refusing to start if run by root.
+- Fix non-persistent mode, which would never work in the previous release.
+- Added information on default values of msg_timeout and sys_interval to the
+  mosquitto.conf man page. (closes bug #492045).
