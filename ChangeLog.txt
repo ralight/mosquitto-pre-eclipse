@@ -1,0 +1,122 @@
+0.5.4 - 2010030x
+================
+
+- Fix memory allocation in mqtt3_fix_sub_topic().
+
+0.5.3 - 20100303
+================
+
+- Will messages are now only sent when a client disconnects unexpectedly.
+- Fix all incoming topics/subscriptions that start with a / or contain
+  multiple / in a row (//).
+- Do actually disconnect client when it sends an empty subscription/topic string.
+- Add missing $SYS/broker/clients/total to man page.
+
+0.5.2 - 20100302
+================
+
+- Always update last backup time, so that the backup doesn't run every time
+  through the main loop once autosave_interval has been reached.
+- Report $SYS/broker/uptime in the same format as rsmb.
+- Make mandatory options obvious in usage output and man page of mosquitto_pub.
+  Fixes bug #529990.
+- Treat subscriptions with a trailing slash correctly. This should fix bugs
+  #530369 and #530099.
+  
+0.5.1 - 20100227
+================
+
+- Must daemonise before pid file is written.
+
+0.5 - 20100227
+==============
+
+- No longer store QoS=0 messages for disconnected clients that do not have
+  clean start set.
+- Rename msg_timeout option to retry_interval for better rsmb compatibility.
+- Change persistence behaviour. The database is now stored in memory even if
+  persistence is enabled. It is written to disk when mosquitto exits and also at
+  periodic intervals as defined by the new autosave_interval option.
+- The writing of the persistence database may be forced by sending mosquitto
+  the SIGUSR1 signal.
+- Clients that do not send CONNECT as their first command are now
+  disconnected.
+- Boolean configuration values may now be specified with true/false as well as
+  1/0.
+- Log message on CONNECT with invalid protocol or protocol version.
+- Default sqlite3-pcre path on Linux is now /usr/lib/sqlite3/pcre.so to match
+  future sqlite3-pcre packages.
+- Add mosquitto_sub and mosquitto_pub, simple clients for subscribe/publish.
+- Add man pages for clients.
+- Add general man page on mqtt.
+- Root privileges are now dropped only after attempting to write a pid file
+  (if configured). This means that the pid file can be written to /var/run/
+  directly and should fix bug #523183.
+
+0.4.2 - 20100203
+================
+
+- Fix segfault on client connect with invalid protocol name/version.
+
+0.4.1 - 20100112
+===============
+
+- Fix regex used for finding retained messages to send on new subscription.
+
+0.4 - 20100105
+==============
+
+- Added support for wildcard subscriptions using + and #.
+- All network operations are now non-blocking and can cope with partial
+  packets, meaning that networking should be a lot more reliable.
+- Total messsages/bytes sent/received are now available in $SYS.
+- Improved logging information - use client ip address and id instead of
+  socket number.
+- Broker build timestamp is available in $SYS.
+- Keepalive==0 is now correctly treated as "never disconnect".
+- Fixed manpage installation.
+- Fixed incorrect $SYS hierarchy locations in documentation and code.
+- Debug type log messages are no longer sent to "topics".
+- Default logging destination no longer includes "topics" to prevent possible
+  error logging to the db before it is initialised.
+- Periodic $SYS messages can now be disabled.
+- stdout and stderr are flushed when logging to them to give more timely
+  updates.
+- dup is now set correctly when resending messages.
+- Database format bumped due to topic column naming fix.
+
+0.3 - 20091217
+==============
+
+- The port option in the configuration file and --port command line argument
+  may now be given any number of times to make mosquitto listen on multiple
+  sockets.
+- Add new config file and command line option "interface" to specify an
+  interface to listen on, rather than all interfaces.
+- Added host access control through tcp-wrappers support.
+- Set SO_REUSEADDR on the listening socket so restart is much quicker.
+- Added support for tracking current heap memory usage - this is published on
+  the topic "$SYS/broker/heap/current size"
+- Added code for logging to stderr, stdout, syslog and topics. 
+- Added logging to numerous places - still plenty of scope for more.
+
+0.2 - 20091204
+==============
+
+- Replaced the command line option --foreground with --daemon, swapping the
+  default behaviour.
+- Added the command line option --config-file, to specify a config file to
+  load.  If this is not given, no config file is load and the default options
+  are used.
+- Added the command line option --port for specifying the port to listen on.
+  This overrides values in the config file.
+- Don't use persistence by default.
+- Default behaviour is now more sane when run by a normal user with no command
+  line options (combination of above changes).
+- Added option user to config file, defaulting to a value of mosquitto. If
+  this value isn't blank and mosquitto is started by root, then it will drop
+  privileges by changing to the user and its primary group. This replaces the
+  current behaviour of refusing to start if run by root.
+- Fix non-persistent mode, which would never work in the previous release.
+- Added information on default values of msg_timeout and sys_interval to the
+  mosquitto.conf man page. (closes bug #492045).
