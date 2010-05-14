@@ -659,6 +659,8 @@ int mqtt3_db_client_insert(mqtt3_context *context, int will, int will_retain, in
 			mqtt3_log_printf(MQTT3_LOG_ERR, "Client %s already connected, closing old connection.", context->id);
 #ifdef WITH_BROKER
 			mqtt3_context_close_duplicate(oldsock);
+#else
+			close(oldsock);
 #endif
 		}
 		mqtt3_db_client_update(context, will, will_retain, will_qos, will_topic, will_message);
@@ -2024,8 +2026,10 @@ void mqtt3_db_sys_update(int interval, time_t start_time)
 			mqtt3_db_messages_easy_queue("", "$SYS/broker/clients/total", 2, strlen(buf), (uint8_t *)buf, 1);
 		}
 
+#ifdef WITH_MEMORY_TRACKING
 		snprintf(buf, 100, "%d", mqtt3_memory_used());
 		mqtt3_db_messages_easy_queue("", "$SYS/broker/heap/current size", 2, strlen(buf), (uint8_t *)buf, 1);
+#endif
 
 		snprintf(buf, 100, "%lu", mqtt3_net_msgs_total_received());
 		mqtt3_db_messages_easy_queue("", "$SYS/broker/messages/received", 2, strlen(buf), (uint8_t *)buf, 1);

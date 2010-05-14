@@ -13,7 +13,6 @@ my $subclient = "/usr/local/bin/mosquitto_sub -t sensors/cc128/raw -q 2";
 my $pubclient = "/usr/local/bin/mosquitto_pub -t sensors/cc128 -q 2 -l";
 my $pubclient_ch1 = "/usr/local/bin/mosquitto_pub -t sensors/cc128/ch1 -q 2 -l";
 
-local $| = 1;
 open(SUB, "$subclient|");
 open(PUB, "|$pubclient");
 open(PUB_CH1, "|$pubclient_ch1");
@@ -30,16 +29,7 @@ while (my $line = <SUB>) {
 		my $watts = $3;
 
 		my $now = time;
-		my $sec;
-		my $min;
-		my $hour;
-		my $mday;
-		my $month;
-		my $year;
-		my $wday;
-		my $yday;
-		my $isdst;
-		my $r_stamp;
+		my ($sec,$min,$hour,$mday,$month,$year,$wday,$yday,$isdst,$r_stamp);
 
 		($sec,$min,$hour,$mday,$month,$year,$wday,$yday,$isdst) = localtime($now);
 		$year += 1900;
