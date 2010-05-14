@@ -122,7 +122,9 @@
 			<varlistentry>
 				<term><option>$SYS/broker/heap/current size</option></term>
 				<listitem>
-					<para>The current size of the heap memory in use by mosquitto.</para>
+					<para>The current size of the heap memory in use by
+					mosquitto. Note that this topic may be unavailable
+					depending on compile time options.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -134,13 +136,13 @@
 			<varlistentry>
 				<term><option>$SYS/broker/messages/received</option></term>
 				<listitem>
-					<para>The total number of messages received since the broker started. (not yet implemented)</para>
+					<para>The total number of messages received since the broker started.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
 				<term><option>$SYS/broker/messages/sent</option></term>
 				<listitem>
-					<para>The total number of messages sent since the broker started. (not yet implemented)</para>
+					<para>The total number of messages sent since the broker started.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
