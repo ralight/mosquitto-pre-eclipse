@@ -27,21 +27,13 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <config.h>
-
-#include <errno.h>
 #include <fcntl.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/select.h>
 #include <unistd.h>
 
-#include <mqtt3.h>
-#include <client_shared.h>
+#include <mosquitto.h>
 
 #define MSGMODE_NONE 0
 #define MSGMODE_CMD 1
@@ -58,22 +50,22 @@ static char *message = NULL;
 static long msglen = 0;
 static int qos = 0;
 static int retain = 0;
-static mqtt3_context *gcontext;
 static int mode = MSGMODE_NONE;
 static int status = STATUS_CONNECTING;
+static struct mosquitto *mosq = NULL;
+static int mid_sent = 0;
 
-void my_connack_callback(int result)
+void my_connect_callback(void *obj, int result)
 {
 	if(!result){
-		gcontext->connected = true;
 		switch(mode){
 			case MSGMODE_CMD:
 			case MSGMODE_FILE:
 			case MSGMODE_STDIN_FILE:
-				mqtt3_raw_publish(gcontext, false, qos, retain, 1, topic, msglen, (uint8_t *)message);
+				mid_sent = mosquitto_publish(mosq, topic, msglen, (uint8_t *)message, qos, retain);
 				break;
 			case MSGMODE_NULL:
-				mqtt3_raw_publish(gcontext, false, qos, retain, 1, topic, 0, NULL);
+				mid_sent = mosquitto_publish(mosq, topic, 0, NULL, qos, retain);
 				break;
 			case MSGMODE_STDIN_LINE:
 				status = STATUS_CONNACK_RECVD;
@@ -84,24 +76,10 @@ void my_connack_callback(int result)
 	}
 }
 
-void my_net_write_callback(int command)
-{
-	if(qos == 0 && command == PUBLISH && mode != MSGMODE_STDIN_LINE){
-		mqtt3_raw_disconnect(gcontext);
-	}
-}
-
-void my_puback_callback(int mid)
+void my_publish_callback(void *obj, int mid)
 {
 	if(mode != MSGMODE_STDIN_LINE){
-		mqtt3_raw_disconnect(gcontext);
-	}
-}
-
-void my_pubcomp_callback(int mid)
-{
-	if(mode != MSGMODE_STDIN_LINE){
-		mqtt3_raw_disconnect(gcontext);
+		mosquitto_disconnect(mosq);
 	}
 }
 
@@ -114,7 +92,7 @@ int load_stdin(void)
 
 	while(!feof(stdin)){
 		rlen = fread(buf, 1, 1024, stdin);
-		message = mqtt3_realloc(message, pos+rlen);
+		message = realloc(message, pos+rlen);
 		if(!message){
 			fprintf(stderr, "Error: Out of memory.\n");
 			return 1;
@@ -156,7 +134,7 @@ int load_file(const char *filename)
 		return 1;
 	}
 	fseek(fptr, 0, SEEK_SET);
-	message = mqtt3_malloc(msglen);
+	message = malloc(msglen);
 	if(!message){
 		fclose(fptr);
 		fprintf(stderr, "Error: Out of memory.\n");
@@ -191,7 +169,6 @@ void print_usage(void)
 
 int main(int argc, char *argv[])
 {
-	mqtt3_context *context;
 	char id[30];
 	int i;
 	char *host = "localhost";
@@ -199,7 +176,6 @@ int main(int argc, char *argv[])
 	int keepalive = 60;
 	int opt;
 	char buf[1024];
-	int mid_sent = 0;
 	bool debug = false;
 
 	sprintf(id, "mosquitto_pub_%d", getpid());
@@ -328,11 +304,18 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 	}
-	fflush(stdout);
+	mosquitto_lib_init();
+	mosq = mosquitto_new(NULL, id);
+	if(!mosq){
+		fprintf(stderr, "Error: Out of memory.\n");
+		return 1;
+	}
+	#if 0
 	if(debug){
 		mqtt3_log_init(MQTT3_LOG_DEBUG | MQTT3_LOG_ERR | MQTT3_LOG_WARNING
 				| MQTT3_LOG_NOTICE | MQTT3_LOG_INFO, MQTT3_LOG_STDERR);
 	}
+	#endif
 
 	if(!topic || mode == MSGMODE_NONE){
 		fprintf(stderr, "Error: Both topic and message must be supplied.\n");
@@ -340,36 +323,28 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	if(client_init()){
-		fprintf(stderr, "Error: Unable to initialise database.\n");
-		return 1;
-	}
-	client_connack_callback = my_connack_callback;
-	client_net_write_callback = my_net_write_callback;
-	client_puback_callback = my_puback_callback;
-	client_pubcomp_callback = my_pubcomp_callback;
+	mosq->on_connect = my_connect_callback;
+	mosq->on_publish = my_publish_callback;
 
-	if(client_connect(&context, host, port, id, keepalive, true)){
+	if(mosquitto_connect(mosq, host, port, keepalive, true)){
 		fprintf(stderr, "Unable to connect.\n");
 		return 1;
 	}
-	gcontext = context;
 
-	while(!client_loop(context)){
+	while(!mosquitto_loop(mosq)){
 		if(mode == MSGMODE_STDIN_LINE && status == STATUS_CONNACK_RECVD){
 			if(fgets(buf, 1024, stdin)){
 				buf[strlen(buf)-1] = '\0';
-				mid_sent++;
-				if(mid_sent > 65535) mid_sent = 1;
-				mqtt3_raw_publish(context, false, qos, retain, mid_sent, topic, strlen(buf), (uint8_t *)buf);
+				mid_sent = mosquitto_publish(mosq, topic, strlen(buf), (uint8_t *)buf, qos, retain);
 			}else if(feof(stdin)){
-				mqtt3_raw_disconnect(gcontext);
+				mosquitto_disconnect(mosq);
 			}
 		}
 	}
 	if(message && mode == MSGMODE_FILE){
-		mqtt3_free(message);
+		free(message);
 	}
-	client_cleanup();
+	mosquitto_destroy(mosq);
+	mosquitto_lib_cleanup();
 	return 0;
 }
