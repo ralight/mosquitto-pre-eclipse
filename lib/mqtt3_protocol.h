@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2010, Roger Light <roger@atchoo.org>
+Copyright (c) 2009,2010, Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -27,37 +27,28 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef _MOSQUITTOPP_H_
-#define _MOSQUITTOPP_H_
+#ifndef _MQTT3_PROTOCOL_H_
+#define _MQTT3_PROTOCOL_H_
 
-#include <stdint.h>
-#include <cstdlib>
-#include <mosquitto.h>
+/* For version 3 of the MQTT protocol */
 
-class mosquittopp {
-	private:
-		struct mosquitto *mosq;
-	public:
-		mosquittopp(const char *id);
-		~mosquittopp();
+#define PROTOCOL_NAME "MQIsdp"
+#define PROTOCOL_VERSION 3
 
-		int will_set(bool will, const char *topic, uint32_t payloadlen=0, const uint8_t *payload=NULL, int qos=0, bool retain=false);
-		int connect(const char *host, int port=1883, int keepalive=60, bool clean_session=true);
-		int disconnect();
-		int publish(const char *topic, uint32_t payloadlen=0, const uint8_t *payload=NULL, int qos=0, bool retain=false);
-		int subscribe(const char *sub, int qos=0);
-		int unsubscribe(const char *sub);
-
-		int loop();
-		int read();
-		int write();
-		
-		virtual void on_connect(int rc) {return;};
-		virtual void on_publish(int mid) {return;};
-		virtual void on_message(struct mosquitto_message *message) {return;};
-		virtual void on_subscribe(int mid) {return;};
-		virtual void on_unsubscribe(int mid) {return;};
-		virtual void on_error() {return;};
-};
+/* Message types */
+#define CONNECT 0x10
+#define CONNACK 0x20
+#define PUBLISH 0x30
+#define PUBACK 0x40
+#define PUBREC 0x50
+#define PUBREL 0x60
+#define PUBCOMP 0x70
+#define SUBSCRIBE 0x80
+#define SUBACK 0x90
+#define UNSUBSCRIBE 0xA0
+#define UNSUBACK 0xB0
+#define PINGREQ 0xC0
+#define PINGRESP 0xD0
+#define DISCONNECT 0xE0
 
 #endif

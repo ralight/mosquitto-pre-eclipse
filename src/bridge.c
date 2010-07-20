@@ -30,6 +30,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <stdint.h>
 
 #include <config.h>
+#include <net_mosq.h>
 #include <mqtt3.h>
 
 int mqtt3_bridge_new(mqtt3_context **contexts, int *context_count, struct _mqtt3_bridge *bridge)
@@ -74,7 +75,19 @@ int mqtt3_bridge_connect(mqtt3_context *context)
 
 	if(!context || !context->bridge) return 1;
 
-	new_sock = mqtt3_socket_connect(context->bridge->address, context->bridge->port);
+	context->connected = false;
+	context->disconnecting = false;
+	context->duplicate = false;
+	context->sock = -1;
+	context->last_msg_in = time(NULL);
+	context->last_msg_out = time(NULL);
+	context->keepalive = context->bridge->keepalive;
+	context->clean_session = context->bridge->clean_session;
+	context->in_packet.payload = NULL;
+	mqtt3_bridge_packet_cleanup(context);
+
+	mqtt3_log_printf(MQTT3_LOG_NOTICE, "Connecting bridge %s", context->bridge->name);
+	new_sock = _mosquitto_socket_connect(context->bridge->address, context->bridge->port);
 	if(new_sock == -1){
 		mqtt3_log_printf(MQTT3_LOG_ERR, "Error creating bridge.");
 		return 1;
@@ -88,7 +101,7 @@ int mqtt3_bridge_connect(mqtt3_context *context)
 	mqtt3_db_client_update(context, 0, 0, 0, NULL, NULL);
 	if(mqtt3_raw_connect(context, context->id,
 			/*will*/ false, /*will qos*/ 0, /*will retain*/ false, /*will topic*/ NULL, /*will msg*/ NULL,
-			60/*keepalive*/, /*cleanstart*/true)){
+			context->keepalive, context->clean_session)){
 
 		return 1;
 	}
@@ -104,15 +117,15 @@ int mqtt3_bridge_connect(mqtt3_context *context)
 
 void mqtt3_bridge_packet_cleanup(mqtt3_context *context)
 {
-	struct _mqtt3_packet *packet;
+	struct _mosquitto_packet *packet;
 	if(!context) return;
 
     while(context->out_packet){
-		mqtt3_context_packet_cleanup(context->out_packet);
+		_mosquitto_packet_cleanup(context->out_packet);
 		packet = context->out_packet;
 		context->out_packet = context->out_packet->next;
 		mqtt3_free(packet);
 	}
 
-	mqtt3_context_packet_cleanup(&(context->in_packet));
+	_mosquitto_packet_cleanup(&(context->in_packet));
 }

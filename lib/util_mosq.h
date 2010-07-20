@@ -26,15 +26,12 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
-#ifndef CLIENT_SHARED_H
-#define CLIENT_SHARED_H
+#ifndef _UTIL_MOSQ_H_
+#define _UTIL_MOSQ_H_
 
-#include <config.h>
-#include <mqtt3.h>
+#include <mosquitto.h>
 
-int client_init(void);
-void client_cleanup(void);
-int client_connect(mqtt3_context **context, const char *host, int port, const char *id, int keepalive, bool clean_session);
-int client_loop(mqtt3_context *context);
+void _mosquitto_check_keepalive(struct mosquitto *mosq);
+int _mosquitto_fix_sub_topic(char **subtopic);
 
 #endif

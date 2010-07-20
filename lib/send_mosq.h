@@ -26,38 +26,19 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
+#ifndef _SEND_MOSQ_H_
+#define _SEND_MOSQ_H_
 
-#ifndef _MOSQUITTOPP_H_
-#define _MOSQUITTOPP_H_
-
-#include <stdint.h>
-#include <cstdlib>
 #include <mosquitto.h>
 
-class mosquittopp {
-	private:
-		struct mosquitto *mosq;
-	public:
-		mosquittopp(const char *id);
-		~mosquittopp();
+int _mosquitto_send_simple_command(struct mosquitto *mosq, uint8_t command);
 
-		int will_set(bool will, const char *topic, uint32_t payloadlen=0, const uint8_t *payload=NULL, int qos=0, bool retain=false);
-		int connect(const char *host, int port=1883, int keepalive=60, bool clean_session=true);
-		int disconnect();
-		int publish(const char *topic, uint32_t payloadlen=0, const uint8_t *payload=NULL, int qos=0, bool retain=false);
-		int subscribe(const char *sub, int qos=0);
-		int unsubscribe(const char *sub);
-
-		int loop();
-		int read();
-		int write();
-		
-		virtual void on_connect(int rc) {return;};
-		virtual void on_publish(int mid) {return;};
-		virtual void on_message(struct mosquitto_message *message) {return;};
-		virtual void on_subscribe(int mid) {return;};
-		virtual void on_unsubscribe(int mid) {return;};
-		virtual void on_error() {return;};
-};
+int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session);
+int _mosquitto_send_disconnect(struct mosquitto *mosq);
+int _mosquitto_send_pingreq(struct mosquitto *mosq);
+int _mosquitto_send_pingresp(struct mosquitto *mosq);
+int _mosquitto_send_publish(struct mosquitto *mosq, const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain);
+int _mosquitto_send_subscribe(struct mosquitto *mosq, bool dup, const char *topic, uint8_t topic_qos);
+int _mosquitto_send_unsubscribe(struct mosquitto *mosq, bool dup, const char *topic);
 
 #endif

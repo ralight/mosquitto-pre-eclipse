@@ -33,20 +33,45 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <stdint.h>
 #include <stdlib.h>
 
+struct mosquitto_message{
+	struct mosquitto_message *next;
+	uint16_t mid;
+	char *topic;
+	uint8_t *payload;
+	uint32_t payloadlen;
+	int qos;
+	bool retain;
+	bool dup;
+};
+
+struct _mosquitto_packet{
+	uint8_t command;
+	uint8_t command_saved;
+	uint8_t have_remaining;
+	uint8_t remaining_count;
+	uint32_t remaining_mult;
+	uint32_t remaining_length;
+	uint32_t to_process;
+	uint32_t pos;
+	uint8_t *payload;
+	struct _mosquitto_packet *next;
+};
+
 struct mosquitto {
 	void *obj;
 	int sock;
 	char *id;
 	int keepalive;
-	bool will;
-	char *will_topic;
-	uint32_t will_payloadlen;
-	uint8_t *will_payload;
-	int will_qos;
-	bool will_retain;
+	bool connected;
+	struct mosquitto_message *messages;
+	struct mosquitto_message *will;
+	struct _mosquitto_packet in_packet;
+	struct _mosquitto_packet *out_packet;
+	time_t last_msg_in;
+	time_t last_msg_out;
 	void (*on_connect)(void *obj, int rc);
 	void (*on_publish)(void *obj, int mid);
-	void (*on_message)(void *obj, const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain);
+	void (*on_message)(void *obj, struct mosquitto_message *message);
 	void (*on_subscribe)(void *obj, int mid);
 	void (*on_unsubscribe)(void *obj, int mid);
 	//void (*on_error)();
@@ -56,6 +81,7 @@ int mosquitto_lib_init(void);
 void mosquitto_lib_cleanup(void);
 
 struct mosquitto *mosquitto_new(void *obj, const char *id);
+int mosquitto_will_set(struct mosquitto *mosq, bool will, const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain);
 void mosquitto_destroy(struct mosquitto *mosq);
 int mosquitto_connect(struct mosquitto *mosq, const char *host, int port, int keepalive, bool clean_session);
 int mosquitto_disconnect(struct mosquitto *mosq);
@@ -65,5 +91,7 @@ int mosquitto_unsubscribe(struct mosquitto *mosq, const char *sub);
 int mosquitto_loop(struct mosquitto *mosq);
 int mosquitto_read(struct mosquitto *mosq);
 int mosquitto_write(struct mosquitto *mosq);
+
+void mosquitto_message_cleanup(struct mosquitto_message **message);
 
 #endif
