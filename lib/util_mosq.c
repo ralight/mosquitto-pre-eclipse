@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2010, Roger Light <roger@atchoo.org>
+Copyright (c) 2009,2010, Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -27,37 +27,52 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef _MOSQUITTOPP_H_
-#define _MOSQUITTOPP_H_
+#include <string.h>
+#include <time.h>
 
-#include <stdint.h>
-#include <cstdlib>
 #include <mosquitto.h>
+#include <net_mosq.h>
+#include <send_mosq.h>
 
-class mosquittopp {
-	private:
-		struct mosquitto *mosq;
-	public:
-		mosquittopp(const char *id);
-		~mosquittopp();
+void _mosquitto_check_keepalive(struct mosquitto *mosq)
+{
+	if(mosq && mosq->sock != -1 && time(NULL) - mosq->last_msg_out >= mosq->keepalive){
+		if(mosq->connected){
+			_mosquitto_send_pingreq(mosq);
+		}else{
+			_mosquitto_socket_close(mosq);
+		}
+	}
+}
 
-		int will_set(bool will, const char *topic, uint32_t payloadlen=0, const uint8_t *payload=NULL, int qos=0, bool retain=false);
-		int connect(const char *host, int port=1883, int keepalive=60, bool clean_session=true);
-		int disconnect();
-		int publish(const char *topic, uint32_t payloadlen=0, const uint8_t *payload=NULL, int qos=0, bool retain=false);
-		int subscribe(const char *sub, int qos=0);
-		int unsubscribe(const char *sub);
+/* Convert ////some////over/slashed///topic/etc/etc//
+ * into some/over/slashed/topic/etc/etc
+ */
+int _mosquitto_fix_sub_topic(char **subtopic)
+{
+	char *fixed = NULL;
+	char *token;
 
-		int loop();
-		int read();
-		int write();
-		
-		virtual void on_connect(int rc) {return;};
-		virtual void on_publish(int mid) {return;};
-		virtual void on_message(struct mosquitto_message *message) {return;};
-		virtual void on_subscribe(int mid) {return;};
-		virtual void on_unsubscribe(int mid) {return;};
-		virtual void on_error() {return;};
-};
+	if(!subtopic || !(*subtopic)) return 1;
 
-#endif
+	/* size of fixed here is +1 for the terminating 0 and +1 for the spurious /
+	 * that gets appended. */
+	fixed = calloc(strlen(*subtopic)+2, 1);
+	if(!fixed) return 1;
+
+	if((*subtopic)[0] == '/'){
+		fixed[0] = '/';
+	}
+	token = strtok(*subtopic, "/");
+	while(token){
+		strcat(fixed, token);
+		strcat(fixed, "/");
+		token = strtok(NULL, "/");
+	}
+
+	fixed[strlen(fixed)-1] = '\0';
+	free(*subtopic);
+	*subtopic = fixed;
+	return 0;
+}
+

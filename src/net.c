@@ -143,54 +143,6 @@ int mqtt3_socket_close(mqtt3_context *context)
 	return rc;
 }
 
-/* Create a socket and connect it to 'ip' on port 'port'.
- * Returns -1 on failure (ip is NULL, socket creation/connection error)
- * Returns sock number on success.
- */
-int mqtt3_socket_connect(const char *host, uint16_t port)
-{
-	int sock;
-	int opt;
-	struct addrinfo hints;
-	struct addrinfo *ainfo, *rp;
-	int s;
-
-	if(!host || !port) return -1;
-
-	memset(&hints, 0, sizeof(struct addrinfo));
-	hints.ai_family = AF_INET; /* IPv4 only at the moment. */
-	hints.ai_socktype = SOCK_STREAM;
-
-	s = getaddrinfo(host, NULL, &hints, &ainfo);
-	if(s) return -1;
-
-	for(rp = ainfo; rp != NULL; rp = rp->ai_next){
-		sock = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-		if(sock == -1) continue;
-		
-		((struct sockaddr_in *)rp->ai_addr)->sin_port = htons(port);
-		if(connect(sock, rp->ai_addr, rp->ai_addrlen) != -1){
-			break;
-		}
-
-		return -1;
-	}
-	if(!rp){
-		mqtt3_log_printf(MQTT3_LOG_ERR, "Error: %s", strerror(errno));
-		return -1;
-	}
-	freeaddrinfo(ainfo);
-
-	/* Set non-blocking */
-	opt = fcntl(sock, F_GETFL, 0);
-	if(opt == -1 || fcntl(sock, F_SETFL, opt | O_NONBLOCK) == -1){
-		close(sock);
-		return -1;
-	}
-
-	return sock;
-}
-
 /* Internal function.
  * Create a socket and set it to listen based on the sockaddr details in addr.
  * Returns -1 on failure (addr is NULL, socket creation/listening error)
@@ -277,9 +229,9 @@ int mqtt3_socket_listen_if(const char *iface, uint16_t port)
 	return -1;
 }
 
-int mqtt3_net_packet_queue(mqtt3_context *context, struct _mqtt3_packet *packet)
+int mqtt3_net_packet_queue(mqtt3_context *context, struct _mosquitto_packet *packet)
 {
-	struct _mqtt3_packet *tail;
+	struct _mosquitto_packet *tail;
 
 	if(!context || !packet) return 1;
 
@@ -393,7 +345,7 @@ int mqtt3_net_read(mqtt3_context *context)
 	rc = mqtt3_packet_handle(context);
 
 	/* Free data and reset values */
-	mqtt3_context_packet_cleanup(&context->in_packet);
+	_mosquitto_packet_cleanup(&context->in_packet);
 
 	context->last_msg_in = time(NULL);
 	return rc;
@@ -403,7 +355,7 @@ int mqtt3_net_write(mqtt3_context *context)
 {
 	uint8_t byte;
 	ssize_t write_length;
-	struct _mqtt3_packet *packet;
+	struct _mosquitto_packet *packet;
 
 	if(!context || context->sock == -1) return 1;
 
@@ -485,106 +437,11 @@ int mqtt3_net_write(mqtt3_context *context)
 #endif
 		/* Free data and reset values */
 		context->out_packet = packet->next;
-		mqtt3_context_packet_cleanup(packet);
+		_mosquitto_packet_cleanup(packet);
 		mqtt3_free(packet);
 
 		context->last_msg_out = time(NULL);
 	}
-	return 0;
-}
-
-int mqtt3_read_byte(mqtt3_context *context, uint8_t *byte)
-{
-	if(context->in_packet.pos+1 > context->in_packet.remaining_length)
-		return 1;
-
-	*byte = context->in_packet.payload[context->in_packet.pos];
-	context->in_packet.pos++;
-
-	return 0;
-}
-
-int mqtt3_write_byte(struct _mqtt3_packet *packet, uint8_t byte)
-{
-	if(packet->pos+1 > packet->remaining_length) return 1;
-
-	packet->payload[packet->pos] = byte;
-	packet->pos++;
-
-	return 0;
-}
-
-int mqtt3_read_bytes(mqtt3_context *context, uint8_t *bytes, uint32_t count)
-{
-	if(context->in_packet.pos+count > context->in_packet.remaining_length)
-		return 1;
-
-	memcpy(bytes, &(context->in_packet.payload[context->in_packet.pos]), count);
-	context->in_packet.pos += count;
-
-	return 0;
-}
-
-int mqtt3_write_bytes(struct _mqtt3_packet *packet, const uint8_t *bytes, uint32_t count)
-{
-	if(packet->pos+count > packet->remaining_length) return 1;
-
-	memcpy(&(packet->payload[packet->pos]), bytes, count);
-	packet->pos += count;
-
-	return 0;
-}
-
-int mqtt3_read_string(mqtt3_context *context, char **str)
-{
-	uint16_t len;
-
-	if(mqtt3_read_uint16(context, &len)) return 1;
-
-	if(context->in_packet.pos+len > context->in_packet.remaining_length)
-		return 1;
-
-	*str = mqtt3_calloc(len+1, sizeof(char));
-	if(*str){
-		memcpy(*str, &(context->in_packet.payload[context->in_packet.pos]), len);
-		context->in_packet.pos += len;
-	}else{
-		return 1;
-	}
-
-	return 0;
-}
-
-int mqtt3_write_string(struct _mqtt3_packet *packet, const char *str, uint16_t length)
-{
-	if(mqtt3_write_uint16(packet, length)) return 1;
-	if(mqtt3_write_bytes(packet, (uint8_t *)str, length)) return 1;
-
-	return 0;
-}
-
-int mqtt3_read_uint16(mqtt3_context *context, uint16_t *word)
-{
-	uint8_t msb, lsb;
-
-	if(context->in_packet.pos+2 > context->in_packet.remaining_length)
-		return 1;
-
-	msb = context->in_packet.payload[context->in_packet.pos];
-	context->in_packet.pos++;
-	lsb = context->in_packet.payload[context->in_packet.pos];
-	context->in_packet.pos++;
-
-	*word = (msb<<8) + lsb;
-
-	return 0;
-}
-
-int mqtt3_write_uint16(struct _mqtt3_packet *packet, uint16_t word)
-{
-	if(mqtt3_write_byte(packet, MQTT_MSB(word))) return 1;
-	if(mqtt3_write_byte(packet, MQTT_LSB(word))) return 1;
-
 	return 0;
 }
 

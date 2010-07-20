@@ -37,77 +37,74 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <sys/select.h>
 #include <unistd.h>
 
-#include <config.h>
-#include <mqtt3.h>
+#include <mosquitto.h>
+#include <net_mosq.h>
 
-void (*client_connack_callback)(int) = NULL;
-
-int mqtt3_handle_connack(mqtt3_context *context)
+int _mosquitto_handle_connack(struct mosquitto *mosq)
 {
 	uint8_t byte;
 	uint8_t rc;
-	int i;
 
-	if(!context || context->in_packet.remaining_length != 2){
+	printf("connack\n");
+	printf("rl: %d\n", mosq->in_packet.remaining_length);
+	if(!mosq || mosq->in_packet.remaining_length != 2){
 		return 1;
 	}
-	mqtt3_log_printf(MQTT3_LOG_DEBUG, "Received CONNACK");
-	if(_mosquitto_read_byte(&context->in_packet, &byte)) return 1; // Reserved byte, not used
-	if(_mosquitto_read_byte(&context->in_packet, &rc)) return 1;
-	if(client_connack_callback){
-		client_connack_callback(rc);
+	printf("a");
+	// FIXME mqtt3_log_printf(MQTT3_LOG_DEBUG, "Received CONNACK");
+	if(_mosquitto_read_byte(&mosq->in_packet, &byte)) return 1; // Reserved byte, not used
+	printf("b");
+	if(_mosquitto_read_byte(&mosq->in_packet, &rc)) return 1;
+	printf("c");
+	if(mosq->on_connect){
+		mosq->on_connect(mosq->obj, rc);
 	}
+	printf("rc: %d\n", rc);
 	switch(rc){
 		case 0:
-			if(context->bridge){
-				for(i=0; i<context->bridge->topic_count; i++){
-					if(context->bridge->topics[i].direction == bd_in || context->bridge->topics[i].direction == bd_both){
-						if(mqtt3_raw_subscribe(context, false, context->bridge->topics[i].topic, 2)){
-							return 1;
-						}
-					}
-				}
-			}
-			context->connected = true;
+			mosq->connected = true;
 			return 0;
 		case 1:
-			mqtt3_log_printf(MQTT3_LOG_ERR, "Connection Refused: unacceptable protocol version");
+			// FIXME mqtt3_log_printf(MQTT3_LOG_ERR, "Connection Refused: unacceptable protocol version");
 			return 1;
 		case 2:
-			mqtt3_log_printf(MQTT3_LOG_ERR, "Connection Refused: identifier rejected");
+			// FIXME mqtt3_log_printf(MQTT3_LOG_ERR, "Connection Refused: identifier rejected");
 			return 1;
 		case 3:
-			mqtt3_log_printf(MQTT3_LOG_ERR, "Connection Refused: broker unavailable");
+			// FIXME mqtt3_log_printf(MQTT3_LOG_ERR, "Connection Refused: broker unavailable");
 			return 1;
 	}
 	return 1;
 }
 
-int mqtt3_handle_suback(mqtt3_context *context)
+int _mosquitto_handle_suback(struct mosquitto *mosq)
 {
 	uint16_t mid;
 	uint8_t granted_qos;
 
-	mqtt3_log_printf(MQTT3_LOG_DEBUG, "Received SUBACK");
-	if(_mosquitto_read_uint16(&context->in_packet, &mid)) return 1;
+	printf("suback\n");
+	// FIXME mqtt3_log_printf(MQTT3_LOG_DEBUG, "Received SUBACK");
+	if(_mosquitto_read_uint16(&mosq->in_packet, &mid)) return 1;
 
-	while(context->in_packet.pos < context->in_packet.remaining_length){
+	while(mosq->in_packet.pos < mosq->in_packet.remaining_length){
 		/* FIXME - Need to do something with this */
-		if(_mosquitto_read_byte(&context->in_packet, &granted_qos)) return 1;
+		// FIXME - Need callback
+		if(_mosquitto_read_byte(&mosq->in_packet, &granted_qos)) return 1;
 	}
 
 	return 0;
 }
 
-int mqtt3_handle_unsuback(mqtt3_context *context)
+int _mosquitto_handle_unsuback(struct mosquitto *mosq)
 {
 	uint16_t mid;
 
-	if(!context || context->in_packet.remaining_length != 2){
+	if(!mosq || mosq->in_packet.remaining_length != 2){
 		return 1;
 	}
-	mqtt3_log_printf(MQTT3_LOG_DEBUG, "Received UNSUBACK");
-	if(_mosquitto_read_uint16(&context->in_packet, &mid)) return 1;
+	// FIXME mqtt3_log_printf(MQTT3_LOG_DEBUG, "Received UNSUBACK");
+	if(_mosquitto_read_uint16(&mosq->in_packet, &mid)) return 1;
+	if(mosq->on_unsubscribe) mosq->on_unsubscribe(mosq->obj, mid);
 
 	return 0;
 }

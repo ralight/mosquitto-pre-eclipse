@@ -44,10 +44,10 @@ static void on_publish_wrapper(void *obj, int mid)
 	m->on_publish(mid);
 }
 
-static void on_message_wrapper(void *obj, const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain)
+static void on_message_wrapper(void *obj, struct mosquitto_message *message)
 {
 	class mosquittopp *m = (class mosquittopp *)obj;
-	m->on_message(topic, payloadlen, payload, qos, retain);
+	m->on_message(message);
 }
 
 static void on_subscribe_wrapper(void *obj, int mid)
@@ -85,6 +85,11 @@ int mosquittopp::connect(const char *host, int port, int keepalive, bool clean_s
 int mosquittopp::disconnect()
 {
 	return mosquitto_disconnect(mosq);
+}
+
+int mosquittopp::will_set(bool will, const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain)
+{
+	return mosquitto_will_set(mosq, will, topic, payloadlen, payload, qos, retain);
 }
 
 int mosquittopp::publish(const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain)

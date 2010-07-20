@@ -40,18 +40,18 @@ static int topic_qos = 0;
 int verbose = 0;
 static struct mosquitto *mosq = NULL;
 
-void my_message_callback(void *obj, const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain)
+void my_message_callback(void *obj, struct mosquitto_message *message)
 {
 	if(verbose){
-		if(payloadlen){
-			printf("%s %s\n", topic, payload);
+		if(message->payloadlen){
+			printf("%s %s\n", message->topic, message->payload);
 		}else{
-			printf("%s (null)\n", topic);
+			printf("%s (null)\n", message->topic);
 		}
 		fflush(stdout);
 	}else{
-		if(payloadlen){
-			printf("%s\n", payload);
+		if(message->payloadlen){
+			printf("%s\n", message->payload);
 			fflush(stdout);
 		}
 	}
@@ -61,12 +61,8 @@ void my_connect_callback(void *obj, int result)
 {
 	int i;
 	if(!result){
-		if(topics){
-			for(i=0; i<topic_count; i++){
-				mosquitto_subscribe(mosq, topics[i], topic_qos);
-			}
-		}else{
-			mosquitto_subscribe(mosq, "#", topic_qos);
+		for(i=0; i<topic_count; i++){
+			mosquitto_subscribe(mosq, topics[i], topic_qos);
 		}
 	}else{
 		fprintf(stderr, "Connect failed\n");
@@ -76,7 +72,8 @@ void my_connect_callback(void *obj, int result)
 void print_usage(void)
 {
 	printf("mosquitto_sub is a simple mqtt client that will subscribe to a single topic and print all messages it receives.\n\n");
-	printf("Usage: mosquitto_sub [-c] [-i id] [-k keepalive] [-p port] [-q qos] [-t topic] [-v]\n\n");
+	printf("Usage: mosquitto_sub [-c] [-i id] [-k keepalive] [-p port] [-q qos] [-v] -t topic ...\n");
+	printf("                     [--will-topic [--will-payload payload] [--will-qos qos] [--will-retain]]\n\n");
 	printf(" -c : disable 'clean session' (store subscription and pending messages when client disconnects).\n");
 	printf(" -d : enable debug messages.\n");
 	printf(" -h : mqtt host to connect to. Defaults to localhost.\n");
@@ -84,8 +81,14 @@ void print_usage(void)
 	printf(" -k : keep alive in seconds for this client. Defaults to 60.\n");
 	printf(" -p : network port to connect to. Defaults to 1883.\n");
 	printf(" -q : quality of service level to use for the subscription. Defaults to 0.\n");
-	printf(" -t : mqtt topic to subscribe to. Defaults to #.\n");
+	printf(" -t : mqtt topic to subscribe to. May be repeated multiple times.\n");
 	printf(" -v : print published messages verbosely.\n");
+	printf(" --will-payload : payload for the client Will, which is sent by the broker in case of\n");
+	printf("                  unexpected disconnection. If not given and will-topic is set, a zero\n");
+	printf("                  length message will be sent.\n");
+	printf(" --will-qos : QoS level for the client Will.\n");
+	printf(" --will-retain : if given, make the client Will retained.\n");
+	printf(" --will-topic : the topic on which to publish the client Will.\n");
 }
 
 int main(int argc, char *argv[])
@@ -97,6 +100,12 @@ int main(int argc, char *argv[])
 	int keepalive = 60;
 	bool clean_session = true;
 	bool debug = false;
+	
+	uint8_t *will_payload = NULL;
+	long will_payloadlen = 0;
+	int will_qos = 0;
+	bool will_retain = false;
+	char *will_topic = NULL;
 
 	sprintf(id, "mosquitto_sub_%d", getpid());
 
@@ -179,11 +188,60 @@ int main(int argc, char *argv[])
 			i++;
 		}else if(!strcmp(argv[i], "-v") || !strcmp(argv[i], "--verbose")){
 			verbose = 1;
+		}else if(!strcmp(argv[i], "--will-payload")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --will-payload argument given but no will payload specified.\n\n");
+				print_usage();
+				return 1;
+			}else{
+				will_payload = (uint8_t *)argv[i+1];
+				will_payloadlen = strlen((char *)will_payload);
+			}
+			i++;
+		}else if(!strcmp(argv[i], "--will-qos")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --will-qos argument given but no will QoS specified.\n\n");
+				print_usage();
+				return 1;
+			}else{
+				will_qos = atoi(argv[i+1]);
+				if(will_qos < 0 || will_qos > 2){
+					fprintf(stderr, "Error: Invalid will QoS %d.\n\n", will_qos);
+					return 1;
+				}
+			}
+			i++;
+		}else if(!strcmp(argv[i], "--will-retain")){
+			will_retain = true;
+		}else if(!strcmp(argv[i], "--will-topic")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --will-topic argument given but no will topic specified.\n\n");
+				print_usage();
+				return 1;
+			}else{
+				will_topic = argv[i+1];
+			}
+			i++;
 		}else{
 			fprintf(stderr, "Error: Unknown option '%s'.\n",argv[i]);
 			print_usage();
 			return 1;
 		}
+	}
+	if(topic_count == 0){
+		fprintf(stderr, "Error: You must specify a topic to subscribe to.\n");
+		print_usage();
+		return 1;
+	}
+	if(will_payload && !will_topic){
+		fprintf(stderr, "Error: Will payload given, but no will topic given.\n");
+		print_usage();
+		return 1;
+	}
+	if(will_retain && !will_topic){
+		fprintf(stderr, "Error: Will retain given, but no will topic given.\n");
+		print_usage();
+		return 1;
 	}
 	#if 0
 	if(debug){
@@ -195,6 +253,10 @@ int main(int argc, char *argv[])
 	mosq = mosquitto_new(NULL, id);
 	if(!mosq){
 		fprintf(stderr, "Error: Out of memory.\n");
+		return 1;
+	}
+	if(will_topic && mosquitto_will_set(mosq, true, will_topic, will_payloadlen, will_payload, will_qos, will_retain)){
+		fprintf(stderr, "Error: Problem setting will.\n");
 		return 1;
 	}
 	mosq->on_connect = my_connect_callback;
