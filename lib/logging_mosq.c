@@ -26,87 +26,43 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
-
-#include <config.h>
-
-#include <errno.h>
+#include <stdarg.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
-#include <mqtt3.h>
+#include <mosquitto.h>
 
-int client_init(void)
+int mosquitto_log_init(struct mosquitto *mosq, int priorities, int destinations)
 {
-	mqtt3_config config;
+	if(!mosq) return 1;
 
-	config.persistence = 0;
-	config.ext_sqlite_regex = NULL;
+	mosq->log_priorities = priorities;
+	mosq->log_destinations = destinations;
 
-	return mqtt3_db_open(&config);
-}
-
-void client_cleanup(void)
-{
-	mqtt3_db_close();
-}
-
-int client_connect(mqtt3_context **context, const char *host, int port, const char *id, int keepalive, bool clean_session)
-{
-	int sock;
-
-	if(!context || !host || !id) return 1;
-
-	sock = mqtt3_socket_connect(host, port);
-	*context = mqtt3_context_init(sock);
-	if((*context)->sock == -1){
-		return 1;
-	}
-
-	(*context)->id = mqtt3_strdup(id);
-	mqtt3_raw_connect(*context, id,
-			/*will*/ false, /*will qos*/ 0, /*will retain*/ false, /*will topic*/ NULL, /*will msg*/ NULL,
-			keepalive, clean_session);
 	return 0;
 }
 
-int client_loop(mqtt3_context *context)
+int _mosquitto_log_printf(struct mosquitto *mosq, int priority, const char *fmt, ...)
 {
-	struct timespec timeout;
-	fd_set readfds, writefds;
-	int fdcount;
+	va_list va;
+	char s[500];
 
-	if(!context || context->sock < 0){
-		return 1;
-	}
-	FD_ZERO(&readfds);
-	FD_SET(context->sock, &readfds);
-	FD_ZERO(&writefds);
-	if(context->out_packet){
-		FD_SET(context->sock, &writefds);
-	}
-	timeout.tv_sec = 1;
-	timeout.tv_nsec = 0;
+	if(!mosq) return 1;
 
-	fdcount = pselect(context->sock+1, &readfds, &writefds, NULL, &timeout, NULL);
-	if(fdcount == -1){
-		fprintf(stderr, "Error in pselect: %s\n", strerror(errno));
-		return 1;
-	}else{
-		if(FD_ISSET(context->sock, &readfds)){
-			if(mqtt3_net_read(context)){
-				mqtt3_socket_close(context);
-				return 1;
-			}
+	if((mosq->log_priorities & priority) && mosq->log_destinations != MOSQ_LOG_NONE){
+		va_start(va, fmt);
+		vsnprintf(s, 500, fmt, va);
+		va_end(va);
+
+		if(mosq->log_destinations & MOSQ_LOG_STDOUT){
+			fprintf(stdout, "%s\n", s);
+			fflush(stdout);
 		}
-		if(FD_ISSET(context->sock, &writefds)){
-			if(mqtt3_net_write(context)){
-				mqtt3_socket_close(context);
-				return 1;
-			}
+		if(mosq->log_destinations & MOSQ_LOG_STDERR){
+			fprintf(stderr, "%s\n", s);
+			fflush(stderr);
 		}
 	}
-	mqtt3_check_keepalive(context);
 
 	return 0;
 }

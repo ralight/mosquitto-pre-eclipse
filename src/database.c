@@ -136,11 +136,6 @@ static int _mqtt3_db_upgrade_1_2(void);
 static int _mqtt3_db_transaction_rollback(void);
 #endif
 
-#ifdef WITH_CLIENT
-/* Client callback for publish events - this WILL change. */
-int (*client_publish_callback)(const char *, int, uint32_t, const uint8_t *, int) = NULL;
-#endif
-
 int mqtt3_db_open(mqtt3_config *config)
 {
 #ifdef WITH_REGEX
@@ -422,7 +417,7 @@ static int _mqtt3_db_upgrade(void)
 {
 	int rc = 0;
 	sqlite3_stmt *stmt = NULL;
-	int version;
+	int version = 0;
 
 	if(!db) return 1;
 
@@ -1013,7 +1008,7 @@ int mqtt3_db_message_count(int *count)
 	return rc;
 }
 
-int mqtt3_db_message_delete(const char *client_id, uint16_t mid, enum mqtt3_msg_direction dir)
+int mqtt3_db_message_delete(const char *client_id, uint16_t mid, enum mosquitto_msg_direction dir)
 {
 	int rc = 0;
 	static sqlite3_stmt *stmt = NULL;
@@ -1055,7 +1050,7 @@ int mqtt3_db_message_delete_by_oid(int64_t oid)
 	return rc;
 }
 
-int mqtt3_db_message_insert(const char *client_id, uint16_t mid, enum mqtt3_msg_direction dir, enum mqtt3_msg_status status, int qos, int64_t store_id)
+int mqtt3_db_message_insert(const char *client_id, uint16_t mid, enum mosquitto_msg_direction dir, enum mqtt3_msg_status status, int qos, int64_t store_id)
 {
 	/* Warning: Don't start transaction in this function. */
 	int rc = 0;
@@ -1115,7 +1110,7 @@ int mqtt3_db_message_insert(const char *client_id, uint16_t mid, enum mqtt3_msg_
 	return rc;
 }
 
-int mqtt3_db_message_update(const char *client_id, uint16_t mid, enum mqtt3_msg_direction dir, enum mqtt3_msg_status status)
+int mqtt3_db_message_update(const char *client_id, uint16_t mid, enum mosquitto_msg_direction dir, enum mqtt3_msg_status status)
 {
 	/* Warning: Don't start transaction in this function. */
 	int rc = 0;
@@ -1184,36 +1179,10 @@ int mqtt3_db_messages_queue(const char *source_id, const char *topic, int qos, i
 	uint8_t client_qos;
 	uint8_t msg_qos;
 	uint16_t mid;
-#ifdef WITH_CLIENT
-	static sqlite3_stmt *stmt = NULL;
-	uint32_t payloadlen;
-	const uint8_t *payload = NULL;
-#endif
 
 	/* Find all clients that subscribe to topic and put messages into the db for them. */
 	if(!source_id || !topic || !store_id) return 1;
 
-#ifdef WITH_CLIENT
-	if(client_publish_callback){
-		if(!stmt){
-			stmt = _mqtt3_db_statement_prepare("SELECT payloadlen,payload FROM message_store WHERE id=?");
-			if(!stmt){
-				return 1;
-			}
-		}
-		if(sqlite3_bind_int64(stmt, 1, store_id) != SQLITE_OK) rc = 1;
-		if(!rc && sqlite3_step(stmt) == SQLITE_ROW){
-			payloadlen = sqlite3_column_int(stmt, 0);
-			if(payloadlen){
-				payload = sqlite3_column_blob(stmt, 1);
-			}
-
-			client_publish_callback(topic, qos, payloadlen, payload, retain);
-		}
-		sqlite3_reset(stmt);
-		sqlite3_clear_bindings(stmt);
-	}
-#endif
 	if(retain){
 		if(mqtt3_db_retain_insert(topic, store_id)) rc = 1;
 	}
@@ -1233,13 +1202,13 @@ int mqtt3_db_messages_queue(const char *source_id, const char *topic, int qos, i
 			}
 			switch(msg_qos){
 				case 0:
-					if(mqtt3_db_message_insert(client_id, mid, md_out, ms_publish, msg_qos, store_id)) rc = 1;
+					if(mqtt3_db_message_insert(client_id, mid, mosq_md_out, ms_publish, msg_qos, store_id)) rc = 1;
 					break;
 				case 1:
-					if(mqtt3_db_message_insert(client_id, mid, md_out, ms_publish_puback, msg_qos, store_id)) rc = 1;
+					if(mqtt3_db_message_insert(client_id, mid, mosq_md_out, ms_publish_puback, msg_qos, store_id)) rc = 1;
 					break;
 				case 2:
-					if(mqtt3_db_message_insert(client_id, mid, md_out, ms_publish_pubrec, msg_qos, store_id)) rc = 1;
+					if(mqtt3_db_message_insert(client_id, mid, mosq_md_out, ms_publish_pubrec, msg_qos, store_id)) rc = 1;
 					break;
 			}
 		}
@@ -1341,7 +1310,7 @@ int mqtt3_db_message_timeout_check(unsigned int timeout)
 	return 0;
 }
 
-int mqtt3_db_message_release(const char *client_id, uint16_t mid, enum mqtt3_msg_direction dir)
+int mqtt3_db_message_release(const char *client_id, uint16_t mid, enum mosquitto_msg_direction dir)
 {
 	int rc = 0;
 	static sqlite3_stmt *stmt = NULL;
@@ -1437,25 +1406,25 @@ int mqtt3_db_message_write(mqtt3_context *context)
 
 				case ms_publish_puback:
 					if(!mqtt3_raw_publish(context, retries, qos, retain, mid, topic, payloadlen, payload)){
-						mqtt3_db_message_update(context->id, mid, md_out, ms_wait_puback);
+						mqtt3_db_message_update(context->id, mid, mosq_md_out, ms_wait_puback);
 					}
 					break;
 
 				case ms_publish_pubrec:
 					if(!mqtt3_raw_publish(context, retries, qos, retain, mid, topic, payloadlen, payload)){
-						mqtt3_db_message_update(context->id, mid, md_out, ms_wait_pubrec);
+						mqtt3_db_message_update(context->id, mid, mosq_md_out, ms_wait_pubrec);
 					}
 					break;
 				
 				case ms_resend_pubrel:
 					if(!mqtt3_raw_pubrel(context, mid)){
-						mqtt3_db_message_update(context->id, mid, md_out, ms_wait_pubrel);
+						mqtt3_db_message_update(context->id, mid, mosq_md_out, ms_wait_pubrel);
 					}
 					break;
 
 				case ms_resend_pubcomp:
 					if(!mqtt3_raw_pubcomp(context, mid)){
-						mqtt3_db_message_update(context->id, mid, md_out, ms_wait_pubcomp);
+						mqtt3_db_message_update(context->id, mid, mosq_md_out, ms_wait_pubcomp);
 					}
 					break;
 			}
@@ -1803,13 +1772,13 @@ int mqtt3_db_retain_queue(mqtt3_context *context, const char *sub, int sub_qos)
 		}
 		switch(qos){
 			case 0:
-				if(mqtt3_db_message_insert(context->id, mid, md_out, ms_publish, qos, store_id)) rc = 1;
+				if(mqtt3_db_message_insert(context->id, mid, mosq_md_out, ms_publish, qos, store_id)) rc = 1;
 				break;
 			case 1:
-				if(mqtt3_db_message_insert(context->id, mid, md_out, ms_publish_puback, qos, store_id)) rc = 1;
+				if(mqtt3_db_message_insert(context->id, mid, mosq_md_out, ms_publish_puback, qos, store_id)) rc = 1;
 				break;
 			case 2:
-				if(mqtt3_db_message_insert(context->id, mid, md_out, ms_publish_pubrec, qos, store_id)) rc = 1;
+				if(mqtt3_db_message_insert(context->id, mid, mosq_md_out, ms_publish_pubrec, qos, store_id)) rc = 1;
 				break;
 		}
 	}

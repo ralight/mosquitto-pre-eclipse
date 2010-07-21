@@ -27,56 +27,28 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <config.h>
-#include <stdint.h>
-#include <string.h>
+#ifndef _MQTT3_PROTOCOL_H_
+#define _MQTT3_PROTOCOL_H_
 
-#include <mqtt3.h>
+/* For version 3 of the MQTT protocol */
 
-/* Convert mqtt command (as defined in mqtt3.h) to corresponding string. */
-const char *mqtt3_command_to_string(uint8_t command)
-{
-	switch(command){
-		case CONNACK:
-			return "CONNACK";
-		case CONNECT:
-			return "CONNECT";
-		case DISCONNECT:
-			return "DISCONNECT";
-		case PINGREQ:
-			return "PINGREQ";
-		case PINGRESP:
-			return "PINGRESP";
-		case PUBACK:
-			return "PUBACK";
-		case PUBCOMP:
-			return "PUBCOMP";
-		case PUBLISH:
-			return "PUBLISH";
-		case PUBREC:
-			return "PUBREC";
-		case PUBREL:
-			return "PUBREL";
-		case SUBACK:
-			return "SUBACK";
-		case SUBSCRIBE:
-			return "SUBSCRIBE";
-		case UNSUBACK:
-			return "UNSUBACK";
-		case UNSUBSCRIBE:
-			return "UNSUBSCRIBE";
-	}
-	return "UNKNOWN";
-}
+#define PROTOCOL_NAME "MQIsdp"
+#define PROTOCOL_VERSION 3
 
-void mqtt3_check_keepalive(mqtt3_context *context)
-{
-	if(context && context->sock != -1 && time(NULL) - context->last_msg_out >= context->keepalive){
-		if(context->connected){
-			mqtt3_raw_pingreq(context);
-		}else{
-			mqtt3_socket_close(context);
-		}
-	}
-}
+/* Message types */
+#define CONNECT 0x10
+#define CONNACK 0x20
+#define PUBLISH 0x30
+#define PUBACK 0x40
+#define PUBREC 0x50
+#define PUBREL 0x60
+#define PUBCOMP 0x70
+#define SUBSCRIBE 0x80
+#define SUBACK 0x90
+#define UNSUBSCRIBE 0xA0
+#define UNSUBACK 0xB0
+#define PINGREQ 0xC0
+#define PINGRESP 0xD0
+#define DISCONNECT 0xE0
 
+#endif

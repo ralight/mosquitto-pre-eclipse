@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009,2010, Roger Light <roger@atchoo.org>
+Copyright (c) 2010, Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -26,57 +26,15 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
+#ifndef _MESSAGES_MOSQ_H_
+#define _MESSAGES_MOSQ_H_
 
-#include <config.h>
-#include <stdint.h>
-#include <string.h>
+#include <mosquitto.h>
 
-#include <mqtt3.h>
+void _mosquitto_message_cleanup_all(struct mosquitto *mosq);
+int _mosquitto_message_delete(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_direction dir);
+int _mosquitto_message_queue(struct mosquitto *mosq, struct mosquitto_message *message);
+int _mosquitto_message_remove(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_direction dir, struct mosquitto_message **message);
+int _mosquitto_message_update(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_direction dir, enum mosquitto_msg_state state);
 
-/* Convert mqtt command (as defined in mqtt3.h) to corresponding string. */
-const char *mqtt3_command_to_string(uint8_t command)
-{
-	switch(command){
-		case CONNACK:
-			return "CONNACK";
-		case CONNECT:
-			return "CONNECT";
-		case DISCONNECT:
-			return "DISCONNECT";
-		case PINGREQ:
-			return "PINGREQ";
-		case PINGRESP:
-			return "PINGRESP";
-		case PUBACK:
-			return "PUBACK";
-		case PUBCOMP:
-			return "PUBCOMP";
-		case PUBLISH:
-			return "PUBLISH";
-		case PUBREC:
-			return "PUBREC";
-		case PUBREL:
-			return "PUBREL";
-		case SUBACK:
-			return "SUBACK";
-		case SUBSCRIBE:
-			return "SUBSCRIBE";
-		case UNSUBACK:
-			return "UNSUBACK";
-		case UNSUBSCRIBE:
-			return "UNSUBSCRIBE";
-	}
-	return "UNKNOWN";
-}
-
-void mqtt3_check_keepalive(mqtt3_context *context)
-{
-	if(context && context->sock != -1 && time(NULL) - context->last_msg_out >= context->keepalive){
-		if(context->connected){
-			mqtt3_raw_pingreq(context);
-		}else{
-			mqtt3_socket_close(context);
-		}
-	}
-}
-
+#endif

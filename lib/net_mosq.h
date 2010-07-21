@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009,2010, Roger Light <roger@atchoo.org>
+Copyright (c) 2010, Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -26,57 +26,30 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
+#ifndef _NET_MOSQ_H_
+#define _NET_MOSQ_H_
 
-#include <config.h>
 #include <stdint.h>
-#include <string.h>
 
-#include <mqtt3.h>
+#include <mosquitto.h>
 
-/* Convert mqtt command (as defined in mqtt3.h) to corresponding string. */
-const char *mqtt3_command_to_string(uint8_t command)
-{
-	switch(command){
-		case CONNACK:
-			return "CONNACK";
-		case CONNECT:
-			return "CONNECT";
-		case DISCONNECT:
-			return "DISCONNECT";
-		case PINGREQ:
-			return "PINGREQ";
-		case PINGRESP:
-			return "PINGRESP";
-		case PUBACK:
-			return "PUBACK";
-		case PUBCOMP:
-			return "PUBCOMP";
-		case PUBLISH:
-			return "PUBLISH";
-		case PUBREC:
-			return "PUBREC";
-		case PUBREL:
-			return "PUBREL";
-		case SUBACK:
-			return "SUBACK";
-		case SUBSCRIBE:
-			return "SUBSCRIBE";
-		case UNSUBACK:
-			return "UNSUBACK";
-		case UNSUBSCRIBE:
-			return "UNSUBSCRIBE";
-	}
-	return "UNKNOWN";
-}
+/* Macros for accessing the MSB and LSB of a uint16_t */
+#define MOSQ_MSB(A) (uint8_t)((A & 0xFF00) >> 8)
+#define MOSQ_LSB(A) (uint8_t)(A & 0x00FF)
 
-void mqtt3_check_keepalive(mqtt3_context *context)
-{
-	if(context && context->sock != -1 && time(NULL) - context->last_msg_out >= context->keepalive){
-		if(context->connected){
-			mqtt3_raw_pingreq(context);
-		}else{
-			mqtt3_socket_close(context);
-		}
-	}
-}
+void _mosquitto_packet_cleanup(struct _mosquitto_packet *packet);
+int _mosquitto_packet_queue(struct mosquitto *mosq, struct _mosquitto_packet *packet);
+int _mosquitto_socket_connect(const char *host, uint16_t port);
+int _mosquitto_socket_close(struct mosquitto *mosq);
 
+int _mosquitto_read_byte(struct _mosquitto_packet *packet, uint8_t *byte);
+int _mosquitto_read_bytes(struct _mosquitto_packet *packet, uint8_t *bytes, uint32_t count);
+int _mosquitto_read_string(struct _mosquitto_packet *packet, char **str);
+int _mosquitto_read_uint16(struct _mosquitto_packet *packet, uint16_t *word);
+
+int _mosquitto_write_byte(struct _mosquitto_packet *packet, uint8_t byte);
+int _mosquitto_write_bytes(struct _mosquitto_packet *packet, const uint8_t *bytes, uint32_t count);
+int _mosquitto_write_string(struct _mosquitto_packet *packet, const char *str, uint16_t length);
+int _mosquitto_write_uint16(struct _mosquitto_packet *packet, uint16_t word);
+
+#endif
