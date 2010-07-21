@@ -27,63 +27,65 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <config.h>
-
-#include <errno.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/select.h>
 #include <unistd.h>
 
-#include <mqtt3.h>
-#include <client_shared.h>
+#include <mosquitto.h>
 
 static char **topics = NULL;
 static int topic_count = 0;
 static int topic_qos = 0;
-static mqtt3_context *gcontext;
 int verbose = 0;
+static struct mosquitto *mosq = NULL;
 
-int my_publish_callback(const char *topic, int qos, uint32_t payloadlen, const uint8_t *payload, int retain)
+void my_message_callback(void *obj, struct mosquitto_message *message)
 {
 	if(verbose){
-		if(payloadlen){
-			printf("%s %s\n", topic, payload);
+		if(message->payloadlen){
+			printf("%s %s\n", message->topic, message->payload);
 		}else{
-			printf("%s (null)\n", topic);
+			printf("%s (null)\n", message->topic);
 		}
 		fflush(stdout);
 	}else{
-		if(payloadlen){
-			printf("%s\n", payload);
+		if(message->payloadlen){
+			printf("%s\n", message->payload);
 			fflush(stdout);
 		}
 	}
-
-	return 0;
 }
 
-void my_connack_callback(int result)
+void my_connect_callback(void *obj, int result)
 {
 	int i;
 	if(!result){
-		gcontext->connected = true;
 		for(i=0; i<topic_count; i++){
-			mqtt3_raw_subscribe(gcontext, false, topics[i], topic_qos);
+			mosquitto_subscribe(mosq, topics[i], topic_qos);
 		}
 	}else{
 		fprintf(stderr, "Connect failed\n");
 	}
 }
 
+void my_subscribe_callback(void *obj, uint16_t mid, int qos_count, uint8_t *granted_qos)
+{
+	int i;
+
+	printf("Subscribed (mid: %d): %d", mid, granted_qos[0]);
+	for(i=1; i<qos_count; i++){
+		printf(", %d", granted_qos[i]);
+	}
+	printf("\n");
+	free(granted_qos);
+}
+
 void print_usage(void)
 {
 	printf("mosquitto_sub is a simple mqtt client that will subscribe to a single topic and print all messages it receives.\n\n");
-	printf("Usage: mosquitto_sub [-c] [-i id] [-k keepalive] [-p port] [-q qos] [-v] -t topic ...\n\n");
+	printf("Usage: mosquitto_sub [-c] [-i id] [-k keepalive] [-p port] [-q qos] [-v] -t topic ...\n");
+	printf("                     [--will-topic [--will-payload payload] [--will-qos qos] [--will-retain]]\n\n");
 	printf(" -c : disable 'clean session' (store subscription and pending messages when client disconnects).\n");
 	printf(" -d : enable debug messages.\n");
 	printf(" -h : mqtt host to connect to. Defaults to localhost.\n");
@@ -93,11 +95,16 @@ void print_usage(void)
 	printf(" -q : quality of service level to use for the subscription. Defaults to 0.\n");
 	printf(" -t : mqtt topic to subscribe to. May be repeated multiple times.\n");
 	printf(" -v : print published messages verbosely.\n");
+	printf(" --will-payload : payload for the client Will, which is sent by the broker in case of\n");
+	printf("                  unexpected disconnection. If not given and will-topic is set, a zero\n");
+	printf("                  length message will be sent.\n");
+	printf(" --will-qos : QoS level for the client Will.\n");
+	printf(" --will-retain : if given, make the client Will retained.\n");
+	printf(" --will-topic : the topic on which to publish the client Will.\n");
 }
 
 int main(int argc, char *argv[])
 {
-	mqtt3_context *context;
 	char id[30];
 	int i;
 	char *host = "localhost";
@@ -105,6 +112,13 @@ int main(int argc, char *argv[])
 	int keepalive = 60;
 	bool clean_session = true;
 	bool debug = false;
+	
+	uint8_t *will_payload = NULL;
+	long will_payloadlen = 0;
+	int will_qos = 0;
+	bool will_retain = false;
+	char *will_topic = NULL;
+	struct timespec timeout;
 
 	sprintf(id, "mosquitto_sub_%d", getpid());
 
@@ -181,12 +195,46 @@ int main(int argc, char *argv[])
 				return 1;
 			}else{
 				topic_count++;
-				topics = mqtt3_realloc(topics, topic_count*sizeof(char *));
+				topics = realloc(topics, topic_count*sizeof(char *));
 				topics[topic_count-1] = argv[i+1];
 			}
 			i++;
 		}else if(!strcmp(argv[i], "-v") || !strcmp(argv[i], "--verbose")){
 			verbose = 1;
+		}else if(!strcmp(argv[i], "--will-payload")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --will-payload argument given but no will payload specified.\n\n");
+				print_usage();
+				return 1;
+			}else{
+				will_payload = (uint8_t *)argv[i+1];
+				will_payloadlen = strlen((char *)will_payload);
+			}
+			i++;
+		}else if(!strcmp(argv[i], "--will-qos")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --will-qos argument given but no will QoS specified.\n\n");
+				print_usage();
+				return 1;
+			}else{
+				will_qos = atoi(argv[i+1]);
+				if(will_qos < 0 || will_qos > 2){
+					fprintf(stderr, "Error: Invalid will QoS %d.\n\n", will_qos);
+					return 1;
+				}
+			}
+			i++;
+		}else if(!strcmp(argv[i], "--will-retain")){
+			will_retain = true;
+		}else if(!strcmp(argv[i], "--will-topic")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --will-topic argument given but no will topic specified.\n\n");
+				print_usage();
+				return 1;
+			}else{
+				will_topic = argv[i+1];
+			}
+			i++;
 		}else{
 			fprintf(stderr, "Error: Unknown option '%s'.\n",argv[i]);
 			print_usage();
@@ -198,26 +246,45 @@ int main(int argc, char *argv[])
 		print_usage();
 		return 1;
 	}
-	if(debug){
-		mqtt3_log_init(MQTT3_LOG_DEBUG | MQTT3_LOG_ERR | MQTT3_LOG_WARNING
-				| MQTT3_LOG_NOTICE | MQTT3_LOG_INFO, MQTT3_LOG_STDERR);
-	}
-	if(client_init()){
-		fprintf(stderr, "Error: Unable to initialise database.\n");
+	if(will_payload && !will_topic){
+		fprintf(stderr, "Error: Will payload given, but no will topic given.\n");
+		print_usage();
 		return 1;
 	}
-	client_publish_callback = my_publish_callback;
-	client_connack_callback = my_connack_callback;
+	if(will_retain && !will_topic){
+		fprintf(stderr, "Error: Will retain given, but no will topic given.\n");
+		print_usage();
+		return 1;
+	}
+	mosq = mosquitto_new(NULL, id);
+	if(!mosq){
+		fprintf(stderr, "Error: Out of memory.\n");
+		return 1;
+	}
+	if(debug){
+		mosquitto_log_init(mosq, MOSQ_LOG_DEBUG | MOSQ_LOG_ERR | MOSQ_LOG_WARNING
+				| MOSQ_LOG_NOTICE | MOSQ_LOG_INFO, MOSQ_LOG_STDERR);
+	}
+	if(will_topic && mosquitto_will_set(mosq, true, will_topic, will_payloadlen, will_payload, will_qos, will_retain)){
+		fprintf(stderr, "Error: Problem setting will.\n");
+		return 1;
+	}
+	mosquitto_connect_callback_set(mosq, my_connect_callback);
+	mosquitto_message_callback_set(mosq, my_message_callback);
+	if(debug){
+		mosq->on_subscribe = my_subscribe_callback;
+	}
 
-	if(client_connect(&context, host, port, id, keepalive, clean_session)){
+	if(mosquitto_connect(mosq, host, port, keepalive, clean_session)){
 		fprintf(stderr, "Unable to connect.\n");
 		return 1;
 	}
-	gcontext = context;
 
-	while(!client_loop(context)){
+	timeout.tv_sec = 0;
+	timeout.tv_nsec = 50000000;
+	while(!mosquitto_loop(mosq, &timeout)){
 	}
-	client_cleanup();
+	mosquitto_destroy(mosq);
 	return 0;
 }
 

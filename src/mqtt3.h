@@ -31,6 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define MQTT3_H
 
 #include <config.h>
+#include <net_mosq.h>
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -49,10 +50,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 /* Database macros */
 #define MQTT_DB_VERSION 2
-
-/* Macros for accessing the MSB and LSB of a uint16_t */
-#define MQTT_MSB(A) (uint8_t)((A & 0xFF00) >> 8)
-#define MQTT_LSB(A) (uint8_t)(A & 0x00FF)
 
 /* Message types */
 #define CONNECT 0x10
@@ -85,21 +82,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #define MQTT3_LOG_WARNING 0x04
 #define MQTT3_LOG_ERR 0x08
 #define MQTT3_LOG_DEBUG 0x10
-
-struct _mqtt3_packet{
-	uint8_t command;
-#ifdef WITH_CLIENT
-	uint8_t command_saved;
-#endif
-	uint8_t have_remaining;
-	uint8_t remaining_count;
-	uint32_t remaining_mult;
-	uint32_t remaining_length;
-	uint32_t to_process;
-	uint32_t pos;
-	uint8_t *payload;
-	struct _mqtt3_packet *next;
-};
 
 enum mqtt3_bridge_direction{
 	bd_out = 0,
@@ -134,8 +116,8 @@ typedef struct _mqtt3_context{
 	bool duplicate;
 	char *id;
 	char *address;
-	struct _mqtt3_packet in_packet;
-	struct _mqtt3_packet *out_packet;
+	struct _mosquitto_packet in_packet;
+	struct _mosquitto_packet *out_packet;
 	struct _mqtt3_bridge *bridge;
 } mqtt3_context;
 
@@ -150,11 +132,6 @@ enum mqtt3_msg_status {
 	ms_wait_pubrel = 7,
 	ms_resend_pubcomp = 8,
 	ms_wait_pubcomp = 9
-};
-
-enum mqtt3_msg_direction {
-	md_in = 0,
-	md_out = 1
 };
 
 struct mqtt3_iface {
@@ -192,27 +169,12 @@ struct _mqtt3_listener {
 	char *client_prefix;
 };
 
-#ifdef WITH_CLIENT
-/* Client callback for publish events - this WILL change. */
-extern int (*client_publish_callback)(const char *, int, uint32_t, const uint8_t *, int);
-/* Client callback for connack events - this WILL change. */
-extern void (*client_connack_callback)(int);
-/* Client callback for puback events - this WILL change. */
-extern void (*client_puback_callback)(int);
-/* Client callback for pubcomp events - this WILL change. */
-extern void (*client_pubcomp_callback)(int);
-/* Client callback for when a packet has been successfully written. */
-extern void (*client_net_write_callback)(int);
-#endif
-
 /* ============================================================
  * Utility functions
  * ============================================================ */
 /* Return a string that corresponds to the MQTT command number (left shifted 4 bits). */
 const char *mqtt3_command_to_string(uint8_t command);
 void mqtt3_check_keepalive(mqtt3_context *context);
-/* Remove excessive slashes in a subscription/topic. */
-int mqtt3_fix_sub_topic(char **subtopic);
 
 /* ============================================================
  * Config functions
@@ -252,23 +214,13 @@ int mqtt3_send_simple_command(mqtt3_context *context, uint8_t command);
  * Network functions
  * ============================================================ */
 int mqtt3_socket_accept(mqtt3_context ***contexts, int *context_count, int listensock);
-int mqtt3_socket_connect(const char *host, uint16_t port);
 int mqtt3_socket_close(mqtt3_context *context);
 int mqtt3_socket_listen(uint16_t port);
 int mqtt3_socket_listen_if(const char *iface, uint16_t port);
 
-int mqtt3_net_packet_queue(mqtt3_context *context, struct _mqtt3_packet *packet);
+int mqtt3_net_packet_queue(mqtt3_context *context, struct _mosquitto_packet *packet);
 int mqtt3_net_read(mqtt3_context *context);
 int mqtt3_net_write(mqtt3_context *context);
-int mqtt3_read_byte(mqtt3_context *context, uint8_t *byte);
-int mqtt3_read_bytes(mqtt3_context *context, uint8_t *bytes, uint32_t count);
-int mqtt3_read_string(mqtt3_context *context, char **str);
-int mqtt3_read_uint16(mqtt3_context *context, uint16_t *word);
-
-int mqtt3_write_byte(struct _mqtt3_packet *packet, uint8_t byte);
-int mqtt3_write_bytes(struct _mqtt3_packet *packet, const uint8_t *bytes, uint32_t count);
-int mqtt3_write_string(struct _mqtt3_packet *packet, const char *str, uint16_t length);
-int mqtt3_write_uint16(struct _mqtt3_packet *packet, uint16_t word);
 
 void mqtt3_net_set_max_connections(int max);
 uint64_t mqtt3_net_bytes_total_received(void);
@@ -315,11 +267,11 @@ int mqtt3_db_client_will_queue(mqtt3_context *context);
 void mqtt3_db_limits_set(int inflight, int queued);
 /* Return the number of in-flight messages in count. */
 int mqtt3_db_message_count(int *count);
-int mqtt3_db_message_delete(const char *client_id, uint16_t mid, enum mqtt3_msg_direction dir);
+int mqtt3_db_message_delete(const char *client_id, uint16_t mid, enum mosquitto_msg_direction dir);
 int mqtt3_db_message_delete_by_oid(int64_t oid);
-int mqtt3_db_message_insert(const char *client_id, uint16_t mid, enum mqtt3_msg_direction dir, enum mqtt3_msg_status status, int qos, int64_t store_id);
-int mqtt3_db_message_release(const char *client_id, uint16_t mid, enum mqtt3_msg_direction dir);
-int mqtt3_db_message_update(const char *client_id, uint16_t mid, enum mqtt3_msg_direction dir, enum mqtt3_msg_status status);
+int mqtt3_db_message_insert(const char *client_id, uint16_t mid, enum mosquitto_msg_direction dir, enum mqtt3_msg_status status, int qos, int64_t store_id);
+int mqtt3_db_message_release(const char *client_id, uint16_t mid, enum mosquitto_msg_direction dir);
+int mqtt3_db_message_update(const char *client_id, uint16_t mid, enum mosquitto_msg_direction dir, enum mqtt3_msg_status status);
 int mqtt3_db_message_write(mqtt3_context *context);
 int mqtt3_db_messages_delete(const char *client_id);
 int mqtt3_db_messages_easy_queue(const char *client_id, const char *topic, int qos, uint32_t payloadlen, const uint8_t *payload, int retain);
@@ -349,7 +301,6 @@ void mqtt3_db_vacuum(void);
  * ============================================================ */
 mqtt3_context *mqtt3_context_init(int sock);
 void mqtt3_context_cleanup(mqtt3_context *context);
-void mqtt3_context_packet_cleanup(struct _mqtt3_packet *packet);
 void mqtt3_context_close_duplicate(int sock);
 
 /* ============================================================

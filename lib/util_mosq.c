@@ -27,56 +27,62 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <config.h>
-#include <stdint.h>
 #include <string.h>
+#include <time.h>
 
-#include <mqtt3.h>
+#include <mosquitto.h>
+#include <net_mosq.h>
+#include <send_mosq.h>
+#include <util_mosq.h>
 
-/* Convert mqtt command (as defined in mqtt3.h) to corresponding string. */
-const char *mqtt3_command_to_string(uint8_t command)
+void _mosquitto_check_keepalive(struct mosquitto *mosq)
 {
-	switch(command){
-		case CONNACK:
-			return "CONNACK";
-		case CONNECT:
-			return "CONNECT";
-		case DISCONNECT:
-			return "DISCONNECT";
-		case PINGREQ:
-			return "PINGREQ";
-		case PINGRESP:
-			return "PINGRESP";
-		case PUBACK:
-			return "PUBACK";
-		case PUBCOMP:
-			return "PUBCOMP";
-		case PUBLISH:
-			return "PUBLISH";
-		case PUBREC:
-			return "PUBREC";
-		case PUBREL:
-			return "PUBREL";
-		case SUBACK:
-			return "SUBACK";
-		case SUBSCRIBE:
-			return "SUBSCRIBE";
-		case UNSUBACK:
-			return "UNSUBACK";
-		case UNSUBSCRIBE:
-			return "UNSUBSCRIBE";
-	}
-	return "UNKNOWN";
-}
-
-void mqtt3_check_keepalive(mqtt3_context *context)
-{
-	if(context && context->sock != -1 && time(NULL) - context->last_msg_out >= context->keepalive){
-		if(context->connected){
-			mqtt3_raw_pingreq(context);
+	if(mosq && mosq->sock != -1 && time(NULL) - mosq->last_msg_out >= mosq->keepalive){
+		if(mosq->connected){
+			_mosquitto_send_pingreq(mosq);
 		}else{
-			mqtt3_socket_close(context);
+			_mosquitto_socket_close(mosq);
 		}
 	}
 }
 
+/* Convert ////some////over/slashed///topic/etc/etc//
+ * into some/over/slashed/topic/etc/etc
+ */
+int _mosquitto_fix_sub_topic(char **subtopic)
+{
+	char *fixed = NULL;
+	char *token;
+
+	if(!subtopic || !(*subtopic)) return 1;
+
+	/* size of fixed here is +1 for the terminating 0 and +1 for the spurious /
+	 * that gets appended. */
+	fixed = calloc(strlen(*subtopic)+2, 1);
+	if(!fixed) return 1;
+
+	if((*subtopic)[0] == '/'){
+		fixed[0] = '/';
+	}
+	token = strtok(*subtopic, "/");
+	while(token){
+		strcat(fixed, token);
+		strcat(fixed, "/");
+		token = strtok(NULL, "/");
+	}
+
+	fixed[strlen(fixed)-1] = '\0';
+	free(*subtopic);
+	*subtopic = fixed;
+	return 0;
+}
+
+uint16_t _mosquitto_mid_generate(struct mosquitto *mosq)
+{
+	if(!mosq) return 1;
+
+	mosq->last_mid++;
+	if(mosq->last_mid == 0) mosq->last_mid++;
+	
+	return mosq->last_mid;
+}
