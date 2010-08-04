@@ -1,0 +1,16 @@
+syntax: glob
+
+*.o
+*.exe
+*.db
+
+client/mosquitto_pub
+client/mosquitto_sub
+man/mosquitto.8
+man/mosquitto.conf.5
+src/mosquitto
+test/test_client
+
+lib/cpp/libmosquittopp.so*
+lib/libmosquitto.so*
+
