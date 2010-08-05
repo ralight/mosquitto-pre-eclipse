@@ -27,10 +27,16 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
+#define snprintf sprintf_s
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#ifndef WIN32
 #include <unistd.h>
+#else
+#include <process.h>
+#endif
 
 #include <mosquitto.h>
 
@@ -257,6 +263,7 @@ int main(int argc, char *argv[])
 		print_usage();
 		return 1;
 	}
+	mosquitto_lib_init();
 	mosq = mosquitto_new(NULL, id);
 	if(!mosq){
 		fprintf(stderr, "Error: Out of memory.\n");
@@ -284,6 +291,8 @@ int main(int argc, char *argv[])
 	while(!mosquitto_loop(mosq, -1)){
 	}
 	mosquitto_destroy(mosq);
+	mosquitto_lib_cleanup();
+
 	return 0;
 }
 
