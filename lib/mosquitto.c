@@ -28,6 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <mosquitto.h>
+#include <logging_mosq.h>
 #include <messages_mosq.h>
 #include <memory_mosq.h>
 #include <mqtt3_protocol.h>
@@ -220,6 +221,7 @@ int mosquitto_publish(struct mosquitto *mosq, uint16_t *mid, const char *topic, 
 				_mosquitto_message_cleanup(&message);
 				return 1;
 			}
+			memcpy(message->msg.payload, payload, payloadlen*sizeof(uint8_t));
 		}else{
 			message->msg.payloadlen = 0;
 			message->msg.payload = NULL;
@@ -290,7 +292,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout)
 	fdcount = select(mosq->sock+1, &readfds, &writefds, NULL, &local_timeout);
 #endif
 	if(fdcount == -1){
-		fprintf(stderr, "Error in pselect: %s\n", strerror(errno));
+		_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Error in pselect: %s\n", strerror(errno));
 		return 1;
 	}else{
 		if(FD_ISSET(mosq->sock, &readfds)){
