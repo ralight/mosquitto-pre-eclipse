@@ -65,7 +65,7 @@ int _mosquitto_packet_handle(struct mosquitto *mosq)
 			return _mosquitto_handle_unsuback(mosq);
 		default:
 			/* If we don't recognise the command, return an error straight away. */
-			fprintf(stderr, "Error: Unrecognised command %d\n", (mosq->in_packet.command)&0xF0);
+			_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Error: Unrecognised command %d\n", (mosq->in_packet.command)&0xF0);
 			return 1;
 	}
 }
@@ -96,7 +96,7 @@ int _mosquitto_handle_pubackcomp(struct mosquitto *mosq)
 		return 1;
 	}
 	if(_mosquitto_read_uint16(&mosq->in_packet, &mid)) return 1;
-	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Received PUBACK (Mid: %d)", mid);
+	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Received PUBACK/PUBCOMP (Mid: %d)", mid);
 
 	if(!_mosquitto_message_delete(mosq, mid, mosq_md_out)){
 		/* Only inform the client the message has been sent once. */
