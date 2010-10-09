@@ -14,6 +14,8 @@
 - Add support for the bind_address config variable.
 - Change the port config variable behaviour to match that of rsmb (applies to
   the default listener only, can be given just once).
+- Fix QoS 2 protocol compliance - stop sending duplicate messages and handle
+  timeouts correctly. Fixes bug #598290.
 
 0.8.3 - 20101004
 ================

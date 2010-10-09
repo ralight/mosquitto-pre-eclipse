@@ -16,11 +16,6 @@ void mqtt3_config_init(mqtt3_config *config)
 	config->daemon = false;
 	config->default_listener.host = NULL;
 	config->default_listener.port = 0;
-#ifdef __CYGWIN__
-	config->ext_sqlite_regex = "./sqlite3-pcre.dll";
-#else
-	config->ext_sqlite_regex = "/usr/lib/sqlite3/pcre.so";
-#endif
 	config->listeners = NULL;
 	config->listener_count = 0;
 	config->log_dest = MQTT3_LOG_STDERR;
@@ -159,25 +154,7 @@ int mqtt3_config_read(mqtt3_config *config, const char *filename)
 					if(_mqtt3_conf_parse_int(&token, "autosave_interval", &config->autosave_interval)) return 1;
 					if(config->autosave_interval < 0) config->autosave_interval = 0;
 				}else if(!strcmp(token, "ext_sqlite_regex")){
-					token = strtok(NULL, " ");
-					if(token){
-						config->ext_sqlite_regex = _mosquitto_strdup(token);
-					}else{
-						mqtt3_log_printf(MOSQ_LOG_ERR, "Error: Empty ext_sqlite_regex value in config.");
-						return MOSQ_ERR_INVAL;
-					}
-				}else if(!strcmp(token, "bind_address")){
-					token = strtok(NULL, " ");
-					if(token){
-						if(config->default_listener.host){
-							mqtt3_log_printf(MOSQ_LOG_WARNING, "Warning: Default listener bind_address specified multiple times. Only the latest will be used.");
-							_mosquitto_free(config->default_listener.host);
-						}
-						config->default_listener.host = _mosquitto_strdup(token);
-					}else{
-						mqtt3_log_printf(MOSQ_LOG_ERR, "Error: Empty bind_address value in configuration.");
-						return MOSQ_ERR_INVAL;
-					}
+					mqtt3_log_printf(MOSQ_LOG_WARNING, "Warning: ext_sqlite_regex variable no longer in use.");
 				}else if(!strcmp(token, "cleansession")){
 					if(!cur_bridge){
 						mqtt3_log_printf(MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");

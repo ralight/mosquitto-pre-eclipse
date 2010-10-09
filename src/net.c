@@ -123,9 +123,6 @@ int mqtt3_socket_close(mqtt3_context *context)
 
 	if(!context) return 1;
 	if(context->core.sock != -1){
-		if(context->core.id){
-			mqtt3_db_client_invalidate_socket(context->core.id, context->core.sock);
-		}
 		rc = close(context->core.sock);
 		context->core.sock = -1;
 	}
@@ -220,7 +217,7 @@ int mqtt3_net_packet_queue(mqtt3_context *context, struct _mosquitto_packet *pac
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mqtt3_net_read(mqtt3_context *context)
+int mqtt3_net_read(mosquitto_db *db, mqtt3_context *context)
 {
 	uint8_t byte;
 	ssize_t read_length;
@@ -314,7 +311,7 @@ int mqtt3_net_read(mqtt3_context *context)
 	msgs_received++;
 	/* All data for this packet is read. */
 	context->core.in_packet.pos = 0;
-	rc = mqtt3_packet_handle(context);
+	rc = mqtt3_packet_handle(db, context);
 
 	/* Free data and reset values */
 	_mosquitto_packet_cleanup(&context->core.in_packet);
