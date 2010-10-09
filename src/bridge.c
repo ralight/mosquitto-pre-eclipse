@@ -27,6 +27,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <assert.h>
 #include <stdint.h>
 
 #include <config.h>
@@ -34,36 +35,38 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <mqtt3.h>
 #include <memory_mosq.h>
 
-int mqtt3_bridge_new(mqtt3_context **contexts, int *context_count, struct _mqtt3_bridge *bridge)
+int mqtt3_bridge_new(mosquitto_db *db, struct _mqtt3_bridge *bridge)
 {
 	int i;
 	mqtt3_context *new_context = NULL;
 	mqtt3_context **tmp_contexts;
 
-	if(!contexts || !bridge) return 1;
+	assert(db);
+	assert(bridge);
 
 	new_context = mqtt3_context_init(-1);
 	if(!new_context){
 		return MOSQ_ERR_NOMEM;
 	}
 	new_context->bridge = bridge;
-	for(i=0; i<(*context_count); i++){
-		if(contexts[i] == NULL){
-			contexts[i] = new_context;
+	for(i=0; i<db->context_count; i++){
+		if(db->contexts[i] == NULL){
+			db->contexts[i] = new_context;
 			break;
 		}
 	}
-	if(i==(*context_count)){
-		(*context_count)++;
-		tmp_contexts = _mosquitto_realloc(contexts, sizeof(mqtt3_context*)*(*context_count));
+	if(i==db->context_count){
+		db->context_count++;
+		tmp_contexts = _mosquitto_realloc(db->contexts, sizeof(mqtt3_context*)*db->context_count);
 		if(tmp_contexts){
-			contexts = tmp_contexts;
-			contexts[(*context_count)-1] = new_context;
+			db->contexts = tmp_contexts;
+			db->contexts[db->context_count-1] = new_context;
 		}else{
 			return MOSQ_ERR_NOMEM;
 		}
 	}
 
+	/* FIXME - need to check that this name isn't already in use. */
 	new_context->core.id = _mosquitto_strdup(bridge->name);
 	if(!new_context->core.id){
 		return MOSQ_ERR_NOMEM;
@@ -71,13 +74,10 @@ int mqtt3_bridge_new(mqtt3_context **contexts, int *context_count, struct _mqtt3
 	new_context->core.username = new_context->bridge->username;
 	new_context->core.password = new_context->bridge->password;
 
-	if(!mqtt3_db_client_insert(new_context, 0, 0, 0, NULL, NULL)){
-		return mqtt3_bridge_connect(new_context);
-	}
-	return 1;
+	return mqtt3_bridge_connect(db, new_context);
 }
 
-int mqtt3_bridge_connect(mqtt3_context *context)
+int mqtt3_bridge_connect(mosquitto_db *db, mqtt3_context *context)
 {
 	int new_sock = -1;
 	int i;
@@ -104,7 +104,6 @@ int mqtt3_bridge_connect(mqtt3_context *context)
 	context->core.sock = new_sock;
 
 	context->core.last_msg_in = time(NULL);
-	mqtt3_db_client_update(context, 0, 0, 0, NULL, NULL);
 	if(mqtt3_raw_connect(context, context->core.id,
 			/*will*/ false, /*will qos*/ 0, /*will retain*/ false, /*will topic*/ NULL, /*will msg*/ NULL,
 			context->core.keepalive, context->clean_session)){
@@ -114,7 +113,7 @@ int mqtt3_bridge_connect(mqtt3_context *context)
 
 	for(i=0; i<context->bridge->topic_count; i++){
 		if(context->bridge->topics[i].direction == bd_out || context->bridge->topics[i].direction == bd_both){
-			if(mqtt3_db_sub_insert(context->core.id, context->bridge->topics[i].topic, 2)) return 1;
+			if(mqtt3_sub_add(context, context->bridge->topics[i].topic, 2, &db->subs)) return 1;
 		}
 	}
 

@@ -34,6 +34,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <config.h>
 #include <mqtt3.h>
 
+extern mosquitto_db int_db;
+
 /* Options for logging should be:
  *
  * A combination of:
@@ -122,7 +124,7 @@ int mqtt3_log_printf(int priority, const char *fmt, ...)
 			syslog(syslog_priority, "%s", s);
 		}
 		if(log_destinations & MQTT3_LOG_TOPIC && priority != MOSQ_LOG_DEBUG){
-			mqtt3_db_messages_easy_queue("", topic, 2, strlen(s), (uint8_t *)s, 0);
+			mqtt3_db_messages_easy_queue(&int_db, NULL, topic, 2, strlen(s), (uint8_t *)s, 0);
 		}
 	}
 

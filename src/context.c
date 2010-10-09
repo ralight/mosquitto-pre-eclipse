@@ -33,6 +33,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <config.h>
 #include <mqtt3.h>
 #include <memory_mosq.h>
+#include <subs.h>
 
 mqtt3_context *mqtt3_context_init(int sock)
 {
@@ -52,6 +53,8 @@ mqtt3_context *mqtt3_context_init(int sock)
 	context->core.keepalive = 60; /* Default to 60s */
 	context->clean_session = true;
 	context->core.id = NULL;
+	context->core.last_mid = 0;
+	context->core.will = NULL;
 	context->core.username = NULL;
 	context->core.password = NULL;
 
@@ -73,32 +76,29 @@ mqtt3_context *mqtt3_context_init(int sock)
 		}
 	}
 	context->bridge = NULL;
+	context->msgs = NULL;
 	
 	return context;
 }
 
-/* This should only be called from within mosquitto.c because that is the only
- * place that can work with the context array. To cause a context to be cleaned
- * in other places, call mqtt3_socket_close() instead. This will force the main
- * loop in mosquitto.c to clean the context and act on clean_session as
- * appropriate.
+/*
  * This will result in any outgoing packets going unsent. If we're disconnected
  * forcefully then it is usually an error condition and shouldn't be a problem,
  * but it will mean that CONNACK messages will never get sent for bad protocol
  * versions for example.
  */
-void mqtt3_context_cleanup(mqtt3_context *context)
+void mqtt3_context_cleanup(mosquitto_db *db, mqtt3_context *context)
 {
 	struct _mosquitto_packet *packet;
+	mosquitto_client_msg *msg, *next;
 	if(!context) return;
 
 	if(context->core.sock != -1){
 		mqtt3_socket_close(context);
 	}
 	if(context->clean_session && !context->duplicate){
-		mqtt3_db_subs_clean_session(context->core.id);
-		mqtt3_db_messages_delete(context->core.id);
-		mqtt3_db_client_delete(context);
+		mqtt3_subs_clean_session(context, &db->subs);
+		mqtt3_db_messages_delete(context);
 	}
 	if(context->address) _mosquitto_free(context->address);
 	if(context->core.id) _mosquitto_free(context->core.id);
@@ -109,6 +109,18 @@ void mqtt3_context_cleanup(mqtt3_context *context)
 		context->core.out_packet = context->core.out_packet->next;
 		_mosquitto_free(packet);
 	}
+	if(context->core.will){
+		if(context->core.will->topic) _mosquitto_free(context->core.will->topic);
+		if(context->core.will->payload) _mosquitto_free(context->core.will->payload);
+	}
+	msg = context->msgs;
+	while(msg){
+		next = msg->next;
+		msg->store->ref_count--;
+		_mosquitto_free(msg);
+		msg = next;
+	}
+	_mosquitto_free(context->core.will);
 	_mosquitto_free(context);
 }
 

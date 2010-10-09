@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009,2010, Roger Light <roger@atchoo.org>
+Copyright (c) 2010 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -27,68 +27,33 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <assert.h>
-#include <string.h>
-#include <time.h>
+#ifndef SUBS_H
+#define SUBS_H
 
-#include <mosquitto.h>
-#include <memory_mosq.h>
-#include <net_mosq.h>
-#include <send_mosq.h>
-#include <util_mosq.h>
+#include <mqtt3.h>
 
-#ifndef WITH_BROKER
-void _mosquitto_check_keepalive(struct mosquitto *mosq)
-{
-	assert(mosq);
-	if(mosq->core.sock != INVALID_SOCKET && time(NULL) - mosq->core.last_msg_out >= mosq->core.keepalive){
-		if(mosq->core.state == mosq_cs_connected){
-			_mosquitto_send_pingreq(mosq);
-		}else{
-			_mosquitto_socket_close(&mosq->core);
-		}
-	}
-}
+struct _mqtt3_context;
+struct mosquitto_msg_store;
+
+struct _mosquitto_subleaf {
+	struct _mosquitto_subleaf *prev;
+	struct _mosquitto_subleaf *next;
+	struct _mqtt3_context *context;
+	int qos;
+};
+
+struct _mosquitto_subhier {
+	struct _mosquitto_subhier *children;
+	struct _mosquitto_subhier *next;
+	struct _mosquitto_subleaf *subs;
+	char *topic;
+	struct mosquitto_msg_store *retained;
+};
+
+int mqtt3_sub_add(struct _mqtt3_context *context, const char *sub, int qos, struct _mosquitto_subhier *root);
+int mqtt3_sub_remove(struct _mqtt3_context *context, const char *sub, struct _mosquitto_subhier *root);
+int mqtt3_sub_search(struct _mosquitto_subhier *root, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored);
+void mqtt3_sub_tree_print(struct _mosquitto_subhier *root, int level);
+int mqtt3_subs_clean_session(struct _mqtt3_context *context, struct _mosquitto_subhier *root);
+
 #endif
-
-/* Convert ////some////over/slashed///topic/etc/etc//
- * into some/over/slashed/topic/etc/etc
- */
-int _mosquitto_fix_sub_topic(char **subtopic)
-{
-	char *fixed = NULL;
-	char *token;
-
-	assert(subtopic);
-	assert(*subtopic);
-
-	/* size of fixed here is +1 for the terminating 0 and +1 for the spurious /
-	 * that gets appended. */
-	fixed = _mosquitto_calloc(strlen(*subtopic)+2, 1);
-	if(!fixed) return MOSQ_ERR_NOMEM;
-
-	if((*subtopic)[0] == '/'){
-		fixed[0] = '/';
-	}
-	token = strtok(*subtopic, "/");
-	while(token){
-		strcat(fixed, token);
-		strcat(fixed, "/");
-		token = strtok(NULL, "/");
-	}
-
-	fixed[strlen(fixed)-1] = '\0';
-	_mosquitto_free(*subtopic);
-	*subtopic = fixed;
-	return MOSQ_ERR_SUCCESS;
-}
-
-uint16_t _mosquitto_mid_generate(struct _mosquitto_core *core)
-{
-	assert(core);
-
-	core->last_mid++;
-	if(core->last_mid == 0) core->last_mid++;
-	
-	return core->last_mid;
-}

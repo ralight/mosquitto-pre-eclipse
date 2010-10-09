@@ -7,7 +7,19 @@ OBJS=context.o database.o logging.o memory.o net.o raw_send.o raw_send_client.o 
 
 .PHONY: all clean
 
-all : packet-gen qos
+all : msgsps_pub msgsps_sub packet-gen qos
+
+msgsps_pub : msgsps_pub.o
+	${CC} $^ -o $@ ../lib/libmosquitto.so.0 -nopie
+
+msgsps_pub.o : msgsps_pub.c
+	${CC} $(CFLAGS) -c $< -o $@
+
+msgsps_sub : msgsps_sub.o
+	${CC} $^ -o $@ ../lib/libmosquitto.so.0 -nopie
+
+msgsps_sub.o : msgsps_sub.c
+	${CC} $(CFLAGS) -c $< -o $@
 
 packet-gen : packet-gen.o
 	${CC} $^ -o $@ ../lib/libmosquitto.so.0 -nopie

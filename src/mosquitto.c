@@ -50,8 +50,7 @@ int allow_severity = LOG_INFO;
 int deny_severity = LOG_INFO;
 #endif
 
-static mqtt3_context **contexts = NULL;
-static int context_count;
+mosquitto_db int_db;
 
 int drop_privileges(mqtt3_config *config);
 void handle_sigint(int signal);
@@ -117,13 +116,13 @@ int loop(mqtt3_config *config, int *listensock, int listensock_count, int listen
 	sigaddset(&sigblock, SIGINT);
 
 	while(run){
-		mqtt3_db_sys_update(config->sys_interval, start_time);
+		mqtt3_db_sys_update(&int_db, config->sys_interval, start_time);
 
 		if(new_clients){
 			client_max = -1;
-			for(i=0; i<context_count; i++){
-				if(contexts[i] && contexts[i]->core.sock != -1 && contexts[i]->core.sock > sock_max){
-					client_max = contexts[i]->core.sock;
+			for(i=0; i<int_db.context_count; i++){
+				if(int_db.contexts[i] && int_db.contexts[i]->core.sock != -1 && int_db.contexts[i]->core.sock > sock_max){
+					client_max = int_db.contexts[i]->core.sock;
 				}
 			}
 			new_clients = 0;
@@ -152,53 +151,53 @@ int loop(mqtt3_config *config, int *listensock, int listensock_count, int listen
 		}
 
 		now = time(NULL);
-		for(i=0; i<context_count; i++){
-			if(contexts[i]){
-				if(contexts[i]->core.sock != -1){
-					if(contexts[i]->bridge){
-						mqtt3_check_keepalive(contexts[i]);
+		for(i=0; i<int_db.context_count; i++){
+			if(int_db.contexts[i]){
+				if(int_db.contexts[i]->core.sock != -1){
+					if(int_db.contexts[i]->bridge){
+						mqtt3_check_keepalive(int_db.contexts[i]);
 					}
-					if(!(contexts[i]->core.keepalive) || now - contexts[i]->core.last_msg_in < contexts[i]->core.keepalive*3/2){
-						if(mqtt3_db_message_write(contexts[i])){
+					if(!(int_db.contexts[i]->core.keepalive) || now - int_db.contexts[i]->core.last_msg_in < int_db.contexts[i]->core.keepalive*3/2){
+						if(mqtt3_db_message_write(int_db.contexts[i])){
 							// FIXME - do something here.
 						}
-						pollfds[contexts[i]->core.sock].fd = contexts[i]->core.sock;
-						pollfds[contexts[i]->core.sock].events = POLLIN | POLLPRI;
-						pollfds[contexts[i]->core.sock].revents = 0;
-						if(contexts[i]->core.out_packet){
-							pollfds[contexts[i]->core.sock].events |= POLLOUT;
+						pollfds[int_db.contexts[i]->core.sock].fd = int_db.contexts[i]->core.sock;
+						pollfds[int_db.contexts[i]->core.sock].events = POLLIN | POLLPRI;
+						pollfds[int_db.contexts[i]->core.sock].revents = 0;
+						if(int_db.contexts[i]->core.out_packet){
+							pollfds[int_db.contexts[i]->core.sock].events |= POLLOUT;
 						}
 					}else{
-						mqtt3_log_printf(MOSQ_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", contexts[i]->core.id);
+						mqtt3_log_printf(MOSQ_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", int_db.contexts[i]->core.id);
 						/* Client has exceeded keepalive*1.5 */
-						mqtt3_db_client_will_queue(contexts[i]);
-						if(contexts[i]->bridge){
-							mqtt3_socket_close(contexts[i]);
+						mqtt3_db_client_will_queue(&int_db, int_db.contexts[i]);
+						if(int_db.contexts[i]->bridge){
+							mqtt3_socket_close(int_db.contexts[i]);
 						}else{
-							mqtt3_context_cleanup(contexts[i]);
-							contexts[i] = NULL;
+							mqtt3_context_cleanup(&int_db, int_db.contexts[i]);
+							int_db.contexts[i] = NULL;
 						}
 					}
 				}else{
-					if(contexts[i]->bridge){
+					if(int_db.contexts[i]->bridge){
 						/* Want to try to restart the bridge connection */
-						if(!contexts[i]->bridge->restart_t){
-							contexts[i]->bridge->restart_t = time(NULL)+30;
+						if(!int_db.contexts[i]->bridge->restart_t){
+							int_db.contexts[i]->bridge->restart_t = time(NULL)+30;
 						}else{
-							if(time(NULL) > contexts[i]->bridge->restart_t){
-								contexts[i]->bridge->restart_t = 0;
-								mqtt3_bridge_connect(contexts[i]);
+							if(time(NULL) > int_db.contexts[i]->bridge->restart_t){
+								int_db.contexts[i]->bridge->restart_t = 0;
+								mqtt3_bridge_connect(&int_db, int_db.contexts[i]);
 							}
 						}
 					}else{
-						mqtt3_context_cleanup(contexts[i]);
-						contexts[i] = NULL;
+						mqtt3_context_cleanup(&int_db, int_db.contexts[i]);
+						int_db.contexts[i] = NULL;
 					}
 				}
 			}
 		}
 
-		mqtt3_db_message_timeout_check(config->retry_interval);
+		mqtt3_db_message_timeout_check(&int_db, config->retry_interval);
 
 		sigprocmask(SIG_SETMASK, &sigblock, &origsig);
 		fdcount = poll(pollfds, pollfd_count, 1000);
@@ -211,19 +210,19 @@ int loop(mqtt3_config *config, int *listensock, int listensock_count, int listen
 			for(i=0; i<listensock_count; i++){
 				if(pollfds[listensock[i]].revents & (POLLIN | POLLPRI)){
 					new_clients = 1;
-					while(mqtt3_socket_accept(&contexts, &context_count, listensock[i]) != -1){
+					while(mqtt3_socket_accept(&int_db.contexts, &int_db.context_count, listensock[i]) != -1){
 					}
 				}
 			}
 		}
 		if(config->persistence && config->autosave_interval){
 			if(last_backup + config->autosave_interval < now){
-				mqtt3_db_backup(false);
+				mqtt3_db_backup(&int_db, false);
 				last_backup = time(NULL);
 			}
 		}
 		if(!config->store_clean_interval || last_store_clean + config->store_clean_interval < now){
-			mqtt3_db_store_clean();
+			mqtt3_db_store_clean(&int_db);
 			last_store_clean = time(NULL);
 		}
 	}
@@ -240,20 +239,20 @@ static void loop_handle_errors(void)
 	struct stat statbuf;
 	int i;
 
-	for(i=0; i<context_count; i++){
-		if(contexts[i] && fstat(contexts[i]->core.sock, &statbuf) == -1){
+	for(i=0; i<int_db.context_count; i++){
+		if(int_db.contexts[i] && fstat(int_db.contexts[i]->core.sock, &statbuf) == -1){
 			if(errno == EBADF){
-				if(contexts[i]->core.state != mosq_cs_disconnecting){
-					mqtt3_log_printf(MOSQ_LOG_NOTICE, "Socket error on client %s, disconnecting.", contexts[i]->core.id);
-					mqtt3_db_client_will_queue(contexts[i]);
+				if(int_db.contexts[i]->core.state != mosq_cs_disconnecting){
+					mqtt3_log_printf(MOSQ_LOG_NOTICE, "Socket error on client %s, disconnecting.", int_db.contexts[i]->core.id);
+					mqtt3_db_client_will_queue(&int_db, int_db.contexts[i]);
 				}else{
-					mqtt3_log_printf(MOSQ_LOG_NOTICE, "Client %s disconnected.", contexts[i]->core.id);
+					mqtt3_log_printf(MOSQ_LOG_NOTICE, "Client %s disconnected.", int_db.contexts[i]->core.id);
 				}
-				if(contexts[i]->bridge){
-					mqtt3_socket_close(contexts[i]);
+				if(int_db.contexts[i]->bridge){
+					mqtt3_socket_close(int_db.contexts[i]);
 				}else{
-					mqtt3_context_cleanup(contexts[i]);
-					contexts[i] = NULL;
+					mqtt3_context_cleanup(&int_db, int_db.contexts[i]);
+					int_db.contexts[i] = NULL;
 				}
 			}
 		}
@@ -264,43 +263,43 @@ static void loop_handle_reads_writes(struct pollfd *pollfds)
 {
 	int i;
 
-	for(i=0; i<context_count; i++){
-		if(contexts[i] && contexts[i]->core.sock != -1){
-			if(pollfds[contexts[i]->core.sock].revents & POLLOUT){
-				if(mqtt3_net_write(contexts[i])){
-					if(contexts[i]->core.state != mosq_cs_disconnecting){
-						mqtt3_log_printf(MOSQ_LOG_NOTICE, "Socket write error on client %s, disconnecting.", contexts[i]->core.id);
-						mqtt3_db_client_will_queue(contexts[i]);
+	for(i=0; i<int_db.context_count; i++){
+		if(int_db.contexts[i] && int_db.contexts[i]->core.sock != -1){
+			if(pollfds[int_db.contexts[i]->core.sock].revents & POLLOUT){
+				if(mqtt3_net_write(int_db.contexts[i])){
+					if(int_db.contexts[i]->core.state != mosq_cs_disconnecting){
+						mqtt3_log_printf(MOSQ_LOG_NOTICE, "Socket write error on client %s, disconnecting.", int_db.contexts[i]->core.id);
+						mqtt3_db_client_will_queue(&int_db, int_db.contexts[i]);
 					}else{
-						mqtt3_log_printf(MOSQ_LOG_NOTICE, "Client %s disconnected.", contexts[i]->core.id);
+						mqtt3_log_printf(MOSQ_LOG_NOTICE, "Client %s disconnected.", int_db.contexts[i]->core.id);
 					}
 					/* Write error or other that means we should disconnect */
 					/* Bridges don't get cleaned up because they will reconnect later. */
-					if(contexts[i]->bridge){
-						mqtt3_socket_close(contexts[i]);
+					if(int_db.contexts[i]->bridge){
+						mqtt3_socket_close(int_db.contexts[i]);
 					}else{
-						mqtt3_context_cleanup(contexts[i]);
-						contexts[i] = NULL;
+						mqtt3_context_cleanup(&int_db, int_db.contexts[i]);
+						int_db.contexts[i] = NULL;
 					}
 				}
 			}
 		}
-		if(contexts[i] && contexts[i]->core.sock != -1){
-			if(pollfds[contexts[i]->core.sock].revents & POLLIN){
-				if(mqtt3_net_read(contexts[i])){
-					if(contexts[i]->core.state != mosq_cs_disconnecting){
-						mqtt3_log_printf(MOSQ_LOG_NOTICE, "Socket read error on client %s, disconnecting.", contexts[i]->core.id);
-						mqtt3_db_client_will_queue(contexts[i]);
+		if(int_db.contexts[i] && int_db.contexts[i]->core.sock != -1){
+			if(pollfds[int_db.contexts[i]->core.sock].revents & POLLIN){
+				if(mqtt3_net_read(&int_db, int_db.contexts[i])){
+					if(int_db.contexts[i]->core.state != mosq_cs_disconnecting){
+						mqtt3_log_printf(MOSQ_LOG_NOTICE, "Socket read error on client %s, disconnecting.", int_db.contexts[i]->core.id);
+						mqtt3_db_client_will_queue(&int_db, int_db.contexts[i]);
 					}else{
-						mqtt3_log_printf(MOSQ_LOG_NOTICE, "Client %s disconnected.", contexts[i]->core.id);
+						mqtt3_log_printf(MOSQ_LOG_NOTICE, "Client %s disconnected.", int_db.contexts[i]->core.id);
 					}
 					/* Read error or other that means we should disconnect */
 					/* Bridges don't get cleaned up because they will reconnect later. */
-					if(contexts[i]->bridge){
-						mqtt3_socket_close(contexts[i]);
+					if(int_db.contexts[i]->bridge){
+						mqtt3_socket_close(int_db.contexts[i]);
 					}else{
-						mqtt3_context_cleanup(contexts[i]);
-						contexts[i] = NULL;
+						mqtt3_context_cleanup(&int_db, int_db.contexts[i]);
+						int_db.contexts[i] = NULL;
 					}
 				}
 			}
@@ -315,13 +314,13 @@ void mqtt3_context_close_duplicate(int sock)
 {
 	int i;
 
-	for(i=0; i<context_count; i++){
-		if(contexts[i]){
-			if(contexts[i]->core.sock == sock){
-				contexts[i]->duplicate = true;
-				mqtt3_db_client_will_queue(contexts[i]);
-				mqtt3_context_cleanup(contexts[i]);
-				contexts[i] = NULL;
+	for(i=0; i<int_db.context_count; i++){
+		if(int_db.contexts[i]){
+			if(int_db.contexts[i]->core.sock == sock){
+				int_db.contexts[i]->duplicate = true;
+				mqtt3_db_client_will_queue(&int_db, int_db.contexts[i]);
+				mqtt3_context_cleanup(&int_db, int_db.contexts[i]);
+				int_db.contexts[i] = NULL;
 				return;
 			}
 		}
@@ -337,13 +336,14 @@ void handle_sigint(int signal)
 /* Signal handler for SIGUSR1 - backup the db. */
 void handle_sigusr1(int signal)
 {
-	mqtt3_db_backup(false);
+	mqtt3_db_backup(&int_db, false);
 }
 
 /* Signal handler for SIGUSR2 - vacuum the db. */
 void handle_sigusr2(int signal)
 {
-	mqtt3_db_vacuum();
+	//mqtt3_db_vacuum();
+	mqtt3_sub_tree_print(&int_db.subs, 0);
 }
 
 int main(int argc, char *argv[])
@@ -386,12 +386,7 @@ int main(int argc, char *argv[])
 	}
 	if(drop_privileges(&config)) return 1;
 
-	context_count = 1;
-	contexts = _mosquitto_malloc(sizeof(mqtt3_context*)*context_count);
-	if(!contexts) return MOSQ_ERR_NOMEM;
-	contexts[0] = NULL;
-
-	if(mqtt3_db_open(&config)){
+	if(mqtt3_db_open(&config, &int_db)){
 		mqtt3_log_printf(MOSQ_LOG_ERR, "Error: Couldn't open database.");
 		return 1;
 	}
@@ -402,18 +397,18 @@ int main(int argc, char *argv[])
 
 	/* Set static $SYS messages */
 	snprintf(buf, 1024, "mosquitto version %s", VERSION);
-	mqtt3_db_messages_easy_queue("", "$SYS/broker/version", 2, strlen(buf), (uint8_t *)buf, 1);
+	mqtt3_db_messages_easy_queue(&int_db, NULL, "$SYS/broker/version", 2, strlen(buf), (uint8_t *)buf, 1);
 	snprintf(buf, 1024, "%s", TIMESTAMP);
-	mqtt3_db_messages_easy_queue("", "$SYS/broker/timestamp", 2, strlen(buf), (uint8_t *)buf, 1);
+	mqtt3_db_messages_easy_queue(&int_db, NULL, "$SYS/broker/timestamp", 2, strlen(buf), (uint8_t *)buf, 1);
 	snprintf(buf, 1024, "%s", "$Revision$"); // Requires hg keyword extension.
-	mqtt3_db_messages_easy_queue("", "$SYS/broker/changeset", 2, strlen(buf), (uint8_t *)buf, 1);
+	mqtt3_db_messages_easy_queue(&int_db, NULL, "$SYS/broker/changeset", 2, strlen(buf), (uint8_t *)buf, 1);
 
 	listener_max = -1;
 	listensock_index = 0;
 	for(i=0; i<config.listener_count; i++){
 		if(mqtt3_socket_listen(config.listeners[i].host, config.listeners[i].port, &socks, &sock_count)){
-			_mosquitto_free(contexts);
-			mqtt3_db_close();
+			_mosquitto_free(int_db.contexts);
+			mqtt3_db_close(&int_db);
 			if(config.pid_file){
 				remove(config.pid_file);
 			}
@@ -422,8 +417,8 @@ int main(int argc, char *argv[])
 		listensock_count += sock_count;
 		listensock = _mosquitto_realloc(listensock, sizeof(int)*listensock_count);
 		if(!listensock){
-			_mosquitto_free(contexts);
-			mqtt3_db_close();
+			_mosquitto_free(int_db.contexts);
+			mqtt3_db_close(&int_db);
 			if(config.pid_file){
 				remove(config.pid_file);
 			}
@@ -431,8 +426,8 @@ int main(int argc, char *argv[])
 		}
 		for(j=0; j<sock_count; j++){
 			if(socks[j] < 0){
-				_mosquitto_free(contexts);
-				mqtt3_db_close();
+				_mosquitto_free(int_db.contexts);
+				mqtt3_db_close(&int_db);
 				if(config.pid_file){
 					remove(config.pid_file);
 				}
@@ -454,7 +449,7 @@ int main(int argc, char *argv[])
 	signal(SIGPIPE, SIG_IGN);
 
 	for(i=0; i<config.bridge_count; i++){
-		if(mqtt3_bridge_new(contexts, &context_count, &(config.bridges[i]))){
+		if(mqtt3_bridge_new(&int_db, &(config.bridges[i]))){
 			mqtt3_log_printf(MOSQ_LOG_WARNING, "Warning: Unable to connect to bridge %s.", 
 					config.bridges[i].name);
 		}
@@ -465,12 +460,12 @@ int main(int argc, char *argv[])
 	mqtt3_log_printf(MOSQ_LOG_INFO, "mosquitto version %s terminating", VERSION);
 	mqtt3_log_close();
 
-	for(i=0; i<context_count; i++){
-		if(contexts[i]){
-			mqtt3_context_cleanup(contexts[i]);
+	for(i=0; i<int_db.context_count; i++){
+		if(int_db.contexts[i]){
+			mqtt3_context_cleanup(&int_db, int_db.contexts[i]);
 		}
 	}
-	_mosquitto_free(contexts);
+	_mosquitto_free(int_db.contexts);
 
 	if(listensock){
 		for(i=0; i<listensock_count; i++){
@@ -482,9 +477,9 @@ int main(int argc, char *argv[])
 	}
 
 	if(config.persistence && config.autosave_interval){
-		mqtt3_db_backup(true);
+		mqtt3_db_backup(&int_db, true);
 	}
-	mqtt3_db_close();
+	mqtt3_db_close(&int_db);
 
 	if(config.pid_file){
 		remove(config.pid_file);

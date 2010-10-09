@@ -99,10 +99,10 @@ struct mosquitto *mosquitto_new(const char *id, void *obj)
 		mosq->core.out_packet = NULL;
 		mosq->core.last_msg_in = time(NULL);
 		mosq->core.last_msg_out = time(NULL);
-		mosq->last_mid = 0;
+		mosq->core.last_mid = 0;
 		mosq->core.state = mosq_cs_new;
 		mosq->messages = NULL;
-		mosq->will = NULL;
+		mosq->core.will = NULL;
 		mosq->on_connect = NULL;
 		mosq->on_publish = NULL;
 		mosq->on_message = NULL;
@@ -120,54 +120,54 @@ int mosquitto_will_set(struct mosquitto *mosq, bool will, const char *topic, uin
 
 	if(!mosq || (will && !topic)) return MOSQ_ERR_INVAL;
 
-	if(mosq->will){
-		if(mosq->will->topic){
-			_mosquitto_free(mosq->will->topic);
-			mosq->will->topic = NULL;
+	if(mosq->core.will){
+		if(mosq->core.will->topic){
+			_mosquitto_free(mosq->core.will->topic);
+			mosq->core.will->topic = NULL;
 		}
-		if(mosq->will->payload){
-			_mosquitto_free(mosq->will->payload);
-			mosq->will->payload = NULL;
+		if(mosq->core.will->payload){
+			_mosquitto_free(mosq->core.will->payload);
+			mosq->core.will->payload = NULL;
 		}
-		_mosquitto_free(mosq->will);
-		mosq->will = NULL;
+		_mosquitto_free(mosq->core.will);
+		mosq->core.will = NULL;
 	}
 
 	if(will){
-		mosq->will = _mosquitto_calloc(1, sizeof(struct mosquitto_message));
-		if(!mosq->will) return MOSQ_ERR_NOMEM;
-		mosq->will->topic = _mosquitto_strdup(topic);
-		if(!mosq->will->topic){
+		mosq->core.will = _mosquitto_calloc(1, sizeof(struct mosquitto_message));
+		if(!mosq->core.will) return MOSQ_ERR_NOMEM;
+		mosq->core.will->topic = _mosquitto_strdup(topic);
+		if(!mosq->core.will->topic){
 			rc = MOSQ_ERR_NOMEM;
 			goto cleanup;
 		}
-		mosq->will->payloadlen = payloadlen;
-		if(mosq->will->payloadlen > 0){
+		mosq->core.will->payloadlen = payloadlen;
+		if(mosq->core.will->payloadlen > 0){
 			if(!payload){
 				rc = MOSQ_ERR_INVAL;
 				goto cleanup;
 			}
-			mosq->will->payload = _mosquitto_malloc(sizeof(uint8_t)*mosq->will->payloadlen);
-			if(!mosq->will->payload){
+			mosq->core.will->payload = _mosquitto_malloc(sizeof(uint8_t)*mosq->core.will->payloadlen);
+			if(!mosq->core.will->payload){
 				rc = MOSQ_ERR_NOMEM;
 				goto cleanup;
 			}
 
-			memcpy(mosq->will->payload, payload, payloadlen);
+			memcpy(mosq->core.will->payload, payload, payloadlen);
 		}
-		mosq->will->qos = qos;
-		mosq->will->retain = retain;
+		mosq->core.will->qos = qos;
+		mosq->core.will->retain = retain;
 	}
 
 	return MOSQ_ERR_SUCCESS;
 
 cleanup:
-	if(mosq->will){
-		if(mosq->will->topic) _mosquitto_free(mosq->will->topic);
-		if(mosq->will->payload) _mosquitto_free(mosq->will->payload);
+	if(mosq->core.will){
+		if(mosq->core.will->topic) _mosquitto_free(mosq->core.will->topic);
+		if(mosq->core.will->payload) _mosquitto_free(mosq->core.will->payload);
 	}
-	_mosquitto_free(mosq->will);
-	mosq->will = NULL;
+	_mosquitto_free(mosq->core.will);
+	mosq->core.will = NULL;
 
 	return rc;
 }
@@ -209,6 +209,11 @@ void mosquitto_destroy(struct mosquitto *mosq)
 {
 	if(mosq->core.id) _mosquitto_free(mosq->core.id);
 	_mosquitto_message_cleanup_all(mosq);
+	if(mosq->core.will){
+		if(mosq->core.will->topic) _mosquitto_free(mosq->core.will->topic);
+		if(mosq->core.will->payload) _mosquitto_free(mosq->core.will->payload);
+	}
+	_mosquitto_free(mosq->core.will);
 	_mosquitto_free(mosq);
 }
 
@@ -249,7 +254,7 @@ int mosquitto_publish(struct mosquitto *mosq, uint16_t *mid, const char *topic, 
 
 	if(!mosq || !topic || qos<0 || qos>2) return MOSQ_ERR_INVAL;
 
-	local_mid = _mosquitto_mid_generate(mosq);
+	local_mid = _mosquitto_mid_generate(&mosq->core);
 	if(mid){
 		*mid = local_mid;
 	}
@@ -359,7 +364,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout)
 		if(FD_ISSET(mosq->core.sock, &readfds)){
 			rc = mosquitto_loop_read(mosq);
 			if(rc){
-				_mosquitto_socket_close(mosq);
+				_mosquitto_socket_close(&mosq->core);
 				if(mosq->core.state == mosq_cs_disconnecting){
 					if(mosq->on_disconnect){
 						mosq->on_disconnect(mosq->obj);
@@ -374,7 +379,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout)
 		if(FD_ISSET(mosq->core.sock, &writefds)){
 			rc = mosquitto_loop_write(mosq);
 			if(rc){
-				_mosquitto_socket_close(mosq);
+				_mosquitto_socket_close(&mosq->core);
 				if(mosq->core.state == mosq_cs_disconnecting){
 					if(mosq->on_disconnect){
 						mosq->on_disconnect(mosq->obj);
