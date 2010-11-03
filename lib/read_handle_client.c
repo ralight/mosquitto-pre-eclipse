@@ -51,7 +51,7 @@ int _mosquitto_handle_connack(struct mosquitto *mosq)
 	rc = _mosquitto_read_byte(&mosq->core.in_packet, &result);
 	if(rc) return rc;
 	if(mosq->on_connect){
-		mosq->on_connect(mosq->obj, rc);
+		mosq->on_connect(mosq->obj, result);
 	}
 	switch(result){
 		case 0:
@@ -65,6 +65,12 @@ int _mosquitto_handle_connack(struct mosquitto *mosq)
 			return MOSQ_ERR_CONN_REFUSED;
 		case 3:
 			_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Connection Refused: broker unavailable");
+			return MOSQ_ERR_CONN_REFUSED;
+		case 4:
+			_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Connection Refused: bad user name or password");
+			return MOSQ_ERR_CONN_REFUSED;
+		case 5:
+			_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Connection Refused: not authorised");
 			return MOSQ_ERR_CONN_REFUSED;
 		default:
 			return MOSQ_ERR_PROTOCOL;
