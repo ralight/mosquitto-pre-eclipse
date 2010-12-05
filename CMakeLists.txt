@@ -7,7 +7,7 @@ project(mosquitto)
 
 cmake_minimum_required(VERSION 2.6)
 
-set (VERSION 0.8.2)
+set (VERSION 0.9)
 
 option(USE_SSL
 	"Include SSL support?" ON)
@@ -42,9 +42,25 @@ else (WIN32)
     set (SHAREDEST share/mosquitto)
 endif (WIN32)
 
+# ========================================
+# Check for required compatibility headers
+# ========================================
+include (CheckIncludeFile)
+
+check_include_file(stdbool.h HAVE_STDBOOL_H)
+if (NOT HAVE_STDBOOL_H)
+	set (STDBOOL_H_PATH ${mosquitto_SOURCE_DIR}/compat/stdbool)
+endif (NOT HAVE_STDBOOL_H)
+
+check_include_file(stdint.h HAVE_STDINT_H)
+if (NOT HAVE_STDINT_H)
+	set (STDINT_H_PATH ${mosquitto_SOURCE_DIR}/compat/stdint)
+endif (NOT HAVE_STDINT_H)
+
+# ========================================
+# Include projects
+# ========================================
+
 add_subdirectory(lib)
 add_subdirectory(client)
-
-if (NOT WIN32)
-	add_subdirectory(src)
-endif (NOT WIN32)
+add_subdirectory(src)

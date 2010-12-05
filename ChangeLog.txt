@@ -1,11 +1,61 @@
-0.9 - 201009xx
+0.9.1 - 20101203
+================
+
+- Add missing code for parsing the "bind_address" configuration option.
+- Fix missing include when compiling with tcp-wrappers support.
+- Add linker version script for C library to control exported functions.
+
+0.9 - 20101114
 ==============
 
+- Client and message data is now stored in memory with custom routines rather
+  than a sqlite database. This removes the dependencies on sqlite, pcre and
+  sqlite3-pcre. It also means that the persistent database format has had to
+  be reimplemented in a custom format. Optional support for importing old
+  sqlite databases is provided.
+- Added IPv6 support for mosquitto and the clients.
 - Provide username and password support for the clients and client libraries.
   This is part of the new MQTT v3.1 spec.
+- The broker supports the username and password connection flags, but will not
+  do anything with the username and password.
 - Python callback functions now optionally take an extra argument which will
   return the user object passed to the Mosquitto() constructor, or the calling
   python object itself if nothing was given to Mosquitto().
+- Remove the mosquitto command line option "-i interface".
+- Remove the mosquitto.conf "interface" variable.
+- Add support for the listener config variable (replaces the interface
+  variable)
+- Add support for the bind_address config variable.
+- Change the port config variable behaviour to match that of rsmb (applies to
+  the default listener only, can be given just once).
+- Fix QoS 2 protocol compliance - stop sending duplicate messages and handle
+  timeouts correctly. Fixes bug #598290.
+- Set retain flag correctly for outgoing messages. It should only be set for
+  messages sent in response to a subscribe command (ie. stale data).
+- Fix bug in returning correct CONNACK result to on_connect client callback.
+- Don't send client will if it is disconnected for exceeding its keepalive
+  timer.
+- Fix client library unsubscribe function incorrectly sending a SUBSCRIBE
+  command when it should be UNSUBSCRIBE. 
+- Fix max_inflight_messages and max_queued_messages operation. These
+  parameters now apply only to QoS 1 and 2 messages and are used regardless of
+  the client connection state.
+- mosquitto.conf now installed to /etc/mosquitto/mosquitto.conf instead of
+  /etc/mosquitto.conf. The /etc/mosquitto/ directory will be used for password
+  and access control files in the future.
+- Give the compile time option of using 32-bit integers for the database IDs
+  instead of 64-bit integers. This is useful where htobe64()/be64toh() are not
+  available or for embedded systems for example.
+- The DUP bit is now set correctly when resending PUBREL messages.
+- A port to Windows native has been partially completed. This currently drops a
+  number of features, including the ability to change configuration parameters
+  and persistent storage.
+
+0.8.3 - 20101004
+================
+
+- Fix QoS 2 protocol compliance - stop sending duplicate messages and handle
+  timeouts correctly. Fixes bug #598290. (backported from future 0.9 code)
 
 0.8.2 - 20100815
 ================

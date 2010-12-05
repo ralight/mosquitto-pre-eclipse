@@ -61,22 +61,22 @@ void _mosquitto_packet_cleanup(struct _mosquitto_packet *packet)
 	packet->pos = 0;
 }
 
-void _mosquitto_packet_queue(struct mosquitto *mosq, struct _mosquitto_packet *packet)
+void _mosquitto_packet_queue(struct _mosquitto_core *core, struct _mosquitto_packet *packet)
 {
 	struct _mosquitto_packet *tail;
 
-	assert(mosq);
+	assert(core);
 	assert(packet);
 
 	packet->next = NULL;
-	if(mosq->core.out_packet){
-		tail = mosq->core.out_packet;
+	if(core->out_packet){
+		tail = core->out_packet;
 		while(tail->next){
 			tail = tail->next;
 		}
 		tail->next = packet;
 	}else{
-		mosq->core.out_packet = packet;
+		core->out_packet = packet;
 	}
 }
 
@@ -120,7 +120,8 @@ int _mosquitto_socket_connect(const char *host, uint16_t port)
 	if(!host || !port) return INVALID_SOCKET;
 
 	memset(&hints, 0, sizeof(struct addrinfo));
-	hints.ai_family = AF_INET; /* IPv4 only at the moment. */
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_flags = AI_ADDRCONFIG;
 	hints.ai_socktype = SOCK_STREAM;
 
 	s = getaddrinfo(host, NULL, &hints, &ainfo);
@@ -130,7 +131,14 @@ int _mosquitto_socket_connect(const char *host, uint16_t port)
 		sock = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
 		if(sock == INVALID_SOCKET) continue;
 		
-		((struct sockaddr_in *)rp->ai_addr)->sin_port = htons(port);
+		if(rp->ai_family == PF_INET){
+			((struct sockaddr_in *)rp->ai_addr)->sin_port = htons(port);
+		}else if(rp->ai_family == PF_INET6){
+			((struct sockaddr_in6 *)rp->ai_addr)->sin6_port = htons(port);
+		}else{
+			freeaddrinfo(ainfo);
+			return INVALID_SOCKET;
+		}
 		if(connect(sock, rp->ai_addr, rp->ai_addrlen) != -1){
 			break;
 		}
@@ -254,7 +262,7 @@ void _mosquitto_write_uint16(struct _mosquitto_packet *packet, uint16_t word)
 
 ssize_t _mosquitto_net_read(struct _mosquitto_core *core, void *buf, size_t count)
 {
-<<<<<<< local
+	assert(core);
 #ifdef WITH_SSL
 	if(core->ssl){
 		return (ssize_t )SSL_read(core->ssl, buf, count);
@@ -263,9 +271,6 @@ ssize_t _mosquitto_net_read(struct _mosquitto_core *core, void *buf, size_t coun
 
 #endif
 
-=======
-	assert(core);
->>>>>>> other
 #ifndef WIN32
 	return read(core->sock, buf, count);
 #else
@@ -279,7 +284,8 @@ ssize_t _mosquitto_net_read(struct _mosquitto_core *core, void *buf, size_t coun
 
 ssize_t _mosquitto_net_write(struct _mosquitto_core *core, void *buf, size_t count)
 {
-<<<<<<< local
+	assert(core);
+
 #ifdef WITH_SSL
 	if(core->ssl){
 		return (ssize_t )SSL_write(core->ssl, buf, count);
@@ -287,9 +293,6 @@ ssize_t _mosquitto_net_write(struct _mosquitto_core *core, void *buf, size_t cou
 		/* Call normal write/send */
 #endif
 
-=======
-	assert(core);
->>>>>>> other
 #ifndef WIN32
 	return write(core->sock, buf, count);
 #else

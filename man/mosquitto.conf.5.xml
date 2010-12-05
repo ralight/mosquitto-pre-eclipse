@@ -53,27 +53,25 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>ext_sqlite_regex</option></term>
+				<term><option>bind_address</option></term>
 				<listitem>
-					<para>The path to the sqlite3 regex extension which is
-					needed for wildcard subscription matching. If it is not
-					found, mosquitto will not start. The default when compiled
-					for Windows is "./sqlite3-pcre.dll" and for other platforms
-					"/usr/lib/sqlite3/pcre.so".</para>
-					<para>The sqlite3 pcre extension used is available at
-					http://git.altlinux.org/people/at/packages/?p=sqlite3-pcre.git</para>
+					<para>Listen for incoming network connections on the
+					specified IP address/hostname only. This is useful to
+					restrict access to certain network interfaces. To restrict
+					access to mosquitto to the local host only, use "bind_address
+					localhost". This only applies to the default listener. Use
+					the listener variable to control other listeners.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>interface</option></term>
+				<term><option>listener</option></term>
 				<listitem>
-					<para>Listen for incoming network connections on the
-					specified interface only. The port to listen to can be
-					changed from the default by appending it to the interface
-					name, e.g. eth0:1884. This is useful to restrict access to
-					certain network interfaces. To restrict access to mosquitto
-					to the local host only, use "interface lo". This option
-					may be specified multiple times.</para>
+					<para>Listen for incoming network connection on the
+					specified port. A second optional argument allows the
+					listener to be bound to a specific ip address/hostname. If
+					this variable is used and neither bind_address nor port are
+					used then the default listener will not be started. This
+					option may be specified multiple times.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -114,27 +112,21 @@
 			<varlistentry>
 				<term><option>max_inflight_messages</option></term>
 				<listitem>
-					<para>The maximum number of messages that can be being
-					processed by a connected client at one time. This includes
-					messages currently going through handshakes for QoS 1 or 2
-					and messages that are being retried. Defaults to 20. Set to
-					0 for no maximum.</para>
+					<para>The maximum number of QoS 1 or 2 messages that can be
+					in the process of being transmitted simultaneously.  This
+					includes messages currently going through handshakes and
+					messages that are being retried. Defaults to 20. Set to 0
+					for no maximum. If set to 1, this will guarantee in-order
+					delivery of messages.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
 				<term><option>max_queued_messages</option></term>
 				<listitem>
 					<para>The maximum number of QoS 1 or 2 messages to hold in
-					a queue for a disconnected client. Defaults to 100. Set to
-					0 for no maximum.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>port</option></term>
-				<listitem>
-					<para>Set the network port to listen on. Defaults to 1883.
-					This option may be given any number of times. A socket will
-					be created for each port listed.</para>
+					the queue above those messages that are currently in
+					flight. Defaults to 100. Set to 0 for no maximum (not
+					recommended).</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -177,6 +169,13 @@
 					init script it will usually be required to write a pid
 					file. This should then be configured as
 					/var/run/mosquitto.pid</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>port</option></term>
+				<listitem>
+					<para>Set the network port for the default listener to
+					listen on. Defaults to 1883.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -271,8 +270,18 @@
 				<listitem>
 					<para>Set the number of seconds after which the bridge
 					should send a ping if no other traffic has occurred.
-					Deefaults to 660. A minimum value of 5 seconds
+					Defaults to 60. A minimum value of 5 seconds
 					isallowed.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>password</option> <replaceable>value</replaceable></term>
+				<listitem>
+					<para>Configure a password for the bridge. This is used for
+					authentication purposes when connecting to a broker that
+					support MQTT v3.1 and requires a username and/or password
+					to connect. This option is only valid if a username is also
+					supplied.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -293,6 +302,15 @@
 					load from a broker, it is possible that you have a loop
 					where each broker is forever forwarding each other the same
 					messages.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>username</option> <replaceable>name</replaceable></term>
+				<listitem>
+					<para>Configure a username for the bridge. This is used for
+					authentication purposes when connecting to a broker that
+					support MQTT v3.1 and requires a username and/or password
+					to connect. See also the password option.</para>
 				</listitem>
 			</varlistentry>
 		</variablelist>
