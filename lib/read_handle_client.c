@@ -51,20 +51,17 @@ int _mosquitto_handle_connack(struct mosquitto *mosq)
 	rc = _mosquitto_read_byte(&mosq->core.in_packet, &result);
 	if(rc) return rc;
 	if(mosq->on_connect){
-		mosq->on_connect(mosq->obj, rc);
+		mosq->on_connect(mosq->obj, result);
 	}
 	switch(result){
 		case 0:
 			mosq->core.state = mosq_cs_connected;
 			return MOSQ_ERR_SUCCESS;
 		case 1:
-			_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Connection Refused: unacceptable protocol version");
-			return MOSQ_ERR_CONN_REFUSED;
 		case 2:
-			_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Connection Refused: identifier rejected");
-			return MOSQ_ERR_CONN_REFUSED;
 		case 3:
-			_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Connection Refused: broker unavailable");
+		case 4:
+		case 5:
 			return MOSQ_ERR_CONN_REFUSED;
 		default:
 			return MOSQ_ERR_PROTOCOL;

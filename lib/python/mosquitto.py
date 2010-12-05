@@ -41,9 +41,94 @@ MOSQ_LOG_ERR=0x08
 MOSQ_LOG_DEBUG=0x10
 
 class Mosquitto:
-	"""MQTT version 3 client class"""
+	"""MQTT version 3.1 client class.
+	
+	This is the main class for use communicating with an MQTT broker.
+
+	General usage flow:
+
+	* Use connect() to connect to a broker
+	* Call loop() frequently to maintain network traffic flow with the broker
+	* Use subscribe() to subscribe to a topic and receive messages
+	* Use publish() to send messages
+	* Use disconnect() to disconnect from the broker
+
+	Data returned from the broker is made available with the use of callback
+	functions as described below.
+
+	Callbacks
+	=========
+
+	A number of callback functions are available to receive data back from the
+	broker. To use a callback, define a function and then assign it to the
+	client. The callback function may be a class member if desired. All of the
+	callbacks as described below have an "obj" argument. This variable
+	corresponds directly to the obj argument passed when creating the client
+	instance. It is however optional when defining the callback functions, so
+	the on connect callback function can be defined as on_connect(obj, rc) or
+	on_connect(rc) for example.
+
+	The callbacks:
+
+	on_connect(obj, rc): called when the broker responds to our connection
+	  request. The value of rc determines success or not:
+	  0: Connection successful
+	  1: Connection refused - incorrect protocol version
+	  2: Connection refused - invalid client identifier
+	  3: Connection refused - server unavailable
+	  4: Connection refused - bad username or password
+	  5: Connection refused - not authorised
+	  6-255: Currently unused.
+
+	on_disconnect(obj): called when the client disconnects from the broker, but
+	  only after having sent a disconnection message to the broker. This will
+	  not be called if the client is disconnected unexpectedly.
+
+	on_message(obj, message): called when a message has been received on a
+	  topic that the client subscribes to. The message variable is a
+	  MosquittoMessage that describs all of the message parameters.
+
+	on_publish(obj, mid): called when a message that was to be sent using the
+	  publish() call has completed transmission to the broker. For messages
+	  with QoS levels 1 and 2, this means that the appropriate handshakes have
+	  completed. For QoS 0, this simply means that the message has left the
+	  client. The mid variable matches the mid variable returned from the
+	  corresponding publish() call, to allow outgoing messages to be tracked.
+	  This callback is important because even if the publish() call returns
+	  success, it does not means that the message has been sent.
+
+	on_subscribe(obj, mid, granted_qos): called when the broker responds to a
+	  subscribe request. The mid variable matches the mid variable returned
+	  from the corresponding subscribe() call. The granted_qos variable is a
+	  list of integers that give the QoS level the broker has granted for each
+	  of the different subscription requests.
+
+	on_unsubscribe(obj, mid): called when the broker responds to an unsubscribe
+	  request. The mid variable matches the mid variable returned from the
+	  corresponding unsubscribe() call.
+
+	Example:
+
+	def on_connect(rc):
+		if rc == 0:
+			print "Connected ok"
+	
+	client = mosquitto.Mosquitto("id")
+	client.on_connect = on_connect
+	...
+
+	"""
 
 	def __init__(self, id, obj=None):
+		"""Constructor
+
+		id: The 23 character or less client id used to identify this client to
+		  the broker. This must be unique on the broker.
+		obj: An optional object of any type that will be passed to any of the
+		  callback function when they are called. If not set, or set to None,
+		  this instance of the Mosquitto class will be passed to the callback
+		  functions.
+		"""
 		if obj==None:
 			self.obj = self
 		else:
@@ -85,45 +170,169 @@ class Mosquitto:
 		if self._mosq:
 			_mosquitto_destroy(self._mosq)
 
-	def connect(self, hostname="127.0.0.1", port=1883, keepalive=60, clean_session=True):
+	def connect(self, hostname="localhost", port=1883, keepalive=60, clean_session=True):
+		"""Connect the client to an MQTT broker.
+		
+		hostname: The hostname or ip address of the broker. Defaults to localhost.
+		port: The network port of the server host to connect to. Defaults to 1883.
+		keepalive: Maximum period in seconds between communications with the
+		  broker. If no other messages are being exchanged, this controls the
+		  rate at which the client will send ping messages to the broker.
+		clean_session: If set to True, the broker will clean any previous
+		  information about this client on connection, and will also not store
+		  anything after disconnect. If set to False, the broker will store all
+		  of the client subscriptions even after the client disconnects, and
+		  will also queue messages with QoS 1 and 2 until the client
+		  reconnects.
+
+		Returns 0 on success (note that this just means a network connection
+		  has been established between the broker and client, and the
+		  connection request sent. To monitor the success of the connection
+		  request, use the on_connect() callback)
+		Returns >0 on error.
+		"""
 		return _mosquitto_connect(self._mosq, hostname, port, keepalive, clean_session)
 
 	def disconnect(self):
+		"""Disconnect a connected client from the broker."""
 		return _mosquitto_disconnect(self._mosq)
 
 	def log_init(self, priorities, destinations):
+		"""Set the logging preferences for this client.
+		
+		Set priorities to a logically OR'd combination of:
+
+		MOSQ_LOG_INFO
+		MOSQ_LOG_NOTICE
+		MOSQ_LOG_WARNING
+		MOSQ_LOG_ERR
+		MOSQ_LOG_DEBUG
+		
+		Set destinations to either MOSQ_LOG_NONE or a logically OR'd
+		combination of:
+
+		MOSQ_LOG_STDOUT=0x04
+		MOSQ_LOG_STDERR=0x08
+		"""
 		return _mosquitto_log_init(self._mosq, priorities, destinations)
 
 	def loop(self, timeout=-1):
+		"""Process network events.
+		
+		This function must be called regularly to ensure communication with the broker is carried out.
+		
+		timeout: The time in milliseconds to wait for incoming/outgoing network
+		  traffic before timing out and returning. If set to -1 or not given,
+		  the default value of 1000 (1 second) will be used.
+
+		Returns 0 on success.
+		Returns >0 on error."""
+
 		return _mosquitto_loop(self._mosq, timeout)
 
-	def subscribe(self, sub, qos):
-		return _mosquitto_subscribe(self._mosq, None, sub, qos)
+	def subscribe(self, sub, qos=0):
+		"""Subscribe the client to a topic.
+		
+		sub: The subscription topic to subscribe to.
+		qos: The desired quality of service level for the subscription.
+
+		Returns a tuple (result, mid), where result being 0 indicates success
+		  and mid is the message ID for the subscribe request. The mid value
+		  can be used to track the subscribe request by checking against the
+		  mid argument in the on_subscribe() callback if it is defined."""
+
+		mid = c_uint16(0)
+		result = _mosquitto_subscribe(self._mosq, mid, sub, qos)
+		return result, mid.value
 
 	def unsubscribe(self, sub):
-		return _mosquitto_unsubscribe(self._mosq, None, sub)
+		"""Unsubscribe the client from a topic.
+		
+		sub: The subscription topic to unsubscribe from.
 
-	def publish(self, topic, payload, qos=0, retain=False):
-		return _mosquitto_publish(self._mosq, None, topic, len(payload), cast(payload, POINTER(c_uint8)), qos, retain)
+		Returns a tuple (result, mid), where result being 0 indicates success
+		  and mid is the message ID for the unsubscribe request. The mid value
+		  can be used to track the unsubscribe request by checking against the
+		  mid argument in the on_unsubscribe() callback if it is defined."""
 
-	def will_set(self, will, topic, payloadlen, payload, qos=0, retain=False):
-		return _mosquitto_will_set(self._mosq, will, topic, payloadlen, payload, qos, retain)
+		mid = c_uint16(0)
+		result = _mosquitto_unsubscribe(self._mosq, mid, sub)
+		return result, mid.value
+
+	def publish(self, topic, payload=None, qos=0, retain=False):
+		"""Publish a message on a topic.
+		
+		This causes a message to be sent to the broker and subsequently from
+		the broker to any clients subscribing to matching topics.
+		
+		topic: The topic that the message should be published on.
+		payload: The actual message to send. If not given, or set to None a
+		  zero length message will be used.
+		qos: The quality of service level to use.
+		retain: If set to true, the message will be set as the "last known
+		  good"/retained message for the topic.
+
+		Returns a tuple (result, mid), where result being 0 indicates success
+		  and mid is the message ID for the publish request. The mid value
+		  can be used to track the publish request by checking against the
+		  mid argument in the on_publish() callback if it is defined."""
+
+		mid = c_uint16(0)
+		result = _mosquitto_publish(self._mosq, mid, topic, len(payload), cast(payload, POINTER(c_uint8)), qos, retain)
+		return result, mid.value
+
+	def will_set(self, topic, payload=None, qos=0, retain=False):
+		"""Set a Will to be sent by the broker in case the client disconnects unexpectedly.
+
+		This must be called before connect() to have any effect.
+
+		topic: The topic that the will message should be published on.
+		payload: The message to send as a will. If not given, or set to None a
+		  zero length message will be used as the will.
+		qos: The quality of service level to use for the will.
+		retain: If set to true, the will message will be set as the "last known
+		  good"/retained message for the topic.
+
+		Returns 0 on success.
+		Returns >1 on error."""
+
+		return _mosquitto_will_set(self._mosq, true, topic, len(payloadlen), cast(payload, POINTER(c_uint8)), qos, retain)
+
+	def will_clear(self):
+		"""Clear a Will that was previously set with the will_set() call.
+
+		This must be called before connect() to have any effect."""
+		return _mosquitto_will_set(self._mosq, false, "", 0, cast(None, POINTER(c_uint8)), 0, 0)
 
 	def username_pw_set(self, username, password=None):
+		"""Set a username and optionally a password for broker authentication.
+
+		Must be called before connect() to have any effect.
+		Requires a broker that supports MQTT v3.1.
+		
+		username: The username to authenticate with. Need have no relationship to the client id.
+		password: The password to authenticate with. Optional.
+		
+		Returns 0 on success.
+		Returns >0 on error."""
 		return _mosquitto_username_pw_set(self._mosq, username, password)
 
 	def _internal_on_connect(self, obj, rc):
 		if self.on_connect:
-			if self.on_connect.func_code.co_argcount == 1:
+			argcount = self.on_connect.func_code.co_argcount
+
+			if argcount == 1:
 				self.on_connect(rc)
-			elif self.on_connect.func_code.co_argcount == 2:
+			elif argcount == 2:
 				self.on_connect(self.obj, rc)
 
 	def _internal_on_disconnect(self, obj):
 		if self.on_disconnect:
-			if self.on_disconnect.func_code.co_argcount == 0:
+			argcount = self.on_disconnect.func_code.co_argcount
+
+			if argcount == 0:
 				self.on_disconnect()
-			elif self.on_disconnect.func_code.co_argcount == 1:
+			elif argcount == 1:
 				self.on_disconnect(self.obj)
 
 	def _internal_on_message(self, obj, message):
@@ -133,16 +342,20 @@ class Mosquitto:
 			qos = message.contents.qos
 			retain = message.contents.retain
 			msg = MosquittoMessage(topic, payload, qos, retain)
-			if self.on_message.func_code.co_argcount == 1:
+			argcount = self.on_message.func_code.co_argcount
+
+			if argcount == 1:
 				self.on_message(msg)
-			elif self.on_message.func_code.co_argcount == 2:
+			elif argcount == 2:
 				self.on_message(self.obj, msg)
 
 	def _internal_on_publish(self, obj, mid):
 		if self.on_publish:
-			if self.on_publish.func_code.co_argcount == 1:
+			argcount = self.on_publish.func_code.co_argcount
+
+			if argcount == 1:
 				self.on_publish(mid)
-			elif self.on_publish.func_code.co_argcount == 1:
+			elif argcount == 2:
 				self.on_publish(self.obj, mid)
 
 	def _internal_on_subscribe(self, obj, mid, qos_count, granted_qos):
@@ -150,19 +363,26 @@ class Mosquitto:
 			qos_list = []
 			for i in range(qos_count):
 				qos_list.append(granted_qos[i])
-			if self.on_subscribe.func_code.co_argcount == 2:
+			argcount = self.on_subscribe.func_code.co_argcount
+
+			if argcount == 2:
 				self.on_subscribe(mid, qos_list)
-			elif self.on_subscribe.func_code.co_argcount == 3:
+			elif argcount == 3:
 				self.on_subscribe(self.obj, mid, qos_list)
 
 	def _internal_on_unsubscribe(self, obj, mid):
 		if self.on_unsubscribe:
-			if self.on_unsubscribe.func_code.co_argcount == 1:
+			argcount = self.on_unsubscribe.func_code.co_argcount
+
+			if argcount == 1:
 				self.on_unsubscribe(mid)
-			elif self.on_unsubscribe.func_code.co_argcount == 2:
+			elif argcount == 2:
 				self.on_unsubscribe(self.obj, mid)
 
 class c_MosquittoMessage(Structure):
+	"""Internal message class used for communicating with C library.
+
+	Don't use."""
 	_fields_ = [("mid", c_uint16),
 				("topic", c_char_p),
 				("payload", c_char_p),
@@ -223,27 +443,27 @@ _mosquitto_log_init.argtypes = [c_void_p, c_int, c_int]
 _mosquitto_log_init.restype = c_int
 
 _mosquitto_connect_callback_set = _libmosq.mosquitto_connect_callback_set
-#_mosquitto_connect_callback_set.argtypes = [c_void_p, c_void_p]
+_mosquitto_connect_callback_set.argtypes = [c_void_p, c_void_p]
 _mosquitto_connect_callback_set.restype = None
 
 _mosquitto_disconnect_callback_set = _libmosq.mosquitto_disconnect_callback_set
-#_mosquitto_disconnect_callback_set.argtypes = [c_void_p, c_void_p]
+_mosquitto_disconnect_callback_set.argtypes = [c_void_p, c_void_p]
 _mosquitto_disconnect_callback_set.restype = None
 
 _mosquitto_publish_callback_set = _libmosq.mosquitto_publish_callback_set
-#_mosquitto_publish_callback_set.argtypes = [c_void_p, c_void_p]
+_mosquitto_publish_callback_set.argtypes = [c_void_p, c_void_p]
 _mosquitto_publish_callback_set.restype = None
 
 _mosquitto_message_callback_set = _libmosq.mosquitto_message_callback_set
-#_mosquitto_message_callback_set.argtypes = [c_void_p, c_void_p]
+_mosquitto_message_callback_set.argtypes = [c_void_p, c_void_p]
 _mosquitto_message_callback_set.restype = None
 
 _mosquitto_subscribe_callback_set = _libmosq.mosquitto_subscribe_callback_set
-#_mosquitto_subscribe_callback_set.argtypes = [c_void_p, c_void_p]
+_mosquitto_subscribe_callback_set.argtypes = [c_void_p, c_void_p]
 _mosquitto_subscribe_callback_set.restype = None
 
 _mosquitto_unsubscribe_callback_set = _libmosq.mosquitto_unsubscribe_callback_set
-#_mosquitto_unsubscribe_callback_set.argtypes = [c_void_p, c_void_p]
+_mosquitto_unsubscribe_callback_set.argtypes = [c_void_p, c_void_p]
 _mosquitto_unsubscribe_callback_set.restype = None
 
 _MOSQ_CONNECT_FUNC = CFUNCTYPE(None, c_void_p, c_int)

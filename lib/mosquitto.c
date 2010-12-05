@@ -48,6 +48,10 @@ typedef int ssize_t;
 #include <send_mosq.h>
 #include <util_mosq.h>
 
+#ifndef ECONNRESET
+#define ECONNRESET 104
+#endif
+
 void mosquitto_lib_version(int *major, int *minor, int *revision)
 {
 	if(major) *major = LIBMOSQUITTO_MAJOR;
@@ -99,10 +103,10 @@ struct mosquitto *mosquitto_new(const char *id, void *obj)
 		mosq->core.out_packet = NULL;
 		mosq->core.last_msg_in = time(NULL);
 		mosq->core.last_msg_out = time(NULL);
-		mosq->last_mid = 0;
+		mosq->core.last_mid = 0;
 		mosq->core.state = mosq_cs_new;
 		mosq->messages = NULL;
-		mosq->will = NULL;
+		mosq->core.will = NULL;
 		mosq->on_connect = NULL;
 		mosq->on_publish = NULL;
 		mosq->on_message = NULL;
@@ -123,54 +127,54 @@ int mosquitto_will_set(struct mosquitto *mosq, bool will, const char *topic, uin
 
 	if(!mosq || (will && !topic)) return MOSQ_ERR_INVAL;
 
-	if(mosq->will){
-		if(mosq->will->topic){
-			_mosquitto_free(mosq->will->topic);
-			mosq->will->topic = NULL;
+	if(mosq->core.will){
+		if(mosq->core.will->topic){
+			_mosquitto_free(mosq->core.will->topic);
+			mosq->core.will->topic = NULL;
 		}
-		if(mosq->will->payload){
-			_mosquitto_free(mosq->will->payload);
-			mosq->will->payload = NULL;
+		if(mosq->core.will->payload){
+			_mosquitto_free(mosq->core.will->payload);
+			mosq->core.will->payload = NULL;
 		}
-		_mosquitto_free(mosq->will);
-		mosq->will = NULL;
+		_mosquitto_free(mosq->core.will);
+		mosq->core.will = NULL;
 	}
 
 	if(will){
-		mosq->will = _mosquitto_calloc(1, sizeof(struct mosquitto_message));
-		if(!mosq->will) return MOSQ_ERR_NOMEM;
-		mosq->will->topic = _mosquitto_strdup(topic);
-		if(!mosq->will->topic){
+		mosq->core.will = _mosquitto_calloc(1, sizeof(struct mosquitto_message));
+		if(!mosq->core.will) return MOSQ_ERR_NOMEM;
+		mosq->core.will->topic = _mosquitto_strdup(topic);
+		if(!mosq->core.will->topic){
 			rc = MOSQ_ERR_NOMEM;
 			goto cleanup;
 		}
-		mosq->will->payloadlen = payloadlen;
-		if(mosq->will->payloadlen > 0){
+		mosq->core.will->payloadlen = payloadlen;
+		if(mosq->core.will->payloadlen > 0){
 			if(!payload){
 				rc = MOSQ_ERR_INVAL;
 				goto cleanup;
 			}
-			mosq->will->payload = _mosquitto_malloc(sizeof(uint8_t)*mosq->will->payloadlen);
-			if(!mosq->will->payload){
+			mosq->core.will->payload = _mosquitto_malloc(sizeof(uint8_t)*mosq->core.will->payloadlen);
+			if(!mosq->core.will->payload){
 				rc = MOSQ_ERR_NOMEM;
 				goto cleanup;
 			}
 
-			memcpy(mosq->will->payload, payload, payloadlen);
+			memcpy(mosq->core.will->payload, payload, payloadlen);
 		}
-		mosq->will->qos = qos;
-		mosq->will->retain = retain;
+		mosq->core.will->qos = qos;
+		mosq->core.will->retain = retain;
 	}
 
 	return MOSQ_ERR_SUCCESS;
 
 cleanup:
-	if(mosq->will){
-		if(mosq->will->topic) _mosquitto_free(mosq->will->topic);
-		if(mosq->will->payload) _mosquitto_free(mosq->will->payload);
+	if(mosq->core.will){
+		if(mosq->core.will->topic) _mosquitto_free(mosq->core.will->topic);
+		if(mosq->core.will->payload) _mosquitto_free(mosq->core.will->payload);
 	}
-	_mosquitto_free(mosq->will);
-	mosq->will = NULL;
+	_mosquitto_free(mosq->core.will);
+	mosq->core.will = NULL;
 
 	return rc;
 }
@@ -212,6 +216,11 @@ void mosquitto_destroy(struct mosquitto *mosq)
 {
 	if(mosq->core.id) _mosquitto_free(mosq->core.id);
 	_mosquitto_message_cleanup_all(mosq);
+	if(mosq->core.will){
+		if(mosq->core.will->topic) _mosquitto_free(mosq->core.will->topic);
+		if(mosq->core.will->payload) _mosquitto_free(mosq->core.will->payload);
+	}
+	_mosquitto_free(mosq->core.will);
 	_mosquitto_free(mosq);
 }
 
@@ -252,7 +261,7 @@ int mosquitto_publish(struct mosquitto *mosq, uint16_t *mid, const char *topic, 
 
 	if(!mosq || !topic || qos<0 || qos>2) return MOSQ_ERR_INVAL;
 
-	local_mid = _mosquitto_mid_generate(mosq);
+	local_mid = _mosquitto_mid_generate(&mosq->core);
 	if(mid){
 		*mid = local_mid;
 	}
@@ -323,6 +332,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout)
 #endif
 	fd_set readfds, writefds;
 	int fdcount;
+	int rc;
 
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(mosq->core.sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
@@ -355,11 +365,11 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout)
 	fdcount = select(mosq->core.sock+1, &readfds, &writefds, NULL, &local_timeout);
 #endif
 	if(fdcount == -1){
-		_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Error in pselect: %s\n", strerror(errno));
-		return 1;
+		return 1; // FIXME what error to return?
 	}else{
 		if(FD_ISSET(mosq->core.sock, &readfds)){
-			if(mosquitto_loop_read(mosq)){
+			rc = mosquitto_loop_read(mosq);
+			if(rc){
 				_mosquitto_socket_close(&mosq->core);
 				if(mosq->core.state == mosq_cs_disconnecting){
 					if(mosq->on_disconnect){
@@ -367,13 +377,13 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout)
 					}
 					return MOSQ_ERR_SUCCESS;
 				}else{
-					fprintf(stderr, "Error in network read.\n");
-					return 1;
+					return rc;
 				}
 			}
 		}
 		if(FD_ISSET(mosq->core.sock, &writefds)){
-			if(mosquitto_loop_write(mosq)){
+			rc = mosquitto_loop_write(mosq);
+			if(rc){
 				_mosquitto_socket_close(&mosq->core);
 				if(mosq->core.state == mosq_cs_disconnecting){
 					if(mosq->on_disconnect){
@@ -381,8 +391,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout)
 					}
 					return MOSQ_ERR_SUCCESS;
 				}else{
-					fprintf(stderr, "Error in network write.\n");
-					return 1;
+					return rc;
 				}
 			}
 		}
@@ -434,7 +443,7 @@ int mosquitto_loop_read(struct mosquitto *mosq)
 		if(read_length == 1){
 			mosq->core.in_packet.command = byte;
 		}else{
-			if(read_length == 0) return 1; /* EOF */
+			if(read_length == 0) return MOSQ_ERR_CONN_LOST; /* EOF */
 #ifndef WIN32
 			if(errno == EAGAIN || errno == EWOULDBLOCK){
 #else
@@ -442,7 +451,12 @@ int mosquitto_loop_read(struct mosquitto *mosq)
 #endif
 				return MOSQ_ERR_SUCCESS;
 			}else{
-				return 1;
+				switch(errno){
+					case ECONNRESET:
+						return MOSQ_ERR_CONN_LOST;
+					default:
+						return 1;
+				}
 			}
 		}
 	}
@@ -463,7 +477,7 @@ int mosquitto_loop_read(struct mosquitto *mosq)
 				mosq->core.in_packet.remaining_length += (byte & 127) * mosq->core.in_packet.remaining_mult;
 				mosq->core.in_packet.remaining_mult *= 128;
 			}else{
-				if(read_length == 0) return 1; /* EOF */
+				if(read_length == 0) return MOSQ_ERR_CONN_LOST; /* EOF */
 #ifndef WIN32
 				if(errno == EAGAIN || errno == EWOULDBLOCK){
 #else
@@ -471,7 +485,12 @@ int mosquitto_loop_read(struct mosquitto *mosq)
 #endif
 					return MOSQ_ERR_SUCCESS;
 				}else{
-					return 1;
+					switch(errno){
+						case ECONNRESET:
+							return MOSQ_ERR_CONN_LOST;
+						default:
+							return 1;
+					}
 				}
 			}
 		}while((byte & 128) != 0);
@@ -496,7 +515,12 @@ int mosquitto_loop_read(struct mosquitto *mosq)
 #endif
 				return MOSQ_ERR_SUCCESS;
 			}else{
-				return 1;
+				switch(errno){
+					case ECONNRESET:
+						return MOSQ_ERR_CONN_LOST;
+					default:
+						return 1;
+				}
 			}
 		}
 	}
@@ -533,7 +557,7 @@ int mosquitto_loop_write(struct mosquitto *mosq)
 			if(write_length == 1){
 				packet->command = 0;
 			}else{
-				if(write_length == 0) return 1; /* EOF */
+				if(write_length == 0) return MOSQ_ERR_CONN_LOST; /* EOF */
 #ifndef WIN32
 				if(errno == EAGAIN || errno == EWOULDBLOCK){
 #else
@@ -541,7 +565,12 @@ int mosquitto_loop_write(struct mosquitto *mosq)
 #endif
 					return MOSQ_ERR_SUCCESS;
 				}else{
-					return 1;
+					switch(errno){
+						case ECONNRESET:
+							return MOSQ_ERR_CONN_LOST;
+						default:
+							return 1;
+					}
 				}
 			}
 		}
@@ -564,7 +593,7 @@ int mosquitto_loop_write(struct mosquitto *mosq)
 					if(packet->remaining_count > 4) return MOSQ_ERR_PROTOCOL;
 	
 				}else{
-					if(write_length == 0) return 1; /* EOF */
+					if(write_length == 0) return MOSQ_ERR_CONN_LOST; /* EOF */
 #ifndef WIN32
 					if(errno == EAGAIN || errno == EWOULDBLOCK){
 #else
@@ -572,7 +601,12 @@ int mosquitto_loop_write(struct mosquitto *mosq)
 #endif
 						return MOSQ_ERR_SUCCESS;
 					}else{
-						return 1;
+						switch(errno){
+							case ECONNRESET:
+								return MOSQ_ERR_CONN_LOST;
+							default:
+								return 1;
+						}
 					}
 				}
 			}while(packet->remaining_length > 0);
@@ -591,7 +625,12 @@ int mosquitto_loop_write(struct mosquitto *mosq)
 #endif
 					return MOSQ_ERR_SUCCESS;
 				}else{
-					return 1;
+					switch(errno){
+						case ECONNRESET:
+							return MOSQ_ERR_CONN_LOST;
+						default:
+							return 1;
+					}
 				}
 			}
 		}

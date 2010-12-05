@@ -19,8 +19,8 @@ reallyclean :
 
 install : mosquitto
 	@for d in ${DIRS}; do $(MAKE) -C $${d} install; done
-	$(INSTALL) -d ${DESTDIR}/etc
-	$(INSTALL) -m 644 mosquitto.conf ${DESTDIR}/etc/mosquitto.conf
+	$(INSTALL) -d ${DESTDIR}/etc/mosquitto
+	$(INSTALL) -m 644 mosquitto.conf ${DESTDIR}/etc/mosquitto/mosquitto.conf
 
 uninstall :
 	@for d in ${DIRS}; do $(MAKE) -C $${d} uninstall; done
@@ -29,7 +29,7 @@ dist : reallyclean
 	@for d in ${DISTDIRS}; do $(MAKE) -C $${d} dist; done
 	
 	mkdir -p dist/mosquitto-${VERSION}
-	cp -r client lib logo man misc security service src ChangeLog.txt CMakeLists.txt COPYING Makefile compiling.txt config.h config.mk readme.txt mosquitto.conf dist/mosquitto-${VERSION}/
+	cp -r client compat lib logo man misc security service src ChangeLog.txt CMakeLists.txt COPYING Makefile compiling.txt config.h config.mk readme.txt mosquitto.conf dist/mosquitto-${VERSION}/
 	cd dist; tar -zcf mosquitto-${VERSION}.tar.gz mosquitto-${VERSION}/
 	for m in libmosquitto.3 mosquitto.8 mosquitto.conf.5 mosquitto_pub.1 mosquitto_sub.1 mqtt.7; \
 		do \
