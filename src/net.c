@@ -114,7 +114,14 @@ int mqtt3_socket_accept(mqtt3_context ***contexts, int *context_count, int liste
 	}else{
 #endif
 		new_context = mqtt3_context_init(new_sock);
-		if(!new_context) return -1;
+		if(!new_context){
+#ifndef WIN32
+			close(new_sock);
+#else
+			closesocket(new_sock);
+#endif
+			return -1;
+		}
 		mqtt3_log_printf(MOSQ_LOG_NOTICE, "New client connected from %s.", new_context->address);
 		for(i=0; i<(*context_count); i++){
 			if((*contexts)[i] == NULL){
@@ -123,11 +130,13 @@ int mqtt3_socket_accept(mqtt3_context ***contexts, int *context_count, int liste
 			}
 		}
 		if(i==(*context_count)){
-			(*context_count)++;
-			tmp_contexts = _mosquitto_realloc(*contexts, sizeof(mqtt3_context*)*(*context_count));
+			tmp_contexts = _mosquitto_realloc(*contexts, sizeof(mqtt3_context*)*((*context_count)+1));
 			if(tmp_contexts){
+				(*context_count)++;
 				*contexts = tmp_contexts;
 				(*contexts)[(*context_count)-1] = new_context;
+			}else{
+				mqtt3_context_cleanup(NULL, new_context, true);
 			}
 		}
 #ifdef WITH_WRAP
@@ -193,11 +202,15 @@ int mqtt3_socket_listen(const char *host, uint16_t port, int **socks, int *sock_
 
 		sock = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
 		if(sock == -1){
-			mqtt3_log_printf(MOSQ_LOG_ERR, "Error: %s", strerror(errno));
-			return 1;
+			mqtt3_log_printf(MOSQ_LOG_WARNING, "Warning: %s", strerror(errno));
+			continue;
 		}
 		(*sock_count)++;
 		*socks = _mosquitto_realloc(*socks, sizeof(int)*(*sock_count));
+		if(!(*socks)){
+			mqtt3_log_printf(MOSQ_LOG_ERR, "Error: Out of memory.");
+			return MOSQ_ERR_NOMEM;
+		}
 		(*socks)[(*sock_count)-1] = sock;
 
 		ss_opt = 1;
@@ -243,14 +256,19 @@ int mqtt3_socket_listen(const char *host, uint16_t port, int **socks, int *sock_
 	}
 	freeaddrinfo(ainfo);
 
-	return 0;
+	/* We need to have at least one working socket. */
+	if(*sock_count > 0){
+		return 0;
+	}else{
+		return 1;
+	}
 }
 
 int mqtt3_net_packet_queue(mqtt3_context *context, struct _mosquitto_packet *packet)
 {
 	struct _mosquitto_packet *tail;
 
-	if(!context || !packet) return 1;
+	if(!context || !packet) return MOSQ_ERR_INVAL;
 
 	packet->next = NULL;
 	if(context->core.out_packet){
@@ -271,7 +289,7 @@ int mqtt3_net_read(mosquitto_db *db, mqtt3_context *context)
 	ssize_t read_length;
 	int rc = 0;
 
-	if(!context || context->core.sock == -1) return 1;
+	if(!context || context->core.sock == -1) return MOSQ_ERR_INVAL;
 	/* This gets called if pselect() indicates that there is network data
 	 * available - ie. at least one byte.  What we do depends on what data we
 	 * already have.
@@ -294,10 +312,8 @@ int mqtt3_net_read(mosquitto_db *db, mqtt3_context *context)
 		if(read_length == 1){
 			bytes_received++;
 			context->core.in_packet.command = byte;
-#ifdef WITH_BROKER
 			/* Clients must send CONNECT as their first command. */
 			if(!(context->bridge) && context->core.state == mosq_cs_new && (byte&0xF0) != CONNECT) return 1;
-#endif
 		}else{
 			if(read_length == 0) return 1; /* EOF */
 #ifndef WIN32
@@ -382,71 +398,14 @@ int mqtt3_net_read(mosquitto_db *db, mqtt3_context *context)
 
 int mqtt3_net_write(mqtt3_context *context)
 {
-	uint8_t byte;
 	ssize_t write_length;
 	struct _mosquitto_packet *packet;
 
-	if(!context || context->core.sock == -1) return 1;
+	if(!context || context->core.sock == -1) return MOSQ_ERR_INVAL;
 
 	while(context->core.out_packet){
 		packet = context->core.out_packet;
 
-		if(packet->command){
-			/* Assign to_proces here before remaining_length changes. */
-			packet->to_process = packet->remaining_length;
-			packet->pos = 0;
-
-			write_length = _mosquitto_net_write(&context->core, &packet->command, 1);
-			if(write_length == 1){
-				bytes_sent++;
-				packet->command = 0;
-			}else{
-				if(write_length == 0) return 1; /* EOF */
-#ifndef WIN32
-				if(errno == EAGAIN || errno == EWOULDBLOCK){
-#else
-				if(WSAGetLastError() == WSAEWOULDBLOCK){
-#endif
-					return MOSQ_ERR_SUCCESS;
-				}else{
-					return 1;
-				}
-			}
-		}
-		if(!packet->have_remaining){
-			/* Write remaining
-			 * Algorithm for encoding taken from pseudo code at
-			 * http://publib.boulder.ibm.com/infocenter/wmbhelp/v6r0m0/topic/com.ibm.etools.mft.doc/ac10870_.htm
-			 */
-			do{
-				byte = packet->remaining_length % 128;
-				packet->remaining_length = packet->remaining_length / 128;
-				/* If there are more digits to encode, set the top bit of this digit */
-				if(packet->remaining_length>0){
-					byte = byte | 0x80;
-				}
-				write_length = _mosquitto_net_write(&context->core, &byte, 1);
-				if(write_length == 1){
-					packet->remaining_count++;
-					/* Max 4 bytes length for remaining length as defined by protocol. */
-					if(packet->remaining_count > 4) return MOSQ_ERR_PROTOCOL;
-	
-					bytes_sent++;
-				}else{
-					if(write_length == 0) return 1; /* EOF */
-#ifndef WIN32
-					if(errno == EAGAIN || errno == EWOULDBLOCK){
-#else
-					if(WSAGetLastError() == WSAEWOULDBLOCK){
-#endif
-						return MOSQ_ERR_SUCCESS;
-					}else{
-						return 1;
-					}
-				}
-			}while(packet->remaining_length > 0);
-			packet->have_remaining = 1;
-		}
 		while(packet->to_process > 0){
 			write_length = _mosquitto_net_write(&context->core, &(packet->payload[packet->pos]), packet->to_process);
 			if(write_length > 0){

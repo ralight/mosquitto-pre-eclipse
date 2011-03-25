@@ -40,11 +40,16 @@ POSSIBILITY OF SUCH DAMAGE.
 #define mosqpp_EXPORT
 #endif
 
-#include <stdint.h>
 #include <cstdlib>
 #include <time.h>
 #include <mosquitto.h>
 
+/*
+ * Class: mosquittopp
+ *
+ * A mosquitto client class. This is a C++ wrapper class for the mosquitto C
+ * library. Please see mosquitto.h for details of the functions.
+ */
 class mosqpp_EXPORT mosquittopp {
 	private:
 		struct mosquitto *mosq;
@@ -59,6 +64,7 @@ class mosqpp_EXPORT mosquittopp {
 		int log_init(int priorities, int destinations);
 		int will_set(bool will, const char *topic, uint32_t payloadlen=0, const uint8_t *payload=NULL, int qos=0, bool retain=false);
 		int username_pw_set(const char *username, const char *password=NULL);
+		int ssl_set(const char *pemfile, const char *password=NULL);
 		int connect(const char *host, int port=1883, int keepalive=60, bool clean_session=true);
 		int disconnect();
 		int publish(uint16_t *mid, const char *topic, uint32_t payloadlen=0, const uint8_t *payload=NULL, int qos=0, bool retain=false);
