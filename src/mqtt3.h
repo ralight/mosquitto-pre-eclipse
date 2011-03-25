@@ -42,7 +42,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 /* Database macros */
-#define MOSQ_DB_VERSION 0
+#define MOSQ_DB_VERSION 1
 
 /* Log destinations */
 #define MQTT3_LOG_NONE 0x00
@@ -53,11 +53,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define MQTT3_LOG_TOPIC 0x10
 #define MQTT3_LOG_ALL 0xFF
 
-#ifdef WITH_32BIT_DBID
-typedef uint32_t dbid_t;
-#else
 typedef uint64_t dbid_t;
-#endif
 
 enum mqtt3_msg_state {
 	ms_invalid = 0,
@@ -73,6 +69,38 @@ enum mqtt3_msg_state {
 	ms_resend_pubrec = 10,
 	ms_queued = 11
 };
+
+struct _mqtt3_listener {
+	int fd;
+	char *host;
+	uint16_t port;
+	int max_connections;
+	char *mount_point;
+};
+
+typedef struct {
+	bool allow_anonymous;
+	int autosave_interval;
+	char *clientid_prefixes;
+	bool daemon;
+	struct _mqtt3_listener default_listener;
+	struct _mqtt3_listener *listeners;
+	int listener_count;
+	int log_dest;
+	int log_type;
+	int max_connections;
+	char *password_file;
+	bool persistence;
+	char *persistence_location;
+	char *persistence_file;
+	int retry_interval;
+	int store_clean_interval;
+	int sys_interval;
+	char *pid_file;
+	char *user;
+	struct _mqtt3_bridge *bridges;
+	int bridge_count;
+} mqtt3_config;
 
 struct _mosquitto_subleaf {
 	struct _mosquitto_subleaf *prev;
@@ -125,6 +153,7 @@ typedef struct _mosquitto_db{
 	struct mosquitto_msg_store *msg_store;
 	int msg_store_count;
 	char *filepath;
+	mqtt3_config *config;
 } mosquitto_db;
 
 enum mqtt3_bridge_direction{
@@ -141,6 +170,7 @@ struct _mqtt3_bridge_topic{
 struct _mqtt3_bridge{
 	char *name;
 	char *address;
+	char *clientid;
 	uint16_t port;
 	int keepalive;
 	bool clean_session;
@@ -159,37 +189,6 @@ typedef struct _mqtt3_context{
 	struct _mqtt3_bridge *bridge;
 	mosquitto_client_msg *msgs;
 } mqtt3_context;
-
-struct _mqtt3_listener {
-	int fd;
-	char *host;
-	uint16_t port;
-	int max_connections;
-	char *mount_point;
-};
-
-typedef struct {
-	bool allow_anonymous;
-	int autosave_interval;
-	bool daemon;
-	struct _mqtt3_listener default_listener;
-	struct _mqtt3_listener *listeners;
-	int listener_count;
-	int log_dest;
-	int log_type;
-	int max_connections;
-	char *password_file;
-	bool persistence;
-	char *persistence_location;
-	char *persistence_file;
-	int retry_interval;
-	int store_clean_interval;
-	int sys_interval;
-	char *pid_file;
-	char *user;
-	struct _mqtt3_bridge *bridges;
-	int bridge_count;
-} mqtt3_config;
 
 /* ============================================================
  * Utility functions

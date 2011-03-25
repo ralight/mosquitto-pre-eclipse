@@ -25,8 +25,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import sys
 from ctypes import *
 from ctypes.util import find_library
+
+if sys.version_info < (2,6,0):
+	c_bool = c_int
 
 # Log destinations
 MOSQ_LOG_NONE=0x00
@@ -316,6 +320,10 @@ class Mosquitto:
 		Returns 0 on success.
 		Returns >0 on error."""
 		return _mosquitto_username_pw_set(self._mosq, username, password)
+
+	def ssl_set(self, pemfile, password=None):
+		"""SSL set"""
+		return _mosquitto_ssl_set(self._mosq, pemfile, password);
 
 	def _internal_on_connect(self, obj, rc):
 		if self.on_connect:

@@ -41,22 +41,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <memory_mosq.h>
 #include <mqtt3.h>
 
-
-#ifdef WITH_32BIT_DBID
-#  define DBID_HTON(a) htonl(a)
-#  define DBID_NTOH(a) ntohl(a)
-#else
-#  ifdef __APPLE__
-#    include <libkern/OSByteOrder.h>
-#    define DBID_HTON(a) OSSwapHostToBigInt64(a)
-#    define DBID_NTOH(a) OSSwapBigToHostInt64(a)
-#  else
-#    include <endian.h>
-#    define DBID_HTON(a) htobe64(a)
-#    define DBID_NTOH(a) be64toh(a)
-#  endif
-#endif
-
 /* DB read/write */
 const unsigned char magic[15] = {0x00, 0xB5, 0x00, 'm','o','s','q','u','i','t','t','o',' ','d','b'};
 #define DB_CHUNK_CFG 1
@@ -139,7 +123,7 @@ static int mqtt3_db_client_messages_write(mosquitto_db *db, int db_fd, mqtt3_con
 		write_e(db_fd, &i16temp, sizeof(uint16_t));
 		write_e(db_fd, context->core.id, slen);
 
-		i64temp = DBID_HTON(cmsg->store->db_id);
+		i64temp = cmsg->store->db_id;
 		write_e(db_fd, &i64temp, sizeof(dbid_t));
 
 		i16temp = htons(cmsg->mid);
@@ -165,7 +149,7 @@ static int mqtt3_db_client_messages_write(mosquitto_db *db, int db_fd, mqtt3_con
 
 #undef write_e
 
-	return 0;
+	return MOSQ_ERR_SUCCESS;
 }
 
 
@@ -194,7 +178,7 @@ static int mqtt3_db_message_store_write(mosquitto_db *db, int db_fd)
 		write_e(db_fd, &i16temp, sizeof(uint16_t));
 		write_e(db_fd, &length, sizeof(uint32_t));
 
-		i64temp = DBID_HTON(stored->db_id);
+		i64temp = stored->db_id;
 		write_e(db_fd, &i64temp, sizeof(dbid_t));
 
 		slen = strlen(stored->source_id);
@@ -232,7 +216,7 @@ static int mqtt3_db_message_store_write(mosquitto_db *db, int db_fd)
 
 #undef write_e
 
-	return 0;
+	return MOSQ_ERR_SUCCESS;
 }
 
 static int mqtt3_db_client_write(mosquitto_db *db, int db_fd)
@@ -250,7 +234,7 @@ static int mqtt3_db_client_write(mosquitto_db *db, int db_fd)
 		}
 	}
 
-	return 0;
+	return MOSQ_ERR_SUCCESS;
 }
 
 static int _db_subs_retain_write(mosquitto_db *db, int db_fd, struct _mosquitto_subhier *node, const char *topic)
@@ -265,7 +249,7 @@ static int _db_subs_retain_write(mosquitto_db *db, int db_fd, struct _mosquitto_
 
 	slen = strlen(topic) + strlen(node->topic) + 2;
 	thistopic = _mosquitto_malloc(sizeof(char)*slen);
-	if(!thistopic) return 1;
+	if(!thistopic) return MOSQ_ERR_NOMEM;
 	if(strlen(topic)){
 		snprintf(thistopic, slen, "%s/%s", topic, node->topic);
 	}else{
@@ -303,7 +287,7 @@ static int _db_subs_retain_write(mosquitto_db *db, int db_fd, struct _mosquitto_
 		write_e(db_fd, &i16temp, sizeof(uint16_t));
 		write_e(db_fd, &length, sizeof(uint32_t));
 
-		i64temp = DBID_HTON(node->retained->db_id);
+		i64temp = node->retained->db_id;
 		write_e(db_fd, &i64temp, sizeof(dbid_t));
 	}
 #undef write_e
@@ -314,7 +298,7 @@ static int _db_subs_retain_write(mosquitto_db *db, int db_fd, struct _mosquitto_
 		subhier = subhier->next;
 	}
 	_mosquitto_free(thistopic);
-	return 0;
+	return MOSQ_ERR_SUCCESS;
 }
 
 static int mqtt3_db_subs_retain_write(mosquitto_db *db, int db_fd)
@@ -327,7 +311,7 @@ static int mqtt3_db_subs_retain_write(mosquitto_db *db, int db_fd)
 		subhier = subhier->next;
 	}
 	
-	return 0;
+	return MOSQ_ERR_SUCCESS;
 }
 
 int mqtt3_db_backup(mosquitto_db *db, bool cleanup, bool shutdown)
@@ -341,7 +325,7 @@ int mqtt3_db_backup(mosquitto_db *db, bool cleanup, bool shutdown)
 	uint16_t i16temp;
 	uint8_t i8temp;
 
-	if(!db || !db->filepath) return 1;
+	if(!db || !db->filepath) return MOSQ_ERR_INVAL;
 	mqtt3_log_printf(MOSQ_LOG_INFO, "Saving in-memory database to %s.", db->filepath);
 	if(cleanup){
 		mqtt3_db_store_clean(db);
@@ -371,7 +355,7 @@ int mqtt3_db_backup(mosquitto_db *db, bool cleanup, bool shutdown)
 	i8temp = sizeof(dbid_t);
 	write_e(db_fd, &i8temp, sizeof(uint8_t));
 	/* last db mid */
-	i64temp = DBID_HTON(db->last_db_id);
+	i64temp = db->last_db_id;
 	write_e(db_fd, &i64temp, sizeof(dbid_t));
 #undef write_e
 
@@ -400,7 +384,7 @@ static int _db_client_msg_restore(mosquitto_db *db, const char *client_id, uint1
 	cmsg = _mosquitto_calloc(1, sizeof(mosquitto_client_msg));
 	if(!cmsg){
 		mqtt3_log_printf(MOSQ_LOG_ERR, "Error: Out of memory.");
-		return 1;
+		return MOSQ_ERR_NOMEM;
 	}
 
 	cmsg->store = NULL;
@@ -441,7 +425,7 @@ static int _db_client_msg_restore(mosquitto_db *db, const char *client_id, uint1
 	}
 	cmsg->next = NULL;
 
-	return 0;
+	return MOSQ_ERR_SUCCESS;
 }
 
 static int _db_client_msg_chunk_restore(mosquitto_db *db, int db_fd)
@@ -464,12 +448,12 @@ static int _db_client_msg_chunk_restore(mosquitto_db *db, int db_fd)
 	if(!client_id){
 		close(db_fd);
 		mqtt3_log_printf(MOSQ_LOG_ERR, "Error: Out of memory.");
-		return 1;
+		return MOSQ_ERR_NOMEM;
 	}
 	read_e(db_fd, client_id, slen);
 
 	read_e(db_fd, &i64temp, sizeof(dbid_t));
-	store_id = DBID_NTOH(i64temp);
+	store_id = i64temp;
 
 	read_e(db_fd, &i16temp, sizeof(uint16_t));
 	mid = ntohs(i16temp);
@@ -506,7 +490,7 @@ static int _db_msg_store_chunk_restore(mosquitto_db *db, int db_fd)
 
 #define read_e(a, b, c) if(read(a, b, c) != c){ goto error; }
 	read_e(db_fd, &i64temp, sizeof(dbid_t));
-	store_id = DBID_NTOH(i64temp);
+	store_id = i64temp;
 
 	read_e(db_fd, &i16temp, sizeof(uint16_t));
 	slen = ntohs(i16temp);
@@ -515,7 +499,7 @@ static int _db_msg_store_chunk_restore(mosquitto_db *db, int db_fd)
 		if(!source_id){
 			close(db_fd);
 			mqtt3_log_printf(MOSQ_LOG_ERR, "Error: Out of memory.");
-			return 1;
+			return MOSQ_ERR_NOMEM;
 		}
 		if(read(db_fd, source_id, slen) != slen){
 			mqtt3_log_printf(MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
@@ -538,7 +522,7 @@ static int _db_msg_store_chunk_restore(mosquitto_db *db, int db_fd)
 			close(db_fd);
 			_mosquitto_free(source_id);
 			mqtt3_log_printf(MOSQ_LOG_ERR, "Error: Out of memory.");
-			return 1;
+			return MOSQ_ERR_NOMEM;
 		}
 		if(read(db_fd, topic, slen) != slen){
 			mqtt3_log_printf(MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
@@ -566,7 +550,7 @@ static int _db_msg_store_chunk_restore(mosquitto_db *db, int db_fd)
 			_mosquitto_free(source_id);
 			_mosquitto_free(topic);
 			mqtt3_log_printf(MOSQ_LOG_ERR, "Error: Out of memory.");
-			return 1;
+			return MOSQ_ERR_NOMEM;
 		}
 		if(read(db_fd, payload, payloadlen) != payloadlen){
 			mqtt3_log_printf(MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
@@ -603,7 +587,7 @@ static int _db_retain_chunk_restore(mosquitto_db *db, int db_fd)
 		close(db_fd);
 		return 1;
 	}
-	store_id = DBID_NTOH(i64temp);
+	store_id = i64temp;
 	store = db->msg_store;
 	while(store){
 		if(store->db_id == store_id){
@@ -617,7 +601,7 @@ static int _db_retain_chunk_restore(mosquitto_db *db, int db_fd)
 		mqtt3_log_printf(MOSQ_LOG_ERR, "Error restoring persistent database, message store corrupt.");
 		return 1;
 	}
-	return 0;
+	return MOSQ_ERR_SUCCESS;
 }
 
 static int _db_sub_chunk_restore(mosquitto_db *db, int db_fd)
@@ -635,7 +619,7 @@ static int _db_sub_chunk_restore(mosquitto_db *db, int db_fd)
 	if(!client_id){
 		close(db_fd);
 		mqtt3_log_printf(MOSQ_LOG_ERR, "Error: Out of memory.");
-		return 1;
+		return MOSQ_ERR_NOMEM;
 	}
 	read_e(db_fd, client_id, slen);
 	read_e(db_fd, &i16temp, sizeof(uint16_t));
@@ -645,7 +629,7 @@ static int _db_sub_chunk_restore(mosquitto_db *db, int db_fd)
 		close(db_fd);
 		mqtt3_log_printf(MOSQ_LOG_ERR, "Error: Out of memory.");
 		_mosquitto_free(client_id);
-		return 1;
+		return MOSQ_ERR_NOMEM;
 	}
 	read_e(db_fd, topic, slen);
 	read_e(db_fd, &qos, sizeof(uint8_t));
@@ -680,14 +664,14 @@ int mqtt3_db_restore(mosquitto_db *db)
 
 #define read_e(a, b, c) if(read(a, b, c) != c){ goto error; }
 	fd = open(db->filepath, O_RDONLY);
-	if(fd < 0) return 0;
+	if(fd < 0) return MOSQ_ERR_SUCCESS;
 	read_e(fd, &header, 15);
 	if(!memcmp(header, magic, 15)){
 		// Restore DB as normal
 		read_e(fd, &crc, sizeof(uint32_t));
 		read_e(fd, &i32temp, sizeof(uint32_t));
 		db_version = ntohl(i32temp);
-		if(db_version != MOSQ_DB_VERSION){
+		if(db_version != MOSQ_DB_VERSION && db_version != 0){
 			close(fd);
 			mqtt3_log_printf(MOSQ_LOG_ERR, "Error: Unsupported persistent database format version %d (need version %d).", db_version, MOSQ_DB_VERSION);
 			return 1;
@@ -708,7 +692,7 @@ int mqtt3_db_restore(mosquitto_db *db)
 						return 1;
 					}
 					read_e(fd, &i64temp, sizeof(dbid_t));
-					db->last_db_id = DBID_NTOH(i64temp);
+					db->last_db_id = i64temp;
 					break;
 
 				case DB_CHUNK_MSG_STORE:

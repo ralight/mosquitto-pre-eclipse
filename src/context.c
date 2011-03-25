@@ -78,9 +78,17 @@ mqtt3_context *mqtt3_context_init(int sock)
 			}
 		}
 	}
+	if(!context->address && sock != -1){
+		/* getpeername and inet_ntop failed and not a bridge */
+		_mosquitto_free(context);
+		return NULL;
+	}
 	context->bridge = NULL;
 	context->msgs = NULL;
-	
+#ifdef WITH_SSL
+	context->core.ssl = NULL;
+#endif
+
 	return context;
 }
 
@@ -97,14 +105,20 @@ void mqtt3_context_cleanup(mosquitto_db *db, mqtt3_context *context, bool do_fre
 	if(!context) return;
 
 	if(context->core.sock != -1){
-		mqtt3_socket_close(context);
+		_mosquitto_socket_close(&context->core);
 	}
-	if(context->clean_session && !context->duplicate){
+	if(context->clean_session && !context->duplicate && db){
 		mqtt3_subs_clean_session(context, &db->subs);
 		mqtt3_db_messages_delete(context);
 	}
-	if(context->address) _mosquitto_free(context->address);
-	if(context->core.id) _mosquitto_free(context->core.id);
+	if(context->address){
+		_mosquitto_free(context->address);
+		context->address = NULL;
+	}
+	if(context->core.id){
+		_mosquitto_free(context->core.id);
+		context->core.id = NULL;
+	}
 	_mosquitto_packet_cleanup(&(context->core.in_packet));
 	while(context->core.out_packet){
 		_mosquitto_packet_cleanup(context->core.out_packet);
@@ -117,12 +131,15 @@ void mqtt3_context_cleanup(mosquitto_db *db, mqtt3_context *context, bool do_fre
 		if(context->core.will->payload) _mosquitto_free(context->core.will->payload);
 		_mosquitto_free(context->core.will);
 	}
-	msg = context->msgs;
-	while(msg){
-		next = msg->next;
-		msg->store->ref_count--;
-		_mosquitto_free(msg);
-		msg = next;
+	if(do_free || context->clean_session){
+		msg = context->msgs;
+		while(msg){
+			next = msg->next;
+			msg->store->ref_count--;
+			_mosquitto_free(msg);
+			msg = next;
+		}
+		context->msgs = NULL;
 	}
 	if(do_free){
 		_mosquitto_free(context);

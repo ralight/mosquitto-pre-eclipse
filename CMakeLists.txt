@@ -7,7 +7,20 @@ project(mosquitto)
 
 cmake_minimum_required(VERSION 2.6)
 
-set (VERSION 0.9)
+set (VERSION 0.9.99)
+
+option(USE_SSL
+	"Include SSL support?" ON)
+
+if (${USE_SSL} STREQUAL ON)
+	# Find needed libraries
+	include(FindOpenSSL)
+	if (NOT OPENSSL_FOUND)
+		message(FATAL_ERROR "OpenSSL was requested but couldn't be found.")
+	endif (NOT OPENSSL_FOUND)
+	add_definitions("-DWITH_SSL")
+endif (${USE_SSL} STREQUAL ON)
+
 
 if (WIN32)
 	execute_process(COMMAND echo "%DATE% %TIME%" OUTPUT_VARIABLE TIMESTAMP
@@ -21,11 +34,15 @@ add_definitions (-DVERSION=\"${VERSION}\" -DTIMESTAMP=\"${TIMESTAMP}\")
 
 if (WIN32)
     set (BINDEST .)
+	set (CONFDEST .)
     set (LIBDEST .)
+	set (MANDEST man)
     set (SHAREDEST .)
 else (WIN32)
     set (BINDEST bin)
+	set (CONFDEST etc)
     set (LIBDEST lib${LIB_SUFFIX})
+	set (MANDEST share/man)
     set (SHAREDEST share/mosquitto)
 endif (WIN32)
 
@@ -51,3 +68,10 @@ endif (NOT HAVE_STDINT_H)
 add_subdirectory(lib)
 add_subdirectory(client)
 add_subdirectory(src)
+add_subdirectory(man)
+
+# ========================================
+# Install config file
+# ========================================
+
+install(FILES mosquitto.conf DESTINATION ${CONFDEST})

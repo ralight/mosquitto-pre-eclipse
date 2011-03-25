@@ -29,17 +29,24 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <assert.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 
 #include <config.h>
 #include <net_mosq.h>
 #include <mqtt3.h>
 #include <memory_mosq.h>
+#include <mosquitto.h>
+
+#ifdef WITH_BRIDGE
 
 int mqtt3_bridge_new(mosquitto_db *db, struct _mqtt3_bridge *bridge)
 {
 	int i;
 	mqtt3_context *new_context = NULL;
 	mqtt3_context **tmp_contexts;
+	char hostname[256];
+	int len;
 
 	assert(db);
 	assert(bridge);
@@ -62,13 +69,28 @@ int mqtt3_bridge_new(mosquitto_db *db, struct _mqtt3_bridge *bridge)
 			db->contexts = tmp_contexts;
 			db->contexts[db->context_count-1] = new_context;
 		}else{
+			_mosquitto_free(new_context);
 			return MOSQ_ERR_NOMEM;
 		}
 	}
 
 	/* FIXME - need to check that this name isn't already in use. */
-	new_context->core.id = _mosquitto_strdup(bridge->name);
+	if(bridge->clientid){
+		new_context->core.id = _mosquitto_strdup(bridge->clientid);
+	}else{
+		if(!gethostname(hostname, 256)){
+			len = strlen(hostname) + strlen(bridge->name) + 2;
+			new_context->core.id = _mosquitto_malloc(len);
+			if(!new_context->core.id){
+				return MOSQ_ERR_NOMEM;
+			}
+			snprintf(new_context->core.id, len, "%s.%s", hostname, bridge->name);
+		}else{
+			return 1;
+		}
+	}
 	if(!new_context->core.id){
+		_mosquitto_free(new_context);
 		return MOSQ_ERR_NOMEM;
 	}
 	new_context->core.username = new_context->bridge->username;
@@ -82,7 +104,7 @@ int mqtt3_bridge_connect(mosquitto_db *db, mqtt3_context *context)
 	int new_sock = -1;
 	int i;
 
-	if(!context || !context->bridge) return 1;
+	if(!context || !context->bridge) return MOSQ_ERR_INVAL;
 
 	context->core.state = mosq_cs_new;
 	context->duplicate = false;
@@ -95,7 +117,7 @@ int mqtt3_bridge_connect(mosquitto_db *db, mqtt3_context *context)
 	mqtt3_bridge_packet_cleanup(context);
 
 	mqtt3_log_printf(MOSQ_LOG_NOTICE, "Connecting bridge %s", context->bridge->name);
-	new_sock = _mosquitto_socket_connect(context->bridge->address, context->bridge->port);
+	new_sock = _mosquitto_socket_connect(&context->core, context->bridge->address, context->bridge->port);
 	if(new_sock == -1){
 		mqtt3_log_printf(MOSQ_LOG_ERR, "Error creating bridge.");
 		return 1;
@@ -117,7 +139,7 @@ int mqtt3_bridge_connect(mosquitto_db *db, mqtt3_context *context)
 		}
 	}
 
-	return 0;
+	return MOSQ_ERR_SUCCESS;
 }
 
 void mqtt3_bridge_packet_cleanup(mqtt3_context *context)
@@ -134,3 +156,5 @@ void mqtt3_bridge_packet_cleanup(mqtt3_context *context)
 
 	_mosquitto_packet_cleanup(&(context->core.in_packet));
 }
+
+#endif
