@@ -10,7 +10,8 @@
 
 	<refnamediv>
 		<refname>mosquitto_control</refname>
-		<refpurpose>a client for controlling the run time operation of the mosquitto broker</refpurpose>
+		<refpurpose>a program for controlling the run time operation of the
+		mosquitto broker</refpurpose>
 	</refnamediv>
 
 	<refsynopsisdiv>
@@ -21,11 +22,69 @@
 
 	<refsect1>
 		<title>Description</title>
-		<para><command>mosquitto_control</command> is </para>
+		<para><command>mosquitto_control</command> can be used to control
+		various runtime parameters of a <command>mosquitto</command> MQTT
+		broker, if the broker is configured to allow this.</para>
+		<para>Examples of the parameters that can be controlled are:</para>
+		<itemizedlist mark="circle">
+			<listitem><para>Adding/removing/starting/stopping bridges</para></listitem>
+			<listitem><para>Adding/removing usernames and passwords</para></listitem>
+			<listitem><para>Adding/removing topic access control lists</para></listitem>
+			<listitem><para>Clearing retained messages</para></listitem>
+		</itemizedlist>
 	</refsect1>
 
 	<refsect1>
 		<title>Options</title>
+		<variablelist>
+			<varlistentry>
+				<term><option>-d</option></term>
+				<term><option>--debug</option></term>
+				<listitem>
+					<para>Enable debug messages.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-h</option></term>
+				<term><option>--host</option></term>
+				<listitem>
+					<para>Specify the hostname or address of the broker to
+					connect to. Defaults to localhost.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-i</option></term>
+				<term><option>--id</option></term>
+				<listitem>
+					<para>The id to use for this client. If not given, defaults
+					to mosquitto_control_ appended with the process id of the
+					client.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-p</option></term>
+				<term><option>--port</option></term>
+				<listitem>
+					<para>Connect to the port specified instead of the default 1883.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>--pw</option></term>
+				<listitem>
+					<para>Provide a password to be used for authenticating with
+					the broker. Using this argument without also specifying a
+					username is invalid.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-u</option></term>
+				<term><option>--username</option></term>
+				<listitem>
+					<para>Provide a username to be used for authenticating with
+					the broker. See also the <option>--pw</option> argument.</para>
+				</listitem>
+			</varlistentry>
+		</variablelist>
 	</refsect1>
 
 	<refsect1>
@@ -34,7 +93,8 @@
 
 	<refsect1>
 		<title>Bugs</title>
-		<para><command>mosquitto_pub</command> bug information can be found at <uri type="webpage">http://launchpad.net/mosquitto</uri>.</para>
+		<para><command>mosquitto_control</command> bug information can be found
+		at <uri type="webpage">http://launchpad.net/mosquitto</uri>.</para>
 	</refsect1>
 
 	<refsect1>
