@@ -45,6 +45,7 @@ endif (WIN32)
 
 add_subdirectory(lib)
 add_subdirectory(client)
+add_subdirectory(control)
 add_subdirectory(src)
 add_subdirectory(man)
 
