@@ -155,7 +155,6 @@ mqtt3_context *mqtt3_context_find(mosquitto_db *db, const char *client_id)
 	 * messages. */
 	int i;
 
-	printf("ctxtf: %s\n", client_id);
 	for(i=0; i<db->context_count; i++){
 		if(db->contexts[i] && !strcmp(db->contexts[i]->core.id, client_id)){
 			return db->contexts[i];
