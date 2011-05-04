@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <mqtt3.h>
 
-int _mosquitto_control_process(struct _mosquitto_db *db, const char *topic, struct mosquitto_msg_store *stored)
+int mosquitto_control_process(struct _mosquitto_db *db, const char *topic, struct mosquitto_msg_store *stored)
 {
 	if(!db) return MOSQ_ERR_INVAL;
 	return MOSQ_ERR_SUCCESS;

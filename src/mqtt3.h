@@ -360,7 +360,7 @@ int mqtt3_unpwd_cleanup(struct _mosquitto_db *db);
  * Control related functions
  * ============================================================ */
 #ifdef WITH_CONTROL
-int _mosquitto_control_process(struct _mosquitto_db *db, const char *topic, struct mosquitto_msg_store *stored);
+int mosquitto_control_process(struct _mosquitto_db *db, const char *source_id, const char *topic, struct mosquitto_msg_store *stored);
 #endif
 
 #endif
