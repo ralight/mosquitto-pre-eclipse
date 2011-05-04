@@ -85,21 +85,12 @@ void my_publish_callback(void *obj, uint16_t mid)
 
 void print_usage(void)
 {
-	printf("mosquitto_control is a simple mqtt client that will publish a message on a single topic and exit.\n\n");
-	printf("Usage: mosquitto_control [-d] [-h host] [-i id] [-p port] [-q qos] [-r] {-f file | -l | -n | -m message} -t topic\n");
-	printf("                     [-u username [--pw password]]\n\n");
+	printf("mosquitto_control is used to provide runtime control of a mosquitto mqtt broker.\n\n");
+	printf("Usage: mosquitto_control [-d] [-h host] [-i id] [-p port] [-u username [--pw password]] <action>\n\n");
 	printf(" -d : enable debug messages.\n");
-	printf(" -f : send the contents of a file as the message.\n");
 	printf(" -h : mqtt host to connect to. Defaults to localhost.\n");
 	printf(" -i : id to use for this client. Defaults to mosquitto_control_ appended with the process id.\n");
-	printf(" -l : read messages from stdin, sending a separate message for each line.\n");
-	printf(" -m : message payload to send.\n");
-	printf(" -n : send a null (zero length) message.\n");
 	printf(" -p : network port to connect to. Defaults to 1883.\n");
-	printf(" -q : quality of service level to use for all messages. Defaults to 0.\n");
-	printf(" -r : message should be retained.\n");
-	printf(" -s : read message from stdin, sending the entire input as a message.\n");
-	printf(" -t : mqtt topic to publish to.\n");
 	printf(" -u : provide a username (requires MQTT 3.1 broker)\n");
 	printf(" --pw : provide a password (requires MQTT 3.1 broker)\n");
 	printf("\nSee http://mosquitto.org/ for more information.\n\n");
