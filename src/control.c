@@ -30,11 +30,53 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <config.h>
 #ifdef WITH_CONTROL
 
+#include <stdio.h>
+#include <string.h>
+
+#include <memory_mosq.h>
 #include <mqtt3.h>
 
-int mosquitto_control_process(struct _mosquitto_db *db, const char *topic, struct mosquitto_msg_store *stored)
+static int _control_user_list(struct _mosquitto_db *db, mqtt3_context *context)
 {
-	if(!db) return MOSQ_ERR_INVAL;
+	struct _mosquitto_unpwd *unpwd = NULL;
+	int rc = 0;
+	char *buf;
+	int len;
+
+	unpwd = db->unpwd;
+	while(!rc && unpwd){
+		if(unpwd->username){
+			len = strlen(unpwd->username) + 11;
+			buf = _mosquitto_malloc(len);
+			if(!buf) return MOSQ_ERR_NOMEM;
+			if(unpwd->password){
+				snprintf(buf, len, "%s:XXXXXXXXXX", unpwd->username);
+			}else{
+				snprintf(buf, len, "%s", unpwd->username);
+			}
+			rc = mqtt3_db_messages_easy_queue(db, NULL, "$SYS/control/user/result", 2, strlen(buf), (uint8_t *)buf, 0);
+			_mosquitto_free(buf);
+		}
+		unpwd = unpwd->next;
+	}
+	/* Send a zero length message as an end-of-data signifier. */
+	rc = mqtt3_db_messages_easy_queue(db, NULL, "$SYS/control/user/result", 2, 0, NULL, 0);
+	return rc;
+}
+
+int mosquitto_control_process(struct _mosquitto_db *db, const char *source_id, const char *topic, struct mosquitto_msg_store *stored)
+{
+	mqtt3_context *context;
+
+	if(!source_id) return MOSQ_ERR_SUCCESS;
+
+	context = mqtt3_context_find(db, source_id);
+	if(!context) return MOSQ_ERR_UNKNOWN;
+
+	if(!strcmp(topic, "$SYS/control/user/list")){
+		return _control_user_list(db, context);
+	}
+
 	return MOSQ_ERR_SUCCESS;
 }
 
