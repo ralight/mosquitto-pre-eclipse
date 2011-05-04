@@ -355,4 +355,11 @@ int mqtt3_pwfile_parse(struct _mosquitto_db *db);
 int mqtt3_unpwd_check(struct _mosquitto_db *db, const char *username, const char *password);
 int mqtt3_unpwd_cleanup(struct _mosquitto_db *db);
 
+/* ============================================================
+ * Control related functions
+ * ============================================================ */
+#ifdef WITH_CONTROL
+int _mosquitto_control_process(struct _mosquitto_db *db, const char *topic, struct mosquitto_msg_store *stored);
+#endif
+
 #endif
