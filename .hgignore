@@ -6,6 +6,7 @@ syntax: glob
 
 client/mosquitto_pub
 client/mosquitto_sub
+control/mosquitto_control
 man/mosquitto.8
 man/mosquitto.conf.5
 src/mosquitto
