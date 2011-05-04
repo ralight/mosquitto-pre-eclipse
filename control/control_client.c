@@ -42,13 +42,36 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <mosquitto.h>
 
+#define ACTION_NONE 0
+#define ACTION_ADD 1
+#define ACTION_DELETE 2
+#define ACTION_LIST 3
+
+#define OBJECT_NONE 0
+#define OBJECT_USER 1
+#define OBJECT_BRIDGE 2
+#define OBJECT_ACL 3
+
 static bool connected = true;
 static char *username = NULL;
 static char *password = NULL;
+static int action = ACTION_NONE;
+static int object = OBJECT_NONE;
+static uint16_t subscribe_mid = 0;
 
 void my_connect_callback(void *obj, int result)
 {
+	struct mosquitto *mosq = (struct mosquitto *)obj;
+
 	if(!result){
+		switch(object){
+			case OBJECT_USER:
+				mosquitto_subscribe(mosq, &subscribe_mid, "$SYS/control/user/result", 2);
+				break;
+			default:
+				connected = false;
+				break;
+		}
 		fprintf(stderr, "Connection succeeded.\n");
 	}else{
 		switch(result){
@@ -79,8 +102,28 @@ void my_disconnect_callback(void *obj)
 	connected = false;
 }
 
+void my_message_callback(void *obj, const struct mosquitto_message *msg)
+{
+	printf("%s\n", msg->payload);
+}
+
 void my_publish_callback(void *obj, uint16_t mid)
 {
+}
+
+void my_subscribe_callback(void *obj, uint16_t mid, int qos_count, const uint8_t *qos)
+{
+	struct mosquitto *mosq = (struct mosquitto *)obj;
+
+	if(mid == subscribe_mid){
+		switch(action){
+			case ACTION_LIST:
+				mosquitto_publish(mosq, NULL, "$SYS/control/user/list", 0, NULL, 2, false);
+				break;
+			default:
+				break;
+		}
+	}
 }
 
 void print_usage(void)
@@ -194,7 +237,9 @@ int main(int argc, char *argv[])
 
 	mosquitto_connect_callback_set(mosq, my_connect_callback);
 	mosquitto_disconnect_callback_set(mosq, my_disconnect_callback);
+	mosquitto_message_callback_set(mosq, my_message_callback);
 	mosquitto_publish_callback_set(mosq, my_publish_callback);
+	mosquitto_subscribe_callback_set(mosq, my_subscribe_callback);
 
 	if(mosquitto_connect(mosq, host, port, keepalive, true)){
 		fprintf(stderr, "Unable to connect.\n");
