@@ -374,6 +374,11 @@ int mqtt3_sub_search(struct _mosquitto_db *db, struct _mosquitto_subhier *root, 
 	assert(topic);
 
 	if(!strncmp(topic, "$SYS/", 5)){
+#ifdef WITH_CONTROL
+		if(!strncmp(topic, "$SYS/control", 12)){
+			return _mosquitto_control_process(db, topic, stored);
+		}
+#endif
 		tree = 2;
 		if(_sub_topic_tokenise(topic+5, &tokens)) return 1;
 	}else if(topic[0] == '/'){
