@@ -72,8 +72,8 @@ void my_connect_callback(void *obj, int result)
 				connected = false;
 				break;
 		}
-		fprintf(stderr, "Connection succeeded.\n");
 	}else{
+		connected = false;
 		switch(result){
 			case 1:
 				fprintf(stderr, "Connection Refused: unacceptable protocol version\n");
@@ -104,7 +104,13 @@ void my_disconnect_callback(void *obj)
 
 void my_message_callback(void *obj, const struct mosquitto_message *msg)
 {
-	printf("%s\n", msg->payload);
+	struct mosquitto *mosq = (struct mosquitto *)obj;
+	if(msg->payload){
+		printf("%s\n", msg->payload);
+	}else{
+		/* Zero length message indicates end of data. */
+		mosquitto_disconnect(mosq);
+	}
 }
 
 void my_publish_callback(void *obj, uint16_t mid)
@@ -247,8 +253,6 @@ int main(int argc, char *argv[])
 	}
 
 	while(!mosquitto_loop(mosq, -1) && connected){
-		/* FIXME - need something here! */
-		connected = false;
 	}
 	mosquitto_destroy(mosq);
 	mosquitto_lib_cleanup();
