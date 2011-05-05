@@ -27,6 +27,27 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
+/* Example commands
+ *
+ * add user roger
+ * add user roger:password
+ * delete user roger
+ * list users
+ *
+ * clear retained foo/bar/#
+ *
+ * add bridge bridge-name,address=192.168.0.1,address=192.168.0.2:1884,topic=in:foo/bar/#
+ * delete bridge bridge-name
+ * start bridge bridge-name
+ * stop bridge bridge-name
+ * list bridges
+ *
+ * add acl topic=read:$SYS/#
+ * add acl user=roger,topic=write:foo
+ * add acl user=roger,topic=#
+ * delete acl topic=read:$SYS/#
+ * list acls
+ */
 
 #include <fcntl.h>
 #include <stdbool.h>
