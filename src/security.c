@@ -313,10 +313,8 @@ int mqtt3_aclfile_parse(struct _mosquitto_db *db)
 int mqtt3_pwfile_parse(struct _mosquitto_db *db)
 {
 	FILE *pwfile;
-	struct _mosquitto_unpwd *unpwd;
 	char buf[256];
 	char *username, *password;
-	int len;
 
 	if(!db || !db->config) return MOSQ_ERR_INVAL;
 
@@ -329,27 +327,8 @@ int mqtt3_pwfile_parse(struct _mosquitto_db *db)
 		if(fgets(buf, 256, pwfile)){
 			username = strtok(buf, ":");
 			if(username){
-				unpwd = _mosquitto_calloc(1, sizeof(struct _mosquitto_unpwd));
-				if(!unpwd) return MOSQ_ERR_NOMEM;
-				unpwd->username = _mosquitto_strdup(username);
-				if(!unpwd) return MOSQ_ERR_NOMEM;
-				len = strlen(unpwd->username);
-				while(unpwd->username[len-1] == 10 || unpwd->username[len-1] == 13){
-					unpwd->username[len-1] = '\0';
-					len = strlen(unpwd->username);
-				}
 				password = strtok(NULL, ":");
-				if(password){
-					unpwd->password = _mosquitto_strdup(password);
-					if(!unpwd) return MOSQ_ERR_NOMEM;
-					len = strlen(unpwd->password);
-					while(unpwd->password[len-1] == 10 || unpwd->password[len-1] == 13){
-						unpwd->password[len-1] = '\0';
-						len = strlen(unpwd->password);
-					}
-				}
-				unpwd->next = db->unpwd;
-				db->unpwd = unpwd;
+				mqtt3_user_add(db, username, password);
 			}
 		}
 	}
@@ -402,3 +381,38 @@ int mqtt3_unpwd_cleanup(struct _mosquitto_db *db)
 	return MOSQ_ERR_SUCCESS;
 }
 
+int mqtt3_user_add(struct _mosquitto_db *db, char *username, char *password)
+{
+	struct _mosquitto_unpwd *unpwd;
+	int len;
+
+	unpwd = _mosquitto_calloc(1, sizeof(struct _mosquitto_unpwd));
+	if(!unpwd) return MOSQ_ERR_NOMEM;
+	unpwd->username = _mosquitto_strdup(username);
+	if(!unpwd->username){
+		_mosquitto_free(unpwd);
+		return MOSQ_ERR_NOMEM;
+	}
+	len = strlen(unpwd->username);
+	while(unpwd->username[len-1] == 10 || unpwd->username[len-1] == 13){
+		unpwd->username[len-1] = '\0';
+		len = strlen(unpwd->username);
+	}
+	if(password){
+		unpwd->password = _mosquitto_strdup(password);
+		if(!unpwd->password){
+			_mosquitto_free(unpwd->username);
+			_mosquitto_free(unpwd);
+			return MOSQ_ERR_NOMEM;
+		}
+		len = strlen(unpwd->password);
+		while(unpwd->password[len-1] == 10 || unpwd->password[len-1] == 13){
+			unpwd->password[len-1] = '\0';
+			len = strlen(unpwd->password);
+		}
+	}
+	unpwd->next = db->unpwd;
+	db->unpwd = unpwd;
+
+	return MOSQ_ERR_SUCCESS;
+}

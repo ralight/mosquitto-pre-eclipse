@@ -355,6 +355,7 @@ int mqtt3_acl_check(struct _mosquitto_db *db, mqtt3_context *context, const char
 int mqtt3_pwfile_parse(struct _mosquitto_db *db);
 int mqtt3_unpwd_check(struct _mosquitto_db *db, const char *username, const char *password);
 int mqtt3_unpwd_cleanup(struct _mosquitto_db *db);
+int mqtt3_user_add(struct _mosquitto_db *db, char *username, char *password);
 
 /* ============================================================
  * Control related functions
