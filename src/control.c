@@ -36,6 +36,25 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <memory_mosq.h>
 #include <mqtt3.h>
 
+static int _control_user_add(struct _mosquitto_db *db, mqtt3_context *context, struct mosquitto_msg_store *stored)
+{
+	int rc = MOSQ_ERR_SUCCESS;
+	char *username, *password;
+	char *payload;
+
+	payload = _mosquitto_calloc(stored->msg.payloadlen+1, sizeof(char));
+	if(!payload) return MOSQ_ERR_NOMEM;
+	memcpy(payload, stored->msg.payload, stored->msg.payloadlen);
+	username = strtok(payload, ":");
+	if(username){
+		password = strtok(NULL, ":");
+		rc = mqtt3_user_add(db, username, password);
+	}
+	_mosquitto_free(payload);
+
+	return rc;
+}
+
 static int _control_user_list(struct _mosquitto_db *db, mqtt3_context *context)
 {
 	struct _mosquitto_unpwd *unpwd = NULL;
@@ -73,7 +92,13 @@ int mosquitto_control_process(struct _mosquitto_db *db, const char *source_id, c
 	context = mqtt3_context_find(db, source_id);
 	if(!context) return MOSQ_ERR_UNKNOWN;
 
-	if(!strcmp(topic, "$SYS/control/user/list")){
+	if(!strcmp(topic, "$SYS/control/user/add")){
+		if(stored->msg.payloadlen && stored->msg.payload){
+			return _control_user_add(db, context, stored);
+		}else{
+			/* FIXME - send an error message back. */
+		}
+	}else if(!strcmp(topic, "$SYS/control/user/list")){
 		return _control_user_list(db, context);
 	}
 
