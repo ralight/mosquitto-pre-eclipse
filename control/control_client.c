@@ -76,23 +76,28 @@ POSSIBILITY OF SUCH DAMAGE.
 static bool connected = true;
 static char *username = NULL;
 static char *password = NULL;
-static int action = ACTION_NONE;
-static int object = OBJECT_NONE;
+static int action = ACTION_ADD;
+static int object = OBJECT_USER;
 static uint16_t subscribe_mid = 0;
+static char *id = NULL;
 
 void my_connect_callback(void *obj, int result)
 {
 	struct mosquitto *mosq = (struct mosquitto *)obj;
+	char *sub;
+	int len;
 
 	if(!result){
-		switch(object){
-			case OBJECT_USER:
-				mosquitto_subscribe(mosq, &subscribe_mid, "$SYS/control/user/result", 2);
-				break;
-			default:
-				connected = false;
-				break;
+		len = strlen(id) + strlen("$SYS/control/result/");
+		sub = malloc(len + 1);
+		if(!sub){
+			connected = false;
+			fprintf(stderr, "Error: Out of memory.\n");
+			return;
 		}
+		snprintf(sub, len, "$SYS/control/result/%s", id);
+		mosquitto_subscribe(mosq, &subscribe_mid, sub, 2);
+		free(sub);
 	}else{
 		connected = false;
 		switch(result){
@@ -141,9 +146,14 @@ void my_publish_callback(void *obj, uint16_t mid)
 void my_subscribe_callback(void *obj, uint16_t mid, int qos_count, const uint8_t *qos)
 {
 	struct mosquitto *mosq = (struct mosquitto *)obj;
+	char *str;
 
 	if(mid == subscribe_mid){
 		switch(action){
+			case ACTION_ADD:
+				str = strdup("bob:bob");
+				mosquitto_publish(mosq, NULL, "$SYS/control/user/add", strlen(str), (uint8_t *)str, 2, false);
+				break;
 			case ACTION_LIST:
 				mosquitto_publish(mosq, NULL, "$SYS/control/user/list", 0, NULL, 2, false);
 				break;
@@ -168,7 +178,6 @@ void print_usage(void)
 
 int main(int argc, char *argv[])
 {
-	char *id = NULL;
 	int i;
 	char *host = "localhost";
 	int port = 1883;

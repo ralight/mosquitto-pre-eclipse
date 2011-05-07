@@ -36,7 +36,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <memory_mosq.h>
 #include <mqtt3.h>
 
-static int _control_user_add(struct _mosquitto_db *db, mqtt3_context *context, struct mosquitto_msg_store *stored)
+static int _control_user_add(struct _mosquitto_db *db, mqtt3_context *context, struct mosquitto_msg_store *stored, const char *topic)
 {
 	int rc = MOSQ_ERR_SUCCESS;
 	char *username, *password;
@@ -55,7 +55,7 @@ static int _control_user_add(struct _mosquitto_db *db, mqtt3_context *context, s
 	return rc;
 }
 
-static int _control_user_list(struct _mosquitto_db *db, mqtt3_context *context)
+static int _control_user_list(struct _mosquitto_db *db, mqtt3_context *context, const char *topic)
 {
 	struct _mosquitto_unpwd *unpwd = NULL;
 	int rc = 0;
@@ -73,36 +73,45 @@ static int _control_user_list(struct _mosquitto_db *db, mqtt3_context *context)
 			}else{
 				snprintf(buf, len, "%s", unpwd->username);
 			}
-			rc = mqtt3_db_messages_easy_queue(db, NULL, "$SYS/control/user/result", 2, strlen(buf), (uint8_t *)buf, 0);
+			rc = mqtt3_db_messages_easy_queue(db, NULL, topic, 2, strlen(buf), (uint8_t *)buf, 0);
 			_mosquitto_free(buf);
 		}
 		unpwd = unpwd->next;
 	}
 	/* Send a zero length message as an end-of-data signifier. */
-	rc = mqtt3_db_messages_easy_queue(db, NULL, "$SYS/control/user/result", 2, 0, NULL, 0);
+	rc = mqtt3_db_messages_easy_queue(db, NULL, topic, 2, 0, NULL, 0);
 	return rc;
 }
 
 int mosquitto_control_process(struct _mosquitto_db *db, const char *source_id, const char *topic, struct mosquitto_msg_store *stored)
 {
+	int rc = MOSQ_ERR_SUCCESS;
 	mqtt3_context *context;
+	int len;
+	char *result_topic;
 
 	if(!source_id) return MOSQ_ERR_SUCCESS;
 
 	context = mqtt3_context_find(db, source_id);
 	if(!context) return MOSQ_ERR_UNKNOWN;
 
+	len = strlen(context->core.id) + strlen("$SYS/control/result/");
+	result_topic = _mosquitto_calloc(len + 1, sizeof(char));
+	if(!result_topic) return MOSQ_ERR_NOMEM;
+	snprintf(result_topic, len, "$SYS/control/result/%s", context->core.id);
+
 	if(!strcmp(topic, "$SYS/control/user/add")){
 		if(stored->msg.payloadlen && stored->msg.payload){
-			return _control_user_add(db, context, stored);
+			rc = _control_user_add(db, context, stored, result_topic);
 		}else{
 			/* FIXME - send an error message back. */
 		}
 	}else if(!strcmp(topic, "$SYS/control/user/list")){
-		return _control_user_list(db, context);
+		rc = _control_user_list(db, context, result_topic);
 	}
 
-	return MOSQ_ERR_SUCCESS;
+	_mosquitto_free(result_topic);
+	return rc;
 }
 
 #endif
