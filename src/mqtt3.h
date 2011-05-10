@@ -98,6 +98,7 @@ typedef struct {
 	bool persistence;
 	char *persistence_location;
 	char *persistence_file;
+	bool remote_control;
 	int retry_interval;
 	int store_clean_interval;
 	int sys_interval;

@@ -31,7 +31,10 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef CMAKE
 #include <config.h>
+#endif
+
 #include <mqtt3.h>
 #include <memory_mosq.h>
 
@@ -63,6 +66,7 @@ void mqtt3_config_init(mqtt3_config *config)
 	config->persistence_location = NULL;
 	config->persistence_file = "mosquitto.db";
 	config->pid_file = NULL;
+	config->remote_control = false;
 	config->retry_interval = 20;
 	config->store_clean_interval = 10;
 	config->sys_interval = 10;
@@ -247,8 +251,6 @@ int mqtt3_config_read(mqtt3_config *config, const char *filename)
 						mqtt3_log_printf(MOSQ_LOG_ERR, "Error: Empty clientid value in configuration.");
 						return MOSQ_ERR_INVAL;
 					}
-				}else if(!strcmp(token, "ext_sqlite_regex")){
-					mqtt3_log_printf(MOSQ_LOG_WARNING, "Warning: ext_sqlite_regex variable no longer in use.");
 				}else if(!strcmp(token, "cleansession")){
 #ifdef WITH_BRIDGE
 					if(!cur_bridge){
@@ -493,6 +495,8 @@ int mqtt3_config_read(mqtt3_config *config, const char *filename)
 						return MOSQ_ERR_INVAL;
 					}
 					config->default_listener.port = port_tmp;
+				}else if(!strcmp(token, "remote_control")){
+					if(_mqtt3_conf_parse_bool(&token, "remote_control", &config->remote_control)) return 1;
 				}else if(!strcmp(token, "retry_interval")){
 					if(_mqtt3_conf_parse_int(&token, "retry_interval", &config->retry_interval)) return 1;
 					if(config->retry_interval < 1 || config->retry_interval > 3600){

@@ -242,6 +242,25 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>remote_control</option></term>
+				<listitem>
+					<para>Boolean value to enable/disable remote control of the
+					broker. This allows the use of the mosquitto_control or
+					other client to control various runtime parameters of the
+					broker, including username and access control.  See
+					<citerefentry><refentrytitle>mosquitto_control</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+					for more details.</para>
+					<para>If using this option, it is *strongly* recommended
+					that access to the $SYS/control hierarchy is restricted by
+					the use of the pwfile, aclfile and allow_anonymous options.
+					Any user that has write (publish) access to this hierarchy
+					can make significant run time changes to the broker such as
+					stopping the broker or allowing access for unauthorised
+					users. Any user that has read access can likewise observe
+					any changes being made.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>retry_interval</option></term>
 				<listitem>
 					<para>The integer number of seconds after a QoS=1 or QoS=2
@@ -404,6 +423,10 @@
 		<para>
 			<citerefentry>
 				<refentrytitle>mosquitto</refentrytitle>
+				<manvolnum>8</manvolnum>
+			</citerefentry>
+			<citerefentry>
+				<refentrytitle>mosquitto_control</refentrytitle>
 				<manvolnum>8</manvolnum>
 			</citerefentry>
 			<citerefentry>
