@@ -375,7 +375,7 @@ int mqtt3_sub_search(struct _mosquitto_db *db, struct _mosquitto_subhier *root, 
 
 	if(!strncmp(topic, "$SYS/", 5)){
 #ifdef WITH_CONTROL
-		if(source_id && !strncmp(topic, "$SYS/control", 12)){
+		if(db->config->remote_control && source_id && !strncmp(topic, "$SYS/control", 12)){
 			rc = mosquitto_control_process(db, source_id, topic, stored);
 			if(rc) return rc;
 		}
