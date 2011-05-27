@@ -331,6 +331,7 @@ int mqtt3_config_read(mqtt3_config *config, const char *filename)
 							mqtt3_log_printf(MOSQ_LOG_ERR, "Error: Invalid port value (%d).", port_tmp);
 							return MOSQ_ERR_INVAL;
 						}
+						config->listeners[config->listener_count-1].mount_point = NULL;
 						config->listeners[config->listener_count-1].port = port_tmp;
 						token = strtok(NULL, " ");
 						if(token){
@@ -411,6 +412,22 @@ int mqtt3_config_read(mqtt3_config *config, const char *filename)
 					}else{
 						mqtt3_log_printf(MOSQ_LOG_ERR, "Error: Empty max_queued_messages value in configuration.");
 					}
+				}else if(!strcmp(token, "mount_point")){
+					if(config->listener_count == 0){
+						mqtt3_log_printf(MOSQ_LOG_ERR, "Error: You must use create a listener before using the mount_point option in the configuration file.");
+						return MOSQ_ERR_INVAL;
+					}
+					token = strtok(NULL, " ");
+					if(token){
+							config->listeners[config->listener_count-1].mount_point = _mosquitto_strdup(token);
+							if(!config->listeners[config->listener_count-1].mount_point){
+								mqtt3_log_printf(MOSQ_LOG_ERR, "Error: Out of memory.");
+								return MOSQ_ERR_NOMEM;
+							}
+					}else{
+						mqtt3_log_printf(MOSQ_LOG_ERR, "Error: Empty mount_point value in configuration.");
+						return MOSQ_ERR_INVAL;
+					}
 				}else if(!strcmp(token, "password_file")){
 					token = strtok(NULL, " ");
 					if(token){
@@ -459,8 +476,8 @@ int mqtt3_config_read(mqtt3_config *config, const char *filename)
 						mqtt3_log_printf(MOSQ_LOG_ERR, "Error: Empty password_file value in configuration.");
 						return MOSQ_ERR_INVAL;
 					}
-				}else if(!strcmp(token, "persistence")){
-					if(_mqtt3_conf_parse_bool(&token, "persistence", &config->persistence)) return 1;
+				}else if(!strcmp(token, "persistence") || !strcmp(token, "retained_persistence")){
+					if(_mqtt3_conf_parse_bool(&token, token, &config->persistence)) return 1;
 				}else if(!strcmp(token, "persistence_file")){
 					token = strtok(NULL, " ");
 					if(token){
@@ -585,7 +602,6 @@ int mqtt3_config_read(mqtt3_config *config, const char *filename)
 #endif
 				}else if(!strcmp(token, "autosave_on_changes")
 						|| !strcmp(token, "connection_messages")
-						|| !strcmp(token, "retained_persistence")
 						|| !strcmp(token, "trace_level")
 						|| !strcmp(token, "addresses")
 						|| !strcmp(token, "idle_timeout")
@@ -595,7 +611,6 @@ int mqtt3_config_read(mqtt3_config *config, const char *filename)
 						|| !strcmp(token, "start_type")
 						|| !strcmp(token, "threshold")
 						|| !strcmp(token, "try_private")
-						|| !strcmp(token, "mount_point")
 						|| !strcmp(token, "ffdc_output")
 						|| !strcmp(token, "max_log_entries")
 						|| !strcmp(token, "trace_output")){

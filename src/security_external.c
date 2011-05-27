@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009,2010, Roger Light <roger@atchoo.org>
+Copyright (c) 2011 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -26,47 +26,46 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
-#include <assert.h>
-#include <stdarg.h>
+
+#ifndef CMAKE
+#include <config.h>
+#endif
+
 #include <stdio.h>
 #include <string.h>
 
-#include <mosquitto_internal.h>
-#include <mosquitto.h>
+#include <memory_mosq.h>
+#include <mqtt3.h>
 
-int mosquitto_log_init(struct mosquitto *mosq, int priorities, int destinations)
+#ifdef WITH_EXTERNAL_SECURITY_CHECKS
+
+int mosquitto_acl_init(struct _mosquitto_db *db)
 {
-	assert(mosq);
-
-	mosq->log_priorities = priorities;
-	mosq->log_destinations = destinations;
-
 	return MOSQ_ERR_SUCCESS;
 }
 
-int _mosquitto_log_printf(struct mosquitto *mosq, int priority, const char *fmt, ...)
+int mosquitto_acl_check(struct _mosquitto_db *db, mqtt3_context *context, const char *topic, int access)
 {
-	va_list va;
-	char s[500];
+	return MOSQ_ERR_ACL_DENIED;
+}
 
-	assert(mosq);
+void mosquitto_acl_cleanup(struct _mosquitto_db *db)
+{
+}
 
-	if((mosq->log_priorities & priority) && mosq->log_destinations != MOSQ_LOG_NONE){
-		va_start(va, fmt);
-		vsnprintf(s, 500, fmt, va);
-		va_end(va);
-		s[499] = '\0'; /* FIXME - quick hack to ensure string is null terminated. */
-
-		if(mosq->log_destinations & MOSQ_LOG_STDOUT){
-			fprintf(stdout, "%s\n", s);
-			fflush(stdout);
-		}
-		if(mosq->log_destinations & MOSQ_LOG_STDERR){
-			fprintf(stderr, "%s\n", s);
-			fflush(stderr);
-		}
-	}
-
+int mosquitto_unpwd_init(struct _mosquitto_db *db)
+{
 	return MOSQ_ERR_SUCCESS;
 }
 
+int mosquitto_unpwd_check(struct _mosquitto_db *db, const char *username, const char *password)
+{
+	return MOSQ_ERR_AUTH;
+}
+
+int mosquitto_unpwd_cleanup(struct _mosquitto_db *db)
+{
+	return MOSQ_ERR_SUCCESS;
+}
+
+#endif
