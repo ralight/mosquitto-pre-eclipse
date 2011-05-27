@@ -6,6 +6,12 @@
 - Implemented $SYS/broker/heap/maximum size
 - $SYS/broker/heap/current size and maximum size messages now include "bytes"
   to match rsmb message format.
+- Implemented the retained_persistence config file option - a synonym of the
+  "persistence" option.
+- Added security_external.c to broker source to make it easier for third
+  parties to add support for their existing username/password and ACL database
+  for security checks.
+- $SYS messages are now only republished when their value changes.
 
 0.10.1 - 20110512
 =================

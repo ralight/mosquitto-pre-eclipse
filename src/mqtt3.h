@@ -205,6 +205,7 @@ typedef struct _mqtt3_context{
 	struct _mqtt3_bridge *bridge;
 	mosquitto_client_msg *msgs;
 	struct _mosquitto_acl_user *acl_list;
+	char *mount_point;
 } mqtt3_context;
 
 /* ============================================================
@@ -245,7 +246,7 @@ int mqtt3_raw_suback(mqtt3_context *context, uint16_t mid, uint32_t payloadlen, 
 /* ============================================================
  * Network functions
  * ============================================================ */
-int mqtt3_socket_accept(mqtt3_context ***contexts, int *context_count, int listensock);
+int mqtt3_socket_accept(struct _mosquitto_db *db, int listensock);
 int mqtt3_socket_listen(const char *host, uint16_t port, int **socks, int *sock_count);
 
 int mqtt3_net_packet_queue(mqtt3_context *context, struct _mosquitto_packet *packet);
@@ -341,10 +342,17 @@ void mqtt3_bridge_packet_cleanup(mqtt3_context *context);
 /* ============================================================
  * Security related functions
  * ============================================================ */
+#ifdef WITH_EXTERNAL_SECURITY_CHECKS
+int mosquitto_unpwd_init(struct _mosquitto_db *db);
+int mosquitto_acl_init(struct _mosquitto_db *db);
+void mosquitto_acl_cleanup(struct _mosquitto_db *db);
+#else
 int mqtt3_aclfile_parse(struct _mosquitto_db *db);
-int mqtt3_acl_check(struct _mosquitto_db *db, mqtt3_context *context, const char *topic, int access);
 int mqtt3_pwfile_parse(struct _mosquitto_db *db);
-int mqtt3_unpwd_check(struct _mosquitto_db *db, const char *username, const char *password);
-int mqtt3_unpwd_cleanup(struct _mosquitto_db *db);
+#endif
+
+int mosquitto_acl_check(struct _mosquitto_db *db, mqtt3_context *context, const char *topic, int access);
+int mosquitto_unpwd_check(struct _mosquitto_db *db, const char *username, const char *password);
+int mosquitto_unpwd_cleanup(struct _mosquitto_db *db);
 
 #endif

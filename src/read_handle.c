@@ -27,6 +27,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <stdio.h>
 #include <string.h>
 
 #include <config.h>
@@ -151,6 +152,8 @@ int mqtt3_handle_publish(mosquitto_db *db, mqtt3_context *context)
 	uint8_t header = context->core.in_packet.command;
 	int res = 0;
 	struct mosquitto_msg_store *stored = NULL;
+	int len;
+	char *topic_mount;
 
 	dup = (header & 0x08)>>3;
 	qos = (header & 0x06)>>1;
@@ -170,6 +173,18 @@ int mqtt3_handle_publish(mosquitto_db *db, mqtt3_context *context)
 	}
 
 	payloadlen = context->core.in_packet.remaining_length - context->core.in_packet.pos;
+	if(context->mount_point){
+		len = strlen(context->mount_point) + strlen(topic) + 1;
+		topic_mount = _mosquitto_calloc(len, sizeof(char));
+		if(!topic_mount){
+			_mosquitto_free(topic);
+			return MOSQ_ERR_NOMEM;
+		}
+		snprintf(topic_mount, len, "%s%s", context->mount_point, topic);
+		_mosquitto_free(topic);
+		topic = topic_mount;
+	}
+
 	mqtt3_log_printf(MOSQ_LOG_DEBUG, "Received PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->core.id, dup, qos, retain, mid, topic, (long)payloadlen);
 	if(payloadlen){
 		payload = _mosquitto_calloc(payloadlen+1, sizeof(uint8_t));
@@ -180,7 +195,7 @@ int mqtt3_handle_publish(mosquitto_db *db, mqtt3_context *context)
 	}
 
 	/* Check for topic access */
-	rc = mqtt3_acl_check(db, context, topic, MOSQ_ACL_WRITE);
+	rc = mosquitto_acl_check(db, context, topic, MOSQ_ACL_WRITE);
 	if(rc == MOSQ_ERR_ACL_DENIED){
 		_mosquitto_free(topic);
 		if(payload) _mosquitto_free(payload);
