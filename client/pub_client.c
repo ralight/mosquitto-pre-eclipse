@@ -218,7 +218,7 @@ void print_usage(void)
 
 int main(int argc, char *argv[])
 {
-	char id[30];
+	char *id = NULL;
 	int i;
 	char *host = "localhost";
 	int port = 1883;
@@ -227,14 +227,13 @@ int main(int argc, char *argv[])
 	char buf[1024];
 	bool debug = false;
 	struct mosquitto *mosq = NULL;
+	int rc;
 
 	uint8_t *will_payload = NULL;
 	long will_payloadlen = 0;
 	int will_qos = 0;
 	bool will_retain = false;
 	char *will_topic = NULL;
-
-	snprintf(id, 30, "mosquitto_pub_%d", getpid());
 
 	for(i=1; i<argc; i++){
 		if(!strcmp(argv[i], "-p") || !strcmp(argv[i], "--port")){
@@ -281,8 +280,7 @@ int main(int argc, char *argv[])
 				print_usage();
 				return 1;
 			}else{
-				memset(id, 0, 30);
-				snprintf(id, 29, "%s", argv[i+1]);
+				id = argv[i+1];
 			}
 			i++;
 		}else if(!strcmp(argv[i], "-l") || !strcmp(argv[i], "--stdin-line")){
@@ -414,6 +412,15 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 	}
+	if(!id){
+		id = malloc(30);
+		if(!id){
+			fprintf(stderr, "Error: Out of memory.\n");
+			return 1;
+		}
+		snprintf(id, 30, "mosquitto_pub_%d", getpid());
+	}
+
 	if(!topic || mode == MSGMODE_NONE){
 		fprintf(stderr, "Error: Both topic and message must be supplied.\n");
 		print_usage();
@@ -456,9 +463,10 @@ int main(int argc, char *argv[])
 	mosquitto_disconnect_callback_set(mosq, my_disconnect_callback);
 	mosquitto_publish_callback_set(mosq, my_publish_callback);
 
-	if(mosquitto_connect(mosq, host, port, keepalive, true)){
-		fprintf(stderr, "Unable to connect.\n");
-		return 1;
+	rc = mosquitto_connect(mosq, host, port, keepalive, true);
+	if(rc){
+		fprintf(stderr, "Unable to connect (%d).\n", rc);
+		return rc;
 	}
 
 	while(!mosquitto_loop(mosq, -1) && connected){

@@ -152,7 +152,7 @@
 				<term><option>max_connections</option></term>
 				<listitem>
 					<para>Limit the total number of clients connected. Set to
-					-1 to have "unlimited" connections. Note that other limits
+					<literal>-1</literal> to have "unlimited" connections. Note that other limits
 					may be imposed that are outside the control of mosquitto.
 					See e.g. <citerefentry><refentrytitle>limits.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
 				</listitem>
@@ -239,6 +239,13 @@
 				<listitem>
 					<para>Set the network port for the default listener to
 					listen on. Defaults to 1883.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>retained_persistence</option></term>
+				<listitem>
+					<para>This is a synonym of the <option>persistence</option>
+					option.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

@@ -237,7 +237,7 @@ int loop(mqtt3_config *config, int *listensock, int listensock_count, int listen
 			for(i=0; i<listensock_count; i++){
 				if(pollfds[listensock[i]].revents & (POLLIN | POLLPRI)){
 					new_clients = 1;
-					while(mqtt3_socket_accept(&int_db.contexts, &int_db.context_count, listensock[i]) != -1){
+					while(mqtt3_socket_accept(&int_db, listensock[i]) != -1){
 					}
 				}
 			}
@@ -413,6 +413,19 @@ int main(int argc, char *argv[])
 	mqtt3_log_init(config.log_type, config.log_dest);
 	mqtt3_log_printf(MOSQ_LOG_INFO, "mosquitto version %s (build date %s) starting", VERSION, TIMESTAMP);
 
+#ifdef WITH_EXTERNAL_SECURITY_CHECKS
+	rc = mosquitto_unpwd_init(&int_db);
+	if(rc){
+		mqtt3_log_printf(MOSQ_LOG_ERR, "Error initialising passwords.");
+		return rc;
+	}
+
+	rc = mosquitto_acl_init(&int_db);
+	if(rc){
+		mqtt3_log_printf(MOSQ_LOG_ERR, "Error initialising ACLs.");
+		return rc;
+	}
+#else
 	/* Load username/password data if required. */
 	if(config.password_file){
 		rc = mqtt3_pwfile_parse(&int_db);
@@ -430,6 +443,7 @@ int main(int argc, char *argv[])
 			return rc;
 		}
 	}
+#endif
 
 	/* Set static $SYS messages */
 	snprintf(buf, 1024, "mosquitto version %s", VERSION);
@@ -529,7 +543,10 @@ int main(int argc, char *argv[])
 		_mosquitto_free(listensock);
 	}
 
-	mqtt3_unpwd_cleanup(&int_db);
+#ifdef WITH_EXTERNAL_SECURITY_CHECKS
+	mosquitto_acl_cleanup(&int_db);
+#endif
+	mosquitto_unpwd_cleanup(&int_db);
 
 	if(config.pid_file){
 		remove(config.pid_file);

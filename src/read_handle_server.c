@@ -27,6 +27,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <stdio.h>
 #include <string.h>
 
 #include <config.h>
@@ -34,6 +35,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <mqtt3.h>
 #include <mqtt3_protocol.h>
 #include <memory_mosq.h>
+#include <send_mosq.h>
 #include <util_mosq.h>
 
 int mqtt3_handle_connect(mosquitto_db *db, mqtt3_context *context)
@@ -53,12 +55,12 @@ int mqtt3_handle_connect(mosquitto_db *db, mqtt3_context *context)
 	
 	/* Don't accept multiple CONNECT commands. */
 	if(context->core.state != mosq_cs_new){
-		mqtt3_socket_close(context);
+		_mosquitto_socket_close(&context->core);
 		return MOSQ_ERR_PROTOCOL;
 	}
 
 	if(_mosquitto_read_string(&context->core.in_packet, &protocol_name)){
-		mqtt3_socket_close(context);
+		_mosquitto_socket_close(&context->core);
 		return 1;
 	}
 	if(!protocol_name){
@@ -75,7 +77,7 @@ int mqtt3_handle_connect(mosquitto_db *db, mqtt3_context *context)
 	_mosquitto_free(protocol_name);
 
 	if(_mosquitto_read_byte(&context->core.in_packet, &protocol_version)){
-		mqtt3_socket_close(context);
+		_mosquitto_socket_close(&context->core);
 		return 1;
 	}
 	if(protocol_version != PROTOCOL_VERSION){
@@ -112,7 +114,7 @@ int mqtt3_handle_connect(mosquitto_db *db, mqtt3_context *context)
 	if(db->config->clientid_prefixes){
 		if(strncmp(db->config->clientid_prefixes, client_id, strlen(db->config->clientid_prefixes))){
 			mqtt3_raw_connack(context, 2);
-			mqtt3_socket_close(context);
+			_mosquitto_socket_close(&context->core);
 			return MOSQ_ERR_SUCCESS;
 		}
 	}
@@ -146,10 +148,10 @@ int mqtt3_handle_connect(mosquitto_db *db, mqtt3_context *context)
 					password_flag = 0;
 				}
 			}
-			rc = mqtt3_unpwd_check(db, username, password);
+			rc = mosquitto_unpwd_check(db, username, password);
 			if(rc == MOSQ_ERR_AUTH){
 				mqtt3_raw_connack(context, 2);
-				mqtt3_socket_close(context);
+				_mosquitto_socket_close(&context->core);
 				return MOSQ_ERR_SUCCESS;
 			}else if(rc == MOSQ_ERR_INVAL){
 				return MOSQ_ERR_INVAL;
@@ -164,7 +166,7 @@ int mqtt3_handle_connect(mosquitto_db *db, mqtt3_context *context)
 
 	if(!username_flag && db->config->allow_anonymous == false){
 		mqtt3_raw_connack(context, 2);
-		mqtt3_socket_close(context);
+		_mosquitto_socket_close(&context->core);
 		return MOSQ_ERR_SUCCESS;
 	}
 
@@ -258,6 +260,8 @@ int mqtt3_handle_subscribe(mosquitto_db *db, mqtt3_context *context)
 	uint8_t qos;
 	uint8_t *payload = NULL, *tmp_payload;
 	uint32_t payloadlen = 0;
+	int len;
+	char *sub_mount;
 
 	if(!context) return MOSQ_ERR_INVAL;
 	mqtt3_log_printf(MOSQ_LOG_DEBUG, "Received SUBSCRIBE from %s", context->core.id);
@@ -297,6 +301,19 @@ int mqtt3_handle_subscribe(mosquitto_db *db, mqtt3_context *context)
 				_mosquitto_free(sub);
 				if(payload) _mosquitto_free(payload);
 				return 1;
+			}
+			if(context->mount_point){
+				len = strlen(context->mount_point) + strlen(sub) + 1;
+				sub_mount = _mosquitto_calloc(len, sizeof(char));
+				if(!sub_mount){
+					_mosquitto_free(sub);
+					if(payload) _mosquitto_free(payload);
+					return MOSQ_ERR_NOMEM;
+				}
+				snprintf(sub_mount, len, "%s%s", context->mount_point, sub);
+				_mosquitto_free(sub);
+				sub = sub_mount;
+
 			}
 			mqtt3_log_printf(MOSQ_LOG_DEBUG, "\t%s (QoS %d)", sub, qos);
 			/* FIXME - need to deny access to retained messages. */
@@ -358,7 +375,7 @@ int mqtt3_handle_unsubscribe(mosquitto_db *db, mqtt3_context *context)
 		}
 	}
 
-	if(mqtt3_send_command_with_mid(context, UNSUBACK, mid, false)) return 1;
+	if(_mosquitto_send_command_with_mid(&context->core, UNSUBACK, mid, false)) return 1;
 
 	return MOSQ_ERR_SUCCESS;
 }

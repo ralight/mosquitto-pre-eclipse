@@ -30,6 +30,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <config.h>
 
 #include <mqtt3.h>
+#include <send_mosq.h>
 
 void (*client_connack_callback)(int) = NULL;
 
@@ -56,7 +57,7 @@ int mqtt3_handle_connack(mqtt3_context *context)
 			if(context->bridge){
 				for(i=0; i<context->bridge->topic_count; i++){
 					if(context->bridge->topics[i].direction == bd_in || context->bridge->topics[i].direction == bd_both){
-						if(mqtt3_raw_subscribe(context, false, context->bridge->topics[i].topic, 2)){
+						if(_mosquitto_send_subscribe(&context->core, NULL, false, context->bridge->topics[i].topic, 2)){
 							return 1;
 						}
 					}

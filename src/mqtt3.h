@@ -205,6 +205,7 @@ typedef struct _mqtt3_context{
 	struct _mqtt3_bridge *bridge;
 	mosquitto_client_msg *msgs;
 	struct _mosquitto_acl_user *acl_list;
+	char *mount_point;
 } mqtt3_context;
 
 /* ============================================================
@@ -232,10 +233,7 @@ int mqtt3_config_read(mqtt3_config *config, const char *filename);
 /* Generic function for sending a command to a client where there is no payload, just a mid.
  * Returns 0 on success, 1 on error.
  */
-int mqtt3_send_command_with_mid(mqtt3_context *context, uint8_t command, uint16_t mid, bool dup);
 int mqtt3_raw_connack(mqtt3_context *context, uint8_t result);
-int mqtt3_raw_connect(mqtt3_context *context, const char *client_id, bool will, uint8_t will_qos, bool will_retain, const char *will_topic, const char *will_msg, uint16_t keepalive, bool clean_session);
-int mqtt3_raw_disconnect(mqtt3_context *context);
 int mqtt3_raw_pingreq(mqtt3_context *context);
 int mqtt3_raw_pingresp(mqtt3_context *context);
 int mqtt3_raw_puback(mqtt3_context *context, uint16_t mid);
@@ -244,15 +242,11 @@ int mqtt3_raw_publish(mqtt3_context *context, int dup, uint8_t qos, bool retain,
 int mqtt3_raw_pubrec(mqtt3_context *context, uint16_t mid);
 int mqtt3_raw_pubrel(mqtt3_context *context, uint16_t mid, bool dup);
 int mqtt3_raw_suback(mqtt3_context *context, uint16_t mid, uint32_t payloadlen, const uint8_t *payload);
-int mqtt3_raw_subscribe(mqtt3_context *context, bool dup, const char *topic, uint8_t topic_qos);
-int mqtt3_raw_unsubscribe(mqtt3_context *context, bool dup, const char *topic);
-int mqtt3_send_simple_command(mqtt3_context *context, uint8_t command);
 
 /* ============================================================
  * Network functions
  * ============================================================ */
-int mqtt3_socket_accept(mqtt3_context ***contexts, int *context_count, int listensock);
-void mqtt3_socket_close(mqtt3_context *context);
+int mqtt3_socket_accept(struct _mosquitto_db *db, int listensock);
 int mqtt3_socket_listen(const char *host, uint16_t port, int **socks, int *sock_count);
 
 int mqtt3_net_packet_queue(mqtt3_context *context, struct _mosquitto_packet *packet);
@@ -348,10 +342,17 @@ void mqtt3_bridge_packet_cleanup(mqtt3_context *context);
 /* ============================================================
  * Security related functions
  * ============================================================ */
+#ifdef WITH_EXTERNAL_SECURITY_CHECKS
+int mosquitto_unpwd_init(struct _mosquitto_db *db);
+int mosquitto_acl_init(struct _mosquitto_db *db);
+void mosquitto_acl_cleanup(struct _mosquitto_db *db);
+#else
 int mqtt3_aclfile_parse(struct _mosquitto_db *db);
-int mqtt3_acl_check(struct _mosquitto_db *db, mqtt3_context *context, const char *topic, int access);
 int mqtt3_pwfile_parse(struct _mosquitto_db *db);
-int mqtt3_unpwd_check(struct _mosquitto_db *db, const char *username, const char *password);
-int mqtt3_unpwd_cleanup(struct _mosquitto_db *db);
+#endif
+
+int mosquitto_acl_check(struct _mosquitto_db *db, mqtt3_context *context, const char *topic, int access);
+int mosquitto_unpwd_check(struct _mosquitto_db *db, const char *username, const char *password);
+int mosquitto_unpwd_cleanup(struct _mosquitto_db *db);
 
 #endif
