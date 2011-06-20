@@ -50,6 +50,11 @@
 //#define WITH_EXTERNAL_SECURITY_CHECKS
 #endif
 
+/* Compile with remote control support included. Remote control must be enabled
+ * in the config file to be used.
+ */
+#define WITH_CONTROL
+
 /* ============================================================
  * Compatibility defines
  *

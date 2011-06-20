@@ -1,4 +1,4 @@
-install(FILES mosquitto_pub.1 mosquitto_sub.1 DESTINATION ${MANDIR}/man1)
+install(FILES mosquitto_control.1 mosquitto_pub.1 mosquitto_sub.1 DESTINATION ${MANDIR}/man1)
 install(FILES libmosquitto.3 DESTINATION ${MANDIR}/man3)
 install(FILES mosquitto.conf.5 DESTINATION ${MANDIR}/man5)
 install(FILES mqtt.7 DESTINATION ${MANDIR}/man7)

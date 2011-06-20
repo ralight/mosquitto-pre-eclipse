@@ -64,8 +64,8 @@ static int _subs_process(struct _mosquitto_db *db, struct _mosquitto_subhier *hi
 			hier->retained = NULL;
 		}
 	}
-	while(source_id && leaf){
-		if(leaf->context->bridge && !strcmp(leaf->context->core.id, source_id)){
+	while(leaf){
+		if(source_id && leaf->context->bridge && !strcmp(leaf->context->core.id, source_id)){
 			leaf = leaf->next;
 			continue;
 		}
@@ -377,6 +377,12 @@ int mqtt3_sub_search(struct _mosquitto_db *db, struct _mosquitto_subhier *root, 
 	assert(topic);
 
 	if(!strncmp(topic, "$SYS/", 5)){
+#ifdef WITH_CONTROL
+		if(db->config->remote_control && source_id && !strncmp(topic, "$SYS/control", 12)){
+			rc = mosquitto_control_process(db, source_id, topic, stored);
+			if(rc) return rc;
+		}
+#endif
 		tree = 2;
 		if(_sub_topic_tokenise(topic+5, &tokens)) return 1;
 	}else if(topic[0] == '/'){
