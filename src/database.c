@@ -427,7 +427,7 @@ int mqtt3_db_messages_easy_queue(mosquitto_db *db, mqtt3_context *context, const
 	if(context){
 		source_id = context->core.id;
 	}else{
-		source_id = "";
+		source_id = NULL;
 	}
 	if(mqtt3_db_message_store(db, source_id, 0, topic, qos, payloadlen, payload, retain, &stored, 0)) return 1;
 
@@ -442,7 +442,7 @@ int mqtt3_db_messages_queue(mosquitto_db *db, const char *source_id, const char 
 	assert(stored);
 
 	/* Find all clients that subscribe to topic and put messages into the db for them. */
-	if(!source_id || !topic) return MOSQ_ERR_INVAL;
+	if(!topic) return MOSQ_ERR_INVAL;
 
 	mqtt3_sub_search(db, &db->subs, source_id, topic, qos, retain, stored);
 	return rc;

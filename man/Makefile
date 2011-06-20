@@ -4,14 +4,14 @@ include ../config.mk
 
 DOCBOOK2MAN=docbook2man.pl
 
-all :  mosquitto.8 mosquitto.conf.5 mosquitto_pub.1 mosquitto_sub.1 mqtt.7 libmosquitto.3
+all :  mosquitto.8 mosquitto.conf.5 mosquitto_control.1 mosquitto_pub.1 mosquitto_sub.1 mqtt.7 libmosquitto.3
 
 clean :
 
 reallyclean : clean
 	-rm -f *.orig
 
-dist : mosquitto.8 mosquitto.conf.5 mosquitto_pub.1 mosquitto_sub.1 mqtt.7 libmosquitto.3
+dist : mosquitto.8 mosquitto.conf.5 mosquitto_control.1 mosquitto_pub.1 mosquitto_sub.1 mqtt.7 libmosquitto.3
 
 install :
 	$(INSTALL) -d ${DESTDIR}$(mandir)/man8
@@ -19,6 +19,7 @@ install :
 	$(INSTALL) -d ${DESTDIR}$(mandir)/man5
 	$(INSTALL) -m 644 mosquitto.conf.5 ${DESTDIR}${mandir}/man5/mosquitto.conf.5
 	$(INSTALL) -d ${DESTDIR}$(mandir)/man1
+	$(INSTALL) -m 644 mosquitto_control.1 ${DESTDIR}${mandir}/man1/mosquitto_control.1
 	$(INSTALL) -m 644 mosquitto_pub.1 ${DESTDIR}${mandir}/man1/mosquitto_pub.1
 	$(INSTALL) -m 644 mosquitto_sub.1 ${DESTDIR}${mandir}/man1/mosquitto_sub.1
 	$(INSTALL) -d ${DESTDIR}$(mandir)/man7
@@ -29,6 +30,7 @@ install :
 uninstall :
 	-rm -f ${DESTDIR}${mandir}/man8/mosquitto.8
 	-rm -f ${DESTDIR}${mandir}/man5/mosquitto.conf.5
+	-rm -f ${DESTDIR}${mandir}/man1/mosquitto_control.1
 	-rm -f ${DESTDIR}${mandir}/man1/mosquitto_pub.1
 	-rm -f ${DESTDIR}${mandir}/man1/mosquitto_sub.1
 	-rm -f ${DESTDIR}${mandir}/man7/mqtt.7
@@ -39,6 +41,9 @@ mosquitto.8 : mosquitto.8.xml
 
 mosquitto.conf.5 : mosquitto.conf.5.xml
 	$(DOCBOOK2MAN) mosquitto.conf.5.xml
+
+mosquitto_control.1 : mosquitto_control.1.xml
+	$(DOCBOOK2MAN) $^
 
 mosquitto_pub.1 : mosquitto_pub.1.xml
 	$(DOCBOOK2MAN) $^
@@ -55,6 +60,7 @@ libmosquitto.3 : libmosquitto.3.xml
 potgen :
 	 xml2po -o po/mosquitto/mosquitto.8.pot mosquitto.8.xml
 	 xml2po -o po/mosquitto.conf/mosquitto.conf.5.pot mosquitto.conf.5.xml
+	 xml2po -o po/mosquitto_control/mosquitto_control.1.pot mosquitto_control.1.xml
 	 xml2po -o po/mosquitto_pub/mosquitto_pub.1.pot mosquitto_pub.1.xml
 	 xml2po -o po/mosquitto_sub/mosquitto_sub.1.pot mosquitto_sub.1.xml
 	 xml2po -o po/mqtt/mqtt.7.pot mqtt.7.xml

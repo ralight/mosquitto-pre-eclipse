@@ -5,6 +5,7 @@ include_directories(${mosquitto_SOURCE_DIR} ${mosquitto_SOURCE_DIR}/src
 set (MOSQ_SRCS
 	conf.c
 	context.c
+	control.c
 	database.c
 	logging.c
 	../lib/memory_mosq.c ../lib/memory_mosq.h
@@ -49,6 +50,11 @@ if (${INC_MEMTRACK} STREQUAL ON)
 	add_definitions("-DWITH_MEMORY_TRACKING")
 endif (${INC_MEMTRACK} STREQUAL ON)
 
+option(INC_CONTROL
+	"Include remote control support?" ON)
+if (${INC_CONTROL} STREQUAL ON)
+	add_definitions("-DWITH_CONTROL")
+endif (${INC_CONTROL} STREQUAL ON)
 option(WITH_PERSISTENCE
 	"Include persistence support?" ON)
 if (${WITH_PERSISTENCE} STREQUAL ON)

@@ -1,3 +1,7 @@
-topic read $SYS/#
+topic read $SYS/broker#
+
 user roger
 topic foo/bar
+
+user admin
+topic write $SYS/control/#

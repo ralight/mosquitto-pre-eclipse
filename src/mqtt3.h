@@ -99,6 +99,7 @@ typedef struct {
 	bool persistence;
 	char *persistence_location;
 	char *persistence_file;
+	bool remote_control;
 	int retry_interval;
 	int store_clean_interval;
 	int sys_interval;
@@ -330,6 +331,7 @@ int mqtt3_subs_clean_session(struct _mqtt3_context *context, struct _mosquitto_s
 mqtt3_context *mqtt3_context_init(int sock);
 void mqtt3_context_cleanup(mosquitto_db *db, mqtt3_context *context, bool do_free);
 void mqtt3_context_disconnect(mosquitto_db *db, int context_index);
+mqtt3_context *mqtt3_context_find(mosquitto_db *db, const char *client_id);
 
 /* ============================================================
  * Logging functions
@@ -360,5 +362,14 @@ int mqtt3_pwfile_parse(struct _mosquitto_db *db);
 int mosquitto_acl_check(struct _mosquitto_db *db, mqtt3_context *context, const char *topic, int access);
 int mosquitto_unpwd_check(struct _mosquitto_db *db, const char *username, const char *password);
 int mosquitto_unpwd_cleanup(struct _mosquitto_db *db);
+
+int mqtt3_user_add(struct _mosquitto_db *db, char *username, char *password);
+
+/* ============================================================
+ * Control related functions
+ * ============================================================ */
+#ifdef WITH_CONTROL
+int mosquitto_control_process(struct _mosquitto_db *db, const char *source_id, const char *topic, struct mosquitto_msg_store *stored);
+#endif
 
 #endif

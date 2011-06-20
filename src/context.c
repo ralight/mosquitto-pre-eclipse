@@ -34,6 +34,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #else
 #include <ws2tcpip.h>
 #endif
+#include <string.h>
 
 #include <config.h>
 
@@ -175,5 +176,22 @@ void mqtt3_context_disconnect(mosquitto_db *db, int context_index)
 		mqtt3_context_cleanup(db, ctxt, true);
 		db->contexts[context_index] = NULL;
 	}
+}
+
+mqtt3_context *mqtt3_context_find(mosquitto_db *db, const char *client_id)
+{
+	/* FIXME - should probably be using hash tables to store clients as
+	 * well/instead of the array. 
+	 * Not *too* critical at the moment because this only gets used for control
+	 * messages. */
+	int i;
+
+	for(i=0; i<db->context_count; i++){
+		if(db->contexts[i] && !strcmp(db->contexts[i]->core.id, client_id)){
+			return db->contexts[i];
+		}
+	}
+
+	return NULL;
 }
 
