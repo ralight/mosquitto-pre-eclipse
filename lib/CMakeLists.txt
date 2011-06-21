@@ -17,6 +17,7 @@ add_library(libmosquitto SHARED
 	send_base_mosq.c
 	send_client_mosq.c
 	send_mosq.c send_mosq.h
+	thread_mosq.h
 	util_mosq.c util_mosq.h)
 
 if (WIN32)
