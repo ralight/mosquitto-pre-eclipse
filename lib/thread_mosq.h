@@ -39,7 +39,7 @@ typedef CRITICAL_SECTION mosquitto_mutex_t;
 #else
 #include <pthread.h>
 typedef pthread_mutex_t mosquitto_mutex_t;
-#define mosquitto_mutex_init(a) pthread_mutex_init(a)
+#define mosquitto_mutex_init(a) pthread_mutex_init(a, NULL)
 #define mosquitto_mutex_destroy(a) pthread_mutex_destroy(a)
 #define mosquitto_mutex_lock(a) pthread_mutex_lock(a)
 #define mosquitto_mutex_unlock(a) pthread_mutex_unlock(a)
