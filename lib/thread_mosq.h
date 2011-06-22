@@ -29,20 +29,27 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef _THREAD_MOSQ_H_
 #define _THREAD_MOSQ_H_
 
-#ifdef WIN32
-#include <windows.h>
-typedef CRITICAL_SECTION mosquitto_mutex_t;
-#define mosquitto_mutex_init(a) InitializeCriticalSection(a)
-#define mosquitto_mutex_destroy(a) DeleteCriticalSection(a)
-#define mosquitto_mutex_lock(a) EnterCriticalSection(a)
-#define mosquitto_mutex_unlock(a) LeaveCriticalSection(a)
+#ifdef WITH_THREADING
+#	ifdef WIN32
+#		include <windows.h>
+		typedef CRITICAL_SECTION mosquitto_mutex_t;
+#		define MOSQUITTO_MUTEX_INIT(a) InitializeCriticalSection(a)
+#		define MOSQUITTO_MUTEX_DESTROY(a) DeleteCriticalSection(a)
+#		define MOSQUITTO_MUTEX_LOCK(a) EnterCriticalSection(a)
+#		define MOSQUITTO_MUTEX_UNLOCK(a) LeaveCriticalSection(a)
+#	else
+#		include <pthread.h>
+		typedef pthread_mutex_t mosquitto_mutex_t;
+#		define MOSQUITTO_MUTEX_INIT(a) pthread_mutex_init(a, NULL)
+#		define MOSQUITTO_MUTEX_DESTROY(a) pthread_mutex_destroy(a)
+#		define MOSQUITTO_MUTEX_LOCK(a) pthread_mutex_lock(a)
+#		define MOSQUITTO_MUTEX_UNLOCK(a) pthread_mutex_unlock(a)
+#	endif
 #else
-#include <pthread.h>
-typedef pthread_mutex_t mosquitto_mutex_t;
-#define mosquitto_mutex_init(a) pthread_mutex_init(a, NULL)
-#define mosquitto_mutex_destroy(a) pthread_mutex_destroy(a)
-#define mosquitto_mutex_lock(a) pthread_mutex_lock(a)
-#define mosquitto_mutex_unlock(a) pthread_mutex_unlock(a)
+#	define MOSQUITTO_MUTEX_INIT(a)
+#	define MOSQUITTO_MUTEX_DESTROY(a)
+#	define MOSQUITTO_MUTEX_LOCK(a)
+#	define MOSQUITTO_MUTEX_UNLOCK(a)
 #endif
 
 
