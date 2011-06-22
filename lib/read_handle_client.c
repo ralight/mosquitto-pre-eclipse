@@ -50,9 +50,11 @@ int _mosquitto_handle_connack(struct mosquitto *mosq)
 	if(rc) return rc;
 	rc = _mosquitto_read_byte(&mosq->core.in_packet, &result);
 	if(rc) return rc;
+	MOSQUITTO_MUTEX_LOCK(&mosq->callback_mutex);
 	if(mosq->on_connect){
 		mosq->on_connect(mosq->obj, result);
 	}
+	MOSQUITTO_MUTEX_UNLOCK(&mosq->callback_mutex);
 	switch(result){
 		case 0:
 			mosq->core.state = mosq_cs_connected;
@@ -92,9 +94,11 @@ int _mosquitto_handle_suback(struct mosquitto *mosq)
 		}
 		i++;
 	}
+	MOSQUITTO_MUTEX_LOCK(&mosq->callback_mutex);
 	if(mosq->on_subscribe){
 		mosq->on_subscribe(mosq->obj, mid, qos_count, granted_qos);
 	}
+	MOSQUITTO_MUTEX_UNLOCK(&mosq->callback_mutex);
 	_mosquitto_free(granted_qos);
 
 	return MOSQ_ERR_SUCCESS;
@@ -112,7 +116,9 @@ int _mosquitto_handle_unsuback(struct mosquitto *mosq)
 	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Received UNSUBACK");
 	rc = _mosquitto_read_uint16(&mosq->core.in_packet, &mid);
 	if(rc) return rc;
+	MOSQUITTO_MUTEX_LOCK(&mosq->callback_mutex);
 	if(mosq->on_unsubscribe) mosq->on_unsubscribe(mosq->obj, mid);
+	MOSQUITTO_MUTEX_UNLOCK(&mosq->callback_mutex);
 
 	return MOSQ_ERR_SUCCESS;
 }

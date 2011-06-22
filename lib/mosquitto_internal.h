@@ -42,6 +42,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #include <mosquitto.h>
+#include <thread_mosq.h>
 
 enum mosquitto_msg_direction {
 	mosq_md_in = 0,
@@ -135,6 +136,9 @@ struct mosquitto {
 	void (*on_subscribe)(void *obj, uint16_t mid, int qos_count, const uint8_t *granted_qos);
 	void (*on_unsubscribe)(void *obj, uint16_t mid);
 	//void (*on_error)();
+#ifdef WITH_THREADING
+	mosquitto_mutex_t callback_mutex;
+#endif
 };
 
 #endif

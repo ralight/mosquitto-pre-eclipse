@@ -108,9 +108,11 @@ int _mosquitto_handle_pubackcomp(struct mosquitto *mosq, const char *type)
 
 	if(!_mosquitto_message_delete(mosq, mid, mosq_md_out)){
 		/* Only inform the client the message has been sent once. */
+		MOSQUITTO_MUTEX_LOCK(&mosq->callback_mutex);
 		if(mosq->on_publish){
 			mosq->on_publish(mosq->obj, mid);
 		}
+		MOSQUITTO_MUTEX_UNLOCK(&mosq->callback_mutex);
 	}
 
 	return MOSQ_ERR_SUCCESS;
@@ -174,16 +176,20 @@ int _mosquitto_handle_publish(struct mosquitto *mosq)
 	message->timestamp = time(NULL);
 	switch(message->msg.qos){
 		case 0:
+			MOSQUITTO_MUTEX_LOCK(&mosq->callback_mutex);
 			if(mosq->on_message){
 				mosq->on_message(mosq->obj, &message->msg);
 			}
+			MOSQUITTO_MUTEX_UNLOCK(&mosq->callback_mutex);
 			_mosquitto_message_cleanup(&message);
 			return MOSQ_ERR_SUCCESS;
 		case 1:
 			rc = _mosquitto_send_puback(mosq, message->msg.mid);
+			MOSQUITTO_MUTEX_LOCK(&mosq->callback_mutex);
 			if(mosq->on_message){
 				mosq->on_message(mosq->obj, &message->msg);
 			}
+			MOSQUITTO_MUTEX_UNLOCK(&mosq->callback_mutex);
 			_mosquitto_message_cleanup(&message);
 			return rc;
 		case 2:
@@ -234,11 +240,13 @@ int _mosquitto_handle_pubrel(struct mosquitto *mosq)
 	if(!_mosquitto_message_remove(mosq, mid, mosq_md_in, &message)){
 		/* Only pass the message on if we have removed it from the queue - this
 		 * prevents multiple callbacks for the same message. */
+		MOSQUITTO_MUTEX_LOCK(&mosq->callback_mutex);
 		if(mosq->on_message){
 			mosq->on_message(mosq->obj, &message->msg);
 		}else{
 			_mosquitto_message_cleanup(&message);
 		}
+		MOSQUITTO_MUTEX_UNLOCK(&mosq->callback_mutex);
 	}
 	rc = _mosquitto_send_pubcomp(mosq, mid);
 	if(rc) return rc;

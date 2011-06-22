@@ -48,6 +48,10 @@
  * system.
  */
 //#define WITH_EXTERNAL_SECURITY_CHECKS
+
+/* Compile with client threading support */
+#define WITH_THREADING
+
 #endif
 
 /* ============================================================
