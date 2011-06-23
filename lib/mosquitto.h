@@ -313,6 +313,26 @@ libmosq_EXPORT int mosquitto_username_pw_set(struct mosquitto *mosq, const char 
 libmosq_EXPORT int mosquitto_connect(struct mosquitto *mosq, const char *host, int port, int keepalive, bool clean_session);
 
 /*
+ * Function: mosquitto_reconnect
+ *
+ * Reconnect to a broker.
+ *
+ * This function provides an easy way of reconnecting to a broker after a
+ * connection has been lost. It uses the values that were provided in the
+ * <mosquitto_connect> call. It must not be called before
+ * <mosquitto_connect>.
+ * 
+ * Parameters:
+ * 	mosq - a valid mosquitto instance.
+ *
+ * Returns:
+ * 	MOSQ_ERR_SUCCESS - on success.
+ * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ */
+libmosq_EXPORT int mosquitto_reconnect(struct mosquitto *mosq);
+
+/*
  * Function: mosquitto_disconnect
  *
  * Disconnect from the broker.
@@ -341,8 +361,6 @@ libmosq_EXPORT int mosquitto_disconnect(struct mosquitto *mosq);
  *               Note that although the MQTT protocol doesn't use message ids
  *               for messages with QoS=0, libmosquitto assigns them message ids
  *               so they can be tracked with this parameter.
- * 	topic -      the topic to publish the message on. Must not contain the
- *               wildcard characters + or #
  * 	payloadlen - the size of the payload (bytes). Valid values are between 0 and
  *               268,435,455.
  * 	payload -    pointer to the data to send. If payloadlen > 0 this must be a
