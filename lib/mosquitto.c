@@ -121,6 +121,7 @@ struct mosquitto *mosquitto_new(const char *id, void *obj)
 		mosq->core.ssl = NULL;
 #endif
 		MOSQUITTO_MUTEX_INIT(&mosq->callback_mutex);
+		MOSQUITTO_MUTEX_INIT(&mosq->state_mutex);
 	}
 	return mosq;
 }
@@ -286,7 +287,9 @@ int mosquitto_disconnect(struct mosquitto *mosq)
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(mosq->core.sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
 
+	MOSQUITTO_MUTEX_LOCK(&mosq->state_mutex);
 	mosq->core.state = mosq_cs_disconnecting;
+	MOSQUITTO_MUTEX_UNLOCK(&mosq->state_mutex);
 
 	return _mosquitto_send_disconnect(&mosq->core);
 }
@@ -438,9 +441,11 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout)
 			rc = mosquitto_loop_read(mosq);
 			if(rc){
 				_mosquitto_socket_close(&mosq->core);
+				MOSQUITTO_MUTEX_LOCK(&mosq->state_mutex);
 				if(mosq->core.state == mosq_cs_disconnecting){
 					rc = MOSQ_ERR_SUCCESS;
 				}
+				MOSQUITTO_MUTEX_UNLOCK(&mosq->state_mutex);
 				MOSQUITTO_MUTEX_LOCK(&mosq->callback_mutex);
 				if(mosq->on_disconnect){
 					mosq->on_disconnect(mosq->obj);
@@ -453,9 +458,11 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout)
 			rc = mosquitto_loop_write(mosq);
 			if(rc){
 				_mosquitto_socket_close(&mosq->core);
+				MOSQUITTO_MUTEX_LOCK(&mosq->state_mutex);
 				if(mosq->core.state == mosq_cs_disconnecting){
 					rc = MOSQ_ERR_SUCCESS;
 				}
+				MOSQUITTO_MUTEX_UNLOCK(&mosq->state_mutex);
 				MOSQUITTO_MUTEX_LOCK(&mosq->callback_mutex);
 				if(mosq->on_disconnect){
 					mosq->on_disconnect(mosq->obj);
