@@ -140,6 +140,7 @@ struct mosquitto {
 	int port;
 #ifdef WITH_THREADING
 	mosquitto_mutex_t callback_mutex;
+	mosquitto_mutex_t state_mutex;
 #endif
 };
 
