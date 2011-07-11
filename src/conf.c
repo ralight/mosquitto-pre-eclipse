@@ -54,7 +54,7 @@ void mqtt3_config_init(mqtt3_config *config)
 	config->default_listener.mount_point = NULL;
 	config->default_listener.socks = NULL;
 	config->default_listener.sock_count = 0;
-	config->default_listener.max_connections = -1;
+	config->default_listener.client_count = 0;
 	config->listeners = NULL;
 	config->listener_count = 0;
 #ifndef WIN32
@@ -67,12 +67,12 @@ void mqtt3_config_init(mqtt3_config *config)
 	config->password_file = NULL;
 	config->persistence = false;
 	config->persistence_location = NULL;
-	config->persistence_file = "mosquitto.db";
+	config->persistence_file = NULL;
 	config->pid_file = NULL;
 	config->retry_interval = 20;
 	config->store_clean_interval = 10;
 	config->sys_interval = 10;
-	config->user = "mosquitto";
+	config->user = NULL;
 #ifdef WITH_BRIDGE
 	config->bridges = NULL;
 	config->bridge_count = 0;
@@ -84,6 +84,18 @@ void mqtt3_config_init(mqtt3_config *config)
 	config->db_username = NULL;
 	config->db_password = NULL;
 #endif
+}
+
+static void print_usage(void)
+{
+	printf("mosquitto is an MQTT v3.1 broker.\n\n");
+	printf("Usage: mosquitto [-c config_file] [-d] [-h] [-p port]\n\n");
+	printf(" -c : specify the broker config file.\n");
+	printf(" -d : put the broker into the background after starting.\n");
+	printf(" -h : display this help.\n");
+	printf(" -p : start the broker listening on the specified port.\n");
+	printf("      Not recommended in conjunction with the -c option.\n");
+	printf("\nSee http://mosquitto.org/ for more information.\n\n");
 }
 
 int mqtt3_config_parse_args(mqtt3_config *config, int argc, char *argv[])
@@ -105,6 +117,9 @@ int mqtt3_config_parse_args(mqtt3_config *config, int argc, char *argv[])
 			i++;
 		}else if(!strcmp(argv[i], "-d") || !strcmp(argv[i], "--daemon")){
 			config->daemon = true;
+		}else if(!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help")){
+			print_usage();
+			return MOSQ_ERR_INVAL;
 		}else if(!strcmp(argv[i], "-p") || !strcmp(argv[i], "--port")){
 			if(i<argc-1){
 				port_tmp = atoi(argv[i+1]);
@@ -121,6 +136,11 @@ int mqtt3_config_parse_args(mqtt3_config *config, int argc, char *argv[])
 				mqtt3_log_printf(MOSQ_LOG_ERR, "Error: -p argument given, but no port specified.");
 				return MOSQ_ERR_INVAL;
 			}
+			i++;
+		}else{
+			fprintf(stderr, "Error: Unknown option '%s'.\n",argv[i]);
+			print_usage();
+			return 1;
 		}
 	}
 
@@ -147,6 +167,10 @@ int mqtt3_config_parse_args(mqtt3_config *config, int argc, char *argv[])
 			config->listeners[config->listener_count-1].mount_point = NULL;
 		}
 		config->listeners[config->listener_count-1].max_connections = config->default_listener.max_connections;
+		config->listeners[config->listener_count-1].client_count = 0;
+		config->listeners[config->listener_count-1].socks = NULL;
+		config->listeners[config->listener_count-1].sock_count = 0;
+		config->listeners[config->listener_count-1].client_count = 0;
 	}
 
 	return MOSQ_ERR_SUCCESS;
@@ -569,6 +593,13 @@ int mqtt3_config_read(mqtt3_config *config, const char *filename)
 		}
 	}
 	fclose(fptr);
+
+	if(!config->persistence_file){
+		config->persistence_file = "mosquitto.db";
+	}
+	if(!config->user){
+		config->user = "mosquitto";
+	}
 
 	mqtt3_db_limits_set(max_inflight_messages, max_queued_messages);
 
