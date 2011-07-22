@@ -106,8 +106,10 @@ typedef struct {
 	int sys_interval;
 	char *pid_file;
 	char *user;
+#ifdef WITH_BRIDGE
 	struct _mqtt3_bridge *bridges;
 	int bridge_count;
+#endif
 #ifdef WITH_EXTERNAL_SECURITY_CHECKS
 	char *db_host;
 	int db_port;
@@ -218,6 +220,11 @@ typedef struct _mqtt3_context{
 } mqtt3_context;
 
 /* ============================================================
+ * Main functions
+ * ============================================================ */
+int mosquitto_main_loop(mosquitto_db *db, int *listensock, int listensock_count, int listener_max);
+
+/* ============================================================
  * Utility functions
  * ============================================================ */
 /* Return a string that corresponds to the MQTT command number (left shifted 4 bits). */
@@ -311,7 +318,7 @@ int mqtt3_db_messages_delete(mqtt3_context *context);
 int mqtt3_db_messages_easy_queue(mosquitto_db *db, mqtt3_context *context, const char *topic, int qos, uint32_t payloadlen, const uint8_t *payload, int retain);
 int mqtt3_db_messages_queue(mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored);
 int mqtt3_db_message_store(mosquitto_db *db, const char *source, uint16_t source_mid, const char *topic, int qos, uint32_t payloadlen, const uint8_t *payload, int retain, struct mosquitto_msg_store **stored, dbid_t store_id);
-int mqtt3_db_message_store_find(mosquitto_db *db, const char *source, uint16_t mid, struct mosquitto_msg_store **stored);
+int mqtt3_db_message_store_find(mqtt3_context *context, uint16_t mid, struct mosquitto_msg_store **stored);
 /* Check all messages waiting on a client reply and resend if timeout has been exceeded. */
 int mqtt3_db_message_timeout_check(mosquitto_db *db, unsigned int timeout);
 int mqtt3_retain_queue(mosquitto_db *db, mqtt3_context *context, const char *sub, int sub_qos);
@@ -345,13 +352,17 @@ int mqtt3_log_printf(int level, const char *fmt, ...) __attribute__((format(prin
 /* ============================================================
  * Bridge functions
  * ============================================================ */
+#ifdef WITH_BRIDGE
 int mqtt3_bridge_new(mosquitto_db *db, struct _mqtt3_bridge *bridge);
 int mqtt3_bridge_connect(mosquitto_db *db, mqtt3_context *context);
 void mqtt3_bridge_packet_cleanup(mqtt3_context *context);
+#endif
 
 /* ============================================================
  * Security related functions
  * ============================================================ */
+int mosquitto_security_init(mosquitto_db *db);
+void mosquitto_security_cleanup(mosquitto_db *db);
 #ifdef WITH_EXTERNAL_SECURITY_CHECKS
 int mosquitto_unpwd_init(struct _mosquitto_db *db);
 int mosquitto_acl_init(struct _mosquitto_db *db);

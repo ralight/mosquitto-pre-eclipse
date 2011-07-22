@@ -1,6 +1,7 @@
 0.12 - 201107xx
 ===============
 
+- Reload (most) configuration on SIGHUP.
 - Memory tracking is no longer compiled in the client library.
 - Add --help option to mosquitto to display usage.
 - Add --id-prefix option to clients to allow easier use with brokers that are
@@ -13,6 +14,14 @@
 - Fix memory leaks on client authentication.
 - If password_file is not defined then clients can now connect even if they
   use a username/password.
+- Add mosquitto_reconnect() to the client library.
+- Add option for compiling with liberal protocol compliance support (enabled
+  by default). 
+- Fix problems with clients reconnecting and old messages remaining in the
+  message store.
+- Display both ip and client id in the log message when a client connects.
+  Change the socket connection message to make it more obvious that it is just
+  a socket connection being made (bug #801135).
 
 0.11.3 - 20110707
 =================
