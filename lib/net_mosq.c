@@ -103,6 +103,7 @@ void _mosquitto_packet_queue(struct _mosquitto_core *core, struct _mosquitto_pac
 	packet->to_process = packet->packet_length;
 
 	packet->next = NULL;
+	pthread_mutex_lock(&core->out_packet_mutex);
 	if(core->out_packet){
 		tail = core->out_packet;
 		while(tail->next){
@@ -112,6 +113,7 @@ void _mosquitto_packet_queue(struct _mosquitto_core *core, struct _mosquitto_pac
 	}else{
 		core->out_packet = packet;
 	}
+	pthread_mutex_unlock(&core->out_packet_mutex);
 }
 
 /* Close a socket associated with a context and set it to -1.

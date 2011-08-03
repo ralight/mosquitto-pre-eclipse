@@ -122,6 +122,7 @@ struct mosquitto *mosquitto_new(const char *id, void *obj)
 #endif
 		pthread_mutex_init(&mosq->callback_mutex, NULL);
 		pthread_mutex_init(&mosq->state_mutex, NULL);
+		pthread_mutex_init(&mosq->core.out_packet_mutex, NULL);
 	}
 	return mosq;
 }
@@ -242,6 +243,8 @@ void mosquitto_destroy(struct mosquitto *mosq)
 	}
 #endif
 	pthread_mutex_destroy(&mosq->callback_mutex);
+	pthread_mutex_destroy(&mosq->state_mutex);
+	pthread_mutex_destroy(&mosq->core.out_packet_mutex);
 	_mosquitto_free(mosq);
 }
 
@@ -406,6 +409,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout)
 	FD_ZERO(&readfds);
 	FD_SET(mosq->core.sock, &readfds);
 	FD_ZERO(&writefds);
+	pthread_mutex_lock(&mosq->core.out_packet_mutex);
 	if(mosq->core.out_packet){
 		FD_SET(mosq->core.sock, &writefds);
 #ifdef WITH_SSL
@@ -413,6 +417,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout)
 		FD_SET(mosq->core.sock, &writefds);
 #endif
 	}
+	pthread_mutex_unlock(&mosq->core.out_packet_mutex);
 	if(timeout >= 0){
 		local_timeout.tv_sec = timeout/1000;
 #ifdef HAVE_PSELECT
@@ -620,8 +625,10 @@ int mosquitto_loop_write(struct mosquitto *mosq)
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(mosq->core.sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
 
+	pthread_mutex_lock(&mosq->core.out_packet_mutex);
 	while(mosq->core.out_packet){
 		packet = mosq->core.out_packet;
+		pthread_mutex_unlock(&mosq->core.out_packet_mutex);
 
 		while(packet->to_process > 0){
 			write_length = _mosquitto_net_write(&mosq->core, &(packet->payload[packet->pos]), packet->to_process);
@@ -654,12 +661,14 @@ int mosquitto_loop_write(struct mosquitto *mosq)
 		pthread_mutex_unlock(&mosq->callback_mutex);
 
 		/* Free data and reset values */
+		pthread_mutex_lock(&mosq->core.out_packet_mutex);
 		mosq->core.out_packet = packet->next;
 		_mosquitto_packet_cleanup(packet);
 		_mosquitto_free(packet);
 
 		mosq->core.last_msg_out = time(NULL);
 	}
+	pthread_mutex_unlock(&mosq->core.out_packet_mutex);
 	return MOSQ_ERR_SUCCESS;
 }
 

@@ -702,6 +702,22 @@ libmosq_EXPORT void mosquitto_unsubscribe_callback_set(struct mosquitto *mosq, v
  */
 libmosq_EXPORT void mosquitto_message_retry_set(struct mosquitto *mosq, unsigned int message_retry);
 
+/*
+ * Function: mosquitto_loop_start
+ *
+ * Parameters:
+ *  mosq - a valid mosquitto instance.
+ */
+libmosq_EXPORT int mosquitto_loop_start(struct mosquitto *mosq);
+
+/*
+ * Function: mosquitto_loop_stop
+ *
+ * Parameters:
+ *  mosq - a valid mosquitto instance.
+ */
+libmosq_EXPORT int mosquitto_loop_stop(struct mosquitto *mosq);
+
 #ifdef __cplusplus
 }
 #endif
