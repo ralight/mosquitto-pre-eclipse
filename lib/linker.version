@@ -38,3 +38,9 @@ VERS_0.12 {
 	global:
 		mosquitto_reconnect;
 } VERS_0.9;
+
+VERS_0.13 {
+	global:
+		mosquitto_loop_start;
+		mosquitto_loop_stop;
+} VERS_0.12;
