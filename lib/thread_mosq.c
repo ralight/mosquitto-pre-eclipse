@@ -29,10 +29,15 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <config.h>
 
+#ifdef _WIN32
+#include <winpthread.h>
+#else
+#include <pthread.h>
+#endif
+
 #include <unistd.h>
 
 #include <mosquitto_internal.h>
-#include <thread_mosq.h>
 
 void *_mosquitto_thread_main(void *obj);
 
@@ -40,7 +45,7 @@ int mosquitto_loop_start(struct mosquitto *mosq)
 {
 	if(!mosq) return MOSQ_ERR_INVAL;
 
-	MOSQUITTO_THREAD_CREATE(&mosq->thread_id, _mosquitto_thread_main, mosq);
+	pthread_create(&mosq->thread_id, NULL, _mosquitto_thread_main, mosq);
 	return MOSQ_ERR_SUCCESS;
 }
 
@@ -65,12 +70,12 @@ void *_mosquitto_thread_main(void *obj)
 		do{
 			rc = mosquitto_loop(mosq, -1);
 		}while(rc == MOSQ_ERR_SUCCESS);
-		MOSQUITTO_MUTEX_LOCK(&mosq->state_mutex);
+		pthread_mutex_lock(&mosq->state_mutex);
 		if(mosq->core.state == mosq_cs_disconnecting){
 			run = 0;
-			MOSQUITTO_MUTEX_UNLOCK(&mosq->state_mutex);
+			pthread_mutex_unlock(&mosq->state_mutex);
 		}else{
-			MOSQUITTO_MUTEX_UNLOCK(&mosq->state_mutex);
+			pthread_mutex_unlock(&mosq->state_mutex);
 			sleep(1);
 			mosquitto_reconnect(mosq);
 		}

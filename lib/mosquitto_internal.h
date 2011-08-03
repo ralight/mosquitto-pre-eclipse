@@ -38,11 +38,13 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <time.h>
 #ifdef WIN32
-#include <winsock2.h>
+#  include <winsock2.h>
+#  include <winpthreads.h>
+#else
+#  include <pthread.h>
 #endif
 
 #include <mosquitto.h>
-#include <thread_mosq.h>
 
 enum mosquitto_msg_direction {
 	mosq_md_in = 0,
@@ -139,8 +141,8 @@ struct mosquitto {
 	char *host;
 	int port;
 #ifdef WITH_THREADING
-	mosquitto_mutex_t callback_mutex;
-	mosquitto_mutex_t state_mutex;
+	pthread_mutex_t callback_mutex;
+	pthread_mutex_t state_mutex;
 #endif
 };
 
