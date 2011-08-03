@@ -175,3 +175,13 @@ int mosquittopp::loop_write()
 	return mosquitto_loop_write(mosq);
 }
 
+int mosquittopp::loop_start()
+{
+	return mosquitto_loop_start(mosq);
+}
+
+int mosquittopp::loop_stop()
+{
+	return mosquitto_loop_stop(mosq);
+}
+
