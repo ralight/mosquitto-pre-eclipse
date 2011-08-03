@@ -57,7 +57,7 @@
 						<arg><option>-u</option> <replaceable>username</replaceable></arg>
 					</group>
 					<group choice='opt'>
-						<arg><option>--pw</option> <replaceable>password</replaceable></arg>
+						<arg><option>-P</option> <replaceable>password</replaceable></arg>
 					</group>
 				</arg>
 			</group>
@@ -162,6 +162,7 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>-P</option></term>
 				<term><option>--pw</option></term>
 				<listitem>
 					<para>Provide a password to be used for authenticating with
@@ -255,7 +256,7 @@
 		sent out if it disconnects unexpectedly. See
 		<citerefentry><refentrytitle>mqtt</refentrytitle><manvolnum>7</manvolnum></citerefentry>
 		for more information.</para>
-		<para>The minimum requirement for this is to use --will-topic to
+		<para>The minimum requirement for this is to use <option>--will-topic</option> to
 		specify which topic the will should be sent out on. This will result in
 		a non-retained, zero length message with QoS 0.</para>
 		<para>Use the <option>--will-retain</option>,
