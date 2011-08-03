@@ -121,6 +121,9 @@ struct _mosquitto_core
 #ifdef WITH_SSL
 	struct _mosquitto_ssl *ssl;
 #endif
+#ifdef WITH_THREADING
+	pthread_mutex_t out_packet_mutex;
+#endif
 };
 
 struct mosquitto {
@@ -143,6 +146,7 @@ struct mosquitto {
 #ifdef WITH_THREADING
 	pthread_mutex_t callback_mutex;
 	pthread_mutex_t state_mutex;
+	pthread_t thread_id;
 #endif
 };
 
