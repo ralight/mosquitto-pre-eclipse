@@ -64,8 +64,8 @@ extern "C" {
 #endif
 
 #define LIBMOSQUITTO_MAJOR 0
-#define LIBMOSQUITTO_MINOR 11
-#define LIBMOSQUITTO_REVISION 90
+#define LIBMOSQUITTO_MINOR 12
+#define LIBMOSQUITTO_REVISION 0
 #define LIBMOSQUITTO_VERSION_NUMBER (LIBMOSQUITTO_MAJOR*1000000+LIBMOSQUITTO_MINOR*1000+LIBMOSQUITTO_REVISION)
 
 /* Log destinations */
@@ -309,6 +309,9 @@ libmosq_EXPORT int mosquitto_username_pw_set(struct mosquitto *mosq, const char 
  * Returns:
  * 	MOSQ_ERR_SUCCESS - on success.
  * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *
+ * See Also:
+ * 	<mosquitto_reconnect>, <mosquitto_disconnect>
  */
 libmosq_EXPORT int mosquitto_connect(struct mosquitto *mosq, const char *host, int port, int keepalive, bool clean_session);
 
@@ -329,6 +332,9 @@ libmosq_EXPORT int mosquitto_connect(struct mosquitto *mosq, const char *host, i
  * 	MOSQ_ERR_SUCCESS - on success.
  * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
  * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ *
+ * See Also:
+ * 	<mosquitto_connect>, <mosquitto_disconnect>
  */
 libmosq_EXPORT int mosquitto_reconnect(struct mosquitto *mosq);
 
