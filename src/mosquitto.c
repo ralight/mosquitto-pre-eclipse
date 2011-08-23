@@ -311,11 +311,12 @@ int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 	char **argv;
 	int argc = 1;
 	char *token;
+	char *saveptr = NULL;
 	int rc;
 
 	argv = _mosquitto_malloc(sizeof(char *)*1);
 	argv[0] = "mosquitto";
-	token = strtok(lpCmdLine, " ");
+	token = strtok_r(lpCmdLine, " ", &saveptr);
 	while(token){
 		argc++;
 		argv = _mosquitto_realloc(argv, sizeof(char *)*argc);
@@ -324,7 +325,7 @@ int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 			return MOSQ_ERR_NOMEM;
 		}
 		argv[argc-1] = token;
-		token = strtok(NULL, " ");
+		token = strtok_r(NULL, " ", &saveptr);
 	}
 	rc = main(argc, argv);
 	_mosquitto_free(argv);

@@ -88,6 +88,7 @@ int _add_acl(struct _mosquitto_db *db, const char *user, const char *topic, int 
 	char *local_topic;
 	char *token = NULL;
 	bool new_user = false;
+	char *saveptr = NULL;
 
 	if(!db || !topic) return MOSQ_ERR_INVAL;
 
@@ -143,9 +144,9 @@ int _add_acl(struct _mosquitto_db *db, const char *user, const char *topic, int 
 		acl_root->topic = _mosquitto_strdup("/");
 		if(!acl_root->topic) return MOSQ_ERR_NOMEM;
 
-		token = strtok(local_topic+1, "/");
+		token = strtok_r(local_topic+1, "/", &saveptr);
 	}else{
-		token = strtok(local_topic, "/");
+		token = strtok_r(local_topic, "/", &saveptr);
 	}
 
 	while(token){
@@ -164,7 +165,7 @@ int _add_acl(struct _mosquitto_db *db, const char *user, const char *topic, int 
 			acl_tail = acl;
 		}
 
-		token = strtok(NULL, "/");
+		token = strtok_r(NULL, "/", &saveptr);
 	}
 	if(acl_root){
 		acl_tail = acl_root;
@@ -209,6 +210,7 @@ int mosquitto_acl_check(struct _mosquitto_db *db, mqtt3_context *context, const 
 	char *local_topic;
 	char *token;
 	struct _mosquitto_acl *acl_root, *acl_tail;
+	char *saveptr = NULL;
 
 	if(!db || !context || !topic) return MOSQ_ERR_INVAL;
 	if(!db->acl_list) return MOSQ_ERR_SUCCESS;
@@ -231,7 +233,7 @@ int mosquitto_acl_check(struct _mosquitto_db *db, mqtt3_context *context, const 
 			acl_tail = acl_tail->child;
 		}
 
-		token = strtok(local_topic, "/");
+		token = strtok_r(local_topic, "/", &saveptr);
 		/* Loop through the topic looking for matches to this ACL. */
 		while(token){
 			if(acl_tail){
@@ -245,7 +247,7 @@ int mosquitto_acl_check(struct _mosquitto_db *db, mqtt3_context *context, const 
 						break;
 					}
 				}else if(!strcmp(acl_tail->topic, token) || !strcmp(acl_tail->topic, "+")){
-					token = strtok(NULL, "/");
+					token = strtok_r(NULL, "/", &saveptr);
 					if(!token && acl_tail->child == NULL){
 						/* We have a match */
 						if(access & acl_tail->access){
@@ -283,6 +285,7 @@ int mqtt3_aclfile_parse(struct _mosquitto_db *db)
 	int access;
 	int rc;
 	int slen;
+	char *saveptr = NULL;
 
 	if(!db || !db->config) return MOSQ_ERR_INVAL;
 	if(!db->config->acl_file) return MOSQ_ERR_SUCCESS;
@@ -299,17 +302,17 @@ int mqtt3_aclfile_parse(struct _mosquitto_db *db)
 			buf[slen-1] = '\0';
 			slen = strlen(buf);
 		}
-		token = strtok(buf, " ");
+		token = strtok_r(buf, " ", &saveptr);
 		if(token){
 			if(!strcmp(token, "topic")){
-				access_s = strtok(NULL, " ");
+				access_s = strtok_r(NULL, " ", &saveptr);
 				if(!access_s){
 					mqtt3_log_printf(MOSQ_LOG_ERR, "Error: Empty topic in acl_file.");
 					if(user) _mosquitto_free(user);
 					fclose(aclfile);
 					return 1;
 				}
-				token = strtok(NULL, " ");
+				token = strtok_r(NULL, " ", &saveptr);
 				if(token){
 					topic = token;
 				}else{
@@ -333,7 +336,7 @@ int mqtt3_aclfile_parse(struct _mosquitto_db *db)
 				rc = _add_acl(db, user, topic, access);
 				if(rc) return rc;
 			}else if(!strcmp(token, "user")){
-				token = strtok(NULL, " ");
+				token = strtok_r(NULL, " ", &saveptr);
 				if(token){
 					if(user) _mosquitto_free(user);
 					user = _mosquitto_strdup(token);
@@ -414,6 +417,7 @@ int mqtt3_pwfile_parse(struct _mosquitto_db *db)
 	char buf[256];
 	char *username, *password;
 	int len;
+	char *saveptr = NULL;
 
 	if(!db || !db->config) return MOSQ_ERR_INVAL;
 
@@ -424,7 +428,7 @@ int mqtt3_pwfile_parse(struct _mosquitto_db *db)
 
 	while(!feof(pwfile)){
 		if(fgets(buf, 256, pwfile)){
-			username = strtok(buf, ":");
+			username = strtok_r(buf, ":", &saveptr);
 			if(username){
 				unpwd = _mosquitto_calloc(1, sizeof(struct _mosquitto_unpwd));
 				if(!unpwd) return MOSQ_ERR_NOMEM;
@@ -435,7 +439,7 @@ int mqtt3_pwfile_parse(struct _mosquitto_db *db)
 					unpwd->username[len-1] = '\0';
 					len = strlen(unpwd->username);
 				}
-				password = strtok(NULL, ":");
+				password = strtok_r(NULL, ":", &saveptr);
 				if(password){
 					unpwd->password = _mosquitto_strdup(password);
 					if(!unpwd) return MOSQ_ERR_NOMEM;
