@@ -101,6 +101,7 @@ static int _sub_topic_tokenise(const char *subtopic, struct _sub_token **topics)
 	struct _sub_token *new_topic, *tail = NULL;
 	char *token;
 	char *local_subtopic = NULL;
+	char *saveptr = NULL;
 
 	assert(subtopic);
 	assert(topics);
@@ -108,7 +109,7 @@ static int _sub_topic_tokenise(const char *subtopic, struct _sub_token **topics)
 	local_subtopic = _mosquitto_strdup(subtopic);
 	if(!local_subtopic) return MOSQ_ERR_NOMEM;
 
-	token = strtok(local_subtopic, "/");
+	token = strtok_r(local_subtopic, "/", &saveptr);
 	while(token){
 		new_topic = _mosquitto_malloc(sizeof(struct _sub_token));
 		if(!new_topic) goto cleanup;
@@ -123,7 +124,7 @@ static int _sub_topic_tokenise(const char *subtopic, struct _sub_token **topics)
 			tail = new_topic;
 			*topics = tail;
 		}
-		token = strtok(NULL, "/");
+		token = strtok_r(NULL, "/", &saveptr);
 	}
 	
 	_mosquitto_free(local_subtopic);
