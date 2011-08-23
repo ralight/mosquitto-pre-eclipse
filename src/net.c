@@ -166,6 +166,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 #else
 	char ss_opt = 1;
 #endif
+	char err[256];
 
 	if(!listener) return MOSQ_ERR_INVAL;
 
@@ -191,7 +192,8 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 
 		sock = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
 		if(sock == -1){
-			mqtt3_log_printf(MOSQ_LOG_WARNING, "Warning: %s", strerror(errno));
+			strerror_r(errno, err, 256);
+			mqtt3_log_printf(MOSQ_LOG_WARNING, "Warning: %s", err);
 			continue;
 		}
 		listener->sock_count++;
@@ -224,13 +226,15 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 #endif
 
 		if(bind(sock, rp->ai_addr, rp->ai_addrlen) == -1){
-			mqtt3_log_printf(MOSQ_LOG_ERR, "Error: %s", strerror(errno));
+			strerror_r(errno, err, 256);
+			mqtt3_log_printf(MOSQ_LOG_ERR, "Error: %s", err);
 			COMPAT_CLOSE(sock);
 			return 1;
 		}
 
 		if(listen(sock, 100) == -1){
-			mqtt3_log_printf(MOSQ_LOG_ERR, "Error: %s", strerror(errno));
+			strerror_r(errno, err, 256);
+			mqtt3_log_printf(MOSQ_LOG_ERR, "Error: %s", err);
 			COMPAT_CLOSE(sock);
 			return 1;
 		}
