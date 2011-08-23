@@ -79,6 +79,7 @@ int drop_privileges(mqtt3_config *config)
 {
 #if !defined(__CYGWIN__) && !defined(WIN32)
 	struct passwd *pwd;
+	char err[256];
 
 	if(geteuid() == 0){
 		if(config->user){
@@ -88,11 +89,13 @@ int drop_privileges(mqtt3_config *config)
 				return 1;
 			}
 			if(setgid(pwd->pw_gid) == -1){
-				mqtt3_log_printf(MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
+				strerror_r(errno, err, 256);
+				mqtt3_log_printf(MOSQ_LOG_ERR, "Error: %s.", err);
 				return 1;
 			}
 			if(setuid(pwd->pw_uid) == -1){
-				mqtt3_log_printf(MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
+				strerror_r(errno, err, 256);
+				mqtt3_log_printf(MOSQ_LOG_ERR, "Error: %s.", err);
 				return 1;
 			}
 		}
@@ -143,6 +146,7 @@ int main(int argc, char *argv[])
 	FILE *pid;
 	int listener_max;
 	int rc;
+	char err[256];
 
 	memset(&int_db, 0, sizeof(mosquitto_db));
 
@@ -158,7 +162,8 @@ int main(int argc, char *argv[])
 			case 0:
 				break;
 			case -1:
-				mqtt3_log_printf(MOSQ_LOG_ERR, "Error in fork: %s", strerror(errno));
+				strerror_r(errno, err, 256);
+				mqtt3_log_printf(MOSQ_LOG_ERR, "Error in fork: %s", err);
 				return 1;
 			default:
 				return MOSQ_ERR_SUCCESS;
