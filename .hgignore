@@ -1,0 +1,22 @@
+syntax: glob
+
+*.o
+*.exe
+*.db
+
+client/mosquitto_pub
+client/mosquitto_sub
+man/mosquitto.8
+man/mosquitto.conf.5
+src/mosquitto
+test/test_client
+test/fake_user
+test/msgsps_pub
+test/msgsps_sub
+test/msgsps_pub.dat
+test/msgsps_sub.dat
+
+lib/cpp/libmosquittopp.so*
+lib/libmosquitto.so*
+
+build/
