@@ -1,3 +1,5 @@
+- Implement "once" and "lazy" bridge start types.
+
 0.14.4 - 20120106
 =================
 
