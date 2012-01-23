@@ -367,10 +367,4 @@ void service_uninstall(void);
 void service_run(void);
 #endif
 
-/* ============================================================
- * DNS related functions
- * ============================================================ */
-
-int mosquitto_zeroconf_init(void);
-
 #endif
