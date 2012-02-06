@@ -38,3 +38,8 @@ VERS_0.12 {
 	global:
 		mosquitto_reconnect;
 } VERS_0.9;
+
+VERS_0.16 {
+	global:
+		mosquitto_want_write;
+} VERS_0.12;

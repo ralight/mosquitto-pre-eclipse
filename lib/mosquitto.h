@@ -568,7 +568,7 @@ libmosq_EXPORT int mosquitto_loop_read(struct mosquitto *mosq);
  *                       Windows.
  *
  * See Also:
- *	<mosquitto_socket>, <mosquitto_loop_read>, <mosquitto_loop_misc>
+ *	<mosquitto_socket>, <mosquitto_loop_read>, <mosquitto_loop_misc>, <mosquitto_want_write>
  */
 libmosq_EXPORT int mosquitto_loop_write(struct mosquitto *mosq);
 
@@ -593,6 +593,19 @@ libmosq_EXPORT int mosquitto_loop_write(struct mosquitto *mosq);
  *	<mosquitto_socket>, <mosquitto_loop_read>, <mosquitto_loop_write>
  */
 libmosq_EXPORT int mosquitto_loop_misc(struct mosquitto *mosq);
+
+/*
+ * Function: mosquitto_want_write
+ *
+ * Returns true if there is data ready to be written on the socket.
+ *
+ * Parameters:
+ *	mosq - a valid mosquitto instance.
+ *
+ * See Also:
+ *	<mosquitto_socket>, <mosquitto_loop_read>, <mosquitto_loop_write>
+ */
+libmosq_EXPORT bool mosquitto_want_write(struct mosquitto *mosq);
 
 /* 
  * Function: mosquitto_connect_callback_set
