@@ -177,4 +177,9 @@ int mosquittopp::loop_write()
 	return mosquitto_loop_write(mosq);
 }
 
+bool mosquittopp::want_write()
+{
+	return mosquitto_want_write(mosq);
+}
+
 }

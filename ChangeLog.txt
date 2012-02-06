@@ -1,3 +1,9 @@
+0.16 - 2012xxxx
+===============
+
+- Add mosquitto_want_write() for use when using own select() loop with
+  mosquitto_socket().
+
 0.15 - 20120205
 ===============
 

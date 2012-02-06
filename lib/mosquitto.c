@@ -441,6 +441,15 @@ int mosquitto_loop_write(struct mosquitto *mosq)
 	return _mosquitto_packet_write(mosq);
 }
 
+bool mosquitto_want_write(struct mosquitto *mosq)
+{
+	if(mosq->out_packet){
+		return true;
+	}else{
+		return false;
+	}
+}
+
 void mosquitto_connect_callback_set(struct mosquitto *mosq, void (*on_connect)(void *, int))
 {
 	mosq->on_connect = on_connect;
