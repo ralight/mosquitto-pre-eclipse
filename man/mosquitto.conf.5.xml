@@ -230,7 +230,7 @@
 					<para>The maximum number of QoS 1 or 2 messages to hold in
 					the queue above those messages that are currently in
 					flight. Defaults to 100. Set to 0 for no maximum (not
-					recommended).</para>
+					recommended). See also the queue_qos0_messages option.</para>
 					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
@@ -319,6 +319,19 @@
 					<para>Set the network port for the default listener to
 					listen on. Defaults to 1883.</para>
 					<para>Not reloaded on reload signal.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>queue_qos0_messages</option> [ true | false ]</term>
+				<listitem>
+					<para>Set to true to queue messages with QoS 0 when a
+					persistent client is disconnected. These messages are
+					included in the limit imposed by max_queued_messages.
+					Defaults to false.</para>
+					<para>Note that the MQTT v3.1 spec states that only QoS 1
+					and 2 messages should be saved in this situation so this is
+					a non-standard option.</para>
+					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
