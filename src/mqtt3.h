@@ -104,6 +104,7 @@ typedef struct {
 	char *persistence_location;
 	char *persistence_file;
 	char *persistence_filepath;
+	bool queue_qos0_messages;
 	int retry_interval;
 	int store_clean_interval;
 	int sys_interval;

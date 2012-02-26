@@ -65,6 +65,7 @@ static void _config_init_reload(mqtt3_config *config)
 	config->persistence_location = NULL;
 	if(config->persistence_file) _mosquitto_free(config->persistence_file);
 	config->persistence_file = NULL;
+	config->queue_qos0_messages = false;
 	config->retry_interval = 20;
 	config->store_clean_interval = 10;
 	config->sys_interval = 10;
@@ -621,6 +622,8 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 						return MOSQ_ERR_INVAL;
 					}
 					config->default_listener.port = port_tmp;
+				}else if(!strcmp(token, "queue_qos0_messages")){
+					if(_conf_parse_bool(&token, token, &config->queue_qos0_messages)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "retry_interval")){
 					if(_conf_parse_int(&token, "retry_interval", &config->retry_interval)) return MOSQ_ERR_INVAL;
 					if(config->retry_interval < 1 || config->retry_interval > 3600){
