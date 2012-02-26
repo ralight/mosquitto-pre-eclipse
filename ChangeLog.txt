@@ -4,6 +4,8 @@
 - Add mosquitto_want_write() for use when using own select() loop with
   mosquitto_socket().
 - Fix reloading of log configuration.
+- Add option for queueing of QoS 0 messages when persistent clients are
+  disconnected.
 
 0.15 - 20120205
 ===============
