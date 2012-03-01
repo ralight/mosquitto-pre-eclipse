@@ -508,7 +508,11 @@ void mqtt3_sub_tree_print(struct _mosquitto_subhier *root, int level)
 	printf("%s", root->topic);
 	leaf = root->subs;
 	while(leaf){
-		printf(" (%s, %d)", "", leaf->qos);
+		if(leaf->context){
+			printf(" (%s, %d)", leaf->context->id, leaf->qos);
+		}else{
+			printf(" (%s, %d)", "", leaf->qos);
+		}
 		leaf = leaf->next;
 	}
 	if(root->retained){
