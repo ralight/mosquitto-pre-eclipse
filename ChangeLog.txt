@@ -6,6 +6,8 @@
 - Fix reloading of log configuration.
 - Add option for queueing of QoS 0 messages when persistent clients are
   disconnected.
+- Usernames were being lost when a non clean-session client reconnected,
+  potentially causing problems with ACLs. This has been fixed.
 
 0.15 - 20120205
 ===============
