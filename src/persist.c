@@ -624,7 +624,7 @@ static int _db_retain_chunk_restore(mosquitto_db *db, FILE *db_fptr)
 	dbid_t i64temp, store_id;
 	struct mosquitto_msg_store *store;
 
-	if(fread(&i64temp, 1, sizeof(dbid_t), db_fptr) != sizeof(dbid_t)){
+	if(fread(&i64temp, sizeof(dbid_t), 1, db_fptr) != 1){
 		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
 		fclose(db_fptr);
 		return 1;
@@ -715,7 +715,7 @@ int mqtt3_db_restore(mosquitto_db *db)
 			return 1;
 		}
 
-		while(rlen = fread(&i16temp, 1, sizeof(uint16_t), fptr), rlen == sizeof(uint16_t)){
+		while(rlen = fread(&i16temp, sizeof(uint16_t), 1, fptr), rlen == 1){
 			chunk = ntohs(i16temp);
 			read_e(fptr, &i32temp, sizeof(uint32_t));
 			length = ntohl(i32temp);
