@@ -8,6 +8,7 @@
   disconnected.
 - Usernames were being lost when a non clean-session client reconnected,
   potentially causing problems with ACLs. This has been fixed.
+- Fix db_dump reading of retained messages.
 
 0.15 - 20120205
 ===============
