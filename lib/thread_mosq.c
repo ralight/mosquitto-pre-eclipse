@@ -37,21 +37,30 @@ void *_mosquitto_thread_main(void *obj);
 
 int mosquitto_loop_start(struct mosquitto *mosq)
 {
+#ifdef WITH_THREADING
 	if(!mosq) return MOSQ_ERR_INVAL;
 
 	pthread_create(&mosq->thread_id, NULL, _mosquitto_thread_main, mosq);
 	return MOSQ_ERR_SUCCESS;
+#else
+	return MOSQ_ERR_NOT_SUPPORTED;
+#endif
 }
 
 int mosquitto_loop_stop(struct mosquitto *mosq)
 {
+#ifdef WITH_THREADING
 	if(!mosq) return MOSQ_ERR_INVAL;
 	
 	pthread_join(mosq->thread_id, NULL);
 
 	return MOSQ_ERR_SUCCESS;
+#else
+	return MOSQ_ERR_NOT_SUPPORTED;
+#endif
 }
 
+#ifdef WITH_THREADING
 void *_mosquitto_thread_main(void *obj)
 {
 	struct mosquitto *mosq = obj;
@@ -76,4 +85,5 @@ void *_mosquitto_thread_main(void *obj)
 	}
 	return obj;
 }
+#endif
 
