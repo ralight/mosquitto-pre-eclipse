@@ -31,18 +31,20 @@ POSSIBILITY OF SUCH DAMAGE.
 #define _MOSQUITTOPP_H_
 
 #ifdef _WIN32
-#ifdef mosquittopp_EXPORTS
-#define mosqpp_EXPORT  __declspec(dllexport)
+#	ifdef mosquittopp_EXPORTS
+#		define mosqpp_EXPORT  __declspec(dllexport)
+#	else
+#		define mosqpp_EXPORT  __declspec(dllimport)
+#	endif
 #else
-#define mosqpp_EXPORT  __declspec(dllimport)
-#endif
-#else
-#define mosqpp_EXPORT
+#	define mosqpp_EXPORT
 #endif
 
 #include <cstdlib>
 #include <time.h>
 #include <mosquitto.h>
+
+namespace mosquittopp {
 
 /*
  * Class: mosquittopp
@@ -88,4 +90,5 @@ class mosqpp_EXPORT mosquittopp {
 		virtual void on_error() {return;};
 };
 
+}
 #endif

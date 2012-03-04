@@ -15,12 +15,17 @@ install : all
 	make -C cpp install
 	make -C python install
 
+uninstall :
+	-rm -f ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.so.0
+	-rm -f ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.so
+	-rm -f ${DESTDIR}${prefix}/include/mosquitto.h
+
 clean :
 	-rm -f *.o libmosquitto.so.0 libmosquitto.so
 	make -C cpp clean
 	make -C python clean
 
-libmosquitto.so.0 : mosquitto.o logging_mosq.o memory_mosq.o messages_mosq.o net_mosq.o read_handle.o read_handle_client.o send_mosq.o send_base_mosq.o send_client_mosq.o thread_mosq.o util_mosq.o
+libmosquitto.so.0 : mosquitto.o logging_mosq.o memory_mosq.o messages_mosq.o net_mosq.o read_handle.o read_handle_client.o read_handle_shared.o send_mosq.o send_client_mosq.o thread_mosq.o util_mosq.o will_mosq.o
 	$(CC) -shared -Wl,--as-needed -Wl,--version-script=linker.version -Wl,-soname,libmosquitto.so.0 $^ -o $@ ${LIBS} -lpthread
 
 mosquitto.o : mosquitto.c mosquitto.h
@@ -44,10 +49,10 @@ read_handle.o : read_handle.c read_handle.h
 read_handle_client.o : read_handle_client.c read_handle.h
 	$(CC) $(CFLAGS) -fPIC -c $< -o $@
 
-send_mosq.o : send_mosq.c send_mosq.h
+read_handle_shared.o : read_handle_shared.c read_handle.h
 	$(CC) $(CFLAGS) -fPIC -c $< -o $@
 
-send_base_mosq.o : send_base_mosq.c send_mosq.h
+send_mosq.o : send_mosq.c send_mosq.h
 	$(CC) $(CFLAGS) -fPIC -c $< -o $@
 
 send_client_mosq.o : send_client_mosq.c send_mosq.h
@@ -57,5 +62,8 @@ thread_mosq.o : thread_mosq.c
 	$(CC) $(CFLAGS) -fPIC -c $< -o $@
 
 util_mosq.o : util_mosq.c util_mosq.h
+	$(CC) $(CFLAGS) -fPIC -c $< -o $@
+
+will_mosq.o : will_mosq.c will_mosq.h
 	$(CC) $(CFLAGS) -fPIC -c $< -o $@
 

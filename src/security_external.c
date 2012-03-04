@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2011 Roger Light <roger@atchoo.org>
+Copyright (c) 2011,2012 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -44,7 +44,7 @@ int mosquitto_acl_init(struct _mosquitto_db *db)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto_acl_check(struct _mosquitto_db *db, mqtt3_context *context, const char *topic, int access)
+int mosquitto_acl_check(struct _mosquitto_db *db, struct mosquitto *context, const char *topic, int access)
 {
 	return MOSQ_ERR_ACL_DENIED;
 }

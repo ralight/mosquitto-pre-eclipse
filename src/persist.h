@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2012 Roger Light <roger@atchoo.org>
+Copyright (c) 2010,2011 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -26,15 +26,21 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
-#ifndef _UTIL_MOSQ_H_
-#define _UTIL_MOSQ_H_
 
-#include <mosquitto.h>
+#ifndef PERSIST_H
+#define PERSIST_H
 
-int _mosquitto_packet_alloc(struct _mosquitto_packet *packet);
-void _mosquitto_check_keepalive(struct mosquitto *mosq);
-int _mosquitto_fix_sub_topic(char **subtopic);
-uint16_t _mosquitto_mid_generate(struct mosquitto *mosq);
-int _mosquitto_topic_wildcard_len_check(const char *str);
+/* DB read/write */
+const unsigned char magic[15] = {0x00, 0xB5, 0x00, 'm','o','s','q','u','i','t','t','o',' ','d','b'};
+#define DB_CHUNK_CFG 1
+#define DB_CHUNK_MSG_STORE 2
+#define DB_CHUNK_CLIENT_MSG 3
+#define DB_CHUNK_RETAIN 4
+#define DB_CHUNK_SUB 5
+#define DB_CHUNK_CLIENT 6
+/* End DB read/write */
+
+#define read_e(f, b, c) if(fread(b, 1, c, f) != c){ goto error; }
+#define write_e(f, b, c) if(fwrite(b, 1, c, f) != c){ goto error; }
 
 #endif

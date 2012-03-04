@@ -1,8 +1,106 @@
-0.13 - 2011xxxx
+0.15 - 20120205
 ===============
 
+- Add support for $SYS/broker/clients/maximum and $SYS/broker/clients/active
+  topics.
+- Add support for $SYS messages/byte per second received/sent topics.
+- Updated mosquitto man page - $SYS hierarchy and signal support were out of
+  date.
+- Auto generated pub/sub client ids now include the hostname.
+- Tool for dumping persistent DB contents is available in src/db_dump. It isn't
+  installed by default.
+- Enforce topic length checks in client library.
+- Implement "once" and "lazy" bridge start types.
+- Add new return type MOSQ_ERR_ERRNO to indicate that the errno variable should
+  be checked for the real error code.
+- Add support for connection_messages config option.
+- mosquitto_sub will now refuse to run if the -c option (disable clean session)
+  is given and no client id is provided.
+- mosquitto_pub now gives more useful error messages on invalid input or other
+  error conditions.
+- Fix Python will_set() true/True typo.
+- Fix messages to topic "a/b" incorrectly matching on a subscription "a" if
+  another subscription "a/#" exists.
+
+0.14.4 - 20120106
+=================
+
+- Fix local bridge notification messages.
+- Fix return values for more internal library calls.
+- Fix incorrect out of memory checks in library and broker.
+- Never time out local bridge connections.
+
+0.14.3 - 20111210
+=================
+
+- Fix potential crash when client connects with an invalid CONNECT packet.
+- Fix incorrect invalid socket comparison on Windows.
+- Server shouldn't crash when a message is published to foo/ when a
+  subscription to foo/# exists (bug #901697).
+- SO_REUSEADDR doesn't work the same on Windows, so don't use it.
+- Cygwin builds now support Windows service features.
+- Fix $SYS/broker/bytes/sent reporting.
+
+0.14.2 - 20111123
+=================
+
+- Add uninstall target for libs.
+- Don't try to write packet whilst in a callback.
+
+0.14.1 - 20111117
+=================
+
+- Fix Python sytax errors (bug #891673).
+
+0.14 - 20111116
+===============
+
+- Add support for matching ACLs based on client id and username.
+- Add a Windows installer file (NSIS based).
+- Add native support for running the broker as a Windows service. This is the
+  default when installed using the new installer.
+- Fix client count for listeners. When clients disconnect, decrement the
+  count. Allow max_connections to work again.
+- Attempt to send all packets immediately upon being queued. This will result
+  in more immediate network communication in many cases.
+- Log IP address when reporting CONNACK packets if the client id isn't yet
+  known.
+- Fix payload length calculation in python will_set function.
+- Fix Python publish and will_set functions for payload=None.
+- Fix keepalive value being lost when reconnecting a client (bug #880863).
+- Persistence file writing now uses portable file functions, so the Cygwin
+  broker build should no longer be necessary.
+- Duplicate code between the client and broker side has been reduced.
+- Queued messages for clients reconnecting with clean_session=false set were
+  not being sent until the next message for that client was received. This has
+  been fixed (bug #890724).
+- Fix subscriptions to # incorrectly matching against topics beginning with /
+
+0.13 - 20110920
+===============
+
+- Implement bridge state notification messages.
+- Save client last used mid in persistent database (DB version number bumped).
 - Expose message id in Python MosquittoMessage.
-- Python callbacks can now be used with class member functions.
+- It is now possible to set the topic QoS level for bridges.
+- Python MosquittoMessage payload parameter is now a Python string, not a
+  ctypes object which makes it much easier to use.
+- Fix queueing of messages for disconnected clients. The max_queued_messages
+  option is now obeyed.
+- C++ library is now in its own namespace, mosquittopp.
+- Add support for adding log message timestamps in the broker.
+- Fix missing mosquitto_username_pw_set() python binding.
+- Fix keepalive timeout for reconnecting non clean-session clients. Prevents
+  immediate disconnection on reconnection.
+- Fix subscription wildcard matching - a subscription of +/+ will now match
+  against /foo
+- Fix subscription wildcard matching - a subscription of foo/# will now match
+  against foo
+- When restoring persistent database, clients should be set to non
+  clean-session or their subscriptions will be immediately removed.
+- Fix SUBACK payload for multiple topic subscriptions.
+- Don't send retained messages when a client subscribes to a topic it is
+  already subscribed to.
 
 0.12 - 20110725
 ===============

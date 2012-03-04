@@ -29,61 +29,61 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <config.h>
 
-#include <assert.h>
-#include <string.h>
-
 #include <mqtt3.h>
 #include <mqtt3_protocol.h>
+#include <memory_mosq.h>
+#include <util_mosq.h>
 
-/* Convert mqtt command (as defined in mqtt3.h) to corresponding string. */
-const char *mqtt3_command_to_string(uint8_t command)
+int _mosquitto_send_connack(struct mosquitto *context, uint8_t result)
 {
-	switch(command){
-		case CONNACK:
-			return "CONNACK";
-		case CONNECT:
-			return "CONNECT";
-		case DISCONNECT:
-			return "DISCONNECT";
-		case PINGREQ:
-			return "PINGREQ";
-		case PINGRESP:
-			return "PINGRESP";
-		case PUBACK:
-			return "PUBACK";
-		case PUBCOMP:
-			return "PUBCOMP";
-		case PUBLISH:
-			return "PUBLISH";
-		case PUBREC:
-			return "PUBREC";
-		case PUBREL:
-			return "PUBREL";
-		case SUBACK:
-			return "SUBACK";
-		case SUBSCRIBE:
-			return "SUBSCRIBE";
-		case UNSUBACK:
-			return "UNSUBACK";
-		case UNSUBSCRIBE:
-			return "UNSUBSCRIBE";
-	}
-	return "UNKNOWN";
-}
+	struct _mosquitto_packet *packet = NULL;
+	int rc;
 
-void mqtt3_check_keepalive(mqtt3_context *context)
-{
-	if(context && context->core.sock != -1 && time(NULL) - context->core.last_msg_out >= context->core.keepalive){
-		if(context->core.state == mosq_cs_connected){
-			mqtt3_raw_pingreq(context);
+	if(context){
+		if(context->id){
+			_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Sending CONNACK to %s (%d)", context->id, result);
 		}else{
-			if(context->listener){
-				context->listener->client_count--;
-				assert(context->listener->client_count >= 0);
-			}
-			context->listener = NULL;
-			_mosquitto_socket_close(&context->core);
+			_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Sending CONNACK to %s (%d)", context->address, result);
 		}
 	}
+
+	packet = _mosquitto_calloc(1, sizeof(struct _mosquitto_packet));
+	if(!packet) return MOSQ_ERR_NOMEM;
+
+	packet->command = CONNACK;
+	packet->remaining_length = 2;
+	rc = _mosquitto_packet_alloc(packet);
+	if(rc){
+		_mosquitto_free(packet);
+		return rc;
+	}
+	packet->payload[packet->pos+0] = 0;
+	packet->payload[packet->pos+1] = result;
+
+	return _mosquitto_packet_queue(context, packet);
 }
 
+int _mosquitto_send_suback(struct mosquitto *context, uint16_t mid, uint32_t payloadlen, const uint8_t *payload)
+{
+	struct _mosquitto_packet *packet = NULL;
+	int rc;
+
+	_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Sending SUBACK to %s", context->id);
+
+	packet = _mosquitto_calloc(1, sizeof(struct _mosquitto_packet));
+	if(!packet) return MOSQ_ERR_NOMEM;
+
+	packet->command = SUBACK;
+	packet->remaining_length = 2+payloadlen;
+	rc = _mosquitto_packet_alloc(packet);
+	if(rc){
+		_mosquitto_free(packet);
+		return rc;
+	}
+	_mosquitto_write_uint16(packet, mid);
+	if(payloadlen){
+		_mosquitto_write_bytes(packet, payload, payloadlen);
+	}
+
+	return _mosquitto_packet_queue(context, packet);
+}
