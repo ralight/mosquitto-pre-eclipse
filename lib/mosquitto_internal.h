@@ -39,9 +39,16 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <time.h>
 #ifdef WIN32
 #  include <winsock2.h>
-#  include <winpthreads.h>
+#endif
+
+#ifdef WITH_THREADING
+#  ifdef WIN32
+#    include <winpthreads.h>
+#  else
+#    include <pthread.h>
+#  endif
 #else
-#  include <pthread.h>
+#  include <dummypthread.h>
 #endif
 
 #include <mosquitto.h>

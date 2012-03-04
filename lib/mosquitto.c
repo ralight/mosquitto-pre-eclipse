@@ -122,11 +122,9 @@ struct mosquitto *mosquitto_new(const char *id, void *obj)
 #ifdef WITH_SSL
 		mosq->ssl = NULL;
 #endif
-#ifdef WITH_THREADING
 		pthread_mutex_init(&mosq->callback_mutex, NULL);
 		pthread_mutex_init(&mosq->state_mutex, NULL);
 		pthread_mutex_init(&mosq->out_packet_mutex, NULL);
-#endif
 	}
 	return mosq;
 }
@@ -193,11 +191,9 @@ void mosquitto_destroy(struct mosquitto *mosq)
 		_mosquitto_free(mosq->ssl);
 	}
 #endif
-#ifdef WITH_THREADING
 	pthread_mutex_destroy(&mosq->callback_mutex);
 	pthread_mutex_destroy(&mosq->state_mutex);
 	pthread_mutex_destroy(&mosq->out_packet_mutex);
-#endif
 	_mosquitto_free(mosq);
 }
 
