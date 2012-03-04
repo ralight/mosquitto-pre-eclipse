@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2011 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2012 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -33,19 +33,22 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <config.h>
 
+#include <mosquitto.h>
+#include <mosquitto_internal.h>
 #include <net_mosq.h>
 #include <mqtt3.h>
 #include <memory_mosq.h>
-#include <mosquitto.h>
 #include <send_mosq.h>
+#include <util_mosq.h>
+#include <will_mosq.h>
 
 #ifdef WITH_BRIDGE
 
 int mqtt3_bridge_new(mosquitto_db *db, struct _mqtt3_bridge *bridge)
 {
 	int i;
-	mqtt3_context *new_context = NULL;
-	mqtt3_context **tmp_contexts;
+	struct mosquitto *new_context = NULL;
+	struct mosquitto **tmp_contexts;
 	char hostname[256];
 	int len;
 
@@ -65,7 +68,7 @@ int mqtt3_bridge_new(mosquitto_db *db, struct _mqtt3_bridge *bridge)
 	}
 	if(i==db->context_count){
 		db->context_count++;
-		tmp_contexts = _mosquitto_realloc(db->contexts, sizeof(mqtt3_context*)*db->context_count);
+		tmp_contexts = _mosquitto_realloc(db->contexts, sizeof(struct mosquitto*)*db->context_count);
 		if(tmp_contexts){
 			db->contexts = tmp_contexts;
 			db->contexts[db->context_count-1] = new_context;
@@ -77,79 +80,94 @@ int mqtt3_bridge_new(mosquitto_db *db, struct _mqtt3_bridge *bridge)
 
 	/* FIXME - need to check that this name isn't already in use. */
 	if(bridge->clientid){
-		new_context->core.id = _mosquitto_strdup(bridge->clientid);
+		new_context->id = _mosquitto_strdup(bridge->clientid);
 	}else{
 		if(!gethostname(hostname, 256)){
 			len = strlen(hostname) + strlen(bridge->name) + 2;
-			new_context->core.id = _mosquitto_malloc(len);
-			if(!new_context->core.id){
+			new_context->id = _mosquitto_malloc(len);
+			if(!new_context->id){
 				return MOSQ_ERR_NOMEM;
 			}
-			snprintf(new_context->core.id, len, "%s.%s", hostname, bridge->name);
+			snprintf(new_context->id, len, "%s.%s", hostname, bridge->name);
 		}else{
 			return 1;
 		}
 	}
-	if(!new_context->core.id){
+	if(!new_context->id){
 		_mosquitto_free(new_context);
 		return MOSQ_ERR_NOMEM;
 	}
-	new_context->core.username = new_context->bridge->username;
-	new_context->core.password = new_context->bridge->password;
+	new_context->username = new_context->bridge->username;
+	new_context->password = new_context->bridge->password;
 
 	return mqtt3_bridge_connect(db, new_context);
 }
 
-int mqtt3_bridge_connect(mosquitto_db *db, mqtt3_context *context)
+int mqtt3_bridge_connect(mosquitto_db *db, struct mosquitto *context)
 {
 	int rc;
 	int i;
+	char *notification_topic;
+	int notification_topic_len;
+	uint8_t notification_payload[2];
 
 	if(!context || !context->bridge) return MOSQ_ERR_INVAL;
 
-	context->core.state = mosq_cs_new;
-	context->core.sock = -1;
-	context->core.last_msg_in = time(NULL);
-	context->core.last_msg_out = time(NULL);
-	context->core.keepalive = context->bridge->keepalive;
-	context->core.clean_session = context->bridge->clean_session;
-	context->core.in_packet.payload = NULL;
+	context->state = mosq_cs_new;
+	context->sock = -1;
+	context->last_msg_in = time(NULL);
+	context->last_msg_out = time(NULL);
+	context->keepalive = context->bridge->keepalive;
+	context->clean_session = context->bridge->clean_session;
+	context->in_packet.payload = NULL;
 	mqtt3_bridge_packet_cleanup(context);
-
-	mqtt3_log_printf(MOSQ_LOG_NOTICE, "Connecting bridge %s", context->bridge->name);
-	rc = _mosquitto_socket_connect(&context->core, context->bridge->address, context->bridge->port);
-	if(rc != MOSQ_ERR_SUCCESS){
-		mqtt3_log_printf(MOSQ_LOG_ERR, "Error creating bridge.");
-		return rc;
-	}
-
-	context->core.last_msg_in = time(NULL);
-	if(_mosquitto_send_connect(&context->core, context->core.keepalive, context->core.clean_session)){
-		return 1;
-	}
 
 	for(i=0; i<context->bridge->topic_count; i++){
 		if(context->bridge->topics[i].direction == bd_out || context->bridge->topics[i].direction == bd_both){
-			if(mqtt3_sub_add(context, context->bridge->topics[i].topic, 2, &db->subs)) return 1;
+			if(mqtt3_sub_add(context, context->bridge->topics[i].topic, context->bridge->topics[i].qos, &db->subs)) return 1;
 		}
 	}
 
-	return MOSQ_ERR_SUCCESS;
+	_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Connecting bridge %s", context->bridge->name);
+	rc = _mosquitto_socket_connect(context, context->bridge->address, context->bridge->port);
+	if(rc != MOSQ_ERR_SUCCESS){
+		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error creating bridge.");
+		return rc;
+	}
+
+	if(context->bridge->notifications){
+		notification_topic_len = strlen(context->id)+strlen("$SYS/broker/connection//state");
+		notification_topic = _mosquitto_malloc(sizeof(char)*(notification_topic_len+1));
+		if(!notification_topic) return MOSQ_ERR_NOMEM;
+
+		snprintf(notification_topic, notification_topic_len+1, "$SYS/broker/connection/%s/state", context->id);
+		notification_payload[0] = '0';
+		notification_payload[1] = '\0';
+		mqtt3_db_messages_easy_queue(db, context, notification_topic, 1, 2, (uint8_t *)&notification_payload, 1);
+		rc = _mosquitto_will_set(context, true, notification_topic, 2, (uint8_t *)&notification_payload, 1, true);
+		if(rc != MOSQ_ERR_SUCCESS){
+			_mosquitto_free(notification_topic);
+			return rc;
+		}
+		_mosquitto_free(notification_topic);
+	}
+
+	return _mosquitto_send_connect(context, context->keepalive, context->clean_session);
 }
 
-void mqtt3_bridge_packet_cleanup(mqtt3_context *context)
+void mqtt3_bridge_packet_cleanup(struct mosquitto *context)
 {
 	struct _mosquitto_packet *packet;
 	if(!context) return;
 
-    while(context->core.out_packet){
-		_mosquitto_packet_cleanup(context->core.out_packet);
-		packet = context->core.out_packet;
-		context->core.out_packet = context->core.out_packet->next;
+    while(context->out_packet){
+		_mosquitto_packet_cleanup(context->out_packet);
+		packet = context->out_packet;
+		context->out_packet = context->out_packet->next;
 		_mosquitto_free(packet);
 	}
 
-	_mosquitto_packet_cleanup(&(context->core.in_packet));
+	_mosquitto_packet_cleanup(&(context->in_packet));
 }
 
 #endif

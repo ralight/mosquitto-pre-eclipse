@@ -1,4 +1,4 @@
-# Copyright (c) 2010, Roger Light <roger@atchoo.org>
+# Copyright (c) 2010-2012 Roger Light <roger@atchoo.org>
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -291,7 +291,12 @@ class Mosquitto:
 		  mid argument in the on_publish() callback if it is defined."""
 
 		mid = c_uint16(0)
-		result = _mosquitto_publish(self._mosq, mid, topic, len(payload), cast(payload, POINTER(c_uint8)), qos, retain)
+		if payload == None:
+			payloadlen = 0
+		else:
+			payloadlen = len(payload)
+
+		result = _mosquitto_publish(self._mosq, mid, topic, payloadlen, cast(payload, POINTER(c_uint8)), qos, retain)
 		return result, mid.value
 
 	def will_set(self, topic, payload=None, qos=0, retain=False):
@@ -309,7 +314,12 @@ class Mosquitto:
 		Returns 0 on success.
 		Returns >1 on error."""
 
-		return _mosquitto_will_set(self._mosq, true, topic, len(payloadlen), cast(payload, POINTER(c_uint8)), qos, retain)
+		if payload == None:
+			payloadlen = 0
+		else:
+			payloadlen = len(payload)
+
+		return _mosquitto_will_set(self._mosq, True, topic, payloadlen, cast(payload, POINTER(c_uint8)), qos, retain)
 
 	def will_clear(self):
 		"""Clear a Will that was previously set with the will_set() call.
@@ -410,9 +420,7 @@ class MosquittoMessage:
 	def __init__(self, mid, topic, payloadlen, payload, qos, retain):
 		self.mid = mid
 		self.topic = topic
-		self.payloadlen = payloadlen
-		self.payload = payload
-		self.payload_str = cast(self.payload, c_char_p).value
+		self.payload = string_at(payload, payloadlen)
 		self.qos = qos
 		self.retain = retain
 
@@ -464,6 +472,10 @@ _mosquitto_unsubscribe.restype = c_int
 _mosquitto_loop = _libmosq.mosquitto_loop
 _mosquitto_loop.argtypes = [c_void_p, c_int]
 _mosquitto_loop.restype = c_int
+
+_mosquitto_username_pw_set = _libmosq.mosquitto_username_pw_set
+_mosquitto_username_pw_set.argtypes = [c_void_p, c_char_p, c_char_p]
+_mosquitto_username_pw_set.restype = c_int
 
 _mosquitto_will_set = _libmosq.mosquitto_will_set
 _mosquitto_will_set.argtypes = [c_void_p, c_bool, c_char_p, c_uint32, POINTER(c_uint8), c_int, c_bool]

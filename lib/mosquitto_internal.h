@@ -45,6 +45,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #include <mosquitto.h>
+#ifdef WITH_BROKER
+struct _mosquitto_client_msg;
+#endif
 
 enum mosquitto_msg_direction {
 	mosq_md_in = 0,
@@ -98,8 +101,7 @@ struct _mosquitto_ssl{
 };
 #endif
 
-struct _mosquitto_core
-{
+struct mosquitto {
 #ifndef WIN32
 	int sock;
 #else
@@ -122,13 +124,19 @@ struct _mosquitto_core
 	struct _mosquitto_ssl *ssl;
 #endif
 #ifdef WITH_THREADING
+	pthread_mutex_t callback_mutex;
+	pthread_mutex_t state_mutex;
+	pthread_t thread_id;
 	pthread_mutex_t out_packet_mutex;
 #endif
-};
-
-struct mosquitto {
-	struct _mosquitto_core core;
+#ifdef WITH_BROKER
+	struct _mqtt3_bridge *bridge;
+	struct _mosquitto_client_msg *msgs;
+	struct _mosquitto_acl_user *acl_list;
+	struct _mqtt3_listener *listener;
+#else
 	void *obj;
+	bool in_callback;
 	unsigned int message_retry;
 	time_t last_retry_check;
 	struct mosquitto_message_all *messages;
@@ -143,10 +151,6 @@ struct mosquitto {
 	//void (*on_error)();
 	char *host;
 	int port;
-#ifdef WITH_THREADING
-	pthread_mutex_t callback_mutex;
-	pthread_mutex_t state_mutex;
-	pthread_t thread_id;
 #endif
 };
 

@@ -1,5 +1,6 @@
-# Also bump lib/mosquitto.h, lib/python/setup.py, CMakeLists.txt
-VERSION=0.12
+# Also bump lib/mosquitto.h, lib/python/setup.py, CMakeLists.txt,
+# installer/mosquitto.nsi, installer/mosquitto-cygwin.nsi
+VERSION=0.15
 TIMESTAMP:=$(shell date "+%F %T%z")
 
 #MANCOUNTRIES=en_GB
