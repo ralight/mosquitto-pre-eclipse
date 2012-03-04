@@ -125,6 +125,7 @@ struct mosquitto {
 	time_t last_msg_out;
 	uint16_t last_mid;
 	struct _mosquitto_packet in_packet;
+	struct _mosquitto_packet *current_out_packet;
 	struct _mosquitto_packet *out_packet;
 	struct mosquitto_message *will;
 #ifdef WITH_SSL
@@ -132,9 +133,10 @@ struct mosquitto {
 #endif
 #ifdef WITH_THREADING
 	pthread_mutex_t callback_mutex;
+	pthread_mutex_t out_packet_mutex;
+	pthread_mutex_t current_out_packet_mutex;
 	pthread_mutex_t state_mutex;
 	pthread_t thread_id;
-	pthread_mutex_t out_packet_mutex;
 #endif
 #ifdef WITH_BROKER
 	struct _mqtt3_bridge *bridge;
