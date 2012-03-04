@@ -29,12 +29,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <config.h>
 
-#ifdef _WIN32
-#include <winpthread.h>
-#else
-#include <pthread.h>
-#endif
-
 #include <unistd.h>
 
 #include <mosquitto_internal.h>
