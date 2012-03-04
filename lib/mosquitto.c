@@ -127,6 +127,7 @@ struct mosquitto *mosquitto_new(const char *id, void *obj)
 		pthread_mutex_init(&mosq->state_mutex, NULL);
 		pthread_mutex_init(&mosq->out_packet_mutex, NULL);
 		pthread_mutex_init(&mosq->current_out_packet_mutex, NULL);
+		pthread_mutex_init(&mosq->msgtime_mutex, NULL);
 	}
 	return mosq;
 }
@@ -197,6 +198,7 @@ void mosquitto_destroy(struct mosquitto *mosq)
 	pthread_mutex_destroy(&mosq->state_mutex);
 	pthread_mutex_destroy(&mosq->out_packet_mutex);
 	pthread_mutex_destroy(&mosq->current_out_packet_mutex);
+	pthread_mutex_destroy(&mosq->msgtime_mutex);
 	_mosquitto_free(mosq);
 }
 
