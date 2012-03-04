@@ -67,6 +67,7 @@ struct mosquitto *mqtt3_context_init(int sock)
 	context->in_packet.payload = NULL;
 	_mosquitto_packet_cleanup(&context->in_packet);
 	context->out_packet = NULL;
+	context->current_out_packet = NULL;
 
 	addrlen = sizeof(addr);
 	context->address = NULL;
@@ -136,6 +137,7 @@ void mqtt3_context_cleanup(mosquitto_db *db, struct mosquitto *context, bool do_
 		context->id = NULL;
 	}
 	_mosquitto_packet_cleanup(&(context->in_packet));
+	_mosquitto_packet_cleanup(context->current_out_packet);
 	while(context->out_packet){
 		_mosquitto_packet_cleanup(context->out_packet);
 		packet = context->out_packet;

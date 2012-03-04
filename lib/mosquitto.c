@@ -103,6 +103,7 @@ struct mosquitto *mosquitto_new(const char *id, void *obj)
 		mosq->in_packet.payload = NULL;
 		_mosquitto_packet_cleanup(&mosq->in_packet);
 		mosq->out_packet = NULL;
+		mosq->current_out_packet = NULL;
 		mosq->last_msg_in = time(NULL);
 		mosq->last_msg_out = time(NULL);
 		mosq->last_mid = 0;
@@ -125,6 +126,7 @@ struct mosquitto *mosquitto_new(const char *id, void *obj)
 		pthread_mutex_init(&mosq->callback_mutex, NULL);
 		pthread_mutex_init(&mosq->state_mutex, NULL);
 		pthread_mutex_init(&mosq->out_packet_mutex, NULL);
+		pthread_mutex_init(&mosq->current_out_packet_mutex, NULL);
 	}
 	return mosq;
 }
@@ -194,6 +196,7 @@ void mosquitto_destroy(struct mosquitto *mosq)
 	pthread_mutex_destroy(&mosq->callback_mutex);
 	pthread_mutex_destroy(&mosq->state_mutex);
 	pthread_mutex_destroy(&mosq->out_packet_mutex);
+	pthread_mutex_destroy(&mosq->current_out_packet_mutex);
 	_mosquitto_free(mosq);
 }
 
@@ -358,7 +361,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout)
 	FD_SET(mosq->sock, &readfds);
 	FD_ZERO(&writefds);
 	pthread_mutex_lock(&mosq->out_packet_mutex);
-	if(mosq->out_packet){
+	if(mosq->out_packet || mosq->current_out_packet){
 		FD_SET(mosq->sock, &writefds);
 #ifdef WITH_SSL
 	}else if(mosq->ssl && mosq->ssl->want_write){

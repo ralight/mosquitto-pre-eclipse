@@ -439,10 +439,16 @@ int _mosquitto_packet_write(struct mosquitto *mosq)
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
 
+	pthread_mutex_lock(&mosq->current_out_packet_mutex);
 	pthread_mutex_lock(&mosq->out_packet_mutex);
-	while(mosq->out_packet){
-		packet = mosq->out_packet;
-		pthread_mutex_unlock(&mosq->out_packet_mutex);
+	if(mosq->out_packet && !mosq->current_out_packet){
+		mosq->current_out_packet = mosq->out_packet;
+		mosq->out_packet = mosq->out_packet->next;
+	}
+	pthread_mutex_unlock(&mosq->out_packet_mutex);
+
+	while(mosq->current_out_packet){
+		packet = mosq->current_out_packet;
 
 		while(packet->to_process > 0){
 			write_length = _mosquitto_net_write(mosq, &(packet->payload[packet->pos]), packet->to_process);
@@ -457,8 +463,10 @@ int _mosquitto_packet_write(struct mosquitto *mosq)
 				errno = WSAGetLastError();
 #endif
 				if(errno == EAGAIN || errno == COMPAT_EWOULDBLOCK){
+					pthread_mutex_unlock(&mosq->current_out_packet_mutex);
 					return MOSQ_ERR_SUCCESS;
 				}else{
+					pthread_mutex_unlock(&mosq->current_out_packet_mutex);
 					switch(errno){
 						case COMPAT_ECONNRESET:
 							return MOSQ_ERR_CONN_LOST;
@@ -484,13 +492,18 @@ int _mosquitto_packet_write(struct mosquitto *mosq)
 
 		/* Free data and reset values */
 		pthread_mutex_lock(&mosq->out_packet_mutex);
-		mosq->out_packet = packet->next;
+		mosq->current_out_packet = mosq->out_packet;
+		if(mosq->out_packet){
+			mosq->out_packet = mosq->out_packet->next;
+		}
+		pthread_mutex_unlock(&mosq->out_packet_mutex);
+
 		_mosquitto_packet_cleanup(packet);
 		_mosquitto_free(packet);
 
 		mosq->last_msg_out = time(NULL);
 	}
-	pthread_mutex_unlock(&mosq->out_packet_mutex);
+	pthread_mutex_unlock(&mosq->current_out_packet_mutex);
 	return MOSQ_ERR_SUCCESS;
 }
 
