@@ -501,7 +501,9 @@ int _mosquitto_packet_write(struct mosquitto *mosq)
 		_mosquitto_packet_cleanup(packet);
 		_mosquitto_free(packet);
 
+		pthread_mutex_lock(&mosq->msgtime_mutex);
 		mosq->last_msg_out = time(NULL);
+		pthread_mutex_unlock(&mosq->msgtime_mutex);
 	}
 	pthread_mutex_unlock(&mosq->current_out_packet_mutex);
 	return MOSQ_ERR_SUCCESS;

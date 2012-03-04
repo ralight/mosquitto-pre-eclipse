@@ -133,6 +133,7 @@ struct mosquitto {
 #endif
 #ifdef WITH_THREADING
 	pthread_mutex_t callback_mutex;
+	pthread_mutex_t msgtime_mutex;
 	pthread_mutex_t out_packet_mutex;
 	pthread_mutex_t current_out_packet_mutex;
 	pthread_mutex_t state_mutex;
