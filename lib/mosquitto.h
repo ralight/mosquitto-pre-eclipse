@@ -109,6 +109,10 @@ struct mosquitto_message{
 
 struct mosquitto;
 
+/*
+ * Topic: Threads
+ *	libmosquitto provides thread safe operation. 
+ */
 /***************************************************
  * Important note
  * 
@@ -480,13 +484,17 @@ libmosq_EXPORT void mosquitto_message_free(struct mosquitto_message **message);
  * Function: mosquitto_loop
  *
  * The main network loop for the client. You must call this frequently in order
- * to keep communications between the client and broker working.
+ * to keep communications between the client and broker working. An alternative
+ * approach is to use <mosquitto_loop_start> to run the client loop in its own
+ * thread.
  *
  * This calls select() to monitor the client network socket. If you want to
  * integrate mosquitto client operation with your own select() call, use
  * <mosquitto_socket>, <mosquitto_loop_read>, <mosquitto_loop_write> and
  * <mosquitto_loop_misc>.
  *
+ * Threads:
+ *	
  * Parameters:
  *	mosq -    a valid mosquitto instance.
  *	timeout - Maximum number of milliseconds to wait for network activity in
@@ -505,8 +513,34 @@ libmosq_EXPORT void mosquitto_message_free(struct mosquitto_message **message);
  *                       contains the error code, even on Windows.
  *                       Use strerror_r() where available or FormatMessage() on
  *                       Windows.
+ * See Also:
+ *	<mosquitto_loop_start>, <mosquitto_loop_stop>
  */
 libmosq_EXPORT int mosquitto_loop(struct mosquitto *mosq, int timeout);
+
+/*
+ * Function: mosquitto_loop_start
+ *
+ * Parameters:
+ *  mosq - a valid mosquitto instance.
+ *
+ * See Also:
+ *	<mosquitto_loop>, <mosquitto_loop_stop>
+ */
+libmosq_EXPORT int mosquitto_loop_start(struct mosquitto *mosq);
+
+/*
+ * Function: mosquitto_loop_stop
+ *
+ * Parameters:
+ *  mosq - a valid mosquitto instance.
+ *	force - set to true to force thread cancellation. If false,
+ *	        <mosquitto_disconnect> must have already been called.
+ *
+ * See Also:
+ *	<mosquitto_loop>, <mosquitto_loop_start>
+ */
+libmosq_EXPORT int mosquitto_loop_stop(struct mosquitto *mosq, bool force);
 
 /*
  * Function: mosquitto_socket
@@ -727,22 +761,6 @@ libmosq_EXPORT void mosquitto_unsubscribe_callback_set(struct mosquitto *mosq, v
  *                  retrying. Defaults to 60.
  */
 libmosq_EXPORT void mosquitto_message_retry_set(struct mosquitto *mosq, unsigned int message_retry);
-
-/*
- * Function: mosquitto_loop_start
- *
- * Parameters:
- *  mosq - a valid mosquitto instance.
- */
-libmosq_EXPORT int mosquitto_loop_start(struct mosquitto *mosq);
-
-/*
- * Function: mosquitto_loop_stop
- *
- * Parameters:
- *  mosq - a valid mosquitto instance.
- */
-libmosq_EXPORT int mosquitto_loop_stop(struct mosquitto *mosq);
 
 #ifdef __cplusplus
 }
