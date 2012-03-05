@@ -47,11 +47,14 @@ int mosquitto_loop_start(struct mosquitto *mosq)
 #endif
 }
 
-int mosquitto_loop_stop(struct mosquitto *mosq)
+int mosquitto_loop_stop(struct mosquitto *mosq, bool force)
 {
 #ifdef WITH_THREADING
 	if(!mosq) return MOSQ_ERR_INVAL;
 	
+	if(force){
+		pthread_cancel(mosq->thread_id);
+	}
 	pthread_join(mosq->thread_id, NULL);
 
 	return MOSQ_ERR_SUCCESS;
@@ -72,7 +75,6 @@ void *_mosquitto_thread_main(void *obj)
 	while(run){
 		do{
 			rc = mosquitto_loop(mosq, -1);
-			printf("rc: %d\n", rc);
 		}while(rc == MOSQ_ERR_SUCCESS);
 		pthread_mutex_lock(&mosq->state_mutex);
 		if(mosq->state == mosq_cs_disconnecting){
