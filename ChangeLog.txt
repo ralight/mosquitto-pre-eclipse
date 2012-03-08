@@ -1,6 +1,10 @@
 0.16 - 2012xxxx
 ===============
 
+- Add "struct mosquitto *mosq" parameter for all callbacks in the client
+  library. This is a binary incompatible change so the soversion of the
+  libraries has been incremented. The new parameter should make it easier to
+  use callbacks in practice.
 - Add mosquitto_want_write() for use when using own select() loop with
   mosquitto_socket().
 - Fix reloading of log configuration.

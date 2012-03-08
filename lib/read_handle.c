@@ -133,7 +133,7 @@ int _mosquitto_handle_publish(struct mosquitto *mosq)
 		case 0:
 			if(mosq->on_message){
 				mosq->in_callback = true;
-				mosq->on_message(mosq->obj, &message->msg);
+				mosq->on_message(mosq, mosq->obj, &message->msg);
 				mosq->in_callback = false;
 			}
 			_mosquitto_message_cleanup(&message);
@@ -142,7 +142,7 @@ int _mosquitto_handle_publish(struct mosquitto *mosq)
 			rc = _mosquitto_send_puback(mosq, message->msg.mid);
 			if(mosq->on_message){
 				mosq->in_callback = true;
-				mosq->on_message(mosq->obj, &message->msg);
+				mosq->on_message(mosq, mosq->obj, &message->msg);
 				mosq->in_callback = false;
 			}
 			_mosquitto_message_cleanup(&message);

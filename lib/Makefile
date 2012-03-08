@@ -1,32 +1,34 @@
 include ../config.mk
 
+SOVERSION=1
+
 .PHONY : clean install
 
-all : libmosquitto.so.0
+all : libmosquitto.so.${SOVERSION}
 	make -C cpp
 	make -C python
 
 install : all
 	$(INSTALL) -d ${DESTDIR}$(prefix)/lib${LIB_SUFFIX}/
-	$(INSTALL) -s libmosquitto.so.0 ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.so.0
-	ln -sf libmosquitto.so.0 ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.so
+	$(INSTALL) -s libmosquitto.so.${SOVERSION} ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.so.${SOVERSION}
+	ln -sf libmosquitto.so.${SOVERSION} ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.so
 	$(INSTALL) -d ${DESTDIR}${prefix}/include/
 	$(INSTALL) mosquitto.h ${DESTDIR}${prefix}/include/mosquitto.h
 	make -C cpp install
 	make -C python install
 
 uninstall :
-	-rm -f ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.so.0
+	-rm -f ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.so.${SOVERSION}
 	-rm -f ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.so
 	-rm -f ${DESTDIR}${prefix}/include/mosquitto.h
 
 clean :
-	-rm -f *.o libmosquitto.so.0 libmosquitto.so
+	-rm -f *.o libmosquitto.so.${SOVERSION} libmosquitto.so
 	make -C cpp clean
 	make -C python clean
 
-libmosquitto.so.0 : mosquitto.o logging_mosq.o memory_mosq.o messages_mosq.o net_mosq.o read_handle.o read_handle_client.o read_handle_shared.o send_mosq.o send_client_mosq.o util_mosq.o will_mosq.o
-	$(CC) -shared -Wl,--version-script=linker.version -Wl,-soname,libmosquitto.so.0 $^ -o $@ ${LIBS}
+libmosquitto.so.${SOVERSION} : mosquitto.o logging_mosq.o memory_mosq.o messages_mosq.o net_mosq.o read_handle.o read_handle_client.o read_handle_shared.o send_mosq.o send_client_mosq.o util_mosq.o will_mosq.o
+	$(CC) -shared -Wl,--version-script=linker.version -Wl,-soname,libmosquitto.so.${SOVERSION} $^ -o $@ ${LIBS}
 
 mosquitto.o : mosquitto.c mosquitto.h
 	$(CC) $(CFLAGS) -fPIC -c $< -o $@
