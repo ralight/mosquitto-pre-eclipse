@@ -54,7 +54,7 @@ int _mosquitto_handle_connack(struct mosquitto *mosq)
 	if(rc) return rc;
 	if(mosq->on_connect){
 		mosq->in_callback = true;
-		mosq->on_connect(mosq->obj, result);
+		mosq->on_connect(mosq, mosq->obj, result);
 		mosq->in_callback = false;
 	}
 	switch(result){

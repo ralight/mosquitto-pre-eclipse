@@ -33,37 +33,37 @@ POSSIBILITY OF SUCH DAMAGE.
 
 namespace mosquittopp {
 
-static void on_connect_wrapper(void *obj, int rc)
+static void on_connect_wrapper(struct mosquitto *mosq, void *obj, int rc)
 {
 	class mosquittopp *m = (class mosquittopp *)obj;
 	m->on_connect(rc);
 }
 
-static void on_disconnect_wrapper(void *obj)
+static void on_disconnect_wrapper(struct mosquitto *mosq, void *obj)
 {
 	class mosquittopp *m = (class mosquittopp *)obj;
 	m->on_disconnect();
 }
 
-static void on_publish_wrapper(void *obj, uint16_t mid)
+static void on_publish_wrapper(struct mosquitto *mosq, void *obj, uint16_t mid)
 {
 	class mosquittopp *m = (class mosquittopp *)obj;
 	m->on_publish(mid);
 }
 
-static void on_message_wrapper(void *obj, const struct mosquitto_message *message)
+static void on_message_wrapper(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
 {
 	class mosquittopp *m = (class mosquittopp *)obj;
 	m->on_message(message);
 }
 
-static void on_subscribe_wrapper(void *obj, uint16_t mid, int qos_count, const uint8_t *granted_qos)
+static void on_subscribe_wrapper(struct mosquitto *mosq, void *obj, uint16_t mid, int qos_count, const uint8_t *granted_qos)
 {
 	class mosquittopp *m = (class mosquittopp *)obj;
 	m->on_subscribe(mid, qos_count, granted_qos);
 }
 
-static void on_unsubscribe_wrapper(void *obj, uint16_t mid)
+static void on_unsubscribe_wrapper(struct mosquitto *mosq, void *obj, uint16_t mid)
 {
 	class mosquittopp *m = (class mosquittopp *)obj;
 	m->on_unsubscribe(mid);

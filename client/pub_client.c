@@ -67,9 +67,8 @@ static char *password = NULL;
 static bool disconnect_sent = false;
 static bool quiet = false;
 
-void my_connect_callback(void *obj, int result)
+void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 {
-	struct mosquitto *mosq = obj;
 	int rc = MOSQ_ERR_SUCCESS;
 
 	if(!result){
@@ -132,15 +131,13 @@ void my_connect_callback(void *obj, int result)
 	}
 }
 
-void my_disconnect_callback(void *obj)
+void my_disconnect_callback(struct mosquitto *mosq, void *obj)
 {
 	connected = false;
 }
 
-void my_publish_callback(void *obj, uint16_t mid)
+void my_publish_callback(struct mosquitto *mosq, void *obj, uint16_t mid)
 {
-	struct mosquitto *mosq = obj;
-
 	if(mode != MSGMODE_STDIN_LINE && disconnect_sent == false){
 		mosquitto_disconnect(mosq);
 		disconnect_sent = true;

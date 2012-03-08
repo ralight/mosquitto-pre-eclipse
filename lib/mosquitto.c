@@ -392,7 +392,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout)
 				}
 				if(mosq->on_disconnect){
 					mosq->in_callback = true;
-					mosq->on_disconnect(mosq->obj);
+					mosq->on_disconnect(mosq, mosq->obj);
 					mosq->in_callback = false;
 				}
 				return rc;
@@ -407,7 +407,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout)
 				}
 				if(mosq->on_disconnect){
 					mosq->in_callback = true;
-					mosq->on_disconnect(mosq->obj);
+					mosq->on_disconnect(mosq, mosq->obj);
 					mosq->in_callback = false;
 				}
 				return rc;
@@ -450,32 +450,32 @@ bool mosquitto_want_write(struct mosquitto *mosq)
 	}
 }
 
-void mosquitto_connect_callback_set(struct mosquitto *mosq, void (*on_connect)(void *, int))
+void mosquitto_connect_callback_set(struct mosquitto *mosq, void (*on_connect)(struct mosquitto *, void *, int))
 {
 	mosq->on_connect = on_connect;
 }
 
-void mosquitto_disconnect_callback_set(struct mosquitto *mosq, void (*on_disconnect)(void *))
+void mosquitto_disconnect_callback_set(struct mosquitto *mosq, void (*on_disconnect)(struct mosquitto *, void *))
 {
 	mosq->on_disconnect = on_disconnect;
 }
 
-void mosquitto_publish_callback_set(struct mosquitto *mosq, void (*on_publish)(void *, uint16_t))
+void mosquitto_publish_callback_set(struct mosquitto *mosq, void (*on_publish)(struct mosquitto *, void *, uint16_t))
 {
 	mosq->on_publish = on_publish;
 }
 
-void mosquitto_message_callback_set(struct mosquitto *mosq, void (*on_message)(void *, const struct mosquitto_message *))
+void mosquitto_message_callback_set(struct mosquitto *mosq, void (*on_message)(struct mosquitto *, void *, const struct mosquitto_message *))
 {
 	mosq->on_message = on_message;
 }
 
-void mosquitto_subscribe_callback_set(struct mosquitto *mosq, void (*on_subscribe)(void *, uint16_t, int, const uint8_t *))
+void mosquitto_subscribe_callback_set(struct mosquitto *mosq, void (*on_subscribe)(struct mosquitto *, void *, uint16_t, int, const uint8_t *))
 {
 	mosq->on_subscribe = on_subscribe;
 }
 
-void mosquitto_unsubscribe_callback_set(struct mosquitto *mosq, void (*on_unsubscribe)(void *, uint16_t))
+void mosquitto_unsubscribe_callback_set(struct mosquitto *mosq, void (*on_unsubscribe)(struct mosquitto *, void *, uint16_t))
 {
 	mosq->on_unsubscribe = on_unsubscribe;
 }
