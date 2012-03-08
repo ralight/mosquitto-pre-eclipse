@@ -7,7 +7,7 @@
 !define env_hklm 'HKLM "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"'
 
 Name "mosquitto"
-!define VERSION 0.15
+!define VERSION 0.15.90
 OutFile "mosquitto-${VERSION}-install-cygwin.exe"
 
 InstallDir "$PROGRAMFILES\mosquitto"
@@ -40,6 +40,7 @@ Section "Files" SecInstall
 	SectionIn RO
 	SetOutPath "$INSTDIR"
 	File "c:\cygwin\bin\cygwin1.dll"
+	File "c:\cygwin\bin\cyggcc_s-1.dll"
 	File "..\src\mosquitto.exe"
 	File "..\build\client\Release\mosquitto_pub.exe"
 	File "..\build\client\Release\mosquitto_sub.exe"

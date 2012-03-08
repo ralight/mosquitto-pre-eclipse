@@ -340,7 +340,7 @@ class Mosquitto:
 		Returns >0 on error."""
 		return _mosquitto_username_pw_set(self._mosq, username, password)
 
-	def _internal_on_connect(self, obj, rc):
+	def _internal_on_connect(self, mosq, obj, rc):
 		if self.on_connect:
 			argcount = self.on_connect.func_code.co_argcount
 
@@ -349,7 +349,7 @@ class Mosquitto:
 			elif argcount == 2 or argcount == 3:
 				self.on_connect(self.obj, rc)
 
-	def _internal_on_disconnect(self, obj):
+	def _internal_on_disconnect(self, mosq, obj):
 		if self.on_disconnect:
 			argcount = self.on_disconnect.func_code.co_argcount
 
@@ -358,7 +358,7 @@ class Mosquitto:
 			elif argcount == 1 or argcount == 2:
 				self.on_disconnect(self.obj)
 
-	def _internal_on_message(self, obj, message):
+	def _internal_on_message(self, mosq, obj, message):
 		if self.on_message:
 			mid = message.contents.mid
 			topic = message.contents.topic
@@ -374,7 +374,7 @@ class Mosquitto:
 			elif argcount == 2 or argcount == 3:
 				self.on_message(self.obj, msg)
 
-	def _internal_on_publish(self, obj, mid):
+	def _internal_on_publish(self, mosq, obj, mid):
 		if self.on_publish:
 			argcount = self.on_publish.func_code.co_argcount
 
@@ -383,7 +383,7 @@ class Mosquitto:
 			elif argcount == 2 or argcount == 3:
 				self.on_publish(self.obj, mid)
 
-	def _internal_on_subscribe(self, obj, mid, qos_count, granted_qos):
+	def _internal_on_subscribe(self, mosq, obj, mid, qos_count, granted_qos):
 		if self.on_subscribe:
 			qos_list = []
 			for i in range(qos_count):
@@ -395,7 +395,7 @@ class Mosquitto:
 			elif argcount == 3 or argcount == 4:
 				self.on_subscribe(self.obj, mid, qos_list)
 
-	def _internal_on_unsubscribe(self, obj, mid):
+	def _internal_on_unsubscribe(self, mosq, obj, mid):
 		if self.on_unsubscribe:
 			argcount = self.on_unsubscribe.func_code.co_argcount
 
@@ -509,12 +509,12 @@ _mosquitto_unsubscribe_callback_set = _libmosq.mosquitto_unsubscribe_callback_se
 _mosquitto_unsubscribe_callback_set.argtypes = [c_void_p, c_void_p]
 _mosquitto_unsubscribe_callback_set.restype = None
 
-_MOSQ_CONNECT_FUNC = CFUNCTYPE(None, c_void_p, c_int)
-_MOSQ_DISCONNECT_FUNC = CFUNCTYPE(None, c_void_p)
-_MOSQ_PUBLISH_FUNC = CFUNCTYPE(None, c_void_p, c_uint16)
-_MOSQ_MESSAGE_FUNC = CFUNCTYPE(None, c_void_p, POINTER(c_MosquittoMessage))
-_MOSQ_SUBSCRIBE_FUNC = CFUNCTYPE(None, c_void_p, c_uint16, c_int, POINTER(c_uint8))
-_MOSQ_UNSUBSCRIBE_FUNC = CFUNCTYPE(None, c_void_p, c_uint16)
+_MOSQ_CONNECT_FUNC = CFUNCTYPE(None, c_void_p, c_void_p, c_int)
+_MOSQ_DISCONNECT_FUNC = CFUNCTYPE(None, c_void_p, c_void_p)
+_MOSQ_PUBLISH_FUNC = CFUNCTYPE(None, c_void_p, c_void_p, c_uint16)
+_MOSQ_MESSAGE_FUNC = CFUNCTYPE(None, c_void_p, c_void_p, POINTER(c_MosquittoMessage))
+_MOSQ_SUBSCRIBE_FUNC = CFUNCTYPE(None, c_void_p, c_void_p, c_uint16, c_int, POINTER(c_uint8))
+_MOSQ_UNSUBSCRIBE_FUNC = CFUNCTYPE(None, c_void_p, c_void_p, c_uint16)
 #==================================================
 # End library loading
 #==================================================

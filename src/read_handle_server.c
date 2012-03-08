@@ -210,6 +210,9 @@ int mqtt3_handle_connect(mosquitto_db *db, int context_index)
 			db->contexts[i]->last_msg_in = time(NULL);
 			db->contexts[i]->last_msg_out = time(NULL);
 			db->contexts[i]->keepalive = context->keepalive;
+			if(context->username){
+				db->contexts[i]->username = _mosquitto_strdup(context->username);
+			}
 			context->sock = -1;
 			context->state = mosq_cs_disconnecting;
 			context = db->contexts[i];

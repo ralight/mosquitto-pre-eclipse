@@ -245,7 +245,7 @@ static int _db_retain_chunk_restore(mosquitto_db *db, FILE *db_fd)
 {
 	dbid_t i64temp, store_id;
 
-	if(fread(&i64temp, sizeof(dbid_t), 1, db_fd) != sizeof(dbid_t)){
+	if(fread(&i64temp, sizeof(dbid_t), 1, db_fd) != 1){
 		fprintf(stderr, "Error: %s.", strerror(errno));
 		fclose(db_fd);
 		return 1;
