@@ -634,7 +634,7 @@ static int _db_retain_chunk_restore(mosquitto_db *db, FILE *db_fptr)
 	struct mosquitto_msg_store *store;
 	char err[256];
 
-	if(fread(&i64temp, 1, sizeof(dbid_t), db_fptr) != sizeof(dbid_t)){
+	if(fread(&i64temp, sizeof(dbid_t), 1, db_fptr) != 1){
 		strerror_r(errno, err, 256);
 		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
 		fclose(db_fptr);
@@ -729,7 +729,7 @@ int mqtt3_db_restore(mosquitto_db *db)
 			return 1;
 		}
 
-		while(rlen = fread(&i16temp, 1, sizeof(uint16_t), fptr), rlen == sizeof(uint16_t)){
+		while(rlen = fread(&i16temp, sizeof(uint16_t), 1, fptr), rlen == 1){
 			chunk = ntohs(i16temp);
 			read_e(fptr, &i32temp, sizeof(uint32_t));
 			length = ntohl(i32temp);
@@ -738,7 +738,7 @@ int mqtt3_db_restore(mosquitto_db *db)
 					read_e(fptr, &i8temp, sizeof(uint8_t)); // shutdown
 					read_e(fptr, &i8temp, sizeof(uint8_t)); // sizeof(dbid_t)
 					if(i8temp != sizeof(dbid_t)){
-						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Incompatible database configuration (dbid size is %d bytes, expected %d)",
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Incompatible database configuration (dbid size is %d bytes, expected %ld)",
 								i8temp, sizeof(dbid_t));
 						fclose(fptr);
 						return 1;

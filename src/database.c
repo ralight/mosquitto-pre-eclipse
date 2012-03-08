@@ -316,7 +316,7 @@ int mqtt3_db_message_insert(mosquitto_db *db, struct mosquitto *context, uint16_
 	}
 
 	if(context->sock != INVALID_SOCKET){
-		if(qos == 0 || max_inflight == 0 || msg_count < max_inflight){
+		if( (qos == 0 && !db->config->queue_qos0_messages) || max_inflight == 0 || msg_count < max_inflight){
 			if(dir == mosq_md_out){
 				switch(qos){
 					case 0:

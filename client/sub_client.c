@@ -49,7 +49,7 @@ static char *password = NULL;
 int verbose = 0;
 bool quiet = false;
 
-void my_message_callback(void *obj, const struct mosquitto_message *message)
+void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
 {
 	if(verbose){
 		if(message->payloadlen){
@@ -66,10 +66,8 @@ void my_message_callback(void *obj, const struct mosquitto_message *message)
 	}
 }
 
-void my_connect_callback(void *obj, int result)
+void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 {
-	struct mosquitto *mosq = obj;
-
 	int i;
 	if(!result){
 		for(i=0; i<topic_count; i++){
@@ -99,7 +97,7 @@ void my_connect_callback(void *obj, int result)
 	}
 }
 
-void my_subscribe_callback(void *obj, uint16_t mid, int qos_count, const uint8_t *granted_qos)
+void my_subscribe_callback(struct mosquitto *mosq, void *obj, uint16_t mid, int qos_count, const uint8_t *granted_qos)
 {
 	int i;
 
