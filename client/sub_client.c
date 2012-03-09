@@ -91,7 +91,7 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 				if(!quiet) fprintf(stderr, "Connection Refused: not authorised\n");
 				break;
 			default:
-				if(!quiet) fprintf(stderr, "Connection Refused: unknown reason\n");
+				if(!quiet) fprintf(stderr, "Connection Refused: unknown reason (%d)\n", result);
 				break;
 		}
 	}
