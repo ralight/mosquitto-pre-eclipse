@@ -4,6 +4,7 @@ syntax: glob
 *.exe
 *.db
 
+client/mosquitto_mysql_log
 client/mosquitto_pub
 client/mosquitto_sub
 man/mosquitto.8
