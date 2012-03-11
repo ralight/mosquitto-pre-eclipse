@@ -131,7 +131,7 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 	}
 }
 
-void my_disconnect_callback(struct mosquitto *mosq, void *obj)
+void my_disconnect_callback(struct mosquitto *mosq, void *obj, int rc)
 {
 	connected = false;
 }
