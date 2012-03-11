@@ -182,9 +182,9 @@ int mosquittopp::loop_start()
 	return mosquitto_loop_start(mosq);
 }
 
-int mosquittopp::loop_stop()
+int mosquittopp::loop_stop(bool force)
 {
-	return mosquitto_loop_stop(mosq);
+	return mosquitto_loop_stop(mosq, force);
 }
 
 bool mosquittopp::want_write()
