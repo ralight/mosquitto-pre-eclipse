@@ -18,10 +18,13 @@
 #define db_database "mqtt_log"
 #define db_port 3306
 
+#define db_query "INSERT INTO mqtt_log (topic, payload) VALUES (?,?)"
+
 #define mqtt_host "localhost"
 #define mqtt_port 1883
 
 static int run = 1;
+static MYSQL_STMT *stmt = NULL;
 
 void handle_signal(int s)
 {
@@ -34,7 +37,17 @@ void connect_callback(struct mosquitto *mosq, void *obj, int result)
 
 void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
 {
-	printf("topic: %s, message: %s\n", message->topic, message->payload);
+	MYSQL_BIND bind[2];
+
+	memset(bind, 0, sizeof(bind));
+
+	bind[0].buffer_type = MYSQL_TYPE_STRING;
+	bind[0].buffer = message->topic;
+	bind[1].buffer_type = MYSQL_TYPE_STRING;
+	bind[1].buffer = message->payload;
+
+	mysql_stmt_bind_param(stmt, bind);
+	mysql_stmt_execute(stmt);
 }
 
 int main(int argc, char *argv[])
@@ -59,6 +72,10 @@ int main(int argc, char *argv[])
 		connection = mysql_real_connect(connection, db_host, db_username, db_password, db_database, db_port, NULL, 0);
 
 		if(connection){
+			stmt = mysql_stmt_init(connection);
+
+			mysql_stmt_prepare(stmt, db_query, strlen(db_query));
+
 			memset(clientid, 0, 24);
 			snprintf(clientid, 23, "mysql_log_%d", getpid());
 			mosq = mosquitto_new(clientid, connection);
@@ -80,6 +97,7 @@ int main(int argc, char *argv[])
 				}
 				mosquitto_destroy(mosq);
 			}
+			mysql_stmt_close(stmt);
 
 			mysql_close(connection);
 		}else{
