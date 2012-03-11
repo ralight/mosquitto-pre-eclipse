@@ -685,8 +685,11 @@ libmosq_EXPORT void mosquitto_connect_callback_set(struct mosquitto *mosq, void 
  * Callback Parameters:
  *  mosq - the mosquitto instance making the callback.
  *  obj -  the user data provided in <mosquitto_new>
+ *  rc -   integer value indicating the reason for the disconnect. A value of 0
+ *         means the client has called <mosquitto_disconnect>. Any other value
+ *         indicates that the disconnect is unexpected.
  */
-libmosq_EXPORT void mosquitto_disconnect_callback_set(struct mosquitto *mosq, void (*on_disconnect)(struct mosquitto *, void *));
+libmosq_EXPORT void mosquitto_disconnect_callback_set(struct mosquitto *mosq, void (*on_disconnect)(struct mosquitto *, void *, int));
  
 /*
  * Function: mosquitto_publish_callback_set

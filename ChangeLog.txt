@@ -15,6 +15,8 @@
 - Fix db_dump reading of retained messages.
 - Fix reloading of persistence_file and persistence_location.
 - Add example of logging all messages to mysql.
+- Add "int rc" parameter to disconnect callback to indicate whether disconnect
+  was unexpected or the result of calling mosquitto_disconnect().
 
 0.15 - 20120205
 ===============

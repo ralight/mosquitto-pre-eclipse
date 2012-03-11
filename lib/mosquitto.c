@@ -410,7 +410,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout)
 				pthread_mutex_lock(&mosq->callback_mutex);
 				if(mosq->on_disconnect){
 					mosq->in_callback = true;
-					mosq->on_disconnect(mosq, mosq->obj);
+					mosq->on_disconnect(mosq, mosq->obj, rc);
 					mosq->in_callback = false;
 				}
 				pthread_mutex_unlock(&mosq->callback_mutex);
@@ -429,7 +429,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout)
 				pthread_mutex_lock(&mosq->callback_mutex);
 				if(mosq->on_disconnect){
 					mosq->in_callback = true;
-					mosq->on_disconnect(mosq, mosq->obj);
+					mosq->on_disconnect(mosq, mosq->obj, rc);
 					mosq->in_callback = false;
 				}
 				pthread_mutex_unlock(&mosq->callback_mutex);
@@ -480,7 +480,7 @@ void mosquitto_connect_callback_set(struct mosquitto *mosq, void (*on_connect)(s
 	pthread_mutex_unlock(&mosq->callback_mutex);
 }
 
-void mosquitto_disconnect_callback_set(struct mosquitto *mosq, void (*on_disconnect)(struct mosquitto *, void *))
+void mosquitto_disconnect_callback_set(struct mosquitto *mosq, void (*on_disconnect)(struct mosquitto *, void *, int))
 {
 	pthread_mutex_lock(&mosq->callback_mutex);
 	mosq->on_disconnect = on_disconnect;

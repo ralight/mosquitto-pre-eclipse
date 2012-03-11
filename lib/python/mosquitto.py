@@ -84,9 +84,9 @@ class Mosquitto:
 	  5: Connection refused - not authorised
 	  6-255: Currently unused.
 
-	on_disconnect(obj): called when the client disconnects from the broker, but
-	  only after having sent a disconnection message to the broker. This will
-	  not be called if the client is disconnected unexpectedly.
+	on_disconnect(obj, rc): called when the client disconnects from the broker.
+	  rc==1 indicates an unexpected disconnect, rc==0 is a disconnect in
+	  response to the client calling disconnect().
 
 	on_message(obj, message): called when a message has been received on a
 	  topic that the client subscribes to. The message variable is a
@@ -349,14 +349,14 @@ class Mosquitto:
 			elif argcount == 2 or argcount == 3:
 				self.on_connect(self.obj, rc)
 
-	def _internal_on_disconnect(self, mosq, obj):
+	def _internal_on_disconnect(self, mosq, obj, rc):
 		if self.on_disconnect:
 			argcount = self.on_disconnect.func_code.co_argcount
 
-			if argcount == 0:
-				self.on_disconnect()
-			elif argcount == 1 or argcount == 2:
-				self.on_disconnect(self.obj)
+			if argcount == 1:
+				self.on_disconnect(rc)
+			elif argcount == 2 or argcount == 3:
+				self.on_disconnect(self.obj, rc)
 
 	def _internal_on_message(self, mosq, obj, message):
 		if self.on_message:
@@ -490,7 +490,7 @@ _mosquitto_connect_callback_set.argtypes = [c_void_p, c_void_p]
 _mosquitto_connect_callback_set.restype = None
 
 _mosquitto_disconnect_callback_set = _libmosq.mosquitto_disconnect_callback_set
-_mosquitto_disconnect_callback_set.argtypes = [c_void_p, c_void_p]
+_mosquitto_disconnect_callback_set.argtypes = [c_void_p, c_void_p, int]
 _mosquitto_disconnect_callback_set.restype = None
 
 _mosquitto_publish_callback_set = _libmosq.mosquitto_publish_callback_set
