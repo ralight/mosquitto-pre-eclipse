@@ -13,8 +13,8 @@
 #include <mysql/mysql.h>
 
 #define db_host "localhost"
-#define db_username "db_username"
-#define db_password "db_password"
+#define db_username "mqtt_log"
+#define db_password "password"
 #define db_database "mqtt_log"
 #define db_port 3306
 
@@ -66,13 +66,14 @@ int main(int argc, char *argv[])
 				mosquitto_connect_callback_set(mosq, connect_callback);
 				mosquitto_message_callback_set(mosq, message_callback);
 
-				mosquitto_subscribe(mosq, NULL, "#", 0);
 
 			    rc = mosquitto_connect(mosq, mqtt_host, mqtt_port, 60, true);
 
+				mosquitto_subscribe(mosq, NULL, "#", 0);
+
 				while(run){
 					rc = mosquitto_loop(mosq, -1);
-					if(rc){
+					if(run && rc){
 						sleep(20);
 						mosquitto_reconnect(mosq);
 					}
@@ -83,6 +84,7 @@ int main(int argc, char *argv[])
 			mysql_close(connection);
 		}else{
 			fprintf(stderr, "Error: Unable to connect to database.\n");
+			printf("%s\n", mysql_error(connection));
 			rc = 1;
 		}
 	}else{
