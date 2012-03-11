@@ -624,7 +624,7 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 					}
 					config->default_listener.port = port_tmp;
 				}else if(!strcmp(token, "queue_qos0_messages")){
-					if(_conf_parse_bool(&token, token, &config->queue_qos0_messages)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_bool(&token, token, &config->queue_qos0_messages, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "retry_interval")){
 					if(_conf_parse_int(&token, "retry_interval", &config->retry_interval, saveptr)) return MOSQ_ERR_INVAL;
 					if(config->retry_interval < 1 || config->retry_interval > 3600){
