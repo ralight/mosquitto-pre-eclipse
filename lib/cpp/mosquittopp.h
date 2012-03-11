@@ -83,7 +83,7 @@ class mosqpp_EXPORT mosquittopp {
 		bool want_write();
 		
 		virtual void on_connect(int rc) {return;};
-		virtual void on_disconnect() {return;};
+		virtual void on_disconnect(int rc) {return;};
 		virtual void on_publish(uint16_t mid) {return;};
 		virtual void on_message(const struct mosquitto_message *message) {return;};
 		virtual void on_subscribe(uint16_t mid, int qos_count, const uint8_t *granted_qos) {return;};

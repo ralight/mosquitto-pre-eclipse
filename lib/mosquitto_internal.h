@@ -153,7 +153,7 @@ struct mosquitto {
 	int log_priorities;
 	int log_destinations;
 	void (*on_connect)(struct mosquitto *, void *obj, int rc);
-	void (*on_disconnect)(struct mosquitto *, void *obj);
+	void (*on_disconnect)(struct mosquitto *, void *obj, int rc);
 	void (*on_publish)(struct mosquitto *, void *obj, uint16_t mid);
 	void (*on_message)(struct mosquitto *, void *obj, const struct mosquitto_message *message);
 	void (*on_subscribe)(struct mosquitto *, void *obj, uint16_t mid, int qos_count, const uint8_t *granted_qos);

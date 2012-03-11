@@ -39,10 +39,10 @@ static void on_connect_wrapper(struct mosquitto *mosq, void *obj, int rc)
 	m->on_connect(rc);
 }
 
-static void on_disconnect_wrapper(struct mosquitto *mosq, void *obj)
+static void on_disconnect_wrapper(struct mosquitto *mosq, void *obj, int rc)
 {
 	class mosquittopp *m = (class mosquittopp *)obj;
-	m->on_disconnect();
+	m->on_disconnect(rc);
 }
 
 static void on_publish_wrapper(struct mosquitto *mosq, void *obj, uint16_t mid)
