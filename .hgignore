@@ -7,6 +7,7 @@ syntax: glob
 client/mosquitto_mysql_log
 client/mosquitto_pub
 client/mosquitto_sub
+examples/temperature_conversion/mqtt_temperature_conversion
 man/mosquitto.8
 man/mosquitto.conf.5
 man/libmosquitto.3
