@@ -17,6 +17,7 @@
 - Add example of logging all messages to mysql.
 - Add "int rc" parameter to disconnect callback to indicate whether disconnect
   was unexpected or the result of calling mosquitto_disconnect().
+- Fix reloading of persistence location.
 
 0.15 - 20120205
 ===============
