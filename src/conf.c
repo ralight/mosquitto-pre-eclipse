@@ -65,6 +65,7 @@ static void _config_init_reload(mqtt3_config *config)
 	config->persistence_location = NULL;
 	if(config->persistence_file) _mosquitto_free(config->persistence_file);
 	config->persistence_file = NULL;
+	config->persistent_client_expiration = 0;
 	config->queue_qos0_messages = false;
 	config->retry_interval = 20;
 	config->store_clean_interval = 10;
@@ -264,6 +265,7 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 #endif
 	int max_inflight_messages = 20;
 	int max_queued_messages = 100;
+	time_t expiration_mult;
 	
 	if(!config->config_file) return 0;
 
@@ -607,6 +609,32 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 					if(_conf_parse_string(&token, "persistence_file", &config->persistence_file, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "persistence_location")){
 					if(_conf_parse_string(&token, "persistence_location", &config->persistence_location, saveptr)) return MOSQ_ERR_INVAL;
+				}else if(!strcmp(token, "persistent_client_expiration")){
+					token = strtok_r(NULL, " ", &saveptr);
+					if(token){
+						switch(token[strlen(token)-1]){
+							case 'd':
+								expiration_mult = 86400;
+							case 'w':
+								expiration_mult = 86400*7;
+							case 'm':
+								expiration_mult = 86400*30;
+							case 'y':
+								expiration_mult = 86400*365;
+								break;
+							default:
+								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid persistent_client_expiration duration in configuration.");
+								return MOSQ_ERR_INVAL;
+						}
+						token[strlen(token)-1] = '\0';
+						config->persistent_client_expiration = atoi(token)*expiration_mult;
+						if(config->persistent_client_expiration <= 0){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid persistent_client_expiration duration in configuration.");
+							return MOSQ_ERR_INVAL;
+						}
+					}else{
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty persistent_client_expiration value in configuration.");
+					}
 				}else if(!strcmp(token, "pid_file")){
 					if(reload) continue; // pid file not valid for reloading.
 					if(_conf_parse_string(&token, "pid_file", &config->pid_file, saveptr)) return MOSQ_ERR_INVAL;
