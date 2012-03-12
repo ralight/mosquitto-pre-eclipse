@@ -604,10 +604,8 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 				}else if(!strcmp(token, "persistence") || !strcmp(token, "retained_persistence")){
 					if(_conf_parse_bool(&token, token, &config->persistence, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "persistence_file")){
-					if(reload) continue; // FIXME
 					if(_conf_parse_string(&token, "persistence_file", &config->persistence_file, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "persistence_location")){
-					if(reload) continue; // FIXME
 					if(_conf_parse_string(&token, "persistence_location", &config->persistence_location, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "pid_file")){
 					if(reload) continue; // pid file not valid for reloading.
