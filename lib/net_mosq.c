@@ -480,14 +480,16 @@ int _mosquitto_packet_write(struct mosquitto *mosq)
 #ifdef WITH_BROKER
 		msgs_sent++;
 #else
-		pthread_mutex_lock(&mosq->callback_mutex);
-		if(((packet->command)&0xF6) == PUBLISH && mosq->on_publish){
-			/* This is a QoS=0 message */
-			mosq->in_callback = true;
-			mosq->on_publish(mosq, mosq->obj, packet->mid);
-			mosq->in_callback = false;
+		if(((packet->command)&0xF6) == PUBLISH){
+			pthread_mutex_lock(&mosq->callback_mutex);
+			if(mosq->on_publish){
+				/* This is a QoS=0 message */
+				mosq->in_callback = true;
+				mosq->on_publish(mosq, mosq->obj, packet->mid);
+				mosq->in_callback = false;
+			}
+			pthread_mutex_unlock(&mosq->callback_mutex);
 		}
-		pthread_mutex_unlock(&mosq->callback_mutex);
 #endif
 
 		/* Free data and reset values */
