@@ -33,8 +33,10 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #ifndef WIN32
 #include <sys/select.h>
+#include <sys/time.h>
 #include <unistd.h>
 #else
+#include <windows.h>
 #include <winsock2.h>
 typedef int ssize_t;
 #endif
@@ -68,6 +70,15 @@ void mosquitto_lib_version(int *major, int *minor, int *revision)
 
 int mosquitto_lib_init(void)
 {
+#ifdef WIN32
+	srand(GetTickCount());
+#else
+	struct timeval tv;
+
+	gettimeofday(&tv, NULL);
+	srand(tv.tv_sec*1000 + tv.tv_usec/1000);
+#endif
+
 	_mosquitto_net_init();
 
 	return MOSQ_ERR_SUCCESS;
@@ -83,8 +94,7 @@ int mosquitto_lib_cleanup(void)
 struct mosquitto *mosquitto_new(const char *id, void *obj)
 {
 	struct mosquitto *mosq = NULL;
-
-	if(!id) return NULL;
+	int i;
 
 	mosq = (struct mosquitto *)_mosquitto_calloc(1, sizeof(struct mosquitto));
 	if(mosq){
@@ -97,7 +107,30 @@ struct mosquitto *mosquitto_new(const char *id, void *obj)
 		mosq->keepalive = 60;
 		mosq->message_retry = 20;
 		mosq->last_retry_check = 0;
-		mosq->id = _mosquitto_strdup(id);
+		if(id){
+			if(strlen(id) == 0){
+				_mosquitto_free(mosq);
+				return NULL;
+			}
+			mosq->id = _mosquitto_strdup(id);
+			mosq->random_id = false;
+		}else{
+			mosq->id = (char *)_mosquitto_calloc(24, sizeof(char));
+			if(!mosq->id){
+				_mosquitto_free(mosq);
+				return NULL;
+			}
+			mosq->random_id = true;
+			mosq->id[0] = 'm';
+			mosq->id[1] = 'o';
+			mosq->id[2] = 's';
+			mosq->id[3] = 'q';
+			mosq->id[4] = '-';
+
+			for(i=5; i<23; i++){
+				mosq->id[i] = (rand()%73)+48;
+			}
+		}
 		mosq->username = NULL;
 		mosq->password = NULL;
 		mosq->in_packet.payload = NULL;
@@ -212,6 +245,8 @@ int mosquitto_connect(struct mosquitto *mosq, const char *host, int port, int ke
 {
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(!host || port <= 0) return MOSQ_ERR_INVAL;
+
+	if(mosq->random_id && clean_session == false) return MOSQ_ERR_INVAL;
 
 	if(mosq->host) _mosquitto_free(mosq->host);
 	mosq->host = _mosquitto_strdup(host);

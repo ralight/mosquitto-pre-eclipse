@@ -11,6 +11,8 @@
 - Add option for expiring disconnected persistent clients.
 - Add option for queueing of QoS 0 messages when persistent clients are
   disconnected.
+- mosquitto_new() will now generate a random client id if the id parameter is
+  NULL.
 - Usernames were being lost when a non clean-session client reconnected,
   potentially causing problems with ACLs. This has been fixed.
 - Fix db_dump reading of retained messages.

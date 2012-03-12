@@ -162,6 +162,7 @@ struct mosquitto {
 	//void (*on_error)();
 	char *host;
 	int port;
+	bool random_id;
 #endif
 };
 
