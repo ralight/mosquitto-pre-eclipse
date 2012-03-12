@@ -27,6 +27,37 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
+/* A note on matching topic subscriptions.
+ *
+ * Topics can be up to 32767 characters in length. The / character is used as a
+ * hierarchy delimiter. Messages are published to a particular topic.
+ * Clients may subscribe to particular topics directly, but may also use
+ * wildcards in subscriptions.  The + and # characters are used as wildcards.
+ * The # wildcard can be used at the end of a subscription only, and is a
+ * wildcard for the level of hierarchy at which it is placed and all subsequent
+ * levels.
+ * The + wildcard may be used at any point within the subscription and is a
+ * wildcard for only the level of hierarchy at which it is placed.
+ * Neither wildcard may be used as part of a substring.
+ * Valid:
+ * 	a/b/+
+ * 	a/+/c
+ * 	a/#
+ * 	a/b/#
+ * 	#
+ * 	+/b/c
+ * 	+/+/+
+ * Invalid:
+ *	a/#/c
+ *	a+/b/c
+ * Valid but non-matching:
+ *	a/b
+ *	a/+
+ *	+/b
+ *	b/c/a
+ *	a/b/d
+ */
+
 #include <config.h>
 
 #include <assert.h>
