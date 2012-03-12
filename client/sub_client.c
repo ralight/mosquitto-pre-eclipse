@@ -361,6 +361,7 @@ int main(int argc, char *argv[])
 	mosq = mosquitto_new(id, NULL);
 	if(!mosq){
 		if(!quiet) fprintf(stderr, "Error: Out of memory.\n");
+		mosquitto_lib_cleanup();
 		return 1;
 	}
 	if(debug){
@@ -369,10 +370,12 @@ int main(int argc, char *argv[])
 	}
 	if(will_topic && mosquitto_will_set(mosq, true, will_topic, will_payloadlen, will_payload, will_qos, will_retain)){
 		if(!quiet) fprintf(stderr, "Error: Problem setting will.\n");
+		mosquitto_lib_cleanup();
 		return 1;
 	}
 	if(username && mosquitto_username_pw_set(mosq, username, password)){
 		if(!quiet) fprintf(stderr, "Error: Problem setting username and password.\n");
+		mosquitto_lib_cleanup();
 		return 1;
 	}
 	mosquitto_connect_callback_set(mosq, my_connect_callback);
@@ -396,6 +399,7 @@ int main(int argc, char *argv[])
 			}
 		}
 		return rc;
+		mosquitto_lib_cleanup();
 	}
 
 	do{
