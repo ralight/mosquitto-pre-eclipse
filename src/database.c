@@ -45,8 +45,6 @@ POSSIBILITY OF SUCH DAMAGE.
 static int max_inflight = 20;
 static int max_queued = 100;
 
-static int _mqtt3_db_cleanup(mosquitto_db *db);
-
 int mqtt3_db_open(mqtt3_config *config, mosquitto_db *db)
 {
 	int rc = 0;
@@ -104,8 +102,6 @@ int mqtt3_db_open(mqtt3_config *config, mosquitto_db *db)
 		if(mqtt3_db_restore(db)) return 1;
 	}
 #endif
-
-	if(_mqtt3_db_cleanup(db)) return 1;
 
 	return rc;
 }
@@ -165,31 +161,6 @@ int mqtt3_db_client_count(mosquitto_db *db, int *count, int *inactive_count)
 	}
 
 	return MOSQ_ERR_SUCCESS;
-}
-
-/* Internal function.
- * Set all stored sockets to -1 (invalid) when starting mosquitto.
- * Also removes any stray clients and subcriptions that may be around from a prior crash.
- * Returns 1 on failure (db is NULL)
- * Returns 0 on success.
- */
-static int _mqtt3_db_cleanup(mosquitto_db *db)
-{
-	int rc = 0;
-
-	if(!db) return MOSQ_ERR_INVAL;
-
-// FIXME - reimplement for new db
-#if 0
-	query = sqlite3_mprintf("UPDATE clients SET sock=-1");
-	/* Remove any stray clients that have clean session set. */
-	query = sqlite3_mprintf("DELETE FROM clients WHERE sock=-1 AND clean_session=1");
-	/* Remove any subs with no client. */
-	query = sqlite3_mprintf("DELETE FROM subs WHERE client_id NOT IN (SELECT id FROM clients)");
-	/* Remove any messages with no client. */
-	query = sqlite3_mprintf("DELETE FROM messages WHERE client_id NOT IN (SELECT id FROM clients)");
-#endif
-	return rc;
 }
 
 int mqtt3_db_message_delete(struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir)
