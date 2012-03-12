@@ -45,6 +45,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <mqtt3.h>
 #include <persist.h>
 
+static uint32_t db_version;
+
+
 static int _db_restore_sub(mosquitto_db *db, const char *client_id, const char *sub, int qos);
 
 static struct mosquitto *_db_find_or_add_context(mosquitto_db *db, const char *client_id, uint16_t last_mid)
@@ -225,7 +228,7 @@ static int mqtt3_db_client_write(mosquitto_db *db, FILE *db_fptr)
 	for(i=0; i<db->context_count; i++){
 		context = db->contexts[i];
 		if(context && context->clean_session == false){
-			length = htonl(2+strlen(context->id) + sizeof(uint16_t));
+			length = htonl(2+strlen(context->id) + sizeof(uint16_t) + sizeof(time_t));
 
 			i16temp = htons(DB_CHUNK_CLIENT);
 			write_e(db_fptr, &i16temp, sizeof(uint16_t));
@@ -237,6 +240,7 @@ static int mqtt3_db_client_write(mosquitto_db *db, FILE *db_fptr)
 			write_e(db_fptr, context->id, slen);
 			i16temp = htons(context->last_mid);
 			write_e(db_fptr, &i16temp, sizeof(uint16_t));
+			write_e(db_fptr, &(context->disconnect_t), sizeof(time_t));
 
 			if(mqtt3_db_client_messages_write(db, db_fptr, context)) return 1;
 		}
@@ -445,6 +449,7 @@ static int _db_client_chunk_restore(mosquitto_db *db, FILE *db_fptr)
 	char *client_id = NULL;
 	int rc = 0;
 	struct mosquitto *context;
+	time_t disconnect_t;
 
 	read_e(db_fptr, &i16temp, sizeof(uint16_t));
 	slen = ntohs(i16temp);
@@ -464,8 +469,16 @@ static int _db_client_chunk_restore(mosquitto_db *db, FILE *db_fptr)
 	read_e(db_fptr, &i16temp, sizeof(uint16_t));
 	last_mid = ntohs(i16temp);
 
+	if(db_version == 2){
+		disconnect_t = time(NULL);
+	}else{
+		read_e(db_fptr, &disconnect_t, sizeof(time_t));
+	}
+
 	context = _db_find_or_add_context(db, client_id, last_mid);
 	if(!context) rc = 1;
+
+	context->disconnect_t = disconnect_t;
 
 	_mosquitto_free(client_id);
 
@@ -700,7 +713,7 @@ int mqtt3_db_restore(mosquitto_db *db)
 	FILE *fptr;
 	char header[15];
 	int rc = 0;
-	uint32_t crc, db_version;
+	uint32_t crc;
 	dbid_t i64temp;
 	uint32_t i32temp, length;
 	uint16_t i16temp, chunk;
@@ -724,9 +737,13 @@ int mqtt3_db_restore(mosquitto_db *db)
 		 * Is your DB change still compatible with previous versions?
 		 */
 		if(db_version > MOSQ_DB_VERSION && db_version != 0){
-			fclose(fptr);
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unsupported persistent database format version %d (need version %d).", db_version, MOSQ_DB_VERSION);
-			return 1;
+			if(db_version == 2){
+				/* Addition of disconnect_t to client chunk in v3. */
+			}else{
+				fclose(fptr);
+				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unsupported persistent database format version %d (need version %d).", db_version, MOSQ_DB_VERSION);
+				return 1;
+			}
 		}
 
 		while(rlen = fread(&i16temp, sizeof(uint16_t), 1, fptr), rlen == 1){
