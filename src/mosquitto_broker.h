@@ -41,9 +41,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #define __attribute__(attrib)
 #endif
 
-/* Database macros */
-#define MOSQ_DB_VERSION 3
-
 /* Log destinations */
 #define MQTT3_LOG_NONE 0x00
 #define MQTT3_LOG_SYSLOG 0x01
