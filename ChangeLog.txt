@@ -8,6 +8,7 @@
 - Add mosquitto_want_write() for use when using own select() loop with
   mosquitto_socket().
 - Fix reloading of log configuration.
+- Add option for expiring disconnected persistent clients.
 - Add option for queueing of QoS 0 messages when persistent clients are
   disconnected.
 - Usernames were being lost when a non clean-session client reconnected,
