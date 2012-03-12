@@ -32,8 +32,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include <string.h>
 
+#include <mosquitto_broker.h>
 #include <memory_mosq.h>
-#include <mqtt3.h>
 
 int mosquitto_security_init(mosquitto_db *db)
 {

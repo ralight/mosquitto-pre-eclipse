@@ -41,8 +41,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <sys/stat.h>
 
+#include <mosquitto_broker.h>
 #include <memory_mosq.h>
-#include <mqtt3.h>
 #include <persist.h>
 
 static uint32_t db_version;

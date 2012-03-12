@@ -54,7 +54,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #ifdef WITH_BROKER
-#  include <mqtt3.h>
+#  include <mosquitto_broker.h>
    extern uint64_t bytes_received;
    extern uint64_t bytes_sent;
    extern unsigned long msgs_received;
