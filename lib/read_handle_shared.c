@@ -41,7 +41,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <send_mosq.h>
 #include <util_mosq.h>
 #ifdef WITH_BROKER
-#include <mqtt3.h>
+#include <mosquitto_broker.h>
 #endif
 
 int _mosquitto_handle_pingreq(struct mosquitto *mosq)

@@ -33,7 +33,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <config.h>
 
-#include <mqtt3.h>
+#include <mosquitto_broker.h>
 #include <memory_mosq.h>
 
 static int _conf_parse_bool(char **token, const char *name, bool *value, char *saveptr);

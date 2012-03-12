@@ -34,9 +34,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <config.h>
 
 #include <mosquitto.h>
+#include <mosquitto_broker.h>
 #include <mosquitto_internal.h>
 #include <net_mosq.h>
-#include <mqtt3.h>
 #include <memory_mosq.h>
 #include <send_mosq.h>
 #include <util_mosq.h>

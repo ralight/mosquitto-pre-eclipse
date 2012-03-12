@@ -38,7 +38,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <util_mosq.h>
 
 #ifdef WITH_BROKER
-#include <mqtt3.h>
+#include <mosquitto_broker.h>
 #endif
 
 int _mosquitto_packet_alloc(struct _mosquitto_packet *packet)

@@ -37,7 +37,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <config.h>
 #endif
 
-#include <mqtt3.h>
+#include <mosquitto_broker.h>
 #include <memory_mosq.h>
 
 extern mosquitto_db int_db;
