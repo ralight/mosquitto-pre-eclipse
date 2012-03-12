@@ -465,23 +465,6 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 	}
-	if(id_prefix){
-		id = malloc(strlen(id_prefix)+10);
-		if(!id){
-			if(!quiet) fprintf(stderr, "Error: Out of memory.\n");
-			return 1;
-		}
-		snprintf(id, strlen(id_prefix)+10, "%s%d", id_prefix, getpid());
-	}else if(!id){
-		id = malloc(30);
-		if(!id){
-			if(!quiet) fprintf(stderr, "Error: Out of memory.\n");
-			return 1;
-		}
-		memset(hostname, 0, 21);
-		gethostname(hostname, 20);
-		snprintf(id, 23, "mosq_pub_%d_%s", getpid(), hostname);
-	}
 
 	if(!topic || mode == MSGMODE_NONE){
 		fprintf(stderr, "Error: Both topic and message must be supplied.\n");
@@ -503,6 +486,27 @@ int main(int argc, char *argv[])
 		if(!quiet) fprintf(stderr, "Warning: Not using password since username not set.\n");
 	}
 	mosquitto_lib_init();
+
+	if(id_prefix){
+		id = malloc(strlen(id_prefix)+10);
+		if(!id){
+			if(!quiet) fprintf(stderr, "Error: Out of memory.\n");
+			mosquitto_lib_cleanup();
+			return 1;
+		}
+		snprintf(id, strlen(id_prefix)+10, "%s%d", id_prefix, getpid());
+	}else if(!id){
+		id = malloc(30);
+		if(!id){
+			if(!quiet) fprintf(stderr, "Error: Out of memory.\n");
+			mosquitto_lib_cleanup();
+			return 1;
+		}
+		memset(hostname, 0, 21);
+		gethostname(hostname, 20);
+		snprintf(id, 23, "mosq_pub_%d_%s", getpid(), hostname);
+	}
+
 	mosq = mosquitto_new(id, NULL);
 	if(!mosq){
 		if(!quiet) fprintf(stderr, "Error: Out of memory.\n");

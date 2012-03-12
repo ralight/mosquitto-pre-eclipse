@@ -321,23 +321,6 @@ int main(int argc, char *argv[])
 		if(!quiet) fprintf(stderr, "Error: You must provide a client id if you are using the -c option.\n");
 		return 1;
 	}
-	if(id_prefix){
-		id = malloc(strlen(id_prefix)+10);
-		if(!id){
-			if(!quiet) fprintf(stderr, "Error: Out of memory.\n");
-			return 1;
-		}
-		snprintf(id, strlen(id_prefix)+10, "%s%d", id_prefix, getpid());
-	}else if(!id){
-		id = malloc(30);
-		if(!id){
-			if(!quiet) fprintf(stderr, "Error: Out of memory.\n");
-			return 1;
-		}
-		memset(hostname, 0, 21);
-		gethostname(hostname, 20);
-		snprintf(id, 23, "mosq_sub_%d_%s", getpid(), hostname);
-	}
 
 	if(topic_count == 0){
 		fprintf(stderr, "Error: You must specify a topic to subscribe to.\n");
@@ -358,6 +341,27 @@ int main(int argc, char *argv[])
 		if(!quiet) fprintf(stderr, "Warning: Not using password since username not set.\n");
 	}
 	mosquitto_lib_init();
+
+	if(id_prefix){
+		id = malloc(strlen(id_prefix)+10);
+		if(!id){
+			if(!quiet) fprintf(stderr, "Error: Out of memory.\n");
+			mosquitto_lib_cleanup();
+			return 1;
+		}
+		snprintf(id, strlen(id_prefix)+10, "%s%d", id_prefix, getpid());
+	}else if(!id){
+		id = malloc(30);
+		if(!id){
+			if(!quiet) fprintf(stderr, "Error: Out of memory.\n");
+			mosquitto_lib_cleanup();
+			return 1;
+		}
+		memset(hostname, 0, 21);
+		gethostname(hostname, 20);
+		snprintf(id, 23, "mosq_sub_%d_%s", getpid(), hostname);
+	}
+
 	mosq = mosquitto_new(id, NULL);
 	if(!mosq){
 		if(!quiet) fprintf(stderr, "Error: Out of memory.\n");

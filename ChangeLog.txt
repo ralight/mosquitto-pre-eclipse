@@ -19,6 +19,7 @@
 - Add "int rc" parameter to disconnect callback to indicate whether disconnect
   was unexpected or the result of calling mosquitto_disconnect().
 - Fix reloading of persistence location.
+- Fix automatic client id generation on Windows.
 
 0.15 - 20120205
 ===============
