@@ -42,7 +42,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 /* Database macros */
-#define MOSQ_DB_VERSION 2
+#define MOSQ_DB_VERSION 3
 
 /* Log destinations */
 #define MQTT3_LOG_NONE 0x00
