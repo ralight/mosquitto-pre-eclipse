@@ -56,6 +56,7 @@ struct mosquitto *mqtt3_context_init(int sock)
 	context->last_msg_out = time(NULL);
 	context->keepalive = 60; /* Default to 60s */
 	context->clean_session = true;
+	context->disconnect_t = 0;
 	context->id = NULL;
 	context->last_mid = 0;
 	context->will = NULL;
@@ -178,6 +179,7 @@ void mqtt3_context_disconnect(mosquitto_db *db, int context_index)
 		assert(ctxt->listener->client_count >= 0);
 		ctxt->listener = NULL;
 	}
+	ctxt->disconnect_t = time(NULL);
 	_mosquitto_socket_close(ctxt);
 }
 

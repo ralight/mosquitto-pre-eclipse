@@ -159,6 +159,17 @@ int mosquitto_main_loop(mosquitto_db *db, int *listensock, int listensock_count,
 						if(db->contexts[i]->clean_session == true){
 							mqtt3_context_cleanup(db, db->contexts[i], true);
 							db->contexts[i] = NULL;
+						}else if(db->config->persistent_client_expiration > 0){
+							/* This is a persistent client, check to see if the
+							 * last time it connected was longer than
+							 * persistent_client_expiration seconds ago. If so,
+							 * expire it and clean up.
+							 */
+							if(time(NULL) > db->contexts[i]->disconnect_t+db->config->persistent_client_expiration){
+								db->contexts[i]->clean_session = true;
+								mqtt3_context_cleanup(db, db->contexts[i], true);
+								db->contexts[i] = NULL;
+							}
 						}
 #ifdef WITH_BRIDGE
 					}
