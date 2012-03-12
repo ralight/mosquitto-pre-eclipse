@@ -144,6 +144,7 @@ struct mosquitto {
 	struct _mosquitto_client_msg *msgs;
 	struct _mosquitto_acl_user *acl_list;
 	struct _mqtt3_listener *listener;
+	time_t disconnect_t;
 #else
 	void *obj;
 	bool in_callback;
