@@ -265,8 +265,7 @@
 					<para>Reloaded on reload signal. The currently loaded username and
 					password data will be freed and reloaded. Clients that are
 					already connected will not be affected.</para>
-				</listitem>
-			</varlistentry>
+				</listitem> </varlistentry>
 			<varlistentry>
 				<term><option>persistence</option> [ true | false ]</term>
 				<listitem>
@@ -297,6 +296,34 @@
 					stored. Must end in a trailing slash. If not given, then
 					the current directory is used.</para>
 					<para>Reloaded on reload signal.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>persistent_client_expiration</option> <replaceable>duration</replaceable></term>
+				<listitem>
+					<para>This option allows persistent clients (those with
+					clean session set to false) to be removed if they do not
+					reconnect within a certain time frame. This is a
+					non-standard option. As far as the MQTT spec is concerned,
+					persistent clients persist forever.</para>
+					<para>Badly designed clients may set clean session to false
+					whilst using a randomly generated client id. This leads to
+					persistent clients that will never reconnect. This option
+					allows these clients to be removed.</para>
+					<para>The expiration period should be an integer followed
+					by one of d w m y for day, week, month and year
+					respectively. For example:</para>
+					<itemizedlist mark="circle">
+						<listitem><para>persistent_client_expiration 2m</para></listitem>
+						<listitem><para>persistent_client_expiration 14d</para></listitem>
+						<listitem><para>persistent_client_expiration 1y</para></listitem>
+					<!-- BUG - putting itemizedlist close tag here breaks the
+						 indentation of the man page. -->
+					<para>As this is a non-standard option, the default if not
+					set is to never expire persistent clients.</para>
+					<para>Reloaded on reload signal.</para>
+					<!-- BUG - this should be above. -->
+					</itemizedlist>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
