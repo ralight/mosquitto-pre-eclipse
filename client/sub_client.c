@@ -364,7 +364,14 @@ int main(int argc, char *argv[])
 
 	mosq = mosquitto_new(id, clean_session, NULL);
 	if(!mosq){
-		if(!quiet) fprintf(stderr, "Error: Out of memory.\n");
+		switch(errno){
+			case ENOMEM:
+				if(!quiet) fprintf(stderr, "Error: Out of memory.\n");
+				break;
+			case EINVAL:
+				if(!quiet) fprintf(stderr, "Error: Invalid id and/or clean_session.\n");
+				break;
+		}
 		mosquitto_lib_cleanup();
 		return 1;
 	}
