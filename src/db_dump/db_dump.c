@@ -36,15 +36,18 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <sys/stat.h>
 
+#include <mosquitto_broker.h>
 #include <memory_mosq.h>
-#include <mqtt3.h>
 #include <persist.h>
+
+static uint32_t db_version;
 
 static int _db_client_chunk_restore(mosquitto_db *db, FILE *db_fd)
 {
 	uint16_t i16temp, slen, last_mid;
 	char *client_id = NULL;
 	int rc = 0;
+	time_t disconnect_t;
 
 	read_e(db_fd, &i16temp, sizeof(uint16_t));
 	slen = ntohs(i16temp);
@@ -65,6 +68,13 @@ static int _db_client_chunk_restore(mosquitto_db *db, FILE *db_fd)
 	read_e(db_fd, &i16temp, sizeof(uint16_t));
 	last_mid = ntohs(i16temp);
 	printf("\tLast MID: %d\n", last_mid);
+
+	if(db_version == 2){
+		disconnect_t = time(NULL);
+	}else{
+		read_e(db_fd, &disconnect_t, sizeof(time_t));
+		printf("\tDisconnect time: %ld\n", disconnect_t);
+	}
 
 	free(client_id);
 
@@ -301,7 +311,7 @@ int main(int argc, char *argv[])
 	FILE *fd;
 	char header[15];
 	int rc = 0;
-	uint32_t crc, db_version;
+	uint32_t crc;
 	dbid_t i64temp;
 	uint32_t i32temp, length;
 	uint16_t i16temp, chunk;
