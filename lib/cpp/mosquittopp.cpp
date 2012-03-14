@@ -86,9 +86,9 @@ int mosquittopp::lib_cleanup()
 	return mosquitto_lib_cleanup();
 }
 
-mosquittopp::mosquittopp(const char *id)
+mosquittopp::mosquittopp(const char *id, bool clean_session)
 {
-	mosq = mosquitto_new(id, this);
+	mosq = mosquitto_new(id, clean_session, this);
 	mosquitto_connect_callback_set(mosq, on_connect_wrapper);
 	mosquitto_disconnect_callback_set(mosq, on_disconnect_wrapper);
 	mosquitto_publish_callback_set(mosq, on_publish_wrapper);
@@ -102,9 +102,9 @@ mosquittopp::~mosquittopp()
 	mosquitto_destroy(mosq);
 }
 
-int mosquittopp::connect(const char *host, int port, int keepalive, bool clean_session)
+int mosquittopp::connect(const char *host, int port, int keepalive)
 {
-	return mosquitto_connect(mosq, host, port, keepalive, clean_session);
+	return mosquitto_connect(mosq, host, port, keepalive);
 }
 
 int mosquittopp::reconnect()

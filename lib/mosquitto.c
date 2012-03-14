@@ -91,10 +91,14 @@ int mosquitto_lib_cleanup(void)
 	return MOSQ_ERR_SUCCESS;
 }
 
-struct mosquitto *mosquitto_new(const char *id, void *obj)
+struct mosquitto *mosquitto_new(const char *id, bool clean_session, void *obj)
 {
 	struct mosquitto *mosq = NULL;
 	int i;
+
+	if(clean_session == false && id == NULL){
+		return NULL;
+	}
 
 	mosq = (struct mosquitto *)_mosquitto_calloc(1, sizeof(struct mosquitto));
 	if(mosq){
@@ -107,20 +111,19 @@ struct mosquitto *mosquitto_new(const char *id, void *obj)
 		mosq->keepalive = 60;
 		mosq->message_retry = 20;
 		mosq->last_retry_check = 0;
+		mosq->clean_session = clean_session;
 		if(id){
 			if(strlen(id) == 0){
 				_mosquitto_free(mosq);
 				return NULL;
 			}
 			mosq->id = _mosquitto_strdup(id);
-			mosq->random_id = false;
 		}else{
 			mosq->id = (char *)_mosquitto_calloc(24, sizeof(char));
 			if(!mosq->id){
 				_mosquitto_free(mosq);
 				return NULL;
 			}
-			mosq->random_id = true;
 			mosq->id[0] = 'm';
 			mosq->id[1] = 'o';
 			mosq->id[2] = 's';
@@ -241,12 +244,10 @@ int mosquitto_socket(struct mosquitto *mosq)
 	return mosq->sock;
 }
 
-int mosquitto_connect(struct mosquitto *mosq, const char *host, int port, int keepalive, bool clean_session)
+int mosquitto_connect(struct mosquitto *mosq, const char *host, int port, int keepalive)
 {
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(!host || port <= 0) return MOSQ_ERR_INVAL;
-
-	if(mosq->random_id && clean_session == false) return MOSQ_ERR_INVAL;
 
 	if(mosq->host) _mosquitto_free(mosq->host);
 	mosq->host = _mosquitto_strdup(host);
@@ -254,7 +255,6 @@ int mosquitto_connect(struct mosquitto *mosq, const char *host, int port, int ke
 	mosq->port = port;
 
 	mosq->keepalive = keepalive;
-	mosq->clean_session = clean_session;
 
 	return mosquitto_reconnect(mosq);
 }

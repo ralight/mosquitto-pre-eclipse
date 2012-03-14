@@ -362,7 +362,7 @@ int main(int argc, char *argv[])
 		snprintf(id, 23, "mosq_sub_%d_%s", getpid(), hostname);
 	}
 
-	mosq = mosquitto_new(id, NULL);
+	mosq = mosquitto_new(id, clean_session, NULL);
 	if(!mosq){
 		if(!quiet) fprintf(stderr, "Error: Out of memory.\n");
 		mosquitto_lib_cleanup();
@@ -388,7 +388,7 @@ int main(int argc, char *argv[])
 		mosquitto_subscribe_callback_set(mosq, my_subscribe_callback);
 	}
 
-	rc = mosquitto_connect(mosq, host, port, keepalive, clean_session);
+	rc = mosquitto_connect(mosq, host, port, keepalive);
 	if(rc){
 		if(!quiet){
 			if(rc == MOSQ_ERR_ERRNO){

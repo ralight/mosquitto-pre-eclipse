@@ -186,20 +186,24 @@ libmosq_EXPORT int mosquitto_lib_cleanup(void);
  * Create a new mosquitto client instance.
  *
  * Parameters:
- * 	id -  String to use as the client id. If NULL, a random client id will be
- *        generated. If id is NULL, clean_session in <mosquitto_connect> must
- *        be true.
- * 	obj - A user pointer that will be passed as an argument to any callbacks
- *        that are specified.
+ * 	id -            String to use as the client id. If NULL, a random client id
+ * 	                will be generated. If id is NULL, clean_session must be true.
+ * 	clean_session - set to true to instruct the broker to clean all messages
+ *                  and subscriptions on disconnect, false to instruct it to
+ *                  keep them. See the man page mqtt(7) for more details.
+ *                  Must be set to true if the id parameter is NULL.
+ * 	obj -           A user pointer that will be passed as an argument to any
+ *                  callbacks that are specified.
  *
  * Returns:
  * 	Pointer to a struct mosquitto on success.
- * 	NULL on failure (zero length id or out of memory).
+ * 	NULL on failure (zero length id, id=NULL with clean_session=false or out of
+ * 	memory).
  *
  * See Also:
  * 	<mosquitto_destroy>
  */
-libmosq_EXPORT struct mosquitto *mosquitto_new(const char *id, void *obj);
+libmosq_EXPORT struct mosquitto *mosquitto_new(const char *id, bool clean_session, void *obj);
 
 /* 
  * Function: mosquitto_destroy
@@ -304,22 +308,16 @@ libmosq_EXPORT int mosquitto_username_pw_set(struct mosquitto *mosq, const char 
  * Connect to an MQTT broker.
  *
  * Parameters:
- * 	mosq -          a valid mosquitto instance.
- * 	host -          the hostname or ip address of the broker to connect to.
- * 	port -          the network port to connect to. Usually 1883.
- * 	keepalive -     the number of seconds after which the broker should send a
- * 	                PING message to the client if no other messages have been
- * 	                exchanged in that time.
- * 	clean_session - set to true to instruct the broker to clean all messages
- *                  and subscriptions on disconnect, false to instruct it to
- *                  keep them. See the man page mqtt(7) for more details.
- *                  Must be set to true if the id parameter to <mosquitto_new>
- *                  was NULL.
+ * 	mosq -      a valid mosquitto instance.
+ * 	host -      the hostname or ip address of the broker to connect to.
+ * 	port -      the network port to connect to. Usually 1883.
+ * 	keepalive - the number of seconds after which the broker should send a PING
+ *              message to the client if no other messages have been exchanged
+ *              in that time.
  *
  * Returns:
  * 	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid, including if
- * 	                   clean_session is false for a random client id.
+ * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
  * 	MOSQ_ERR_ERRNO -   if a system call returned an error. The variable errno
  *                     contains the error code, even on Windows.
  *                     Use strerror_r() where available or FormatMessage() on
@@ -328,7 +326,7 @@ libmosq_EXPORT int mosquitto_username_pw_set(struct mosquitto *mosq, const char 
  * See Also:
  * 	<mosquitto_reconnect>, <mosquitto_disconnect>
  */
-libmosq_EXPORT int mosquitto_connect(struct mosquitto *mosq, const char *host, int port, int keepalive, bool clean_session);
+libmosq_EXPORT int mosquitto_connect(struct mosquitto *mosq, const char *host, int port, int keepalive);
 
 /*
  * Function: mosquitto_reconnect

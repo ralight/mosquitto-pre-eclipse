@@ -123,11 +123,17 @@ class Mosquitto:
 
 	"""
 
-	def __init__(self, id, obj=None):
+	def __init__(self, id, clean_session=True, obj=None):
 		"""Constructor
 
 		id: The 23 character or less client id used to identify this client to
 		  the broker. This must be unique on the broker.
+		clean_session: If set to True, the broker will clean any previous
+		  information about this client on connection, and will also not store
+		  anything after disconnect. If set to False, the broker will store all
+		  of the client subscriptions even after the client disconnects, and
+		  will also queue messages with QoS 1 and 2 until the client
+		  reconnects.
 		obj: An optional object of any type that will be passed to any of the
 		  callback function when they are called. If not set, or set to None,
 		  this instance of the Mosquitto class will be passed to the callback
@@ -139,7 +145,7 @@ class Mosquitto:
 			self.obj = obj
 
 		_mosquitto_lib_init()
-		self._mosq = _mosquitto_new(id, None)
+		self._mosq = _mosquitto_new(id, clean_session, None)
 
 		#==================================================
 		# Configure callbacks
@@ -178,7 +184,7 @@ class Mosquitto:
 		if self._mosq:
 			_mosquitto_destroy(self._mosq)
 
-	def connect(self, hostname="localhost", port=1883, keepalive=60, clean_session=True):
+	def connect(self, hostname="localhost", port=1883, keepalive=60):
 		"""Connect the client to an MQTT broker.
 		
 		hostname: The hostname or ip address of the broker. Defaults to localhost.
@@ -186,12 +192,6 @@ class Mosquitto:
 		keepalive: Maximum period in seconds between communications with the
 		  broker. If no other messages are being exchanged, this controls the
 		  rate at which the client will send ping messages to the broker.
-		clean_session: If set to True, the broker will clean any previous
-		  information about this client on connection, and will also not store
-		  anything after disconnect. If set to False, the broker will store all
-		  of the client subscriptions even after the client disconnects, and
-		  will also queue messages with QoS 1 and 2 until the client
-		  reconnects.
 
 		Returns 0 on success (note that this just means a network connection
 		  has been established between the broker and client, and the
@@ -199,7 +199,7 @@ class Mosquitto:
 		  request, use the on_connect() callback)
 		Returns >0 on error.
 		"""
-		return _mosquitto_connect(self._mosq, hostname, port, keepalive, clean_session)
+		return _mosquitto_connect(self._mosq, hostname, port, keepalive)
 
 	def reconnect(self):
 		"""Reconnect to a broker. This uses the saved parameters from the
