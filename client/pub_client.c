@@ -507,7 +507,7 @@ int main(int argc, char *argv[])
 		snprintf(id, 23, "mosq_pub_%d_%s", getpid(), hostname);
 	}
 
-	mosq = mosquitto_new(id, NULL);
+	mosq = mosquitto_new(id, true, NULL);
 	if(!mosq){
 		if(!quiet) fprintf(stderr, "Error: Out of memory.\n");
 		mosquitto_lib_cleanup();
@@ -532,7 +532,7 @@ int main(int argc, char *argv[])
 	mosquitto_disconnect_callback_set(mosq, my_disconnect_callback);
 	mosquitto_publish_callback_set(mosq, my_publish_callback);
 
-	rc = mosquitto_connect(mosq, host, port, keepalive, true);
+	rc = mosquitto_connect(mosq, host, port, keepalive);
 	if(rc){
 		if(!quiet){
 			if(rc == MOSQ_ERR_ERRNO){
