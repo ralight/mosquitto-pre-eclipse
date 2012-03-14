@@ -197,8 +197,9 @@ libmosq_EXPORT int mosquitto_lib_cleanup(void);
  *
  * Returns:
  * 	Pointer to a struct mosquitto on success.
- * 	NULL on failure (zero length id, id=NULL with clean_session=false or out of
- * 	memory).
+ * 	NULL on failure. Interrogate errno to determine the cause for the failure:
+ *      - ENOMEM on out of memory.
+ *      - EINVAL on invalid input parameters.
  *
  * See Also:
  * 	<mosquitto_destroy>

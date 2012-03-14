@@ -16,6 +16,7 @@
 - The clean_session parameter has been moved from mosquitto_connect() to
   mosquitto_new() because it is a client parameter rather than a connection
   parameter.
+- mosquitto_new() now sets errno to indicate failure type.
 - Usernames were being lost when a non clean-session client reconnected,
   potentially causing problems with ACLs. This has been fixed.
 - Fix db_dump reading of retained messages.

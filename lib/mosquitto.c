@@ -97,6 +97,7 @@ struct mosquitto *mosquitto_new(const char *id, bool clean_session, void *obj)
 	int i;
 
 	if(clean_session == false && id == NULL){
+		errno = EINVAL;
 		return NULL;
 	}
 
@@ -115,6 +116,7 @@ struct mosquitto *mosquitto_new(const char *id, bool clean_session, void *obj)
 		if(id){
 			if(strlen(id) == 0){
 				_mosquitto_free(mosq);
+				errno = EINVAL;
 				return NULL;
 			}
 			mosq->id = _mosquitto_strdup(id);
@@ -122,6 +124,7 @@ struct mosquitto *mosquitto_new(const char *id, bool clean_session, void *obj)
 			mosq->id = (char *)_mosquitto_calloc(24, sizeof(char));
 			if(!mosq->id){
 				_mosquitto_free(mosq);
+				errno = ENOMEM;
 				return NULL;
 			}
 			mosq->id[0] = 'm';
@@ -164,6 +167,8 @@ struct mosquitto *mosquitto_new(const char *id, bool clean_session, void *obj)
 		pthread_mutex_init(&mosq->out_packet_mutex, NULL);
 		pthread_mutex_init(&mosq->current_out_packet_mutex, NULL);
 		pthread_mutex_init(&mosq->msgtime_mutex, NULL);
+	}else{
+		errno = ENOMEM;
 	}
 	return mosq;
 }
