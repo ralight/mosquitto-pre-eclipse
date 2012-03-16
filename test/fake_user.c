@@ -40,9 +40,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <mosquitto.h>
 
-void my_connect_callback(void *obj, int result)
+void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 {
-	struct mosquitto *mosq = obj;
 	char topic[100];
 
 	if(!result){
@@ -73,7 +72,7 @@ int main(int argc, char *argv[])
 	snprintf(id, 30, "fake_user_%d", pid);
 
 	mosquitto_lib_init();
-	mosq = mosquitto_new(id, NULL);
+	mosq = mosquitto_new(id, clean_session, NULL);
 	if(!mosq){
 		fprintf(stderr, "Error: Out of memory.\n");
 		return 1;
@@ -90,7 +89,7 @@ int main(int argc, char *argv[])
 	while(1){
 		clean_session = rand()%10==0?false:true;
 
-		if(mosquitto_connect(mosq, host, port, keepalive, clean_session)){
+		if(mosquitto_connect(mosq, host, port, keepalive)){
 			fprintf(stderr, "Unable to connect.\n");
 			return 1;
 		}
