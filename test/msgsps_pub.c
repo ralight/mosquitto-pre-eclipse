@@ -13,18 +13,18 @@ static bool run = true;
 static int message_count = 0;
 static struct timeval start, stop;
 
-void my_connect_callback(void *obj, int rc)
+void my_connect_callback(struct mosquitto *mosq, void *obj, int rc)
 {
 	printf("rc: %d\n", rc);
 	gettimeofday(&start, NULL);
 }
 
-void my_disconnect_callback(void *obj)
+void my_disconnect_callback(struct mosquitto *mosq, void *obj, int result)
 {
 	run = false;
 }
 
-void my_publish_callback(void *obj, uint16_t mid)
+void my_publish_callback(struct mosquitto *mosq, void *obj, uint16_t mid)
 {
 	message_count++;
 	//printf("%d ", message_count);
@@ -108,12 +108,12 @@ int main(int argc, char *argv[])
 
 	mosquitto_lib_init();
 
-	mosq = mosquitto_new("perftest", NULL);
+	mosq = mosquitto_new("perftest", true, NULL);
 	mosquitto_connect_callback_set(mosq, my_connect_callback);
 	mosquitto_disconnect_callback_set(mosq, my_disconnect_callback);
 	mosquitto_publish_callback_set(mosq, my_publish_callback);
 
-	mosquitto_connect(mosq, "127.0.0.1", 1885, 600, true);
+	mosquitto_connect(mosq, "127.0.0.1", 1883, 600);
 
 	i=0;
 	while(!mosquitto_loop(mosq, -1) && run){

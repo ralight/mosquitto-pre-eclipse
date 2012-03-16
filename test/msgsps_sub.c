@@ -15,17 +15,17 @@ static struct timeval start, stop;
 FILE *fptr = NULL;
 
 
-void my_connect_callback(void *obj, int rc)
+void my_connect_callback(struct mosquitto *mosq, void *obj, int rc)
 {
 	printf("rc: %d\n", rc);
 }
 
-void my_disconnect_callback(void *obj)
+void my_disconnect_callback(struct mosquitto *mosq, void *obj, int result)
 {
 	run = false;
 }
 
-void my_message_callback(void *obj, const struct mosquitto_message *msg)
+void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *msg)
 {
 	if(message_count == 0){
 		gettimeofday(&start, NULL);
@@ -58,12 +58,12 @@ int main(int argc, char *argv[])
 	mosquitto_lib_init();
 
 	snprintf(id, 50, "msgps_sub_%d", getpid());
-	mosq = mosquitto_new(id, NULL);
+	mosq = mosquitto_new(id, true, NULL);
 	mosquitto_connect_callback_set(mosq, my_connect_callback);
 	mosquitto_disconnect_callback_set(mosq, my_disconnect_callback);
 	mosquitto_message_callback_set(mosq, my_message_callback);
 
-	mosquitto_connect(mosq, "127.0.0.1", 1885, 600, true);
+	mosquitto_connect(mosq, "127.0.0.1", 1883, 600);
 	mosquitto_subscribe(mosq, &mid, "perf/test", 0);
 
 	while(!mosquitto_loop(mosq, 1) && run){

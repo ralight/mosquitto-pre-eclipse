@@ -2,8 +2,9 @@ include ../config.mk
 
 CC=cc
 CFLAGS=-I../src -I../lib -I. -I.. -Wall -ggdb -DDEBUG -DWITH_CLIENT
-LDFLAGS=-nopie
+LDFLAGS=
 OBJS=context.o database.o logging.o memory.o net.o raw_send.o raw_send_client.o read_handle.o read_handle_client.o util.o
+SOVERSION=1
 
 .PHONY: all clean
 
@@ -11,32 +12,32 @@ all : fake_user msgsps_pub msgsps_sub
 #packet-gen qos
 
 fake_user : fake_user.o
-	#${CC} $^ -o $@ ../lib/libmosquitto.so.0 -nopie
-	${CC} $^ -o $@ -lmosquitto -nopie
+	#${CC} $^ -o $@ ../lib/libmosquitto.so.${SOVERSION}
+	${CC} $^ -o $@ -lmosquitto
 
 fake_user.o : fake_user.c
 	${CC} $(CFLAGS) -c $< -o $@
 
 msgsps_pub : msgsps_pub.o
-	${CC} $^ -o $@ ../lib/libmosquitto.so.0 -nopie
+	${CC} $^ -o $@ ../lib/libmosquitto.so.${SOVERSION}
 
 msgsps_pub.o : msgsps_pub.c msgsps_common.h
 	${CC} $(CFLAGS) -c $< -o $@
 
 msgsps_sub : msgsps_sub.o
-	${CC} $^ -o $@ ../lib/libmosquitto.so.0 -nopie
+	${CC} $^ -o $@ ../lib/libmosquitto.so.${SOVERSION}
 
 msgsps_sub.o : msgsps_sub.c msgsps_common.h
 	${CC} $(CFLAGS) -c $< -o $@
 
 packet-gen : packet-gen.o
-	${CC} $^ -o $@ ../lib/libmosquitto.so.0 -nopie
+	${CC} $^ -o $@ ../lib/libmosquitto.so.${SOVERSION}
 
 packet-gen.o : packet-gen.c
 	${CC} $(CFLAGS) -c $< -o $@
 
 qos : qos.o
-	${CC} $^ -o $@ ../lib/libmosquitto.so.0 -nopie
+	${CC} $^ -o $@ ../lib/libmosquitto.so.${SOVERSION}
 
 qos.o : qos.c
 	${CC} $(CFLAGS) -c $< -o $@
