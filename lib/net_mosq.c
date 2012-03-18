@@ -63,13 +63,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #  include <read_handle.h>
 #endif
 
-#ifndef WIN32
-#  define COMPAT_ECONNRESET ECONNRESET
-#  define COMPAT_EWOULDBLOCK EWOULDBLOCK
-#else
-#  define COMPAT_EWOULDBLOCK WSAEWOULDBLOCK
-#endif
-
 #include <memory_mosq.h>
 #include <mqtt3_protocol.h>
 #include <net_mosq.h>

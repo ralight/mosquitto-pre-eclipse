@@ -26,6 +26,7 @@
   was unexpected or the result of calling mosquitto_disconnect().
 - Fix reloading of persistence location.
 - Fix automatic client id generation on Windows.
+- Fix missing COMPAT_ECONNRESET define on Windows.
 
 0.15 - 20120205
 ===============
