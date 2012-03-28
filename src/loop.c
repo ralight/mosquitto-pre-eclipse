@@ -29,6 +29,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <config.h>
 
+#include <assert.h>
 #ifndef WIN32
 #include <poll.h>
 #else
@@ -68,8 +69,7 @@ int mosquitto_main_loop(mosquitto_db *db, int *listensock, int listensock_count,
 	int i;
 	struct pollfd *pollfds = NULL;
 	unsigned int pollfd_count = 0;
-	int client_max = 0;
-	unsigned int sock_max = 0;
+	int pollfd_index;
 
 #ifndef WIN32
 	sigemptyset(&sigblock);
@@ -79,20 +79,8 @@ int mosquitto_main_loop(mosquitto_db *db, int *listensock, int listensock_count,
 	while(run){
 		mqtt3_db_sys_update(db, db->config->sys_interval, start_time);
 
-		client_max = -1;
-		for(i=0; i<db->context_count; i++){
-			if(db->contexts[i] && db->contexts[i]->sock != INVALID_SOCKET && db->contexts[i]->sock > client_max){
-				client_max = db->contexts[i]->sock;
-			}
-		}
-
-		if(client_max > listener_max){
-			sock_max = client_max;
-		}else{
-			sock_max = listener_max;
-		}
-		if(sock_max+1 > pollfd_count){
-			pollfd_count = sock_max+1;
+		if(listensock_count + db->context_count > pollfd_count){
+			pollfd_count = listensock_count + db->context_count;
 			pollfds = _mosquitto_realloc(pollfds, sizeof(struct pollfd)*pollfd_count);
 			if(!pollfds){
 				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
@@ -102,19 +90,20 @@ int mosquitto_main_loop(mosquitto_db *db, int *listensock, int listensock_count,
 
 		memset(pollfds, -1, sizeof(struct pollfd)*pollfd_count);
 
+		pollfd_index = 0;
 		for(i=0; i<listensock_count; i++){
-			pollfds[listensock[i]].fd = listensock[i];
-			pollfds[listensock[i]].events = POLLIN;
-			pollfds[listensock[i]].revents = 0;
+			pollfds[pollfd_index].fd = listensock[i];
+			pollfds[pollfd_index].events = POLLIN;
+			pollfds[pollfd_index].revents = 0;
+			pollfd_index++;
 		}
 
 		now = time(NULL);
 		for(i=0; i<db->context_count; i++){
 			if(db->contexts[i]){
+				db->contexts[i]->pollfd_index = -1;
+
 				if(db->contexts[i]->sock != INVALID_SOCKET){
-					if(db->contexts[i]->sock > sock_max){
-						sock_max = db->contexts[i]->sock;
-					}
 #ifdef WITH_BRIDGE
 					if(db->contexts[i]->bridge){
 						_mosquitto_check_keepalive(db->contexts[i]);
@@ -124,14 +113,14 @@ int mosquitto_main_loop(mosquitto_db *db, int *listensock, int listensock_count,
 					/* Local bridges never time out in this fashion. */
 					if(!(db->contexts[i]->keepalive) || db->contexts[i]->bridge || now - db->contexts[i]->last_msg_in < (time_t)(db->contexts[i]->keepalive)*3/2){
 						if(mqtt3_db_message_write(db->contexts[i]) == MOSQ_ERR_SUCCESS){
-							if(db->contexts[i]->sock < pollfd_count){
-								pollfds[db->contexts[i]->sock].fd = db->contexts[i]->sock;
-								pollfds[db->contexts[i]->sock].events = POLLIN;
-								pollfds[db->contexts[i]->sock].revents = 0;
-								if(db->contexts[i]->out_packet){
-									pollfds[db->contexts[i]->sock].events |= POLLOUT;
-								}
+							pollfds[pollfd_index].fd = db->contexts[i]->sock;
+							pollfds[pollfd_index].events = POLLIN;
+							pollfds[pollfd_index].revents = 0;
+							if(db->contexts[i]->out_packet){
+								pollfds[pollfd_index].events |= POLLOUT;
 							}
+							db->contexts[i]->pollfd_index = pollfd_index;
+							pollfd_index++;
 						}else{
 							mqtt3_context_disconnect(db, i);
 						}
@@ -182,10 +171,10 @@ int mosquitto_main_loop(mosquitto_db *db, int *listensock, int listensock_count,
 
 #ifndef WIN32
 		sigprocmask(SIG_SETMASK, &sigblock, &origsig);
-		fdcount = poll(pollfds, pollfd_count, 1000);
+		fdcount = poll(pollfds, pollfd_index, 1000);
 		sigprocmask(SIG_SETMASK, &origsig, NULL);
 #else
-		fdcount = WSAPoll(pollfds, pollfd_count, 1000);
+		fdcount = WSAPoll(pollfds, pollfd_index, 1000);
 #endif
 		if(fdcount == -1){
 			loop_handle_errors(db, pollfds);
@@ -193,7 +182,7 @@ int mosquitto_main_loop(mosquitto_db *db, int *listensock, int listensock_count,
 			loop_handle_reads_writes(db, pollfds);
 
 			for(i=0; i<listensock_count; i++){
-				if(pollfds[listensock[i]].revents & (POLLIN | POLLPRI)){
+				if(pollfds[i].revents & (POLLIN | POLLPRI)){
 					while(mqtt3_socket_accept(db, listensock[i]) != -1){
 					}
 				}
@@ -245,7 +234,7 @@ static void loop_handle_errors(mosquitto_db *db, struct pollfd *pollfds)
 
 	for(i=0; i<db->context_count; i++){
 		if(db->contexts[i] && db->contexts[i]->sock != INVALID_SOCKET){
-			if(pollfds[db->contexts[i]->sock].revents & POLLHUP){
+			if(pollfds[db->contexts[i]->pollfd_index].revents & POLLHUP){
 				if(db->config->connection_messages == true){
 					if(db->contexts[i]->state != mosq_cs_disconnecting){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Socket error on client %s, disconnecting.", db->contexts[i]->id);
@@ -265,7 +254,8 @@ static void loop_handle_reads_writes(mosquitto_db *db, struct pollfd *pollfds)
 
 	for(i=0; i<db->context_count; i++){
 		if(db->contexts[i] && db->contexts[i]->sock != INVALID_SOCKET){
-			if(pollfds[db->contexts[i]->sock].revents & POLLOUT){
+			assert(pollfds[db->contexts[i]->pollfd_index].fd == db->contexts[i]->sock);
+			if(pollfds[db->contexts[i]->pollfd_index].revents & POLLOUT){
 				if(_mosquitto_packet_write(db->contexts[i])){
 					if(db->config->connection_messages == true){
 						if(db->contexts[i]->state != mosq_cs_disconnecting){
@@ -280,7 +270,8 @@ static void loop_handle_reads_writes(mosquitto_db *db, struct pollfd *pollfds)
 			}
 		}
 		if(db->contexts[i] && db->contexts[i]->sock != INVALID_SOCKET){
-			if(pollfds[db->contexts[i]->sock].revents & POLLIN){
+			assert(pollfds[db->contexts[i]->pollfd_index].fd == db->contexts[i]->sock);
+			if(pollfds[db->contexts[i]->pollfd_index].revents & POLLIN){
 				if(_mosquitto_packet_read(db, i)){
 					if(db->config->connection_messages == true){
 						if(db->contexts[i]->state != mosq_cs_disconnecting){
