@@ -53,10 +53,6 @@ typedef int ssize_t;
 #include <util_mosq.h>
 #include <will_mosq.h>
 
-#ifndef ECONNRESET
-#define ECONNRESET 104
-#endif
-
 #if !defined(WIN32) && defined(__SYMBIAN32__)
 #define HAVE_PSELECT
 #endif
