@@ -210,6 +210,7 @@ int mqtt3_handle_connect(mosquitto_db *db, int context_index)
 			db->contexts[i]->last_msg_in = time(NULL);
 			db->contexts[i]->last_msg_out = time(NULL);
 			db->contexts[i]->keepalive = context->keepalive;
+			db->contexts[i]->pollfd_index = context->pollfd_index;
 			if(context->username){
 				db->contexts[i]->username = _mosquitto_strdup(context->username);
 			}
