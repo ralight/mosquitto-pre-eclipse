@@ -44,6 +44,7 @@ int main(int argc, char *argv[])
 	double dstart, dstop, diff;
 	uint16_t mid = 0;
 	char id[50];
+	int rc;
 
 	start.tv_sec = 0;
 	start.tv_usec = 0;
@@ -66,8 +67,11 @@ int main(int argc, char *argv[])
 	mosquitto_connect(mosq, "127.0.0.1", 1883, 600);
 	mosquitto_subscribe(mosq, &mid, "perf/test", 0);
 
-	while(!mosquitto_loop(mosq, 1) && run){
-	}
+	do{
+		rc = mosquitto_loop(mosq, 1);
+	}while(rc == MOSQ_ERR_SUCCESS && run);
+	printf("rc: %d\n", rc);
+
 	dstart = (double)start.tv_sec*1.0e6 + (double)start.tv_usec;
 	dstop = (double)stop.tv_sec*1.0e6 + (double)stop.tv_usec;
 	diff = (dstop-dstart)/1.0e6;

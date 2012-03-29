@@ -266,6 +266,9 @@ int mosquitto_reconnect(struct mosquitto *mosq)
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(!mosq->host || mosq->port <= 0) return MOSQ_ERR_INVAL;
 
+	pthread_mutex_lock(&mosq->state_mutex);
+	mosq->state = mosq_cs_new;
+	pthread_mutex_unlock(&mosq->state_mutex);
 	rc = _mosquitto_socket_connect(mosq, mosq->host, mosq->port);
 	if(rc){
 		return rc;
