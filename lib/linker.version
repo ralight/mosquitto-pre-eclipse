@@ -2,7 +2,7 @@
  * symbols are exported.
  */
 
-VERS_0.9 {
+VERS_1.0 {
 	global:
 		mosquitto_lib_version;
 		mosquitto_lib_init;
@@ -13,6 +13,7 @@ VERS_0.9 {
 		mosquitto_will_set;
 		mosquitto_username_pw_set;
 		mosquitto_connect;
+		mosquitto_reconnect;
 		mosquitto_disconnect;
 		mosquitto_publish;
 		mosquitto_subscribe;
@@ -21,6 +22,8 @@ VERS_0.9 {
 		mosquitto_message_free;
 		mosquitto_loop;
 		mosquitto_socket;
+		mosquitto_loop_start;
+		mosquitto_loop_stop;
 		mosquitto_loop_read;
 		mosquitto_loop_write;
 		mosquitto_loop_misc;
@@ -31,17 +34,8 @@ VERS_0.9 {
 		mosquitto_subscribe_callback_set;
 		mosquitto_unsubscribe_callback_set;
 		mosquitto_message_retry_set;
+		mosquitto_want_write;
+		mosquitto_user_data_set;
 	local: *;
 };
 
-VERS_0.12 {
-	global:
-		mosquitto_reconnect;
-} VERS_0.9;
-
-VERS_0.16 {
-	global:
-		mosquitto_loop_start;
-		mosquitto_loop_stop;
-		mosquitto_want_write;
-} VERS_0.12;
