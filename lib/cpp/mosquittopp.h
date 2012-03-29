@@ -73,6 +73,7 @@ class mosqpp_EXPORT mosquittopp {
 		int subscribe(uint16_t *mid, const char *sub, int qos=0);
 		int unsubscribe(uint16_t *mid, const char *sub);
 		void message_retry_set(unsigned int message_retry);
+		void user_data_set(void *obj);
 
 		int loop(int timeout=-1);
 		int loop_misc();

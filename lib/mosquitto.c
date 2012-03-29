@@ -551,3 +551,10 @@ void mosquitto_unsubscribe_callback_set(struct mosquitto *mosq, void (*on_unsubs
 	pthread_mutex_unlock(&mosq->callback_mutex);
 }
 
+void mosquitto_user_data_set(struct mosquitto *mosq, void *obj)
+{
+	if(mosq){
+		mosq->obj = obj;
+	}
+}
+

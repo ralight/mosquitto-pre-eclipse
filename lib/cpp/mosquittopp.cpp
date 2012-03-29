@@ -192,4 +192,9 @@ bool mosquittopp::want_write()
 	return mosquitto_want_write(mosq);
 }
 
+void mosquittopp::user_data_set(void *obj)
+{
+	mosquitto_user_data_set(mosq, obj);
+}
+
 }
