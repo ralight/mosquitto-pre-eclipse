@@ -632,6 +632,7 @@ libmosq_EXPORT int mosquitto_loop_write(struct mosquitto *mosq);
  * Returns:
  *	MOSQ_ERR_SUCCESS -   on success.
  * 	MOSQ_ERR_INVAL -     if the input parameters were invalid.
+ * 	MOSQ_ERR_NO_CONN -   if the client isn't connected to a broker.
  *
  * See Also:
  *	<mosquitto_socket>, <mosquitto_loop_read>, <mosquitto_loop_write>
