@@ -660,7 +660,7 @@ libmosq_EXPORT bool mosquitto_want_write(struct mosquitto *mosq);
  * Parameters:
  *  mosq -       a valid mosquitto instance.
  *  on_connect - a callback function in the following form:
- *               void callback(void *obj, int rc)
+ *               void callback(struct mosquitto *mosq, void *obj, int rc)
  *
  * Callback Parameters:
  *  mosq - the mosquitto instance making the callback.
@@ -684,7 +684,7 @@ libmosq_EXPORT void mosquitto_connect_callback_set(struct mosquitto *mosq, void 
  * Parameters:
  *  mosq -          a valid mosquitto instance.
  *  on_disconnect - a callback function in the following form:
- *                  void callback(void *obj)
+ *                  void callback(struct mosquitto *mosq, void *obj)
  *
  * Callback Parameters:
  *  mosq - the mosquitto instance making the callback.
@@ -704,7 +704,7 @@ libmosq_EXPORT void mosquitto_disconnect_callback_set(struct mosquitto *mosq, vo
  * Parameters:
  *  mosq -       a valid mosquitto instance.
  *  on_publish - a callback function in the following form:
- *               void callback(void *obj, uint16_t mid)
+ *               void callback(struct mosquitto *mosq, void *obj, uint16_t mid)
  *
  * Callback Parameters:
  *  mosq - the mosquitto instance making the callback.
@@ -722,7 +722,7 @@ libmosq_EXPORT void mosquitto_publish_callback_set(struct mosquitto *mosq, void 
  * Parameters:
  *  mosq -       a valid mosquitto instance.
  *  on_message - a callback function in the following form:
- *               void callback(void *obj, const struct mosquitto_message *message)
+ *               void callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
  *
  * Callback Parameters:
  *  mosq -    the mosquitto instance making the callback.
@@ -745,7 +745,7 @@ libmosq_EXPORT void mosquitto_message_callback_set(struct mosquitto *mosq, void 
  * Parameters:
  *  mosq -         a valid mosquitto instance.
  *  on_subscribe - a callback function in the following form:
- *                 void callback(void *obj, uint16_t mid, int qos_count, const uint8_t *granted_qos)
+ *                 void callback(struct mosquitto *mosq, void *obj, uint16_t mid, int qos_count, const uint8_t *granted_qos)
  *
  * Callback Parameters:
  *  mosq -        the mosquitto instance making the callback.
@@ -766,7 +766,7 @@ libmosq_EXPORT void mosquitto_subscribe_callback_set(struct mosquitto *mosq, voi
  * Parameters:
  *  mosq -           a valid mosquitto instance.
  *  on_unsubscribe - a callback function in the following form:
- *                   void callback(void *obj, uint16_t mid)
+ *                   void callback(struct mosquitto *mosq, void *obj, uint16_t mid)
  *
  * Callback Parameters:
  *  mosq - the mosquitto instance making the callback.
