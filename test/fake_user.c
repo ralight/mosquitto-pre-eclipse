@@ -54,9 +54,9 @@ int main(int argc, char *argv[])
 {
 	char id[30];
 	char *host = "localhost";
-	int port = 1885;
+	int port = 1883;
 	int keepalive = 60;
-	bool clean_session = true;
+	bool clean_session = false;
 	struct mosquitto *mosq = NULL;
 	
 	uint8_t *will_payload = NULL;
@@ -93,13 +93,14 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "Unable to connect.\n");
 			return 1;
 		}
+		mosquitto_subscribe(mosq, NULL, "#", 0);
 
 		while(!mosquitto_loop(mosq, -1)){
 			if(rand()%100==0){
 				snprintf(topic, 100, "fake/%d", rand()%100);
 				mosquitto_publish(mosq, NULL, topic, 10, (uint8_t*)"0123456789", rand()%3, rand()%2);
 			}
-			if(rand()%5000==0){
+			if(rand()%50==0){
 				mosquitto_disconnect(mosq);
 			}
 		}
