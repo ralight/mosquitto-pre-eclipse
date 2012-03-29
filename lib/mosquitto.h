@@ -202,7 +202,7 @@ libmosq_EXPORT int mosquitto_lib_cleanup(void);
  *      - EINVAL on invalid input parameters.
  *
  * See Also:
- * 	<mosquitto_destroy>
+ * 	<mosquitto_destroy>, <mosquitto_user_data_set>
  */
 libmosq_EXPORT struct mosquitto *mosquitto_new(const char *id, bool clean_session, void *obj);
 
@@ -787,6 +787,22 @@ libmosq_EXPORT void mosquitto_unsubscribe_callback_set(struct mosquitto *mosq, v
  *                  retrying. Defaults to 60.
  */
 libmosq_EXPORT void mosquitto_message_retry_set(struct mosquitto *mosq, unsigned int message_retry);
+
+/*
+ * Function: mosquitto_user_data_set
+ *
+ * When <mosquitto_new> is called, the pointer given as the "obj" parameter
+ * will be passed to the callbacks as user data. The <mosquitto_user_data_set>
+ * function allows this obj parameter to be updated at any time. This function
+ * will not modify the memory pointed to by the current user data pointer. If
+ * it is dynamically allocated memory you must free it yourself.
+ *
+ * Parameters:
+ *  mosq - a valid mosquitto instance.
+ * 	obj -  A user pointer that will be passed as an argument to any callbacks
+ * 	       that are specified.
+ */
+libmosq_EXPORT void mosquitto_user_data_set(struct mosquitto *mosq, void *obj);
 
 #ifdef __cplusplus
 }

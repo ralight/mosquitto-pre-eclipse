@@ -17,6 +17,7 @@
   mosquitto_new() because it is a client parameter rather than a connection
   parameter.
 - mosquitto_new() now sets errno to indicate failure type.
+- Add mosquitto_user_data_set() to allow user data pointer to be updated.
 - Usernames were being lost when a non clean-session client reconnected,
   potentially causing problems with ACLs. This has been fixed.
 - Significant improvement to memory handling on Windows.
