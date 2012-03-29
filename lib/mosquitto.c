@@ -481,6 +481,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout)
 int mosquitto_loop_misc(struct mosquitto *mosq)
 {
 	if(!mosq) return MOSQ_ERR_INVAL;
+	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
 
 	_mosquitto_check_keepalive(mosq);
 	if(mosq->last_retry_check+1 < time(NULL)){
