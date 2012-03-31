@@ -140,7 +140,16 @@ int mosquitto_main_loop(mosquitto_db *db, int *listensock, int listensock_count,
 						}else{
 							if(db->contexts[i]->bridge->start_type == bst_automatic && time(NULL) > db->contexts[i]->bridge->restart_t){
 								db->contexts[i]->bridge->restart_t = 0;
-								mqtt3_bridge_connect(db, db->contexts[i]);
+								if(mqtt3_bridge_connect(db, db->contexts[i]) == MOSQ_ERR_SUCCESS){
+									pollfds[pollfd_index].fd = db->contexts[i]->sock;
+									pollfds[pollfd_index].events = POLLIN;
+									pollfds[pollfd_index].revents = 0;
+									if(db->contexts[i]->out_packet){
+										pollfds[pollfd_index].events |= POLLOUT;
+									}
+									db->contexts[i]->pollfd_index = pollfd_index;
+									pollfd_index++;
+								}
 							}
 						}
 					}else{
