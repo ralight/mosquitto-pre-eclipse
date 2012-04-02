@@ -10,7 +10,7 @@ set (MOSQ_SRCS
 	loop.c
 	../lib/memory_mosq.c ../lib/memory_mosq.h
 	mosquitto.c
-	mqtt3.h
+	mosquitto_broker.h
 	net.c
 	../lib/net_mosq.c ../lib/net_mosq.h
 	persist.c persist.h
