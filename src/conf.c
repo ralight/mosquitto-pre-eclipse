@@ -153,6 +153,7 @@ void mqtt3_config_cleanup(mqtt3_config *config)
 
 static void print_usage(void)
 {
+	printf("mosquitto version %s (build date %s)\n\n", VERSION, TIMESTAMP);
 	printf("mosquitto is an MQTT v3.1 broker.\n\n");
 	printf("Usage: mosquitto [-c config_file] [-d] [-h] [-p port]\n\n");
 	printf(" -c : specify the broker config file.\n");
