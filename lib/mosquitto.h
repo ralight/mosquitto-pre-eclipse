@@ -136,7 +136,7 @@ struct mosquitto;
 /*
  * Function: mosquitto_lib_version
  *
- * Can be used to obtain version information for the phasecapture library.
+ * Can be used to obtain version information for the mosquitto library.
  * This allows the application to compare the library version against the
  * version it was compiled against by using the LIBMOSQUITTO_MAJOR,
  * LIBMOSQUITTO_MINOR and LIBMOSQUITTO_REVISION defines.
