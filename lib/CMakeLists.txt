@@ -17,7 +17,7 @@ add_library(libmosquitto SHARED
 	read_handle_shared.c
 	send_client_mosq.c
 	send_mosq.c send_mosq.h
-	thread_mosq.h
+	thread_mosq.c
 	util_mosq.c util_mosq.h
 	will_mosq.c will_mosq.h)
 
