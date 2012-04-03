@@ -53,6 +53,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #define STATUS_CONNECTING 0
 #define STATUS_CONNACK_RECVD 1
 
+/* Global variables for use in callbacks. See sub_client.c for an example of
+ * using a struct to hold variables for use in callbacks. */
 static char *topic = NULL;
 static char *message = NULL;
 static long msglen = 0;
