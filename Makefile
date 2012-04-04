@@ -3,7 +3,7 @@ include config.mk
 DIRS=lib client src man
 DISTDIRS=man
 
-.PHONY : all mosquitto clean reallyclean install uninstall dist sign copy
+.PHONY : all mosquitto clean reallyclean test install uninstall dist sign copy
 
 all : mosquitto
 
@@ -16,6 +16,9 @@ clean :
 reallyclean : 
 	for d in ${DIRS}; do $(MAKE) -C $${d} reallyclean; done
 	-rm -f *.orig
+
+test :
+	$(MAKE) -C test test
 
 install : mosquitto
 	@for d in ${DIRS}; do $(MAKE) -C $${d} install; done
