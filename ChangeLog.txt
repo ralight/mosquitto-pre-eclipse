@@ -34,6 +34,7 @@
 - mosquitto_loop_misq() can now return MOSQ_ERR_NO_CONN;
 - Clients that had disconnected were not always being detected immediately on
   Linux. This has been fixed.
+- Enforce client id limits in the broker.
 
 0.15 - 20120205
 ===============
