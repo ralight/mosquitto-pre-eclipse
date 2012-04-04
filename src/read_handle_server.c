@@ -53,6 +53,7 @@ int mqtt3_handle_connect(mosquitto_db *db, int context_index)
 	int rc;
 	struct _mosquitto_acl_user *acl_tail;
 	struct mosquitto *context;
+	int slen;
 
 	context = db->contexts[context_index];
 	
@@ -112,6 +113,13 @@ int mqtt3_handle_connect(mosquitto_db *db, int context_index)
 	}
 
 	if(_mosquitto_read_string(&context->in_packet, &client_id)){
+		mqtt3_context_disconnect(db, context_index);
+		return 1;
+	}
+
+	slen = strlen(client_id);
+	if(slen > 23 || slen == 0){
+		_mosquitto_send_connack(context, 2);
 		mqtt3_context_disconnect(db, context_index);
 		return 1;
 	}
