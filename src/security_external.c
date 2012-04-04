@@ -51,8 +51,13 @@ POSSIBILITY OF SUCH DAMAGE.
  * This function will also be called when the broker receives a signal to
  * reload its configuration. In this situation <mosquitto_acl_cleanup> will be
  * called followed by <mosquitto_acl_init>.
+ *
+ * Parameters:
+ *	db - main broker data structer
+ *	reload - set to true if this function is being called as part of a config
+ *           reload.
  */
-int mosquitto_acl_init(struct _mosquitto_db *db)
+int mosquitto_acl_init(struct _mosquitto_db *db, bool reload)
 {
 	return MOSQ_ERR_SUCCESS;
 }
@@ -97,8 +102,13 @@ int mosquitto_acl_check(struct _mosquitto_db *db, struct mosquitto *context, con
  * This function will also be called when the broker receives a signal to
  * reload its configuration. In this situation <mosquitto_acl_cleanup> will be
  * called followed by <mosquitto_acl_init>.
+ *
+ * Parameters:
+ *	db - main broker data structer
+ *	reload - set to true if this function is being called as part of a config
+ *           reload.
  */
-void mosquitto_acl_cleanup(struct _mosquitto_db *db)
+void mosquitto_acl_cleanup(struct _mosquitto_db *db, bool reload)
 {
 }
 
@@ -136,8 +146,13 @@ int mosquitto_security_apply(struct _mosquitto_db *db)
  * This function will also be called when the broker receives a signal to
  * reload its configuration. In this situation <mosquitto_unpwd_cleanup> will
  * be called followed by <mosquitto_unpwd_init>.
+ *
+ * Parameters:
+ *	db - main broker data structer
+ *	reload - set to true if this function is being called as part of a config
+ *           reload.
  */
-int mosquitto_unpwd_init(struct _mosquitto_db *db)
+int mosquitto_unpwd_init(struct _mosquitto_db *db, bool reload)
 {
 	return MOSQ_ERR_SUCCESS;
 }
@@ -173,8 +188,13 @@ int mosquitto_unpwd_check(struct _mosquitto_db *db, const char *username, const 
  * This function will also be called when the broker receives a signal to
  * reload its configuration. In this situation <mosquitto_unpwd_cleanup> will be
  * called followed by <mosquitto_unpwd_init>.
+ *
+ * Parameters:
+ *	db - main broker data structer
+ *	reload - set to true if this function is being called as part of a config
+ *           reload.
  */
-int mosquitto_unpwd_cleanup(struct _mosquitto_db *db)
+int mosquitto_unpwd_cleanup(struct _mosquitto_db *db, bool reload)
 {
 	return MOSQ_ERR_SUCCESS;
 }

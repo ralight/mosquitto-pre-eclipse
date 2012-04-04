@@ -35,18 +35,18 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <mosquitto_broker.h>
 #include <memory_mosq.h>
 
-int mosquitto_security_init(mosquitto_db *db)
+int mosquitto_security_init(mosquitto_db *db, bool reload)
 {
 	int rc;
 
 #ifdef WITH_EXTERNAL_SECURITY_CHECKS
-	rc = mosquitto_unpwd_init(db);
+	rc = mosquitto_unpwd_init(db, reload);
 	if(rc){
 		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error initialising passwords.");
 		return rc;
 	}
 
-	rc = mosquitto_acl_init(db);
+	rc = mosquitto_acl_init(db, reload);
 	if(rc){
 		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error initialising ACLs.");
 		return rc;
@@ -73,10 +73,10 @@ int mosquitto_security_init(mosquitto_db *db)
 	return MOSQ_ERR_SUCCESS;
 }
 
-void mosquitto_security_cleanup(mosquitto_db *db)
+void mosquitto_security_cleanup(mosquitto_db *db, bool reload)
 {
-	mosquitto_acl_cleanup(db);
-	mosquitto_unpwd_cleanup(db);
+	mosquitto_acl_cleanup(db, reload);
+	mosquitto_unpwd_cleanup(db, reload);
 }
 
 #ifndef WITH_EXTERNAL_SECURITY_CHECKS
@@ -550,7 +550,7 @@ static void _free_acl(struct _mosquitto_acl *acl)
 	_mosquitto_free(acl);
 }
 
-void mosquitto_acl_cleanup(struct _mosquitto_db *db)
+void mosquitto_acl_cleanup(struct _mosquitto_db *db, bool reload)
 {
 	int i;
 	struct _mosquitto_acl_user *user_tail;
@@ -665,7 +665,7 @@ int mosquitto_unpwd_check(struct _mosquitto_db *db, const char *username, const 
 	return MOSQ_ERR_AUTH;
 }
 
-int mosquitto_unpwd_cleanup(struct _mosquitto_db *db)
+int mosquitto_unpwd_cleanup(struct _mosquitto_db *db, bool reload)
 {
 	struct _mosquitto_unpwd *tail;
 
