@@ -32,6 +32,8 @@
 - Fix missing COMPAT_ECONNRESET define on Windows.
 - Fix broker crash on incorrect protocol number.
 - mosquitto_loop_misq() can now return MOSQ_ERR_NO_CONN;
+- Clients that had disconnected were not always being detected immediately on
+  Linux. This has been fixed.
 
 0.15 - 20120205
 ===============
