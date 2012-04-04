@@ -14,3 +14,6 @@ test :
 	./02-subscribe-qos2.py
 	
 	./kill_broker.sh
+
+test-kill:
+	./kill_broker.sh
