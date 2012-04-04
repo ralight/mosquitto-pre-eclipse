@@ -13,5 +13,7 @@ connack_recvd = sock.recv(256)
 sock.close()
 
 if connack_recvd != connack_packet:
+	(cmd, rl, resv, rc) = unpack('bbbb', connack_recvd)
+	print "FAIL: Expected 32,2,0,0 got " + str(cmd) + "," + str(rl) + "," + str(resv) + "," + str(rc)
 	exit(1)
 
