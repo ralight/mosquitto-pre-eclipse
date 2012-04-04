@@ -218,8 +218,8 @@ int mosquitto_main_loop(mosquitto_db *db, int *listensock, int listensock_count,
 		if(flag_reload){
 			_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Reloading config.");
 			mqtt3_config_read(db->config, true);
-			mosquitto_security_cleanup(db);
-			mosquitto_security_init(db);
+			mosquitto_security_cleanup(db, true);
+			mosquitto_security_init(db, true);
 			mosquitto_security_apply(db);
 			mqtt3_log_init(db->config->log_type, db->config->log_dest);
 			flag_reload = false;

@@ -341,21 +341,21 @@ void mqtt3_bridge_packet_cleanup(struct mosquitto *context);
 /* ============================================================
  * Security related functions
  * ============================================================ */
-int mosquitto_security_init(mosquitto_db *db);
-void mosquitto_security_cleanup(mosquitto_db *db);
+int mosquitto_security_init(mosquitto_db *db, bool reload);
+int mosquitto_security_apply(struct _mosquitto_db *db);
+void mosquitto_security_cleanup(mosquitto_db *db, bool reload);
 #ifdef WITH_EXTERNAL_SECURITY_CHECKS
-int mosquitto_unpwd_init(struct _mosquitto_db *db);
-int mosquitto_acl_init(struct _mosquitto_db *db);
+int mosquitto_unpwd_init(struct _mosquitto_db *db, bool reload);
+int mosquitto_acl_init(struct _mosquitto_db *db, bool reload);
 #else
 int mqtt3_aclfile_parse(struct _mosquitto_db *db);
 int mqtt3_pwfile_parse(struct _mosquitto_db *db);
-int mosquitto_security_apply(struct _mosquitto_db *db);
 #endif
 
 int mosquitto_acl_check(struct _mosquitto_db *db, struct mosquitto *context, const char *topic, int access);
-void mosquitto_acl_cleanup(struct _mosquitto_db *db);
+void mosquitto_acl_cleanup(struct _mosquitto_db *db, bool reload);
 int mosquitto_unpwd_check(struct _mosquitto_db *db, const char *username, const char *password);
-int mosquitto_unpwd_cleanup(struct _mosquitto_db *db);
+int mosquitto_unpwd_cleanup(struct _mosquitto_db *db, bool reload);
 
 /* ============================================================
  * Window service related functions
