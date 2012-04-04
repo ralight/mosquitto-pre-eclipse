@@ -6,8 +6,12 @@ LDFLAGS=
 OBJS=context.o database.o logging.o memory.o net.o raw_send.o raw_send_client.o read_handle.o read_handle_client.o util.o
 SOVERSION=1
 
-.PHONY: all clean
+.PHONY: all test clean
 
+test :
+	$(MAKE) -C broker test
+	$(MAKE) -C lib test
+	
 all : fake_user msgsps_pub msgsps_sub 
 #packet-gen qos
 
