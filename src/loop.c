@@ -279,7 +279,6 @@ static void loop_handle_reads_writes(mosquitto_db *db, struct pollfd *pollfds)
 			}
 		}
 		if(db->contexts[i] && db->contexts[i]->sock != INVALID_SOCKET){
-		printf("i: %d %d\n", i, pollfds[db->contexts[i]->pollfd_index].revents);
 			assert(pollfds[db->contexts[i]->pollfd_index].fd == db->contexts[i]->sock);
 			if(pollfds[db->contexts[i]->pollfd_index].revents & POLLOUT){
 				if(_mosquitto_packet_write(db->contexts[i])){
