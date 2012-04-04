@@ -90,7 +90,6 @@ int mqtt3_handle_connect(mosquitto_db *db, int context_index)
 			_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Invalid protocol version %d in CONNECT from %s.",
 					protocol_version, context->address);
 		}
-		_mosquitto_free(protocol_name);
 		_mosquitto_send_connack(context, 1);
 		mqtt3_context_disconnect(db, context_index);
 		return MOSQ_ERR_PROTOCOL;

@@ -30,6 +30,7 @@
 - Fix reloading of persistence location.
 - Fix automatic client id generation on Windows.
 - Fix missing COMPAT_ECONNRESET define on Windows.
+- Fix broker crash on incorrect protocol number.
 - mosquitto_loop_misq() can now return MOSQ_ERR_NO_CONN;
 
 0.15 - 20120205
