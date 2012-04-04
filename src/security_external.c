@@ -53,6 +53,27 @@ void mosquitto_acl_cleanup(struct _mosquitto_db *db)
 {
 }
 
+/*
+ * Function: mosquitto_security_apply
+ *
+ * This function is called after the broker receives a signal to reload its
+ * configuration. <mosquitto_security_cleanup> and <mosquitto_security_init>
+ * will have already been called when <mosquitto_security_apply> is called, so
+ * the acl and unpwd cleanup and init functions will have also been called.
+ *
+ * You should use this function to apply any settings that have been changed. The built in checks do the following:
+ *
+ * - Disconnect anonymous users if appropriate
+ * - Disconnect users with invalid passwords
+ * - Reapply ACLs
+ *
+ * The return value isn't currently checked.
+ */
+int mosquitto_security_apply(struct _mosquitto_db *db)
+{
+	return MOSQ_ERR_SUCCESS;
+}
+
 int mosquitto_unpwd_init(struct _mosquitto_db *db)
 {
 	return MOSQ_ERR_SUCCESS;
