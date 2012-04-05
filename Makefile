@@ -20,9 +20,6 @@ reallyclean :
 test :
 	$(MAKE) -C test test
 
-test-kill :
-	$(MAKE) -C test test-kill
-
 install : mosquitto
 	@for d in ${DIRS}; do $(MAKE) -C $${d} install; done
 	$(INSTALL) -d ${DESTDIR}/etc/mosquitto

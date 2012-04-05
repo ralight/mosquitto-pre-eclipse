@@ -4,5 +4,3 @@ all :
 
 test :
 
-test-kill:
-	
