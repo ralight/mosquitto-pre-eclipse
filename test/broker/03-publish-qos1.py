@@ -6,7 +6,8 @@ import socket
 from struct import *
 
 mid = 19
-connect_packet = pack('!BBH6sBBBBH13s', 16, 12+2+13,6,"MQIsdp",3,2,0,60,13,"pub-qos1-test")
+keepalive = 60
+connect_packet = pack('!BBH6sBBHH13s', 16, 12+2+13,6,"MQIsdp",3,2,keepalive,13,"pub-qos1-test")
 connack_packet = pack('!BBBB', 32, 2, 0, 0);
 
 publish_packet = pack('!BBH13sH7s', 48+2, 2+13+2+7, 13, "pub/qos1/test", mid, "message")
