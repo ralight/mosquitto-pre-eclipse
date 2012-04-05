@@ -44,6 +44,7 @@ try:
 			print "FAIL: Expected 80,2," + str(mid) + " got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd)
 			rc = 1
 		else:
+			# Timeout is 8 seconds which means the broker should repeat the PUBREC.
 			pubrec_recvd = sock.recv(256)
 
 			if pubrec_recvd != pubrec_dup_packet:
