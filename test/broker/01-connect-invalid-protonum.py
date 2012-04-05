@@ -5,7 +5,8 @@
 import socket
 from struct import *
 
-connect_packet = pack('!BBH6sBBBBH20s', 16, 12+2+20,6,"MQIsdp",0,2,0,10,20,"connect-invalid-test")
+keepalive = 10
+connect_packet = pack('!BBH6sBBHH20s', 16, 12+2+20,6,"MQIsdp",0,2,keepalive,20,"connect-invalid-test")
 connack_packet = pack('!BBBB', 32, 2, 0, 1);
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
