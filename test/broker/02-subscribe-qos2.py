@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# Test whether a SUBSCRIBE to a topic with QoS 2 results in the correct SUBACK packet.
+
 import socket
 from struct import *
 

@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# Test whether a valid CONNECT results in the correct CONNACK packet.
+
 import socket
 from struct import *
 
