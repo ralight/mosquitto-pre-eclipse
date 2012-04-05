@@ -12,6 +12,8 @@ test :
 	./02-subscribe-qos0.py
 	./02-subscribe-qos1.py
 	./02-subscribe-qos2.py
+	./03-publish-qos1.py
+	./03-publish-qos2.py
 	
 	./kill_broker.sh
 
