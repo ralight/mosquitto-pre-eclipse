@@ -5,11 +5,12 @@
 import socket
 from struct import *
 
-connect_packet = pack('BBBB6sBBBBBB19s', 16, 12+2+19,0,6,"MQIsdp",3,2,0,60,0,19,"subscribe-qos2-test")
-connack_packet = pack('BBBB', 32, 2, 0, 0);
+mid = 3
+connect_packet = pack('!BBH6sBBBBH19s', 16, 12+2+19,6,"MQIsdp",3,2,0,60,19,"subscribe-qos2-test")
+connack_packet = pack('!BBBB', 32, 2, 0, 0);
 
-subscribe_packet = pack('BBBBBB9sB', 130, 2+2+9+1, 0, 1, 0, 9, "qos2/test", 2)
-suback_packet = pack('BBBBB', 144, 2+1, 0, 1, 2)
+subscribe_packet = pack('!BBHH9sB', 130, 2+2+9+1, mid, 9, "qos2/test", 2)
+suback_packet = pack('!BBHB', 144, 2+1, mid, 2)
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.connect(("localhost", 1888))
@@ -25,6 +26,6 @@ suback_recvd = sock.recv(256)
 sock.close()
 
 if suback_recvd != suback_packet:
-	(cmd, rl, midh, midl, qos) = unpack('BBBBB', suback_recvd)
-	print "FAIL: Expected 144,3,0,1,2 got " + str(cmd) + "," + str(rl) + "," + str(midh) + "," + str(midl) + "," + str(qos)
+	(cmd, rl, mid_recvd, qos) = unpack('!BBHB', suback_recvd)
+	print "FAIL: Expected 144,3,"+str(mid)+",2 got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd) + "," + str(qos)
 	exit(1)

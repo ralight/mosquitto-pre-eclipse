@@ -5,11 +5,12 @@
 import socket
 from struct import *
 
-connect_packet = pack('BBBB6sBBBBBB13s', 16, 12+2+13,0,6,"MQIsdp",3,2,0,60,0,13,"pub-qos1-test")
-connack_packet = pack('BBBB', 32, 2, 0, 0);
+mid = 19
+connect_packet = pack('!BBH6sBBBBH13s', 16, 12+2+13,6,"MQIsdp",3,2,0,60,13,"pub-qos1-test")
+connack_packet = pack('!BBBB', 32, 2, 0, 0);
 
-publish_packet = pack('BBBB13sBB7s', 48+2, 2+13+2+7, 0, 13, "pub/qos1/test", 0, 17, "message")
-puback_packet = pack('BBBB', 64, 2, 0, 17)
+publish_packet = pack('!BBH13sH7s', 48+2, 2+13+2+7, 13, "pub/qos1/test", mid, "message")
+puback_packet = pack('!BBH', 64, 2, mid)
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.connect(("localhost", 1888))
@@ -25,6 +26,6 @@ puback_recvd = sock.recv(256)
 sock.close()
 
 if puback_recvd != puback_packet:
-	(cmd, rl, midh, midl) = unpack('BBBB', puback_recvd)
-	print "FAIL: Expected 64,2,0,17 got " + str(cmd) + "," + str(rl) + "," + str(midh) + "," + str(midl)
+	(cmd, rl, mid_recvd) = unpack('!BBH', puback_recvd)
+	print "FAIL: Expected 64,2,"+str(mid)+" got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd)
 	exit(1)
