@@ -3,8 +3,6 @@
 all :
 
 test :
-	./run_broker.sh
-	
 	./01-connect-success.py
 	./01-connect-invalid-protonum.py
 	./01-connect-invalid-id-0.py
@@ -14,8 +12,3 @@ test :
 	./02-subscribe-qos2.py
 	./03-publish-qos1.py
 	./03-publish-qos2.py
-	
-	./kill_broker.sh
-
-test-kill:
-	./kill_broker.sh

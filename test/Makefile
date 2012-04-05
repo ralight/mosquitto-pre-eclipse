@@ -12,10 +12,6 @@ test :
 	$(MAKE) -C broker test
 	$(MAKE) -C lib test
 
-test-kill :
-	$(MAKE) -C broker test-kill
-	$(MAKE) -C lib test-kill
-	
 all : fake_user msgsps_pub msgsps_sub 
 #packet-gen qos
 
