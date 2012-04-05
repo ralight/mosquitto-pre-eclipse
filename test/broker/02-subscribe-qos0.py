@@ -27,3 +27,4 @@ sock.close()
 if suback_recvd != suback_packet:
 	(cmd, rl, midh, midl, qos) = unpack('BBBBB', suback_recvd)
 	print "FAIL: Expected 144,3,0,1,0 got " + str(cmd) + "," + str(rl) + "," + str(midh) + "," + str(midl) + "," + str(qos)
+	exit(1)
