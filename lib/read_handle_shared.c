@@ -130,7 +130,7 @@ int _mosquitto_handle_pubrec(struct mosquitto *mosq)
 #ifdef WITH_BROKER
 	_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Received PUBREC from %s (Mid: %d)", mosq->id, mid);
 
-	rc = mqtt3_db_message_update(mosq, mid, mosq_md_out, ms_wait_pubcomp);
+	rc = mqtt3_db_message_update(mosq, mid, mosq_md_out, ms_wait_for_pubcomp);
 #else
 	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Received PUBREC (Mid: %d)", mid);
 

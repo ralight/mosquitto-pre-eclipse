@@ -237,13 +237,13 @@ int mqtt3_handle_connect(mosquitto_db *db, int context_index)
 				if(context->msgs->state == ms_queued && context->msgs->direction == mosq_md_out){
 					switch(context->msgs->qos){
 						case 0:
-							context->msgs->state = ms_publish;
+							context->msgs->state = ms_publish_qos0;
 							break;
 						case 1:
-							context->msgs->state = ms_publish_puback;
+							context->msgs->state = ms_publish_qos1;
 							break;
 						case 2:
-							context->msgs->state = ms_publish_pubrec;
+							context->msgs->state = ms_publish_qos2;
 							break;
 					}
 				}
