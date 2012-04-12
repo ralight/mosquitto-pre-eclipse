@@ -18,7 +18,7 @@ pubrec_packet = pack('!BBH', 80, 2, mid)
 pubrel_packet = pack('!BBH', 96, 2, mid)
 pubcomp_packet = pack('!BBH', 112, 2, mid)
 
-broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'])
+broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'], stderr=subprocess.PIPE)
 
 try:
 	time.sleep(0.1)
