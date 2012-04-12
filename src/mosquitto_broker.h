@@ -58,16 +58,16 @@ typedef uint64_t dbid_t;
 
 enum mqtt3_msg_state {
 	ms_invalid = 0,
-	ms_publish = 1,
-	ms_publish_puback = 2,
-	ms_wait_puback = 3,
-	ms_publish_pubrec = 4,
-	ms_wait_pubrec = 5,
+	ms_publish_qos0 = 1,
+	ms_publish_qos1 = 2,
+	ms_wait_for_puback = 3,
+	ms_publish_qos2 = 4,
+	ms_wait_for_pubrec = 5,
 	ms_resend_pubrel = 6,
-	ms_wait_pubrel = 7,
+	ms_wait_for_pubrel = 7,
 	ms_resend_pubcomp = 8,
-	ms_wait_pubcomp = 9,
-	ms_resend_pubrec = 10,
+	ms_wait_for_pubcomp = 9,
+	ms_send_pubrec = 10,
 	ms_queued = 11
 };
 

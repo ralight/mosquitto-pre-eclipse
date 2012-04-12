@@ -174,7 +174,7 @@ void _mosquitto_message_retry_check(struct mosquitto *mosq)
 				case mosq_ms_wait_pubrel:
 					message->timestamp = now;
 					message->dup = true;
-					_mosquitto_send_pubrec(mosq, message->msg.mid, true);
+					_mosquitto_send_pubrec(mosq, message->msg.mid);
 					break;
 				case mosq_ms_wait_pubcomp:
 					message->timestamp = now;

@@ -17,7 +17,6 @@ connack_packet = pack('!BBBB', 32, 2, 0, 0);
 mid = 1926
 publish_packet = pack('!BBH13sH15s', 48+4, 2+13+2+15, 13, "pub/qos2/test", mid, "timeout-message")
 pubrec_packet = pack('!BBH', 80, 2, mid)
-pubrec_dup_packet = pack('!BBH', 80+8, 2, mid)
 pubrel_packet = pack('!BBH', 96, 2, mid)
 pubcomp_packet = pack('!BBH', 112, 2, mid)
 
@@ -47,7 +46,7 @@ try:
 			# Timeout is 8 seconds which means the broker should repeat the PUBREC.
 			pubrec_recvd = sock.recv(256)
 
-			if pubrec_recvd != pubrec_dup_packet:
+			if pubrec_recvd != pubrec_packet:
 				(cmd, rl, mid_recvd) = unpack('!BBH', pubrec_recvd)
 				print "FAIL: Expected 88,2," + str(mid) + " got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd)
 				rc = 1
