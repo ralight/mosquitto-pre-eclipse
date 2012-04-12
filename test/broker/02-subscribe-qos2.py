@@ -16,7 +16,7 @@ connack_packet = pack('!BBBB', 32, 2, 0, 0);
 subscribe_packet = pack('!BBHH9sB', 130, 2+2+9+1, mid, 9, "qos2/test", 2)
 suback_packet = pack('!BBHB', 144, 2+1, mid, 2)
 
-broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'])
+broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'], stderr=subprocess.PIPE)
 
 try:
 	time.sleep(0.1)

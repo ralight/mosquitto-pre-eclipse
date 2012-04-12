@@ -12,7 +12,7 @@ keepalive = 10
 connect_packet = pack('!BBH6sBBHH20s', 16, 12+2+20,6,"MQIsdp",3,2,keepalive,20,"connect-success-test")
 connack_packet = pack('!BBBB', 32, 2, 0, 0);
 
-broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'])
+broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'], stderr=subprocess.PIPE)
 
 try:
 	time.sleep(0.1)
