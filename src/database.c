@@ -489,7 +489,7 @@ int mqtt3_db_message_timeout_check(mosquitto_db *db, unsigned int timeout)
 						new_state = ms_publish_puback;
 						break;
 					case ms_wait_pubrec:
-						new_state = ms_publish_pubrec;
+						new_state = ms_resend_pubrec;
 						break;
 					case ms_wait_pubrel:
 						new_state = ms_resend_pubrec;
@@ -569,7 +569,7 @@ int mqtt3_db_message_write(struct mosquitto *context)
 
 	tail = context->msgs;
 	while(tail){
-		if(tail->direction == mosq_md_out && tail->state != ms_queued){
+		if(tail->state != ms_queued){
 			mid = tail->mid;
 			retries = tail->dup;
 			retain = tail->retain;
