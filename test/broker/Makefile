@@ -12,4 +12,4 @@ test :
 	./02-subscribe-qos2.py
 	./03-publish-qos1.py
 	./03-publish-qos2.py
-	./03-publish-timeout-qos2.py
+	./03-publish-c2b-timeout-qos2.py

@@ -21,7 +21,7 @@ pubrec_dup_packet = pack('!BBH', 80+8, 2, mid)
 pubrel_packet = pack('!BBH', 96, 2, mid)
 pubcomp_packet = pack('!BBH', 112, 2, mid)
 
-broker = subprocess.Popen(['../../src/mosquitto', '-c', '03-publish-timeout-qos2.conf'], stderr=subprocess.PIPE)
+broker = subprocess.Popen(['../../src/mosquitto', '-c', '03-publish-c2b-timeout-qos2.conf'], stderr=subprocess.PIPE)
 
 try:
 	time.sleep(0.1)
