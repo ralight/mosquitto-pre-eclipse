@@ -20,8 +20,8 @@ mid = 1
 publish_packet = pack('!BBH17sH15s', 48+4, 2+17+2+15, 17, "qos2/timeout/test", mid, "timeout-message")
 publish_dup_packet = pack('!BBH17sH15s', 48+8+4, 2+17+2+15, 17, "qos2/timeout/test", mid, "timeout-message")
 pubrec_packet = pack('!BBH', 80, 2, mid)
-pubrel_packet = pack('!BBH', 96, 2, mid)
-pubrel_dup_packet = pack('!BBH', 96+8, 2, mid)
+pubrel_packet = pack('!BBH', 96+2, 2, mid)
+pubrel_dup_packet = pack('!BBH', 96+8+2, 2, mid)
 pubcomp_packet = pack('!BBH', 112, 2, mid)
 
 broker = subprocess.Popen(['../../src/mosquitto', '-c', '03-publish-b2c-timeout-qos2.conf'], stderr=subprocess.PIPE)
@@ -72,16 +72,16 @@ try:
 
 					if pubrel_recvd != pubrel_packet:
 						(cmd, rl, mid) = unpack('!BBH', pubrel_recvd)
-						print "FAIL: Expected 96,2,"+str(mid)+" got " + str(cmd) + "," + str(rl) + "," + str(mid)
+						print "FAIL: Expected 98,2,"+str(mid)+" got " + str(cmd) + "," + str(rl) + "," + str(mid)
 						rc = 1
 					else:
 						# Wait for longer than 5 seconds to get republish with dup set
 						# This is covered by the 8 second timeout
 						pubrel_recvd = sock.recv(256)
 
-						if pubrel_recvd != pubrel_packet:
+						if pubrel_recvd != pubrel_dup_packet:
 							(cmd, rl, mid) = unpack('!BBH', pubrel_recvd)
-							print "FAIL: Expected 104,2,"+str(mid)+" got " + str(cmd) + "," + str(rl) + "," + str(mid)
+							print "FAIL: Expected 106,2,"+str(mid)+" got " + str(cmd) + "," + str(rl) + "," + str(mid)
 							rc = 1
 						else:
 							sock.send(pubcomp_packet)
