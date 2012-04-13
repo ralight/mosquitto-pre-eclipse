@@ -325,9 +325,40 @@ libmosq_EXPORT int mosquitto_username_pw_set(struct mosquitto *mosq, const char 
  *                     Windows.
  *
  * See Also:
- * 	<mosquitto_reconnect>, <mosquitto_disconnect>
+ * 	<mosquitto_connect_async>, <mosquitto_reconnect>, <mosquitto_disconnect>
  */
 libmosq_EXPORT int mosquitto_connect(struct mosquitto *mosq, const char *host, int port, int keepalive);
+
+/*
+ * Function: mosquitto_connect_async
+ *
+ * Connect to an MQTT broker. This is a non-blocking call. If you use
+ * <mosquitto_connect_async> your client must use the threaded interface
+ * <mosquitto_loop_start>. If you need to use <mosquitto_loop>, you must use
+ * <mosquitto_connect> to connect the client.
+ *
+ * May be called before or after <mosquitto_loop_start>.
+ *
+ * Parameters:
+ * 	mosq -      a valid mosquitto instance.
+ * 	host -      the hostname or ip address of the broker to connect to.
+ * 	port -      the network port to connect to. Usually 1883.
+ * 	keepalive - the number of seconds after which the broker should send a PING
+ *              message to the client if no other messages have been exchanged
+ *              in that time.
+ *
+ * Returns:
+ * 	MOSQ_ERR_SUCCESS - on success.
+ * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ * 	MOSQ_ERR_ERRNO -   if a system call returned an error. The variable errno
+ *                     contains the error code, even on Windows.
+ *                     Use strerror_r() where available or FormatMessage() on
+ *                     Windows.
+ *
+ * See Also:
+ * 	<mosquitto_connect>, <mosquitto_reconnect>, <mosquitto_disconnect>
+ */
+libmosq_EXPORT int mosquitto_connect_async(struct mosquitto *mosq, const char *host, int port, int keepalive);
 
 /*
  * Function: mosquitto_reconnect
@@ -529,7 +560,7 @@ libmosq_EXPORT int mosquitto_loop(struct mosquitto *mosq, int timeout);
  *  mosq - a valid mosquitto instance.
  *
  * See Also:
- *	<mosquitto_loop>, <mosquitto_loop_stop>
+ *	<mosquitto_connect_async>, <mosquitto_loop>, <mosquitto_loop_stop>
  */
 libmosq_EXPORT int mosquitto_loop_start(struct mosquitto *mosq);
 

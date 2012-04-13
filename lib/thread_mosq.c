@@ -72,6 +72,14 @@ void *_mosquitto_thread_main(void *obj)
 
 	if(!mosq) return NULL;
 
+	pthread_mutex_lock(&mosq->state_mutex);
+	if(mosq->state == mosq_cs_connect_async){
+		pthread_mutex_unlock(&mosq->state_mutex);
+		mosquitto_reconnect(mosq);
+	}else{
+		pthread_mutex_unlock(&mosq->state_mutex);
+	}
+
 	while(run){
 		do{
 			rc = mosquitto_loop(mosq, -1);
