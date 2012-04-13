@@ -80,11 +80,13 @@ void _mosquitto_check_keepalive(struct mosquitto *mosq)
 {
 	assert(mosq);
 	time_t last_msg_out;
+	time_t last_msg_in;
+	time_t now = time(NULL);
 #if defined(WITH_BROKER) && defined(WITH_BRIDGE)
 	/* Check if a lazy bridge should be timed out due to idle. */
 	if(mosq->bridge && mosq->bridge->start_type == bst_lazy
 				&& mosq->sock != INVALID_SOCKET
-				&& time(NULL) - mosq->last_msg_out >= mosq->bridge->idle_timeout){
+				&& now - mosq->last_msg_out >= mosq->bridge->idle_timeout){
 
 		_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Bridge connection %s has exceeded idle timeout, disconnecting.", mosq->id);
 		_mosquitto_socket_close(mosq);
@@ -93,9 +95,12 @@ void _mosquitto_check_keepalive(struct mosquitto *mosq)
 #endif
 	pthread_mutex_lock(&mosq->msgtime_mutex);
 	last_msg_out = mosq->last_msg_out;
+	last_msg_in = mosq->last_msg_in;
 	pthread_mutex_unlock(&mosq->msgtime_mutex);
-	if(mosq->sock != INVALID_SOCKET && time(NULL) - last_msg_out >= mosq->keepalive){
-		if(mosq->state == mosq_cs_connected){
+	if(mosq->sock != INVALID_SOCKET &&
+			(now - last_msg_out >= mosq->keepalive || now - last_msg_in >= mosq->keepalive)){
+
+		if(mosq->state == mosq_cs_connected && mosq->ping_t == 0){
 			_mosquitto_send_pingreq(mosq);
 		}else{
 #ifdef WITH_BROKER
