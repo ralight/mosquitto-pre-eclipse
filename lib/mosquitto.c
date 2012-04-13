@@ -141,6 +141,7 @@ struct mosquitto *mosquitto_new(const char *id, bool clean_session, void *obj)
 		mosq->current_out_packet = NULL;
 		mosq->last_msg_in = time(NULL);
 		mosq->last_msg_out = time(NULL);
+		mosq->ping_t = 0;
 		mosq->last_mid = 0;
 		mosq->state = mosq_cs_new;
 		mosq->messages = NULL;
@@ -476,20 +477,27 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout)
 			}
 		}
 	}
-	mosquitto_loop_misc(mosq);
-
-	return MOSQ_ERR_SUCCESS;
+	return mosquitto_loop_misc(mosq);
 }
 
 int mosquitto_loop_misc(struct mosquitto *mosq)
 {
+	time_t now = time(NULL);
+
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
 
 	_mosquitto_check_keepalive(mosq);
-	if(mosq->last_retry_check+1 < time(NULL)){
+	if(mosq->last_retry_check+1 < now){
 		_mosquitto_message_retry_check(mosq);
-		mosq->last_retry_check = time(NULL);
+		mosq->last_retry_check = now;
+	}
+	if(mosq->ping_t && now - mosq->ping_t >= mosq->keepalive){
+		/* mosq->ping_t != 0 means we are waiting for a pingresp.
+		 * This hasn't happened in the keepalive time so we should disconnect.
+		 */
+		_mosquitto_socket_close(mosq);
+		return MOSQ_ERR_CONN_LOST;
 	}
 	return MOSQ_ERR_SUCCESS;
 }

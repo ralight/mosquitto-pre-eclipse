@@ -35,6 +35,8 @@
 - Clients that had disconnected were not always being detected immediately on
   Linux. This has been fixed.
 - Enforce client id limits in the broker.
+- Client will now disconnect itself from the broker if it doesn't receive a
+  PINGRESP in the keepalive period after sending a PINGREQ.
 
 0.15 - 20120205
 ===============
