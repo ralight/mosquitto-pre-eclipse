@@ -556,8 +556,17 @@ libmosq_EXPORT int mosquitto_loop(struct mosquitto *mosq, int timeout);
 /*
  * Function: mosquitto_loop_start
  *
+ * This is part of the threaded client interface. Call this once to start a new
+ * thread to process network traffic. This provides an alternative to
+ * repeatedly calling <mosquitto_loop> yourself.
+ *
  * Parameters:
  *  mosq - a valid mosquitto instance.
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS -       on success.
+ * 	MOSQ_ERR_INVAL -         if the input parameters were invalid.
+ *	MOSQ_ERR_NOT_SUPPORTED - if thread support is not available.
  *
  * See Also:
  *	<mosquitto_connect_async>, <mosquitto_loop>, <mosquitto_loop_stop>
@@ -567,10 +576,21 @@ libmosq_EXPORT int mosquitto_loop_start(struct mosquitto *mosq);
 /*
  * Function: mosquitto_loop_stop
  *
+ * This is part of the threaded client interface. Call this once to stop the
+ * network thread previously created with <mosquitto_loop_start>. This call
+ * will block until the network thread finishes. For the network thread to end,
+ * you must have previously called <mosquitto_disconnect> or have set the force
+ * parameter to true.
+ *
  * Parameters:
  *  mosq - a valid mosquitto instance.
  *	force - set to true to force thread cancellation. If false,
  *	        <mosquitto_disconnect> must have already been called.
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS -       on success.
+ * 	MOSQ_ERR_INVAL -         if the input parameters were invalid.
+ *	MOSQ_ERR_NOT_SUPPORTED - if thread support is not available.
  *
  * See Also:
  *	<mosquitto_loop>, <mosquitto_loop_start>
