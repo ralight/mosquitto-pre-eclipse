@@ -37,6 +37,8 @@
 - Enforce client id limits in the broker.
 - Client will now disconnect itself from the broker if it doesn't receive a
   PINGRESP in the keepalive period after sending a PINGREQ.
+- Client will now send a PINGREQ if it has not received a message from the
+  broker in keepalive seconds.
 
 0.15 - 20120205
 ===============

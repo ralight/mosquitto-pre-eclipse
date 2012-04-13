@@ -643,7 +643,9 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 	/* Free data and reset values */
 	_mosquitto_packet_cleanup(&mosq->in_packet);
 
+	pthread_mutex_lock(&mosq->msgtime_mutex);
 	mosq->last_msg_in = time(NULL);
+	pthread_mutex_unlock(&mosq->msgtime_mutex);
 	return rc;
 }
 
