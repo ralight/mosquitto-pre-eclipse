@@ -72,7 +72,8 @@ enum mosquitto_msg_state {
 enum mosquitto_client_state {
 	mosq_cs_new = 0,
 	mosq_cs_connected = 1,
-	mosq_cs_disconnecting = 2
+	mosq_cs_disconnecting = 2,
+	mosq_cs_connect_async = 3
 };
 
 struct _mosquitto_packet{

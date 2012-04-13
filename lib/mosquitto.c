@@ -248,6 +248,15 @@ int mosquitto_socket(struct mosquitto *mosq)
 
 int mosquitto_connect(struct mosquitto *mosq, const char *host, int port, int keepalive)
 {
+	int rc;
+	rc = mosquitto_connect_async(mosq, host, port, keepalive);
+	if(rc) return rc;
+
+	return mosquitto_reconnect(mosq);
+}
+
+int mosquitto_connect_async(struct mosquitto *mosq, const char *host, int port, int keepalive)
+{
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(!host || port <= 0) return MOSQ_ERR_INVAL;
 
@@ -257,8 +266,11 @@ int mosquitto_connect(struct mosquitto *mosq, const char *host, int port, int ke
 	mosq->port = port;
 
 	mosq->keepalive = keepalive;
+	pthread_mutex_lock(&mosq->state_mutex);
+	mosq->state = mosq_cs_connect_async;
+	pthread_mutex_unlock(&mosq->state_mutex);
 
-	return mosquitto_reconnect(mosq);
+	return MOSQ_ERR_SUCCESS;
 }
 
 int mosquitto_reconnect(struct mosquitto *mosq)
