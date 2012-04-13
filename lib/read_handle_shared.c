@@ -68,6 +68,7 @@ int _mosquitto_handle_pingresp(struct mosquitto *mosq)
 		return MOSQ_ERR_PROTOCOL;
 	}
 #endif
+	mosq->ping_t = 0; /* No longer waiting for a PINGRESP. */
 #ifdef WITH_BROKER
 	_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Received PINGRESP from %s", mosq->id);
 #else
