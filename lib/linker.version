@@ -13,6 +13,7 @@ VERS_1.0 {
 		mosquitto_will_set;
 		mosquitto_username_pw_set;
 		mosquitto_connect;
+		mosquitto_connect_async;
 		mosquitto_reconnect;
 		mosquitto_disconnect;
 		mosquitto_publish;
