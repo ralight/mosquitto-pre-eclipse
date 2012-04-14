@@ -201,6 +201,20 @@ class Mosquitto:
 		"""
 		return _mosquitto_connect(self._mosq, hostname, port, keepalive)
 
+	def connect_async(self, hostname="localhost", port=1883, keepalive=60):
+		"""Asynchronously connect the client to an MQTT broker.
+		
+		hostname: The hostname or ip address of the broker. Defaults to localhost.
+		port: The network port of the server host to connect to. Defaults to 1883.
+		keepalive: Maximum period in seconds between communications with the
+		  broker. If no other messages are being exchanged, this controls the
+		  rate at which the client will send ping messages to the broker.
+
+		Returns 0 on success
+		Returns >0 on error.
+		"""
+		return _mosquitto_connect_async(self._mosq, hostname, port, keepalive)
+
 	def reconnect(self):
 		"""Reconnect to a broker. This uses the saved parameters from the
 		connect() call to reconnect to a broker after a disconnect."""
@@ -448,6 +462,10 @@ _mosquitto_destroy.restype = None
 _mosquitto_connect = _libmosq.mosquitto_connect
 _mosquitto_connect.argtypes = [c_void_p, c_char_p, c_int, c_int, c_bool]
 _mosquitto_connect.restype = c_int
+
+_mosquitto_connect_async = _libmosq.mosquitto_connect_async
+_mosquitto_connect_async.argtypes = [c_void_p, c_char_p, c_int, c_int, c_bool]
+_mosquitto_connect_async.restype = c_int
 
 _mosquitto_reconnect = _libmosq.mosquitto_reconnect
 _mosquitto_reconnect.argtypes = [c_void_p]
