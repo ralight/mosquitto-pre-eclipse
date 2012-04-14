@@ -14,16 +14,13 @@ keepalive = 60
 connect_packet = pack('!BBH6sBBHH21s', 16, 12+2+21,6,"MQIsdp",3,2,keepalive,21,"pub-qos1-timeout-test")
 connack_packet = pack('!BBBB', 32, 2, 0, 0);
 
-subscribe_packet = pack('!BBHH17sB', 130, 2+2+17+1, mid, 17, "qos1/timeout/test", 2)
-suback_packet = pack('!BBHB', 144, 2+1, mid, 2)
+subscribe_packet = pack('!BBHH17sB', 130, 2+2+17+1, mid, 17, "qos1/timeout/test", 1)
+suback_packet = pack('!BBHB', 144, 2+1, mid, 1)
 
 mid = 1
 publish_packet = pack('!BBH17sH15s', 48+2, 2+17+2+15, 17, "qos1/timeout/test", mid, "timeout-message")
 publish_dup_packet = pack('!BBH17sH15s', 48+8+2, 2+17+2+15, 17, "qos1/timeout/test", mid, "timeout-message")
 puback_packet = pack('!BBH', 64, 2, mid)
-
-env = dict(environ)
-env['LD_LIBRARY_PATH'] = '../../lib'
 
 broker = subprocess.Popen(['../../src/mosquitto', '-c', '03-publish-b2c-timeout-qos1.conf'], stderr=subprocess.PIPE)
 
@@ -48,7 +45,7 @@ try:
 			print "FAIL: Expected 144,3,"+str(mid)+",2 got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd) + "," + str(qos)
 			rc = 1
 		else:
-			pub = subprocess.Popen(['../../client/mosquitto_pub', '-p', '1888', '-q', '1', '-t', 'qos1/timeout/test', '-m', 'timeout-message'], env=env);
+			pub = subprocess.Popen(['./03-publish-b2c-timeout-qos1-helper.py'])
 			pub.wait()
 			# Should have now received a publish command
 			publish_recvd = sock.recv(256)
