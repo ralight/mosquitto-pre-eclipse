@@ -8,7 +8,7 @@ import time
 from struct import *
 from os import environ
 
-rc = 0
+rc = 1
 mid = 3265
 keepalive = 60
 connect_packet = pack('!BBH6sBBHH21s', 16, 12+2+21,6,"MQIsdp",3,2,keepalive,21,"pub-qos1-timeout-test")
@@ -35,7 +35,6 @@ try:
 
 	if connack_recvd != connack_packet:
 		print "FAIL: Connect failed."
-		rc = 1
 	else:
 		sock.send(subscribe_packet)
 		suback_recvd = sock.recv(256)
@@ -43,7 +42,6 @@ try:
 		if suback_recvd != suback_packet:
 			(cmd, rl, mid_recvd, qos) = unpack('!BBHB', suback_recvd)
 			print "FAIL: Expected 144,3,"+str(mid)+",2 got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd) + "," + str(qos)
-			rc = 1
 		else:
 			pub = subprocess.Popen(['./03-publish-b2c-timeout-qos1-helper.py'])
 			pub.wait()
@@ -54,7 +52,6 @@ try:
 				print "FAIL: Received publish not correct."
 				print "Received: "+publish_recvd+" length="+str(len(publish_recvd))
 				print "Expected: "+publish_packet+" length="+str(len(publish_packet))
-				rc = 1
 			else:
 				# Wait for longer than 5 seconds to get republish with dup set
 				# This is covered by the 8 second timeout
@@ -64,9 +61,9 @@ try:
 					print "FAIL: Recieved publish with dup not correct."
 					print "Received: "+publish_recvd+" length="+str(len(publish_recvd))
 					print "Expected: "+publish_packet+" length="+str(len(publish_packet))
-					rc = 1
 				else:
 					sock.send(puback_packet)
+					rc = 0
 
 	sock.close()
 finally:

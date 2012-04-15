@@ -8,7 +8,7 @@ import socket
 import time
 from struct import *
 
-rc = 0
+rc = 1
 keepalive = 60
 connect_packet = pack('!BBH6sBBHH17s', 16, 12+2+17,6,"MQIsdp",3,2,keepalive,17,"retain-clear-test")
 connack_packet = pack('!BBBB', 32, 2, 0, 0);
@@ -36,7 +36,6 @@ try:
 
 	if connack_recvd != connack_packet:
 		print "FAIL: Connect failed."
-		rc = 1
 	else:
 		# Send retained message
 		sock.send(publish_packet)
@@ -47,7 +46,6 @@ try:
 		if suback_recvd != suback_packet:
 			(cmd, rl, mid_recvd, qos) = unpack('!BBHB', suback_recvd)
 			print "FAIL: Expected 144,3,"+str(mid_sub)+",0 got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd) + "," + str(qos)
-			rc = 1
 		else:
 			publish_recvd = sock.recv(256)
 
@@ -55,7 +53,6 @@ try:
 				print "FAIL: Recieved incorrect publish."
 				print "Received: "+publish_recvd+" length="+str(len(publish_recvd))
 				print "Expected: "+publish_packet+" length="+str(len(publish_packet))
-				rc = 1
 			else:
 				# Now unsubscribe from the topic before we clear the retained
 				# message.
@@ -65,7 +62,6 @@ try:
 				if unsuback_recvd != unsuback_packet:
 					(cmd, rl, mid_recvd) = unpack('!BBH', unsuback_recvd)
 					print "FAIL: Expected 176,2,"+str(mid_unsub)+",0 got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd)
-					rc = 1
 				else:
 					# Now clear the retained message.
 					sock.send(retain_clear_packet)
@@ -77,16 +73,14 @@ try:
 					if suback_recvd != suback_packet:
 						(cmd, rl, mid_recvd, qos) = unpack('!BBHB', suback_recvd)
 						print "FAIL: Expected 144,3,"+str(mid_sub)+",0 got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd) + "," + str(qos)
-						rc = 1
 					else:
 						try:
 							retain_clear = sock.recv(256)
 						except socket.timeout:
 							# This is the expected event
-							pass
+							rc = 0
 						else:
 							print "FAIL: Received unexpected message."
-							rc = 1
 
 	sock.close()
 finally:
