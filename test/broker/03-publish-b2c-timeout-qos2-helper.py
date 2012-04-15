@@ -7,7 +7,7 @@ import socket
 import time
 from struct import *
 
-rc = 0
+rc = 1
 keepalive = 60
 connect_packet = pack('!BBH6sBBHH11s', 16, 12+2+11,6,"MQIsdp",3,2,keepalive,11,"test-helper")
 connack_packet = pack('!BBBB', 32, 2, 0, 0);
@@ -25,7 +25,6 @@ connack_recvd = sock.recv(256)
 
 if connack_recvd != connack_packet:
 	print "FAIL in helper: Connect failed."
-	rc = 1
 else:
 	sock.send(publish_packet)
 	pubrec_recvd = sock.recv(256)
@@ -33,7 +32,6 @@ else:
 	if pubrec_recvd != pubrec_packet:
 		(cmd, rl, mid_recvd) = unpack('!BBH', pubrec_recvd)
 		print "FAIL in helper: Expected 80,2," + str(mid) + " got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd)
-		rc = 1
 	else:
 		sock.send(pubrel_packet)
 		pubcomp_recvd = sock.recv(256)
@@ -41,7 +39,8 @@ else:
 		if pubcomp_recvd != pubcomp_packet:
 			(cmd, rl, mid_recvd) = unpack('!BBH', pubcomp_recvd)
 			print "FAIL in helper: Expected 112,2," + str(mid) + " got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd)
-			rc = 1
+		else:
+			rc = 0
 
 sock.close()
 

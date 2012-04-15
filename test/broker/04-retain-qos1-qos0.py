@@ -9,7 +9,7 @@ import socket
 import time
 from struct import *
 
-rc = 0
+rc = 1
 keepalive = 60
 connect_packet = pack('!BBH6sBBHH16s', 16, 12+2+16,6,"MQIsdp",3,2,keepalive,16,"retain-qos1-test")
 connack_packet = pack('!BBBB', 32, 2, 0, 0);
@@ -34,14 +34,12 @@ try:
 
 	if connack_recvd != connack_packet:
 		print "FAIL: Connect failed."
-		rc = 1
 	else:
 		sock.send(publish_packet)
 		puback_recvd = sock.recv(256)
 		if puback_recvd != puback_packet:
 			(cmd, rl, mid_recvd) = unpack('!BBH', puback_recvd)
 			print "FAIL: Expected 64,2,"+str(mid)+" got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd)
-			rc = 1
 		else:
 			sock.send(subscribe_packet)
 			suback_recvd = sock.recv(256)
@@ -49,7 +47,6 @@ try:
 			if suback_recvd != suback_packet:
 				(cmd, rl, mid_recvd, qos) = unpack('!BBHB', suback_recvd)
 				print "FAIL: Expected 144,3,"+str(mid)+",0 got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd) + "," + str(qos)
-				rc = 1
 			else:
 				publish_recvd = sock.recv(256)
 
@@ -57,7 +54,8 @@ try:
 					print "FAIL: Recieved incorrect publish."
 					print "Received: "+publish_recvd+" length="+str(len(publish_recvd))
 					print "Expected: "+publish0_packet+" length="+str(len(publish0_packet))
-					rc = 1
+				else:
+					rc = 0
 	sock.close()
 finally:
 	broker.terminate()

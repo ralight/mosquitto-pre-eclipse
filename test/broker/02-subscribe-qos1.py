@@ -7,7 +7,7 @@ import socket
 import time
 from struct import *
 
-rc = 0
+rc = 1
 mid = 79
 keepalive = 60
 connect_packet = pack('!BBH6sBBHH19s', 16, 12+2+19,6,"MQIsdp",3,2,keepalive,19,"subscribe-qos1-test")
@@ -28,7 +28,6 @@ try:
 
 	if connack_recvd != connack_packet:
 		print "FAIL: Connect failed."
-		rc = 1
 	else:
 		sock.send(subscribe_packet)
 		suback_recvd = sock.recv(256)
@@ -36,7 +35,8 @@ try:
 		if suback_recvd != suback_packet:
 			(cmd, rl, mid_recvd, qos) = unpack('!BBHB', suback_recvd)
 			print "FAIL: Expected 144,3,"+str(mid)+",1 got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd) + "," + str(qos)
-			rc = 1
+		else:
+			rc = 0
 
 	sock.close()
 finally:
