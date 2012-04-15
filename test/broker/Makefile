@@ -16,3 +16,4 @@ test :
 	./03-publish-c2b-timeout-qos2.py
 	./03-publish-b2c-timeout-qos2.py
 	./04-retain-qos0.py
+	./04-retain-qos1-qos0.py
