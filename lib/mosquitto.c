@@ -36,8 +36,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <sys/time.h>
 #include <unistd.h>
 #else
-#include <windows.h>
 #include <winsock2.h>
+#include <windows.h>
 typedef int ssize_t;
 #endif
 

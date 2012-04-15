@@ -78,10 +78,10 @@ int _mosquitto_packet_alloc(struct _mosquitto_packet *packet)
 
 void _mosquitto_check_keepalive(struct mosquitto *mosq)
 {
-	assert(mosq);
 	time_t last_msg_out;
 	time_t last_msg_in;
 	time_t now = time(NULL);
+	assert(mosq);
 #if defined(WITH_BROKER) && defined(WITH_BRIDGE)
 	/* Check if a lazy bridge should be timed out due to idle. */
 	if(mosq->bridge && mosq->bridge->start_type == bst_lazy
