@@ -47,6 +47,7 @@ try:
 				print "FAIL: Recieved incorrect publish."
 				print "Received: "+publish_recvd+" length="+str(len(publish_recvd))
 				print "Expected: "+publish_packet+" length="+str(len(publish_packet))
+				rc = 1
 	sock.close()
 finally:
 	broker.terminate()
