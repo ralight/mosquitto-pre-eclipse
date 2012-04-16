@@ -6,7 +6,6 @@ test :
 	./01-connect-success.py
 	./01-connect-invalid-protonum.py
 	./01-connect-invalid-id-0.py
-	./01-connect-invalid-id-24.py
 	./02-subscribe-qos0.py
 	./02-subscribe-qos1.py
 	./02-subscribe-qos2.py
@@ -18,3 +17,7 @@ test :
 	./04-retain-qos0.py
 	./04-retain-qos1-qos0.py
 	./04-retain-qos0-clear.py
+
+# Tests for with WITH_STRICT_PROTOCOL defined
+strict-test : 
+	./01-connect-invalid-id-24.py

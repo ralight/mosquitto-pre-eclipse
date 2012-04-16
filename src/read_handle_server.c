@@ -118,7 +118,11 @@ int mqtt3_handle_connect(mosquitto_db *db, int context_index)
 	}
 
 	slen = strlen(client_id);
+#ifdef WITH_STRICT_PROTOCOL
 	if(slen > 23 || slen == 0){
+#else
+	if(slen == 0){
+#endif
 		_mosquitto_send_connack(context, 2);
 		mqtt3_context_disconnect(db, context_index);
 		return 1;

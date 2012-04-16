@@ -38,7 +38,8 @@
 - mosquitto_loop_misq() can now return MOSQ_ERR_NO_CONN;
 - Clients that had disconnected were not always being detected immediately on
   Linux. This has been fixed.
-- Enforce client id limits in the broker.
+- Enforce client id limits in the broker (only when WITH_STRICT_PROTOCOL is
+  defined).
 - Client will now disconnect itself from the broker if it doesn't receive a
   PINGRESP in the keepalive period after sending a PINGREQ.
 - Client will now send a PINGREQ if it has not received a message from the
