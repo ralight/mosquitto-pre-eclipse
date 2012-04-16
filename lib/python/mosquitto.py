@@ -460,7 +460,7 @@ _mosquitto_destroy.argtypes = [c_void_p]
 _mosquitto_destroy.restype = None
 
 _mosquitto_connect = _libmosq.mosquitto_connect
-_mosquitto_connect.argtypes = [c_void_p, c_char_p, c_int, c_int, c_bool]
+_mosquitto_connect.argtypes = [c_void_p, c_char_p, c_int, c_int]
 _mosquitto_connect.restype = c_int
 
 _mosquitto_connect_async = _libmosq.mosquitto_connect_async
@@ -508,7 +508,7 @@ _mosquitto_connect_callback_set.argtypes = [c_void_p, c_void_p]
 _mosquitto_connect_callback_set.restype = None
 
 _mosquitto_disconnect_callback_set = _libmosq.mosquitto_disconnect_callback_set
-_mosquitto_disconnect_callback_set.argtypes = [c_void_p, c_void_p, c_int]
+_mosquitto_disconnect_callback_set.argtypes = [c_void_p, c_void_p]
 _mosquitto_disconnect_callback_set.restype = None
 
 _mosquitto_publish_callback_set = _libmosq.mosquitto_publish_callback_set
@@ -528,7 +528,7 @@ _mosquitto_unsubscribe_callback_set.argtypes = [c_void_p, c_void_p]
 _mosquitto_unsubscribe_callback_set.restype = None
 
 _MOSQ_CONNECT_FUNC = CFUNCTYPE(None, c_void_p, c_void_p, c_int)
-_MOSQ_DISCONNECT_FUNC = CFUNCTYPE(None, c_void_p, c_void_p)
+_MOSQ_DISCONNECT_FUNC = CFUNCTYPE(None, c_void_p, c_void_p, c_int)
 _MOSQ_PUBLISH_FUNC = CFUNCTYPE(None, c_void_p, c_void_p, c_uint16)
 _MOSQ_MESSAGE_FUNC = CFUNCTYPE(None, c_void_p, c_void_p, POINTER(c_MosquittoMessage))
 _MOSQ_SUBSCRIBE_FUNC = CFUNCTYPE(None, c_void_p, c_void_p, c_uint16, c_int, POINTER(c_uint8))
