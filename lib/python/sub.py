@@ -30,16 +30,16 @@
 import mosquitto
 
 def on_connect(rc):
-	print "rc: ", rc
+	print("rc: "+str(rc))
 
 def on_message(msg):
-	print msg.topic,msg.qos,msg.payload
+	print(msg.topic+" "+str(msg.qos)+" "+msg.payload)
 
 def on_publish(mid):
-	print "mid:", mid
+	print("mid: "+str(mid))
 
 def on_subscribe(mid, granted_qos):
-	print "Subscribed:",mid,granted_qos
+	print("Subscribed: "+str(mid)+" "+str(granted_qos))
 	
 
 mqttc = mosquitto.Mosquitto("python_sub")
@@ -54,4 +54,4 @@ rc = 0
 while rc == 0:
 	rc = mqttc.loop()
 
-print "rc:", rc
+print("rc: "+str(rc))
