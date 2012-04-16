@@ -47,7 +47,7 @@ mqttc.on_message = on_message
 mqttc.on_connect = on_connect
 mqttc.on_publish = on_publish
 mqttc.on_subscribe = on_subscribe
-mqttc.connect("127.0.0.1", 1883, 60, True)
+mqttc.connect("127.0.0.1", 1883, 60)
 mqttc.subscribe("$SYS/#", 0)
 
 rc = 0
