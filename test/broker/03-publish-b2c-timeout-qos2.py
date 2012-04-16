@@ -37,14 +37,14 @@ try:
 	connack_recvd = sock.recv(256)
 
 	if connack_recvd != connack_packet:
-		print "FAIL: Connect failed."
+		print("FAIL: Connect failed.")
 	else:
 		sock.send(subscribe_packet)
 		suback_recvd = sock.recv(256)
 
 		if suback_recvd != suback_packet:
 			(cmd, rl, mid_recvd, qos) = unpack('!BBHB', suback_recvd)
-			print "FAIL: Expected 144,3,"+str(mid)+",2 got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd) + "," + str(qos)
+			print("FAIL: Expected 144,3,"+str(mid)+",2 got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd) + "," + str(qos))
 		else:
 			pub = subprocess.Popen(['./03-publish-b2c-timeout-qos2-helper.py'])
 			pub.wait()
@@ -52,25 +52,25 @@ try:
 			publish_recvd = sock.recv(256)
 
 			if publish_recvd != publish_packet:
-				print "FAIL: Received publish not correct."
-				print "Received: "+publish_recvd+" length="+str(len(publish_recvd))
-				print "Expected: "+publish_packet+" length="+str(len(publish_packet))
+				print("FAIL: Received publish not correct.")
+				print("Received: "+publish_recvd+" length="+str(len(publish_recvd)))
+				print("Expected: "+publish_packet+" length="+str(len(publish_packet)))
 			else:
 				# Wait for longer than 5 seconds to get republish with dup set
 				# This is covered by the 8 second timeout
 				publish_recvd = sock.recv(256)
 
 				if publish_recvd != publish_dup_packet:
-					print "FAIL: Recieved publish with dup not correct."
-					print "Received: "+publish_recvd+" length="+str(len(publish_recvd))
-					print "Expected: "+publish_packet+" length="+str(len(publish_packet))
+					print("FAIL: Recieved publish with dup not correct.")
+					print("Received: "+publish_recvd+" length="+str(len(publish_recvd)))
+					print("Expected: "+publish_packet+" length="+str(len(publish_packet)))
 				else:
 					sock.send(pubrec_packet)
 					pubrel_recvd = sock.recv(256)
 
 					if pubrel_recvd != pubrel_packet:
 						(cmd, rl, mid) = unpack('!BBH', pubrel_recvd)
-						print "FAIL: Expected 98,2,"+str(mid)+" got " + str(cmd) + "," + str(rl) + "," + str(mid)
+						print("FAIL: Expected 98,2,"+str(mid)+" got " + str(cmd) + "," + str(rl) + "," + str(mid))
 					else:
 						# Wait for longer than 5 seconds to get republish with dup set
 						# This is covered by the 8 second timeout
@@ -78,7 +78,7 @@ try:
 
 						if pubrel_recvd != pubrel_dup_packet:
 							(cmd, rl, mid) = unpack('!BBH', pubrel_recvd)
-							print "FAIL: Expected 106,2,"+str(mid)+" got " + str(cmd) + "," + str(rl) + "," + str(mid)
+							print("FAIL: Expected 106,2,"+str(mid)+" got " + str(cmd) + "," + str(rl) + "," + str(mid))
 						else:
 							sock.send(pubcomp_packet)
 							rc = 0

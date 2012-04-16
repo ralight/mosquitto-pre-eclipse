@@ -32,28 +32,28 @@ try:
 	connack_recvd = sock.recv(256)
 
 	if connack_recvd != connack_packet:
-		print "FAIL: Connect failed."
+		print("FAIL: Connect failed.")
 	else:
 		sock.send(publish_packet)
 		pubrec_recvd = sock.recv(256)
 
 		if pubrec_recvd != pubrec_packet:
 			(cmd, rl, mid_recvd) = unpack('!BBH', pubrec_recvd)
-			print "FAIL: Expected 80,2," + str(mid) + " got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd)
+			print("FAIL: Expected 80,2," + str(mid) + " got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd))
 		else:
 			# Timeout is 8 seconds which means the broker should repeat the PUBREC.
 			pubrec_recvd = sock.recv(256)
 
 			if pubrec_recvd != pubrec_packet:
 				(cmd, rl, mid_recvd) = unpack('!BBH', pubrec_recvd)
-				print "FAIL: Expected 88,2," + str(mid) + " got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd)
+				print("FAIL: Expected 88,2," + str(mid) + " got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd))
 			else:
 				sock.send(pubrel_packet)
 				pubcomp_recvd = sock.recv(256)
 
 				if pubcomp_recvd != pubcomp_packet:
 					(cmd, rl, mid_recvd) = unpack('!BBH', pubcomp_recvd)
-					print "FAIL: Expected 112,2," + str(mid) + " got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd)
+					print("FAIL: Expected 112,2," + str(mid) + " got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd))
 				else:
 					rc = 0
 

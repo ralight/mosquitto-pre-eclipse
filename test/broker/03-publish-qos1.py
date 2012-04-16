@@ -27,14 +27,14 @@ try:
 	connack_recvd = sock.recv(256)
 
 	if connack_recvd != connack_packet:
-		print "FAIL: Connect failed."
+		print("FAIL: Connect failed.")
 	else:
 		sock.send(publish_packet)
 		puback_recvd = sock.recv(256)
 
 		if puback_recvd != puback_packet:
 			(cmd, rl, mid_recvd) = unpack('!BBH', puback_recvd)
-			print "FAIL: Expected 64,2,"+str(mid)+" got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd)
+			print("FAIL: Expected 64,2,"+str(mid)+" got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd))
 		else:
 			rc = 0
 

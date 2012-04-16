@@ -35,7 +35,7 @@ try:
 	connack_recvd = sock.recv(256)
 
 	if connack_recvd != connack_packet:
-		print "FAIL: Connect failed."
+		print("FAIL: Connect failed.")
 	else:
 		# Send retained message
 		sock.send(publish_packet)
@@ -45,14 +45,14 @@ try:
 
 		if suback_recvd != suback_packet:
 			(cmd, rl, mid_recvd, qos) = unpack('!BBHB', suback_recvd)
-			print "FAIL: Expected 144,3,"+str(mid_sub)+",0 got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd) + "," + str(qos)
+			print("FAIL: Expected 144,3,"+str(mid_sub)+",0 got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd) + "," + str(qos))
 		else:
 			publish_recvd = sock.recv(256)
 
 			if publish_recvd != publish_packet:
-				print "FAIL: Recieved incorrect publish."
-				print "Received: "+publish_recvd+" length="+str(len(publish_recvd))
-				print "Expected: "+publish_packet+" length="+str(len(publish_packet))
+				print("FAIL: Recieved incorrect publish.")
+				print("Received: "+publish_recvd+" length="+str(len(publish_recvd)))
+				print("Expected: "+publish_packet+" length="+str(len(publish_packet)))
 			else:
 				# Now unsubscribe from the topic before we clear the retained
 				# message.
@@ -61,7 +61,7 @@ try:
 
 				if unsuback_recvd != unsuback_packet:
 					(cmd, rl, mid_recvd) = unpack('!BBH', unsuback_recvd)
-					print "FAIL: Expected 176,2,"+str(mid_unsub)+",0 got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd)
+					print("FAIL: Expected 176,2,"+str(mid_unsub)+",0 got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd))
 				else:
 					# Now clear the retained message.
 					sock.send(retain_clear_packet)
@@ -72,7 +72,7 @@ try:
 					suback_recvd = sock.recv(256)
 					if suback_recvd != suback_packet:
 						(cmd, rl, mid_recvd, qos) = unpack('!BBHB', suback_recvd)
-						print "FAIL: Expected 144,3,"+str(mid_sub)+",0 got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd) + "," + str(qos)
+						print("FAIL: Expected 144,3,"+str(mid_sub)+",0 got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd) + "," + str(qos))
 					else:
 						try:
 							retain_clear = sock.recv(256)
@@ -80,7 +80,7 @@ try:
 							# This is the expected event
 							rc = 0
 						else:
-							print "FAIL: Received unexpected message."
+							print("FAIL: Received unexpected message.")
 
 	sock.close()
 finally:

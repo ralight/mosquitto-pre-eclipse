@@ -33,27 +33,27 @@ try:
 	connack_recvd = sock.recv(256)
 
 	if connack_recvd != connack_packet:
-		print "FAIL: Connect failed."
+		print("FAIL: Connect failed.")
 	else:
 		sock.send(publish_packet)
 		puback_recvd = sock.recv(256)
 		if puback_recvd != puback_packet:
 			(cmd, rl, mid_recvd) = unpack('!BBH', puback_recvd)
-			print "FAIL: Expected 64,2,"+str(mid)+" got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd)
+			print("FAIL: Expected 64,2,"+str(mid)+" got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd))
 		else:
 			sock.send(subscribe_packet)
 			suback_recvd = sock.recv(256)
 
 			if suback_recvd != suback_packet:
 				(cmd, rl, mid_recvd, qos) = unpack('!BBHB', suback_recvd)
-				print "FAIL: Expected 144,3,"+str(mid)+",0 got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd) + "," + str(qos)
+				print("FAIL: Expected 144,3,"+str(mid)+",0 got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd) + "," + str(qos))
 			else:
 				publish_recvd = sock.recv(256)
 
 				if publish_recvd != publish0_packet:
-					print "FAIL: Recieved incorrect publish."
-					print "Received: "+publish_recvd+" length="+str(len(publish_recvd))
-					print "Expected: "+publish0_packet+" length="+str(len(publish0_packet))
+					print("FAIL: Recieved incorrect publish.")
+					print("Received: "+publish_recvd+" length="+str(len(publish_recvd)))
+					print("Expected: "+publish0_packet+" length="+str(len(publish0_packet)))
 				else:
 					rc = 0
 	sock.close()
