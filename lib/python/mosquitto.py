@@ -123,10 +123,10 @@ class Mosquitto:
 
 	"""
 
-	def __init__(self, id, clean_session=True, obj=None):
+	def __init__(self, clientid, clean_session=True, obj=None):
 		"""Constructor
 
-		id: The 23 character or less client id used to identify this client to
+		clientid: The 23 character or less client id used to identify this client to
 		  the broker. This must be unique on the broker.
 		clean_session: If set to True, the broker will clean any previous
 		  information about this client on connection, and will also not store
@@ -145,7 +145,7 @@ class Mosquitto:
 			self.obj = obj
 
 		_mosquitto_lib_init()
-		self._mosq = _mosquitto_new(id, clean_session, None)
+		self._mosq = _mosquitto_new(clientid, clean_session, None)
 
 		#==================================================
 		# Configure callbacks
