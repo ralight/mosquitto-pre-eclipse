@@ -22,6 +22,8 @@
 - Add mosquitto_user_data_set() to allow user data pointer to be updated.
 - Usernames were being lost when a non clean-session client reconnected,
   potentially causing problems with ACLs. This has been fixed.
+- The Python library has modified to match the libmosquitto changes and
+  simplified at the same time.
 - Significant improvement to memory handling on Windows.
 - Fix db_dump reading of retained messages.
 - Fix reloading of persistence_file and persistence_location.
