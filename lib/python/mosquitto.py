@@ -32,6 +32,17 @@ from ctypes.util import find_library
 if sys.version_info < (2,6,0):
 	c_bool = c_int
 
+if sys.version_info < (3,0,0):
+	def str_fudge_e(s):
+		return s
+	def str_fudge_d(s):
+		return s
+else:
+	def str_fudge_e(s):
+		return s.encode('utf-8')
+	def str_fudge_d(s):
+		return s.decode('utf-8')
+
 # Log destinations
 MOSQ_LOG_NONE=0x00
 MOSQ_LOG_STDOUT=0x04
@@ -140,7 +151,7 @@ class Mosquitto:
 		self.obj = obj
 
 		_mosquitto_lib_init()
-		self._mosq = _mosquitto_new(clientid, clean_session, None)
+		self._mosq = _mosquitto_new(str_fudge_e(clientid), clean_session, None)
 
 		#==================================================
 		# Configure callbacks
@@ -192,7 +203,7 @@ class Mosquitto:
 		  request, use the on_connect() callback)
 		Returns >0 on error.
 		"""
-		return _mosquitto_connect(self._mosq, hostname, port, keepalive)
+		return _mosquitto_connect(self._mosq, str_fudge_e(hostname), port, keepalive)
 
 	def connect_async(self, hostname="localhost", port=1883, keepalive=60):
 		"""Asynchronously connect the client to an MQTT broker.
@@ -262,7 +273,7 @@ class Mosquitto:
 		  mid argument in the on_subscribe() callback if it is defined."""
 
 		mid = c_uint16(0)
-		result = _mosquitto_subscribe(self._mosq, mid, sub, qos)
+		result = _mosquitto_subscribe(self._mosq, mid, str_fudge_e(sub), qos)
 		return result, mid.value
 
 	def unsubscribe(self, sub):
@@ -276,7 +287,7 @@ class Mosquitto:
 		  mid argument in the on_unsubscribe() callback if it is defined."""
 
 		mid = c_uint16(0)
-		result = _mosquitto_unsubscribe(self._mosq, mid, sub)
+		result = _mosquitto_unsubscribe(self._mosq, mid, str_fudge_e(sub))
 		return result, mid.value
 
 	def publish(self, topic, payload=None, qos=0, retain=False):
@@ -358,7 +369,7 @@ class Mosquitto:
 	def _internal_on_message(self, mosq, obj, message):
 		if self.on_message:
 			mid = message.contents.mid
-			topic = message.contents.topic
+			topic = str_fudge_d(message.contents.topic)
 			payloadlen = message.contents.payloadlen
 			payload = message.contents.payload
 			qos = message.contents.qos
