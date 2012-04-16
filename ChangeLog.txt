@@ -24,6 +24,7 @@
   potentially causing problems with ACLs. This has been fixed.
 - The Python library has modified to match the libmosquitto changes and
   simplified at the same time.
+- The Python library should now be compatible with Python 3.
 - Significant improvement to memory handling on Windows.
 - Fix db_dump reading of retained messages.
 - Fix reloading of persistence_file and persistence_location.

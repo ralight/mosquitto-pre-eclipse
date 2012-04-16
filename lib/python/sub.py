@@ -33,7 +33,7 @@ def on_connect(mosq, obj, rc):
 	print("rc: "+str(rc))
 
 def on_message(mosq, obj, msg):
-	print(msg.topic+" "+str(msg.qos)+" "+msg.payload)
+	print(msg.topic+" "+str(msg.qos)+" "+str(msg.payload))
 
 def on_publish(mosq, obj, mid):
 	print("mid: "+str(mid))
