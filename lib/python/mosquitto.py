@@ -508,7 +508,7 @@ _mosquitto_connect_callback_set.argtypes = [c_void_p, c_void_p]
 _mosquitto_connect_callback_set.restype = None
 
 _mosquitto_disconnect_callback_set = _libmosq.mosquitto_disconnect_callback_set
-_mosquitto_disconnect_callback_set.argtypes = [c_void_p, c_void_p, int]
+_mosquitto_disconnect_callback_set.argtypes = [c_void_p, c_void_p, c_int]
 _mosquitto_disconnect_callback_set.restype = None
 
 _mosquitto_publish_callback_set = _libmosq.mosquitto_publish_callback_set
