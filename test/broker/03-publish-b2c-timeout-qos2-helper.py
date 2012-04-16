@@ -24,21 +24,21 @@ sock.send(connect_packet)
 connack_recvd = sock.recv(256)
 
 if connack_recvd != connack_packet:
-	print "FAIL in helper: Connect failed."
+	print("FAIL in helper: Connect failed.")
 else:
 	sock.send(publish_packet)
 	pubrec_recvd = sock.recv(256)
 
 	if pubrec_recvd != pubrec_packet:
 		(cmd, rl, mid_recvd) = unpack('!BBH', pubrec_recvd)
-		print "FAIL in helper: Expected 80,2," + str(mid) + " got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd)
+		print("FAIL in helper: Expected 80,2," + str(mid) + " got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd))
 	else:
 		sock.send(pubrel_packet)
 		pubcomp_recvd = sock.recv(256)
 
 		if pubcomp_recvd != pubcomp_packet:
 			(cmd, rl, mid_recvd) = unpack('!BBH', pubcomp_recvd)
-			print "FAIL in helper: Expected 112,2," + str(mid) + " got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd)
+			print("FAIL in helper: Expected 112,2," + str(mid) + " got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd))
 		else:
 			rc = 0
 

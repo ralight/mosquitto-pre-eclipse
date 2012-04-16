@@ -27,14 +27,14 @@ try:
 	connack_recvd = sock.recv(256)
 
 	if connack_recvd != connack_packet:
-		print "FAIL: Connect failed."
+		print("FAIL: Connect failed.")
 	else:
 		sock.send(subscribe_packet)
 		suback_recvd = sock.recv(256)
 
 		if suback_recvd != suback_packet:
 			(cmd, rl, mid_recvd, qos) = unpack('!BBHB', suback_recvd)
-			print "FAIL: Expected 144,3,"+str(mid)+",2 got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd) + "," + str(qos)
+			print("FAIL: Expected 144,3,"+str(mid)+",2 got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd) + "," + str(qos))
 		else:
 			rc = 0
 
