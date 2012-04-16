@@ -65,14 +65,14 @@ class Mosquitto:
 
 	A number of callback functions are available to receive data back from the
 	broker. To use a callback, define a function and then assign it to the
-	client. The callback function may be a class member if desired. All of the
-	callbacks as described below have an "obj" argument. This variable
-	corresponds directly to the obj argument passed when creating the client
-	instance.
+	client. The callback function may be a class member if desired. All
+	callbacks have at least two parameters, mosq and obj. The mosq parameter is
+	the client instance that is calling the callback and the obj parameter is
+	the user object passed when the client instance was created.
 
 	The callbacks:
 
-	on_connect(obj, rc): called when the broker responds to our connection
+	on_connect(mosq, obj, rc): called when the broker responds to our connection
 	  request. The value of rc determines success or not:
 	  0: Connection successful
 	  1: Connection refused - incorrect protocol version
@@ -82,15 +82,15 @@ class Mosquitto:
 	  5: Connection refused - not authorised
 	  6-255: Currently unused.
 
-	on_disconnect(obj, rc): called when the client disconnects from the broker.
+	on_disconnect(mosq, obj, rc): called when the client disconnects from the broker.
 	  rc==1 indicates an unexpected disconnect, rc==0 is a disconnect in
 	  response to the client calling disconnect().
 
-	on_message(obj, message): called when a message has been received on a
+	on_message(mosq, obj, message): called when a message has been received on a
 	  topic that the client subscribes to. The message variable is a
 	  MosquittoMessage that describs all of the message parameters.
 
-	on_publish(obj, mid): called when a message that was to be sent using the
+	on_publish(mosq, obj, mid): called when a message that was to be sent using the
 	  publish() call has completed transmission to the broker. For messages
 	  with QoS levels 1 and 2, this means that the appropriate handshakes have
 	  completed. For QoS 0, this simply means that the message has left the
@@ -99,19 +99,19 @@ class Mosquitto:
 	  This callback is important because even if the publish() call returns
 	  success, it does not means that the message has been sent.
 
-	on_subscribe(obj, mid, granted_qos): called when the broker responds to a
+	on_subscribe(mosq, obj, mid, granted_qos): called when the broker responds to a
 	  subscribe request. The mid variable matches the mid variable returned
 	  from the corresponding subscribe() call. The granted_qos variable is a
 	  list of integers that give the QoS level the broker has granted for each
 	  of the different subscription requests.
 
-	on_unsubscribe(obj, mid): called when the broker responds to an unsubscribe
+	on_unsubscribe(mosq, obj, mid): called when the broker responds to an unsubscribe
 	  request. The mid variable matches the mid variable returned from the
 	  corresponding unsubscribe() call.
 
 	Example:
 
-	def on_connect(obj, rc):
+	def on_connect(mosq, obj, rc):
 		if rc == 0:
 			print("Connected ok")
 	
@@ -349,11 +349,11 @@ class Mosquitto:
 
 	def _internal_on_connect(self, mosq, obj, rc):
 		if self.on_connect:
-			self.on_connect(self.obj, rc)
+			self.on_connect(self, self.obj, rc)
 
 	def _internal_on_disconnect(self, mosq, obj, rc):
 		if self.on_disconnect:
-			self.on_disconnect(self.obj, rc)
+			self.on_disconnect(self, self.obj, rc)
 
 	def _internal_on_message(self, mosq, obj, message):
 		if self.on_message:
@@ -365,11 +365,11 @@ class Mosquitto:
 			retain = message.contents.retain
 			msg = MosquittoMessage(mid, topic, payloadlen, payload, qos, retain)
 
-			self.on_message(self.obj, msg)
+			self.on_message(self, self.obj, msg)
 
 	def _internal_on_publish(self, mosq, obj, mid):
 		if self.on_publish:
-			self.on_publish(self.obj, mid)
+			self.on_publish(self, self.obj, mid)
 
 	def _internal_on_subscribe(self, mosq, obj, mid, qos_count, granted_qos):
 		if self.on_subscribe:
@@ -377,11 +377,11 @@ class Mosquitto:
 			for i in range(qos_count):
 				qos_list.append(granted_qos[i])
 
-			self.on_subscribe(self.obj, mid, qos_list)
+			self.on_subscribe(self, self.obj, mid, qos_list)
 
 	def _internal_on_unsubscribe(self, mosq, obj, mid):
 		if self.on_unsubscribe:
-			self.on_unsubscribe(self.obj, mid)
+			self.on_unsubscribe(self, self.obj, mid)
 
 class c_MosquittoMessage(Structure):
 	"""Internal message class used for communicating with C library.
