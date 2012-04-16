@@ -68,9 +68,7 @@ class Mosquitto:
 	client. The callback function may be a class member if desired. All of the
 	callbacks as described below have an "obj" argument. This variable
 	corresponds directly to the obj argument passed when creating the client
-	instance. It is however optional when defining the callback functions, so
-	the on connect callback function can be defined as on_connect(obj, rc) or
-	on_connect(rc) for example.
+	instance.
 
 	The callbacks:
 
@@ -113,9 +111,9 @@ class Mosquitto:
 
 	Example:
 
-	def on_connect(rc):
+	def on_connect(obj, rc):
 		if rc == 0:
-			print "Connected ok"
+			print("Connected ok")
 	
 	client = mosquitto.Mosquitto("id")
 	client.on_connect = on_connect
@@ -139,10 +137,7 @@ class Mosquitto:
 		  this instance of the Mosquitto class will be passed to the callback
 		  functions.
 		"""
-		if obj==None:
-			self.obj = self
-		else:
-			self.obj = obj
+		self.obj = obj
 
 		_mosquitto_lib_init()
 		self._mosq = _mosquitto_new(clientid, clean_session, None)
@@ -356,21 +351,11 @@ class Mosquitto:
 
 	def _internal_on_connect(self, mosq, obj, rc):
 		if self.on_connect:
-			argcount = self.on_connect.func_code.co_argcount
-
-			if argcount == 1:
-				self.on_connect(rc)
-			elif argcount == 2 or argcount == 3:
-				self.on_connect(self.obj, rc)
+			self.on_connect(self.obj, rc)
 
 	def _internal_on_disconnect(self, mosq, obj, rc):
 		if self.on_disconnect:
-			argcount = self.on_disconnect.func_code.co_argcount
-
-			if argcount == 1:
-				self.on_disconnect(rc)
-			elif argcount == 2 or argcount == 3:
-				self.on_disconnect(self.obj, rc)
+			self.on_disconnect(self.obj, rc)
 
 	def _internal_on_message(self, mosq, obj, message):
 		if self.on_message:
@@ -381,42 +366,24 @@ class Mosquitto:
 			qos = message.contents.qos
 			retain = message.contents.retain
 			msg = MosquittoMessage(mid, topic, payloadlen, payload, qos, retain)
-			argcount = self.on_message.func_code.co_argcount
 
-			if argcount == 1:
-				self.on_message(msg)
-			elif argcount == 2 or argcount == 3:
-				self.on_message(self.obj, msg)
+			self.on_message(self.obj, msg)
 
 	def _internal_on_publish(self, mosq, obj, mid):
 		if self.on_publish:
-			argcount = self.on_publish.func_code.co_argcount
-
-			if argcount == 1:
-				self.on_publish(mid)
-			elif argcount == 2 or argcount == 3:
-				self.on_publish(self.obj, mid)
+			self.on_publish(self.obj, mid)
 
 	def _internal_on_subscribe(self, mosq, obj, mid, qos_count, granted_qos):
 		if self.on_subscribe:
 			qos_list = []
 			for i in range(qos_count):
 				qos_list.append(granted_qos[i])
-			argcount = self.on_subscribe.func_code.co_argcount
 
-			if argcount == 2:
-				self.on_subscribe(mid, qos_list)
-			elif argcount == 3 or argcount == 4:
-				self.on_subscribe(self.obj, mid, qos_list)
+			self.on_subscribe(self.obj, mid, qos_list)
 
 	def _internal_on_unsubscribe(self, mosq, obj, mid):
 		if self.on_unsubscribe:
-			argcount = self.on_unsubscribe.func_code.co_argcount
-
-			if argcount == 1:
-				self.on_unsubscribe(mid)
-			elif argcount == 2 or argcount == 3:
-				self.on_unsubscribe(self.obj, mid)
+			self.on_unsubscribe(self.obj, mid)
 
 class c_MosquittoMessage(Structure):
 	"""Internal message class used for communicating with C library.
