@@ -29,16 +29,16 @@
 
 import mosquitto
 
-def on_connect(rc):
+def on_connect(obj, rc):
 	print("rc: "+str(rc))
 
-def on_message(msg):
+def on_message(obj, msg):
 	print(msg.topic+" "+str(msg.qos)+" "+msg.payload)
 
-def on_publish(mid):
+def on_publish(obj, mid):
 	print("mid: "+str(mid))
 
-def on_subscribe(mid, granted_qos):
+def on_subscribe(obj, mid, granted_qos):
 	print("Subscribed: "+str(mid)+" "+str(granted_qos))
 	
 
