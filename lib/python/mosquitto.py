@@ -173,11 +173,9 @@ class Mosquitto:
 		#==================================================
 
 	def __del__(self):
-		_mosquitto_lib_cleanup()
-		
-	def __del__(self):
 		if self._mosq:
 			_mosquitto_destroy(self._mosq)
+		_mosquitto_lib_cleanup()
 
 	def connect(self, hostname="localhost", port=1883, keepalive=60):
 		"""Connect the client to an MQTT broker.
