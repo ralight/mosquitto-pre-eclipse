@@ -452,7 +452,7 @@ _mosquitto_lib_cleanup.argtypes = None
 _mosquitto_lib_cleanup.restype = c_int
 
 _mosquitto_new = _libmosq.mosquitto_new
-_mosquitto_new.argtypes = [c_char_p, c_void_p]
+_mosquitto_new.argtypes = [c_char_p, c_bool, c_void_p]
 _mosquitto_new.restype = c_void_p
 
 _mosquitto_destroy = _libmosq.mosquitto_destroy
