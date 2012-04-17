@@ -49,6 +49,8 @@ uint64_t g_bytes_received = 0;
 uint64_t g_bytes_sent = 0;
 unsigned long g_msgs_received = 0;
 unsigned long g_msgs_sent = 0;
+unsigned long g_pub_msgs_received = 0;
+unsigned long g_pub_msgs_sent = 0;
 
 int mqtt3_db_open(mqtt3_config *config, mosquitto_db *db)
 {
@@ -729,6 +731,8 @@ void mqtt3_db_sys_update(mosquitto_db *db, int interval, time_t start_time)
 #endif
 	static unsigned long msgs_received = -1;
 	static unsigned long msgs_sent = -1;
+	static unsigned long pub_msgs_received = -1;
+	static unsigned long pub_msgs_sent = -1;
 	static unsigned int msgsps_received = -1;
 	static unsigned int msgsps_sent = -1;
 	static unsigned long long bytes_received = -1;
@@ -796,6 +800,18 @@ void mqtt3_db_sys_update(mosquitto_db *db, int interval, time_t start_time)
 			msgs_sent = g_msgs_sent;
 			snprintf(buf, 100, "%lu", msgs_sent);
 			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/messages/sent", 2, strlen(buf), (uint8_t *)buf, 1);
+		}
+
+		if(pub_msgs_received != g_pub_msgs_received){
+			pub_msgs_received = g_pub_msgs_received;
+			snprintf(buf, 100, "%lu", pub_msgs_received);
+			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/publish/messages/received", 2, strlen(buf), (uint8_t *)buf, 1);
+		}
+		
+		if(pub_msgs_sent != g_pub_msgs_sent){
+			pub_msgs_sent = g_pub_msgs_sent;
+			snprintf(buf, 100, "%lu", pub_msgs_sent);
+			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/publish/messages/sent", 2, strlen(buf), (uint8_t *)buf, 1);
 		}
 
 		if(bytes_received != g_bytes_received){

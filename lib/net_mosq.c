@@ -59,6 +59,8 @@ POSSIBILITY OF SUCH DAMAGE.
    extern uint64_t g_bytes_sent;
    extern unsigned long g_msgs_received;
    extern unsigned long g_msgs_sent;
+   extern unsigned long g_pub_msgs_received;
+   extern unsigned long g_pub_msgs_sent;
 #else
 #  include <read_handle.h>
 #endif
@@ -472,6 +474,9 @@ int _mosquitto_packet_write(struct mosquitto *mosq)
 
 #ifdef WITH_BROKER
 		g_msgs_sent++;
+		if(((packet->command)&0xF6) == PUBLISH){
+			g_pub_msgs_sent++;
+		}
 #else
 		if(((packet->command)&0xF6) == PUBLISH){
 			pthread_mutex_lock(&mosq->callback_mutex);
@@ -635,6 +640,9 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 	mosq->in_packet.pos = 0;
 #ifdef WITH_BROKER
 	g_msgs_received++;
+	if(((mosq->in_packet.command)&0xF5) == PUBLISH){
+		g_pub_msgs_received++;
+	}
 	rc = mqtt3_packet_handle(db, context_index);
 #else
 	rc = _mosquitto_packet_handle(mosq);

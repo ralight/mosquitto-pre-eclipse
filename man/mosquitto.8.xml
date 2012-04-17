@@ -181,19 +181,31 @@
 			<varlistentry>
 				<term><option>$SYS/broker/messages/received</option></term>
 				<listitem>
-					<para>The total number of messages received since the broker started.</para>
+					<para>The total number of messages of any type received since the broker started.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
 				<term><option>$SYS/broker/messages/sent</option></term>
 				<listitem>
-					<para>The total number of messages sent since the broker started.</para>
+					<para>The total number of messages of any type sent since the broker started.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
 				<term><option>$SYS/broker/messages/stored</option></term>
 				<listitem>
 					<para>The number of messages currently held in the message store.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>$SYS/broker/publish/messages/received</option></term>
+				<listitem>
+					<para>The total number of PUBLISH messages received since the broker started.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>$SYS/broker/publish/messages/sent</option></term>
+				<listitem>
+					<para>The total number of PUBLISH messages sent since the broker started.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

@@ -1,6 +1,8 @@
 0.16 - 2012xxxx
 ===============
 
+- Add $SYS/broker/publish/messages/{sent|received} to show the number of
+  PUBLISH messages sent/received.
 - Add "struct mosquitto *mosq" parameter for all callbacks in the client
   library. This is a binary incompatible change so the soversion of the
   libraries has been incremented. The new parameter should make it easier to
