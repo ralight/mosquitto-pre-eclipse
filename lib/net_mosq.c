@@ -55,10 +55,10 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef WITH_BROKER
 #  include <mosquitto_broker.h>
-   extern uint64_t bytes_received;
-   extern uint64_t bytes_sent;
-   extern unsigned long msgs_received;
-   extern unsigned long msgs_sent;
+   extern uint64_t g_bytes_received;
+   extern uint64_t g_bytes_sent;
+   extern unsigned long g_msgs_received;
+   extern unsigned long g_msgs_sent;
 #else
 #  include <read_handle.h>
 #endif
@@ -447,7 +447,7 @@ int _mosquitto_packet_write(struct mosquitto *mosq)
 			write_length = _mosquitto_net_write(mosq, &(packet->payload[packet->pos]), packet->to_process);
 			if(write_length > 0){
 #ifdef WITH_BROKER
-				bytes_sent += write_length;
+				g_bytes_sent += write_length;
 #endif
 				packet->to_process -= write_length;
 				packet->pos += write_length;
@@ -471,7 +471,7 @@ int _mosquitto_packet_write(struct mosquitto *mosq)
 		}
 
 #ifdef WITH_BROKER
-		msgs_sent++;
+		g_msgs_sent++;
 #else
 		if(((packet->command)&0xF6) == PUBLISH){
 			pthread_mutex_lock(&mosq->callback_mutex);
@@ -541,7 +541,7 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 		if(read_length == 1){
 			mosq->in_packet.command = byte;
 #ifdef WITH_BROKER
-			bytes_received++;
+			g_bytes_received++;
 			/* Clients must send CONNECT as their first command. */
 			if(!(mosq->bridge) && mosq->state == mosq_cs_new && (byte&0xF0) != CONNECT) return MOSQ_ERR_PROTOCOL;
 #endif
@@ -577,7 +577,7 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 				if(mosq->in_packet.remaining_count > 4) return MOSQ_ERR_PROTOCOL;
 
 #ifdef WITH_BROKER
-				bytes_received++;
+				g_bytes_received++;
 #endif
 				mosq->in_packet.remaining_length += (byte & 127) * mosq->in_packet.remaining_mult;
 				mosq->in_packet.remaining_mult *= 128;
@@ -610,7 +610,7 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 		read_length = _mosquitto_net_read(mosq, &(mosq->in_packet.payload[mosq->in_packet.pos]), mosq->in_packet.to_process);
 		if(read_length > 0){
 #ifdef WITH_BROKER
-			bytes_received += read_length;
+			g_bytes_received += read_length;
 #endif
 			mosq->in_packet.to_process -= read_length;
 			mosq->in_packet.pos += read_length;
@@ -634,7 +634,7 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 	/* All data for this packet is read. */
 	mosq->in_packet.pos = 0;
 #ifdef WITH_BROKER
-	msgs_received++;
+	g_msgs_received++;
 	rc = mqtt3_packet_handle(db, context_index);
 #else
 	rc = _mosquitto_packet_handle(mosq);

@@ -58,11 +58,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <memory_mosq.h>
 #include <net_mosq.h>
 
-uint64_t bytes_received = 0;
-uint64_t bytes_sent = 0;
-unsigned long msgs_received = 0;
-unsigned long msgs_sent = 0;
-
 int mqtt3_socket_accept(struct _mosquitto_db *db, int listensock)
 {
 	int i;
@@ -249,25 +244,5 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 	}else{
 		return 1;
 	}
-}
-
-uint64_t mqtt3_net_bytes_total_received(void)
-{
-	return bytes_received;
-}
-
-uint64_t mqtt3_net_bytes_total_sent(void)
-{
-	return bytes_sent;
-}
-
-unsigned long mqtt3_net_msgs_total_received(void)
-{
-	return msgs_received;
-}
-
-unsigned long mqtt3_net_msgs_total_sent(void)
-{
-	return msgs_sent;
 }
 

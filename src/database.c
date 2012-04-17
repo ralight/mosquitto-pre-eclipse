@@ -45,6 +45,11 @@ POSSIBILITY OF SUCH DAMAGE.
 static int max_inflight = 20;
 static int max_queued = 100;
 
+uint64_t g_bytes_received = 0;
+uint64_t g_bytes_sent = 0;
+unsigned long g_msgs_received = 0;
+unsigned long g_msgs_sent = 0;
+
 int mqtt3_db_open(mqtt3_config *config, mosquitto_db *db)
 {
 	int rc = 0;
@@ -712,7 +717,6 @@ void mqtt3_db_sys_update(mosquitto_db *db, int interval, time_t start_time)
 	int inactive;
 	int active;
 	unsigned long value_ul;
-	unsigned long long value_ull;
 
 	static int msg_store_count = -1;
 	static int client_count = -1;
@@ -782,30 +786,26 @@ void mqtt3_db_sys_update(mosquitto_db *db, int interval, time_t start_time)
 		}
 #endif
 
-		value_ul = mqtt3_net_msgs_total_received();
-		if(msgs_received != value_ul){
-			msgs_received = value_ul;
+		if(msgs_received != g_msgs_received){
+			msgs_received = g_msgs_received;
 			snprintf(buf, 100, "%lu", msgs_received);
 			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/messages/received", 2, strlen(buf), (uint8_t *)buf, 1);
 		}
 		
-		value_ul = mqtt3_net_msgs_total_sent();
-		if(msgs_sent != value_ul){
-			msgs_sent = value_ul;
+		if(msgs_sent != g_msgs_sent){
+			msgs_sent = g_msgs_sent;
 			snprintf(buf, 100, "%lu", msgs_sent);
 			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/messages/sent", 2, strlen(buf), (uint8_t *)buf, 1);
 		}
 
-		value_ull = (unsigned long long)mqtt3_net_bytes_total_received();
-		if(bytes_received != value_ull){
-			bytes_received = value_ull;
+		if(bytes_received != g_bytes_received){
+			bytes_received = g_bytes_received;
 			snprintf(buf, 100, "%llu", bytes_received);
 			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/bytes/received", 2, strlen(buf), (uint8_t *)buf, 1);
 		}
 		
-		value_ull = (unsigned long long)mqtt3_net_bytes_total_sent();
-		if(bytes_sent != value_ull){
-			bytes_sent = value_ull;
+		if(bytes_sent != g_bytes_sent){
+			bytes_sent = g_bytes_sent;
 			snprintf(buf, 100, "%llu", bytes_sent);
 			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/bytes/sent", 2, strlen(buf), (uint8_t *)buf, 1);
 		}
