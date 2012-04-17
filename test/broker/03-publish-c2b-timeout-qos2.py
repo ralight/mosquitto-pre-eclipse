@@ -33,6 +33,8 @@ try:
 
 	if connack_recvd != connack_packet:
 		print("FAIL: Connect failed.")
+		(cmd, rl, resv, rc) = unpack('!BBBB', connack_recvd)
+		print("FAIL: Expected 32,2,0,0 got " + str(cmd) + "," + str(rl) + "," + str(resv) + "," + str(rc))
 	else:
 		sock.send(publish_packet)
 		pubrec_recvd = sock.recv(256)
