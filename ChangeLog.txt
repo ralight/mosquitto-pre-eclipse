@@ -11,6 +11,8 @@ Broker:
   disconnected.
 - Enforce client id limits in the broker (only when WITH_STRICT_PROTOCOL is
   defined).
+- Add $SYS/system/ hierarchy to provide information on the system. Only
+  supported on Linux and when compiled with WITH_SYSTEM_METRICS.
 - Fix reloading of log configuration.
 - Usernames were being lost when a non clean-session client reconnected,
   potentially causing problems with ACLs. This has been fixed.
