@@ -35,6 +35,12 @@
  */
 #define WITH_BRIDGE
 
+/* IMPORTANT: WITH_SYSTEM_METRICS is currently ONLY supported on LINUX !
+ * Compile with system metrics support. These are published on $SYS/system/
+ * such that critical system resources can be monitored.
+ */
+#define WITH_SYSTEM_METRICS
+
 /* Compile with strict protocol support. This means that both the client
  * library and the broker will be very strict about protocol compliance on
  * incoming data. Neither of them will return an error on incorrect "remaining
