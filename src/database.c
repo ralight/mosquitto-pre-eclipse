@@ -52,6 +52,10 @@ unsigned long g_msgs_sent = 0;
 unsigned long g_pub_msgs_received = 0;
 unsigned long g_pub_msgs_sent = 0;
 
+#ifdef WITH_SYSTEM_METRICS
+	#include <sys/sysinfo.h>
+#endif
+
 int mqtt3_db_open(mqtt3_config *config, mosquitto_db *db)
 {
 	int rc = 0;
@@ -739,6 +743,14 @@ void mqtt3_db_sys_update(mosquitto_db *db, int interval, time_t start_time)
 	static unsigned long long bytes_sent = -1;
 	static unsigned int bytesps_received = -1;
 	static unsigned int bytesps_sent = -1;
+#ifdef WITH_SYSTEM_METRICS
+	static long system_uptime=-1;
+	static long system_load=-1;
+	static unsigned long totalram=-1;
+	static unsigned long freeram=-1;
+	static unsigned short procs=-1;
+#endif
+
 
 	if(interval && now - interval > last_update){
 		uptime = now - start_time;
@@ -855,6 +867,66 @@ void mqtt3_db_sys_update(mosquitto_db *db, int interval, time_t start_time)
 				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/bytes/per second/sent", 2, strlen(buf), (uint8_t *)buf, 1);
 			}
 		}
+
+#ifdef WITH_SYSTEM_METRICS
+//		Since Linux 2.3.23 (i386), 2.3.48 (all architectures) the structure is:
+//
+//		struct sysinfo {
+//			long uptime;             /* Seconds since boot */
+//			unsigned long loads[3];  /* 1, 5, and 15 minute load averages */
+//			unsigned long totalram;  /* Total usable main memory size */
+//			unsigned long freeram;   /* Available memory size */
+//			unsigned long sharedram; /* Amount of shared memory */
+//			unsigned long bufferram; /* Memory used by buffers */
+//			unsigned long totalswap; /* Total swap space size */
+//			unsigned long freeswap;  /* swap space still available */
+//			unsigned short procs;    /* Number of current processes */
+//			unsigned long totalhigh; /* Total high memory size */
+//			unsigned long freehigh;  /* Available high memory size */
+//			unsigned int mem_unit;   /* Memory unit size in bytes */
+//			char _f[20-2*sizeof(long)-sizeof(int)]; /* Padding for libc5 */
+//		};
+
+
+		struct sysinfo info;
+		sysinfo(&info);
+
+		if(sysinfo(&info) != 0){
+			perror("sysinfo");
+		}
+		else{
+			value_ul = info.uptime;
+			if(system_uptime != value_ul){
+				system_uptime = value_ul;
+				snprintf(buf, 100, "%lu seconds", system_uptime);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/system/uptime", 2, strlen(buf), (uint8_t *)buf, 1);
+			}
+			value_ul = info.loads[0];			// 1 minute load average
+			if(system_load != value_ul){
+				system_load = value_ul;
+				snprintf(buf, 100, "%lu", system_load);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/system/load", 2, strlen(buf), (uint8_t *)buf, 1);
+			}
+			value_ul = info.totalram *(unsigned long long)info.mem_unit / 1024;		// report in KB
+			if(totalram != value_ul){
+				totalram = value_ul;
+				snprintf(buf, 100, "%lu KB", totalram);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/system/totalram", 2, strlen(buf), (uint8_t *)buf, 1);
+			}
+			value_ul = info.freeram *(unsigned long long)info.mem_unit / 1024;		// report in KB
+			if(freeram != value_ul){
+				freeram = value_ul;
+				snprintf(buf, 100, "%lu KB", freeram);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/system/freeram", 2, strlen(buf), (uint8_t *)buf, 1);
+			}
+			value = info.procs;
+			if(procs != value){
+				procs = value;
+				snprintf(buf, 100, "%d processes", procs);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/system/procs", 2, strlen(buf), (uint8_t *)buf, 1);
+			}
+		}
+#endif
 
 		last_update = time(NULL);
 	}
