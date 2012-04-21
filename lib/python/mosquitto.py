@@ -417,7 +417,10 @@ class MosquittoMessage:
 #==================================================
 # Library loading
 #==================================================
-_libmosq = cdll.LoadLibrary(find_library("mosquitto"))
+if sys.platform == 'win32':
+	_libmosq = cdll.LoadLibrary(find_library("mosquitto"))
+else:
+	_libmosq = cdll.LoadLibrary("libmosquitto.so.1")
 
 _mosquitto_lib_init = _libmosq.mosquitto_lib_init
 _mosquitto_lib_init.argtypes = None
