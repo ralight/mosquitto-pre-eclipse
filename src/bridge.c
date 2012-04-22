@@ -125,6 +125,11 @@ int mqtt3_bridge_connect(mosquitto_db *db, struct mosquitto *context)
 	for(i=0; i<context->bridge->topic_count; i++){
 		if(context->bridge->topics[i].direction == bd_out || context->bridge->topics[i].direction == bd_both){
 			if(mqtt3_sub_add(context, context->bridge->topics[i].topic, context->bridge->topics[i].qos, &db->subs)) return 1;
+		}else{
+			/* direction = inwards only. This means we should not be subscribed
+			 * to the topic. It is possible that we used to be subscribed to
+			 * this topic so unsubscribe. */
+			mqtt3_sub_remove(context, context->bridge->topics[i].topic, &db->subs);
 		}
 	}
 
