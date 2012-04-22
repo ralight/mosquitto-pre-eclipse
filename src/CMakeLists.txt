@@ -6,6 +6,7 @@ set (MOSQ_SRCS
 	conf.c
 	context.c
 	database.c
+	lib_load.h
 	logging.c
 	loop.c
 	../lib/memory_mosq.c ../lib/memory_mosq.h
