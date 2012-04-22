@@ -27,7 +27,8 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <config.h>
+#ifndef LIB_LOAD_H
+#define LIB_LOAD_H
 
 #ifdef WIN32
 #	include <windows.h>
@@ -45,3 +46,4 @@ POSSIBILITY OF SUCH DAMAGE.
 #	define LIB_SYM(HANDLE, SYM) dlsym(HANDLE, SYM)
 #endif
 
+#endif
