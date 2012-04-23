@@ -164,6 +164,11 @@ static int mqtt3_db_message_store_write(mosquitto_db *db, FILE *db_fptr)
 
 	stored = db->msg_store;
 	while(stored){
+		if(!strncmp(stored->msg.topic, "$SYS", 4)){
+			/* Don't save $SYS messages. */
+			stored = stored->next;
+			continue;
+		}
 		length = htonl(sizeof(dbid_t) + 2+strlen(stored->source_id) +
 				sizeof(uint16_t) + sizeof(uint16_t) +
 				2+strlen(stored->msg.topic) + sizeof(uint32_t) +
@@ -295,14 +300,17 @@ static int _db_subs_retain_write(mosquitto_db *db, FILE *db_fptr, struct _mosqui
 		sub = sub->next;
 	}
 	if(node->retained){
-		length = htonl(sizeof(dbid_t));
+		if(strncmp(node->retained->msg.topic, "$SYS", 4)){
+			/* Don't save $SYS messages. */
+			length = htonl(sizeof(dbid_t));
 
-		i16temp = htons(DB_CHUNK_RETAIN);
-		write_e(db_fptr, &i16temp, sizeof(uint16_t));
-		write_e(db_fptr, &length, sizeof(uint32_t));
+			i16temp = htons(DB_CHUNK_RETAIN);
+			write_e(db_fptr, &i16temp, sizeof(uint16_t));
+			write_e(db_fptr, &length, sizeof(uint32_t));
 
-		i64temp = node->retained->db_id;
-		write_e(db_fptr, &i64temp, sizeof(dbid_t));
+			i64temp = node->retained->db_id;
+			write_e(db_fptr, &i64temp, sizeof(dbid_t));
+		}
 	}
 
 	subhier = node->children;

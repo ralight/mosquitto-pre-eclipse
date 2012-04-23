@@ -22,6 +22,9 @@ Broker:
 - Fix missing COMPAT_ECONNRESET define on Windows.
 - Clients that had disconnected were not always being detected immediately on
   Linux. This has been fixed.
+- Don't save $SYS messages to the on-disk persistent db. All $SYS messages
+  should be reconstructed on a restart. This means bridge connection
+  notifications will now be correct on a restart.
 
 Client library:
 
