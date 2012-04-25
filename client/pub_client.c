@@ -506,7 +506,7 @@ int main(int argc, char *argv[])
 		}
 		memset(hostname, 0, 21);
 		gethostname(hostname, 20);
-		snprintf(id, 23, "mosq_pub_%d_%s", getpid(), hostname);
+		snprintf(id, 23, "mosqpub/%d-%s", getpid(), hostname);
 	}
 
 	mosq = mosquitto_new(id, true, NULL);

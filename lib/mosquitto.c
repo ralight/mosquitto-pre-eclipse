@@ -127,7 +127,7 @@ struct mosquitto *mosquitto_new(const char *id, bool clean_session, void *obj)
 			mosq->id[1] = 'o';
 			mosq->id[2] = 's';
 			mosq->id[3] = 'q';
-			mosq->id[4] = '-';
+			mosq->id[4] = '/';
 
 			for(i=5; i<23; i++){
 				mosq->id[i] = (rand()%73)+48;

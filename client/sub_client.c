@@ -382,7 +382,7 @@ int main(int argc, char *argv[])
 		}
 		memset(hostname, 0, 21);
 		gethostname(hostname, 20);
-		snprintf(id, 23, "mosq_sub_%d_%s", getpid(), hostname);
+		snprintf(id, 23, "mosqsub/%d-%s", getpid(), hostname);
 	}
 
 	mosq = mosquitto_new(id, clean_session, &ud);
