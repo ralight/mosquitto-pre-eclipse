@@ -73,7 +73,7 @@ finally:
 	broker.terminate()
 	local_broker.terminate()
 	try:
-		os.remove('mosquitto.db2')
+		os.remove('mosquitto.db')
 	except OSError:
 		pass
 
