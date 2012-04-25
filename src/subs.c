@@ -80,6 +80,7 @@ static int _subs_process(struct _mosquitto_db *db, struct _mosquitto_subhier *hi
 	int client_qos, msg_qos;
 	uint16_t mid;
 	struct _mosquitto_subleaf *leaf;
+	bool client_retain;
 
 	leaf = hier->subs;
 
@@ -118,7 +119,17 @@ static int _subs_process(struct _mosquitto_db *db, struct _mosquitto_subhier *hi
 			}else{
 				mid = 0;
 			}
-			if(mqtt3_db_message_insert(db, leaf->context, mid, mosq_md_out, msg_qos, false, stored) == 1) rc = 1;
+			if(leaf->context->bridge){
+				/* If we know the client is a bridge then we should set retain
+				 * even if the message is fresh. If we don't do this, retained
+				 * messages won't be propagated. */
+				client_retain = retain;
+			}else{
+				/* Client is not a bridge and this isn't a stale message so
+				 * retain should be false. */
+				client_retain = false;
+			}
+			if(mqtt3_db_message_insert(db, leaf->context, mid, mosq_md_out, msg_qos, client_retain, stored) == 1) rc = 1;
 		}else{
 			rc = 1;
 		}
