@@ -90,25 +90,8 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 			mosquitto_subscribe(mosq, NULL, ud->topics[i], ud->topic_qos);
 		}
 	}else{
-		switch(result){
-			case 1:
-				if(!ud->quiet) fprintf(stderr, "Connection Refused: unacceptable protocol version\n");
-				break;
-			case 2:
-				if(!ud->quiet) fprintf(stderr, "Connection Refused: identifier rejected\n");
-				break;
-			case 3:
-				if(!ud->quiet) fprintf(stderr, "Connection Refused: broker unavailable\n");
-				break;
-			case 4:
-				if(!ud->quiet) fprintf(stderr, "Connection Refused: bad user name or password\n");
-				break;
-			case 5:
-				if(!ud->quiet) fprintf(stderr, "Connection Refused: not authorised\n");
-				break;
-			default:
-				if(!ud->quiet) fprintf(stderr, "Connection Refused: unknown reason (%d)\n", result);
-				break;
+		if(result && !ud->quiet){
+			fprintf(stderr, "%s\n", mosquitto_connack_string(result));
 		}
 	}
 }

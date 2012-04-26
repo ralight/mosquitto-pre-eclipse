@@ -91,6 +91,11 @@ const char* strerror(int mosq_errno)
 	return mosquitto_strerror(mosq_errno);
 }
 
+const char* connack_string(int connack_code)
+{
+	return mosquitto_connack_string(connack_code);
+}
+
 mosquittopp::mosquittopp(const char *id, bool clean_session)
 {
 	mosq = mosquitto_new(id, clean_session, this);
