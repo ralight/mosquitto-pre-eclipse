@@ -46,6 +46,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 namespace mosquittopp {
 
+const char *strerror(int mosq_errno);
+
 /*
  * Class: mosquittopp
  *

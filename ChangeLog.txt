@@ -42,6 +42,7 @@ Client library:
 - Add mosquitto_user_data_set() to allow user data pointer to be updated.
 - Add "int rc" parameter to disconnect callback to indicate whether disconnect
   was unexpected or the result of calling mosquitto_disconnect().
+- Add mosquitto_strerror() for obtaining a string description of error numbers.
 - Client will now disconnect itself from the broker if it doesn't receive a
   PINGRESP in the keepalive period after sending a PINGREQ.
 - Client will now send a PINGREQ if it has not received a message from the

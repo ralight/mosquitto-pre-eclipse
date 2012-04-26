@@ -37,6 +37,7 @@ VERS_1.0 {
 		mosquitto_message_retry_set;
 		mosquitto_want_write;
 		mosquitto_user_data_set;
+		mosquitto_strerror;
 	local: *;
 };
 
