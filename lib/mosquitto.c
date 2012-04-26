@@ -620,3 +620,23 @@ const char *mosquitto_strerror(int mosq_errno)
 	}
 }
 
+const char *mosquitto_connack_string(int connack_code)
+{
+	switch(connack_code){
+		case 0:
+			return "Connection Accepted.";
+		case 1:
+			return "Connection Refused: unacceptable protocol version.";
+		case 2:
+			return "Connection Refused: identifier rejected.";
+		case 3:
+			return "Connection Refused: broker unavailable.";
+		case 4:
+			return "Connection Refused: bad user name or password.";
+		case 5:
+			return "Connection Refused: not authorised.";
+		default:
+			return "Connection Refused: unknown reason.";
+	}
+}
+

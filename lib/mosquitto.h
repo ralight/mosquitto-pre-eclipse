@@ -869,6 +869,19 @@ libmosq_EXPORT void mosquitto_user_data_set(struct mosquitto *mosq, void *obj);
  */
 libmosq_EXPORT const char *mosquitto_strerror(int mosq_errno);
 
+/*
+ * Function mosquitto_connack_string
+ *
+ * Call to obtain a const string description of an MQTT connection result.
+ *
+ * Parameters:
+ *	connack_code - an MQTT connection result.
+ *
+ * Returns:
+ *	A constant string describing the result.
+ */
+libmosq_EXPORT const char *mosquitto_connack_string(int connack_code);
+
 #ifdef __cplusplus
 }
 #endif

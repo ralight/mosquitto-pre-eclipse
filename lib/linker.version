@@ -38,6 +38,7 @@ VERS_1.0 {
 		mosquitto_want_write;
 		mosquitto_user_data_set;
 		mosquitto_strerror;
+		mosquitto_connack_string;
 	local: *;
 };
 

@@ -47,6 +47,7 @@ POSSIBILITY OF SUCH DAMAGE.
 namespace mosquittopp {
 
 const char *strerror(int mosq_errno);
+const char *connack_string(int connack_code);
 
 /*
  * Class: mosquittopp

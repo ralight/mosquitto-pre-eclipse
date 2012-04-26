@@ -43,6 +43,8 @@ Client library:
 - Add "int rc" parameter to disconnect callback to indicate whether disconnect
   was unexpected or the result of calling mosquitto_disconnect().
 - Add mosquitto_strerror() for obtaining a string description of error numbers.
+- Add mosquitto_connack_string() for obtaining a string description of MQTT
+  connection results.
 - Client will now disconnect itself from the broker if it doesn't receive a
   PINGRESP in the keepalive period after sending a PINGREQ.
 - Client will now send a PINGREQ if it has not received a message from the

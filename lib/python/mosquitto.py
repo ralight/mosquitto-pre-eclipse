@@ -361,6 +361,9 @@ class Mosquitto:
 	def strerror(self, mosq_errno):
 		return _mosquitto_strerror(mosq_errno)
 
+	def connack_string(self, connack_code):
+		return _mosquitto_connack_string(connack_code)
+
 	def _internal_on_connect(self, mosq, obj, rc):
 		if self.on_connect:
 			self.on_connect(self, self.obj, rc)
@@ -512,6 +515,10 @@ _mosquitto_unsubscribe_callback_set.restype = None
 _mosquitto_strerror = _libmosq.mosquitto_strerror
 _mosquitto_strerror.argtypes = [c_int]
 _mosquitto_strerror.restype = c_char_p
+
+_mosquitto_connack_string = _libmosq.mosquitto_connack_string
+_mosquitto_connack_string.argtypes = [c_int]
+_mosquitto_connack_string.restype = c_char_p
 
 _MOSQ_CONNECT_FUNC = CFUNCTYPE(None, c_void_p, c_void_p, c_int)
 _MOSQ_DISCONNECT_FUNC = CFUNCTYPE(None, c_void_p, c_void_p, c_int)
