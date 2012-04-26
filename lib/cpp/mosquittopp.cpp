@@ -86,6 +86,11 @@ int mosquittopp::lib_cleanup()
 	return mosquitto_lib_cleanup();
 }
 
+const char* strerror(int mosq_errno)
+{
+	return mosquitto_strerror(mosq_errno);
+}
+
 mosquittopp::mosquittopp(const char *id, bool clean_session)
 {
 	mosq = mosquitto_new(id, clean_session, this);

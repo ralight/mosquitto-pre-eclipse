@@ -582,3 +582,41 @@ void mosquitto_user_data_set(struct mosquitto *mosq, void *obj)
 	}
 }
 
+const char *mosquitto_strerror(int mosq_errno)
+{
+	switch(mosq_errno){
+		case MOSQ_ERR_SUCCESS:
+			return "No error.";
+		case MOSQ_ERR_NOMEM:
+			return "Out of memory.";
+		case MOSQ_ERR_PROTOCOL:
+			return "A network protocol error occurred when communicating with the broker.";
+		case MOSQ_ERR_INVAL:
+			return "Invalid function arguments provided.";
+		case MOSQ_ERR_NO_CONN:
+			return "The client is not currently connected.";
+		case MOSQ_ERR_CONN_REFUSED:
+			return "The connection was refused.";
+		case MOSQ_ERR_NOT_FOUND:
+			return "Message not found (internal error).";
+		case MOSQ_ERR_CONN_LOST:
+			return "The connection was lost.";
+		case MOSQ_ERR_SSL:
+			return "An SSL error occurred.";
+		case MOSQ_ERR_PAYLOAD_SIZE:
+			return "Payload too large.";
+		case MOSQ_ERR_NOT_SUPPORTED:
+			return "This feature is not supported.";
+		case MOSQ_ERR_AUTH:
+			return "Authorisation failed.";
+		case MOSQ_ERR_ACL_DENIED:
+			return "Access denied by ACL.";
+		case MOSQ_ERR_UNKNOWN:
+			return "Unknown error.";
+		case MOSQ_ERR_ERRNO:
+			return "Error defined by errno.";
+		default:
+			return "Unknown error.";
+	}
+}
+

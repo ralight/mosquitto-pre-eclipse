@@ -856,6 +856,19 @@ libmosq_EXPORT void mosquitto_message_retry_set(struct mosquitto *mosq, unsigned
  */
 libmosq_EXPORT void mosquitto_user_data_set(struct mosquitto *mosq, void *obj);
 
+/*
+ * Function mosquitto_strerror
+ *
+ * Call to obtain a const string description of a mosquitto error number.
+ *
+ * Parameters:
+ *	mosq_errno - a mosquitto error number.
+ *
+ * Returns:
+ *	A constant string describing the error.
+ */
+libmosq_EXPORT const char *mosquitto_strerror(int mosq_errno);
+
 #ifdef __cplusplus
 }
 #endif
