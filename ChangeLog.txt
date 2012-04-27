@@ -65,6 +65,7 @@ Other:
 
 - Fix db_dump reading of retained messages.
 - Add example of logging all messages to mysql.
+- Fix potential buffer overflow in pub/sub clients.
 
 0.15 - 20120205
 ===============
