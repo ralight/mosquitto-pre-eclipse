@@ -243,7 +243,7 @@ int main(int argc, char *argv[])
 	struct mosquitto *mosq = NULL;
 	int rc;
 	int rc2;
-	char hostname[21];
+	char hostname[MOSQ_MQTT_ID_MAX_LENGTH - 9];
 	char err[1024];
 
 	uint8_t *will_payload = NULL;
@@ -481,15 +481,17 @@ int main(int argc, char *argv[])
 		}
 		snprintf(id, strlen(id_prefix)+10, "%s%d", id_prefix, getpid());
 	}else if(!id){
-		id = malloc(30);
+		id = malloc(MOSQ_MQTT_ID_MAX_LENGTH + 1);
 		if(!id){
 			if(!quiet) fprintf(stderr, "Error: Out of memory.\n");
 			mosquitto_lib_cleanup();
 			return 1;
 		}
-		memset(hostname, 0, 21);
-		gethostname(hostname, 20);
-		snprintf(id, 23, "mosqpub/%d-%s", getpid(), hostname);
+		hostname[0] = '\0';
+		gethostname(hostname, MOSQ_MQTT_ID_MAX_LENGTH - 10);
+		hostname[MOSQ_MQTT_ID_MAX_LENGTH - 10] = '\0';
+		snprintf(id, MOSQ_MQTT_ID_MAX_LENGTH, "mosqpub/%d-%s", getpid(), hostname);
+		id[MOSQ_MQTT_ID_MAX_LENGTH] = '\0';
 	}
 
 	mosq = mosquitto_new(id, true, NULL);

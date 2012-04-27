@@ -98,6 +98,9 @@ extern "C" {
 #define MOSQ_ERR_UNKNOWN 13
 #define MOSQ_ERR_ERRNO 14
 
+/* MQTT specification restricts client ids to a maximum of 23 characters */
+#define MOSQ_MQTT_ID_MAX_LENGTH 23
+
 struct mosquitto_message{
 	uint16_t mid;
 	char *topic;
