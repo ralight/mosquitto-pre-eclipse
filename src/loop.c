@@ -49,7 +49,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <util_mosq.h>
 
 #ifndef POLLRDHUP
-#define POLLRDHUP POLLHUP
+/* Ignore POLLRDHUP flag on systems where it doesn't exist. */
+#define POLLRDHUP 0
 #endif
 
 extern bool flag_reload;
