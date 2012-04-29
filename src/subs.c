@@ -119,7 +119,7 @@ static int _subs_process(struct _mosquitto_db *db, struct _mosquitto_subhier *hi
 			}else{
 				mid = 0;
 			}
-			if(leaf->context->bridge){
+			if(leaf->context->is_bridge){
 				/* If we know the client is a bridge then we should set retain
 				 * even if the message is fresh. If we don't do this, retained
 				 * messages won't be propagated. */

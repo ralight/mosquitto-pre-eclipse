@@ -142,6 +142,7 @@ struct mosquitto {
 	pthread_t thread_id;
 #endif
 #ifdef WITH_BROKER
+	bool is_bridge;
 	struct _mqtt3_bridge *bridge;
 	struct _mosquitto_client_msg *msgs;
 	struct _mosquitto_acl_user *acl_list;

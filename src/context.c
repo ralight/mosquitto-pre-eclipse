@@ -47,7 +47,7 @@ struct mosquitto *mqtt3_context_init(int sock)
 	socklen_t addrlen;
 	char address[1024];
 
-	context = _mosquitto_malloc(sizeof(struct mosquitto));
+	context = _mosquitto_calloc(1, sizeof(struct mosquitto));
 	if(!context) return NULL;
 	
 	context->state = mosq_cs_new;
@@ -64,6 +64,10 @@ struct mosquitto *mqtt3_context_init(int sock)
 	context->password = NULL;
 	context->listener = NULL;
 	context->acl_list = NULL;
+	/* is_bridge records whether this client is a bridge or not. This could be
+	 * done by looking at context->bridge for bridges that we create ourself,
+	 * but incoming bridges need some other way of being recorded. */
+	context->is_bridge = false;
 
 	context->in_packet.payload = NULL;
 	_mosquitto_packet_cleanup(&context->in_packet);
