@@ -114,6 +114,7 @@ int mqtt3_bridge_new(mosquitto_db *db, struct _mqtt3_bridge *bridge)
 		_mosquitto_free(id);
 	}
 	new_context->bridge = bridge;
+	new_context->is_bridge = true;
 
 	new_context->username = new_context->bridge->username;
 	new_context->password = new_context->bridge->password;
