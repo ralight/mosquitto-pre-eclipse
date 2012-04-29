@@ -19,6 +19,8 @@ Broker:
 - Significant improvement to memory handling on Windows.
 - Bridges with outgoing topics will now set the retain flag correctly so that
   messages will be retained on the remote broker.
+- Incoming bridge connections are now detected by checking if bit 8 of the
+  protocol version number is set. This requires support from the remote broker.
 - Fix reloading of persistence_file and persistence_location.
 - Fix broker crash on incorrect protocol number.
 - Fix missing COMPAT_ECONNRESET define on Windows.
