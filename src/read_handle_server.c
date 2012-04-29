@@ -86,7 +86,7 @@ int mqtt3_handle_connect(mosquitto_db *db, int context_index)
 		mqtt3_context_disconnect(db, context_index);
 		return 1;
 	}
-	if(protocol_version != PROTOCOL_VERSION){
+	if((protocol_version&0x7F) != PROTOCOL_VERSION){
 		if(db->config->connection_messages == true){
 			_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Invalid protocol version %d in CONNECT from %s.",
 					protocol_version, context->address);
@@ -94,6 +94,9 @@ int mqtt3_handle_connect(mosquitto_db *db, int context_index)
 		_mosquitto_send_connack(context, 1);
 		mqtt3_context_disconnect(db, context_index);
 		return MOSQ_ERR_PROTOCOL;
+	}
+	if((protocol_version&0x80) == 0x80){
+		context->is_bridge = true;
 	}
 
 	if(_mosquitto_read_byte(&context->in_packet, &connect_flags)){
