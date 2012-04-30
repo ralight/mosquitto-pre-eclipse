@@ -50,6 +50,7 @@ try:
 	sock.close()
 finally:
 	broker.terminate()
+	broker.wait()
 
 exit(rc)
 
