@@ -1,20 +1,28 @@
 include config.mk
 
-DIRS=lib client src man
+DIRS=lib client src
+DOCDIRS=man
 DISTDIRS=man
 
-.PHONY : all mosquitto clean reallyclean test install uninstall dist sign copy
+.PHONY : all mosquitto docs binary clean reallyclean test install uninstall dist sign copy
 
-all : mosquitto
+all : mosquitto docs
+
+docs :
+	for d in ${DOCDIRS}; do $(MAKE) -C $${d}; done
+
+binary : mosquitto
 
 mosquitto :
 	for d in ${DIRS}; do $(MAKE) -C $${d}; done
 
 clean :
 	for d in ${DIRS}; do $(MAKE) -C $${d} clean; done
+	for d in ${DOCDIRS}; do $(MAKE) -C $${d} clean; done
 
 reallyclean : 
 	for d in ${DIRS}; do $(MAKE) -C $${d} reallyclean; done
+	for d in ${DOCDIRS}; do $(MAKE) -C $${d} reallyclean; done
 	-rm -f *.orig
 
 test :
@@ -22,6 +30,7 @@ test :
 
 install : mosquitto
 	@for d in ${DIRS}; do $(MAKE) -C $${d} install; done
+	@for d in ${DOCDIRS}; do $(MAKE) -C $${d} install; done
 	$(INSTALL) -d ${DESTDIR}/etc/mosquitto
 	$(INSTALL) -m 644 mosquitto.conf ${DESTDIR}/etc/mosquitto/mosquitto.conf
 	$(INSTALL) -m 644 aclfile.example ${DESTDIR}/etc/mosquitto/aclfile.example
