@@ -91,7 +91,7 @@ int mqtt3_handle_connect(mosquitto_db *db, int context_index)
 			_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Invalid protocol version %d in CONNECT from %s.",
 					protocol_version, context->address);
 		}
-		_mosquitto_send_connack(context, 1);
+		_mosquitto_send_connack(context, CONNACK_REFUSED_PROTOCOL_VERSION);
 		mqtt3_context_disconnect(db, context_index);
 		return MOSQ_ERR_PROTOCOL;
 	}
@@ -126,7 +126,7 @@ int mqtt3_handle_connect(mosquitto_db *db, int context_index)
 #else
 	if(slen == 0){
 #endif
-		_mosquitto_send_connack(context, 2);
+		_mosquitto_send_connack(context, CONNACK_REFUSED_IDENTIFIER_REJECTED);
 		mqtt3_context_disconnect(db, context_index);
 		return 1;
 	}
@@ -135,7 +135,7 @@ int mqtt3_handle_connect(mosquitto_db *db, int context_index)
 	if(db->config->clientid_prefixes){
 		if(strncmp(db->config->clientid_prefixes, client_id, strlen(db->config->clientid_prefixes))){
 			_mosquitto_free(client_id);
-			_mosquitto_send_connack(context, 2);
+			_mosquitto_send_connack(context, CONNACK_REFUSED_NOT_AUTHORIZED);
 			mqtt3_context_disconnect(db, context_index);
 			return MOSQ_ERR_SUCCESS;
 		}
@@ -178,7 +178,7 @@ int mqtt3_handle_connect(mosquitto_db *db, int context_index)
 			context->username = username;
 			context->password = password;
 			if(rc == MOSQ_ERR_AUTH){
-				_mosquitto_send_connack(context, 2);
+				_mosquitto_send_connack(context, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
 				mqtt3_context_disconnect(db, context_index);
 				_mosquitto_free(client_id);
 				return MOSQ_ERR_SUCCESS;
@@ -196,7 +196,7 @@ int mqtt3_handle_connect(mosquitto_db *db, int context_index)
 	}
 
 	if(!username_flag && db->config->allow_anonymous == false){
-		_mosquitto_send_connack(context, 2);
+		_mosquitto_send_connack(context, CONNACK_REFUSED_NOT_AUTHORIZED);
 		mqtt3_context_disconnect(db, context_index);
 		_mosquitto_free(client_id);
 		return MOSQ_ERR_SUCCESS;
@@ -302,7 +302,7 @@ int mqtt3_handle_connect(mosquitto_db *db, int context_index)
 	}
 
 	context->state = mosq_cs_connected;
-	return _mosquitto_send_connack(context, 0);
+	return _mosquitto_send_connack(context, CONNACK_ACCEPTED);
 }
 
 int mqtt3_handle_disconnect(mosquitto_db *db, int context_index)
