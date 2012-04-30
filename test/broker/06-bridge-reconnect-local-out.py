@@ -71,7 +71,9 @@ try:
 	sock.close()
 finally:
 	broker.terminate()
+	broker.wait()
 	local_broker.terminate()
+	local_broker.wait()
 	try:
 		os.remove('mosquitto.db')
 	except OSError:

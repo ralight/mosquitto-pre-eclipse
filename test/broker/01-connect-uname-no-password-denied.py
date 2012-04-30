@@ -31,6 +31,7 @@ try:
 		rc = 0
 finally:
 	broker.terminate()
+	broker.wait()
 
 exit(rc)
 
