@@ -58,7 +58,7 @@ try:
 				publish_recvd = sock.recv(256)
 
 				if publish_recvd != publish_dup_packet:
-					print("FAIL: Recieved publish with dup not correct.")
+					print("FAIL: Received publish with dup not correct.")
 					print("Received: "+publish_recvd+" length="+str(len(publish_recvd)))
 					print("Expected: "+publish_packet+" length="+str(len(publish_packet)))
 				else:
