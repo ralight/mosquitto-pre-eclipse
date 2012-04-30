@@ -36,7 +36,7 @@ try:
 	time.sleep(0.1)
 
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	sock.settimeout(8) # 8 seconds timeout is longer than 5 seconds message retry.
+	sock.settimeout(60) # 60 seconds timeout is much longer than 5 seconds message retry.
 	sock.connect(("localhost", 1888))
 	sock.send(connect_packet)
 	connack_recvd = sock.recv(256)
