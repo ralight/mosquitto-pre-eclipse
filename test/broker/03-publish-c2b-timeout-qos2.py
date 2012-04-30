@@ -23,7 +23,7 @@ pubcomp_packet = pack('!BBH', 112, 2, mid)
 broker = subprocess.Popen(['../../src/mosquitto', '-c', '03-publish-c2b-timeout-qos2.conf'], stderr=subprocess.PIPE)
 
 try:
-	time.sleep(0.1)
+	time.sleep(0.5)
 
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	sock.settimeout(60) # 60 seconds timeout is much longer than 5 seconds message retry.
