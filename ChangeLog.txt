@@ -31,6 +31,7 @@ Broker:
   notifications will now be correct on a restart.
 - Fix reloading of bridge clients from the persistent db. This means that
   outgoing bridged topics should always work.
+- Local bridges are now no longer restricted by local ACLs.
 
 Client library:
 

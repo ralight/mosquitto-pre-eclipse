@@ -287,6 +287,7 @@ int mosquitto_acl_check(struct _mosquitto_db *db, struct mosquitto *context, con
 
 	if(!db || !context || !topic) return MOSQ_ERR_INVAL;
 	if(!db->acl_list) return MOSQ_ERR_SUCCESS;
+	if(context->bridge) return MOSQ_ERR_SUCCESS;
 	if(!context->acl_list && !db->acl_patterns) return MOSQ_ERR_ACL_DENIED;
 
 	if(context->acl_list){
