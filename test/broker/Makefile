@@ -7,6 +7,7 @@ test :
 	./01-connect-invalid-protonum.py
 	./01-connect-invalid-id-0.py
 	./01-connect-anon-denied.py
+	./01-connect-uname-no-password-denied.py
 	./02-subscribe-qos0.py
 	./02-subscribe-qos1.py
 	./02-subscribe-qos2.py
