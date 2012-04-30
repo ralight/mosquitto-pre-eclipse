@@ -11,4 +11,4 @@ Numbering is as follows:
 04: Retained message tests
 05: Clean session tests
 06: Bridge tests
-
+07: Will tests
