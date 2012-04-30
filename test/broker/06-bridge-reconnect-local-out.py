@@ -25,15 +25,15 @@ except OSError:
 	pass
 
 broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'], stderr=subprocess.PIPE)
-time.sleep(0.1)
+time.sleep(0.5)
 local_broker = subprocess.Popen(['../../src/mosquitto', '-c', '06-bridge-reconnect-local-out.conf'], stderr=subprocess.PIPE)
-time.sleep(0.1)
+time.sleep(0.5)
 local_broker.terminate()
 local_broker.wait()
 local_broker = subprocess.Popen(['../../src/mosquitto', '-c', '06-bridge-reconnect-local-out.conf'], stderr=subprocess.PIPE)
 
 try:
-	time.sleep(0.1)
+	time.sleep(0.5)
 
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	sock.settimeout(60) # 60 seconds timeout is much longer than 5 seconds message retry.

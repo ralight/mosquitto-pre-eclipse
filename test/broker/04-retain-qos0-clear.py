@@ -26,7 +26,7 @@ unsuback_packet = pack('!BBH', 176, 2, mid_unsub)
 broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'], stderr=subprocess.PIPE)
 
 try:
-	time.sleep(0.1)
+	time.sleep(0.5)
 
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	sock.settimeout(4) # Reduce timeout for when we don't expect incoming data.

@@ -16,7 +16,7 @@ connack_packet = pack('!BBBB', 32, 2, 0, 0);
 broker = subprocess.Popen(['../../src/mosquitto', '-c', '01-connect-uname-password-success.conf'], stderr=subprocess.PIPE)
 
 try:
-	time.sleep(0.1)
+	time.sleep(0.5)
 
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	sock.connect(("localhost", 1888))

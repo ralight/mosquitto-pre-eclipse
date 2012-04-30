@@ -19,7 +19,7 @@ puback_packet = pack('!BBH', 64, 2, mid)
 broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'], stderr=subprocess.PIPE)
 
 try:
-	time.sleep(0.1)
+	time.sleep(0.5)
 
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	sock.connect(("localhost", 1888))

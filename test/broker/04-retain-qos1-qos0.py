@@ -25,7 +25,7 @@ publish0_packet = pack('!BBH16s16s', 48+1, 2+16+16, 16, "retain/qos1/test", "ret
 broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'], stderr=subprocess.PIPE)
 
 try:
-	time.sleep(0.1)
+	time.sleep(0.5)
 
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	sock.connect(("localhost", 1888))
