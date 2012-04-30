@@ -25,7 +25,7 @@ try:
 
 	if connack_recvd != connack_packet:
 		(cmd, rl, resv, rc) = unpack('!BBBB', connack_recvd)
-		print("FAIL: Expected 32,2,0,0 got " + str(cmd) + "," + str(rl) + "," + str(resv) + "," + str(rc))
+		print("FAIL: Expected 32,2,0,5 got " + str(cmd) + "," + str(rl) + "," + str(resv) + "," + str(rc))
 	else:
 		rc = 0
 finally:
