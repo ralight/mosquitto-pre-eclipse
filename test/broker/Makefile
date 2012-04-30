@@ -26,6 +26,7 @@ test :
 	./04-retain-qos0-clear.py
 	./05-clean-session-qos1.py 
 	./06-bridge-reconnect-local-out.py
+	./07-will-qos0.py
 
 # Tests for with WITH_STRICT_PROTOCOL defined
 strict-test : 
