@@ -510,7 +510,7 @@ int _mosquitto_packet_write(struct mosquitto *mosq)
 }
 
 #ifdef WITH_BROKER
-int _mosquitto_packet_read(mosquitto_db *db, int context_index)
+int _mosquitto_packet_read(mosquitto_db *db, struct mosquitto *mosq)
 #else
 int _mosquitto_packet_read(struct mosquitto *mosq)
 #endif
@@ -518,12 +518,6 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 	uint8_t byte;
 	ssize_t read_length;
 	int rc = 0;
-#ifdef WITH_BROKER
-	struct mosquitto *mosq;
-
-	if(context_index < 0 || context_index >= db->context_count) return MOSQ_ERR_INVAL;
-	mosq = db->contexts[context_index];
-#endif
 
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
@@ -643,7 +637,7 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 	if(((mosq->in_packet.command)&0xF5) == PUBLISH){
 		g_pub_msgs_received++;
 	}
-	rc = mqtt3_packet_handle(db, context_index);
+	rc = mqtt3_packet_handle(db, mosq);
 #else
 	rc = _mosquitto_packet_handle(mosq);
 #endif

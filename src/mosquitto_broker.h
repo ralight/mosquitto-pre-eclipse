@@ -263,10 +263,10 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener);
 /* ============================================================
  * Read handling functions
  * ============================================================ */
-int mqtt3_packet_handle(mosquitto_db *db, int context_index);
+int mqtt3_packet_handle(mosquitto_db *db, struct mosquitto *context);
 int mqtt3_handle_connack(mosquitto_db *db, struct mosquitto *context);
-int mqtt3_handle_connect(mosquitto_db *db, int context_index);
-int mqtt3_handle_disconnect(mosquitto_db *db, int context_index);
+int mqtt3_handle_connect(mosquitto_db *db, struct mosquitto *context);
+int mqtt3_handle_disconnect(mosquitto_db *db, struct mosquitto *context);
 int mqtt3_handle_publish(mosquitto_db *db, struct mosquitto *context);
 int mqtt3_handle_subscribe(mosquitto_db *db, struct mosquitto *context);
 int mqtt3_handle_unsubscribe(mosquitto_db *db, struct mosquitto *context);
@@ -315,7 +315,7 @@ int mqtt3_subs_clean_session(struct mosquitto *context, struct _mosquitto_subhie
  * ============================================================ */
 struct mosquitto *mqtt3_context_init(int sock);
 void mqtt3_context_cleanup(mosquitto_db *db, struct mosquitto *context, bool do_free);
-void mqtt3_context_disconnect(mosquitto_db *db, int context_index);
+void mqtt3_context_disconnect(mosquitto_db *db, struct mosquitto *context);
 
 /* ============================================================
  * Logging functions

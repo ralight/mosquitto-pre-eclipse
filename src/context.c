@@ -169,11 +169,8 @@ void mqtt3_context_cleanup(mosquitto_db *db, struct mosquitto *context, bool do_
 	}
 }
 
-void mqtt3_context_disconnect(mosquitto_db *db, int context_index)
+void mqtt3_context_disconnect(mosquitto_db *db, struct mosquitto *ctxt)
 {
-	struct mosquitto *ctxt;
-
-	ctxt = db->contexts[context_index];
 	if(ctxt->state != mosq_cs_disconnecting && ctxt->will){
 		/* Unexpected disconnect, queue the client will. */
 		mqtt3_db_messages_easy_queue(db, ctxt, ctxt->will->topic, ctxt->will->qos, ctxt->will->payloadlen, ctxt->will->payload, ctxt->will->retain);
