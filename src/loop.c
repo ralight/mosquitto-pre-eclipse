@@ -129,14 +129,14 @@ int mosquitto_main_loop(mosquitto_db *db, int *listensock, int listensock_count,
 							db->contexts[i]->pollfd_index = pollfd_index;
 							pollfd_index++;
 						}else{
-							mqtt3_context_disconnect(db, i);
+							mqtt3_context_disconnect(db, db->contexts[i]);
 						}
 					}else{
 						if(db->config->connection_messages == true){
 							_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", db->contexts[i]->id);
 						}
 						/* Client has exceeded keepalive*1.5 */
-						mqtt3_context_disconnect(db, i);
+						mqtt3_context_disconnect(db, db->contexts[i]);
 					}
 				}else{
 #ifdef WITH_BRIDGE
@@ -250,7 +250,7 @@ static void do_disconnect(mosquitto_db *db, int context_index)
 			_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected.", db->contexts[context_index]->id);
 		}
 	}
-	mqtt3_context_disconnect(db, context_index);
+	mqtt3_context_disconnect(db, db->contexts[context_index]);
 }
 
 /* Error ocurred, probably an fd has been closed. 
@@ -291,14 +291,14 @@ static void loop_handle_reads_writes(mosquitto_db *db, struct pollfd *pollfds)
 						}
 					}
 					/* Write error or other that means we should disconnect */
-					mqtt3_context_disconnect(db, i);
+					mqtt3_context_disconnect(db, db->contexts[i]);
 				}
 			}
 		}
 		if(db->contexts[i] && db->contexts[i]->sock != INVALID_SOCKET){
 			assert(pollfds[db->contexts[i]->pollfd_index].fd == db->contexts[i]->sock);
 			if(pollfds[db->contexts[i]->pollfd_index].revents & POLLIN){
-				if(_mosquitto_packet_read(db, i)){
+				if(_mosquitto_packet_read(db, db->contexts[i])){
 					if(db->config->connection_messages == true){
 						if(db->contexts[i]->state != mosq_cs_disconnecting){
 							_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Socket read error on client %s, disconnecting.", db->contexts[i]->id);
@@ -307,7 +307,7 @@ static void loop_handle_reads_writes(mosquitto_db *db, struct pollfd *pollfds)
 						}
 					}
 					/* Read error or other that means we should disconnect */
-					mqtt3_context_disconnect(db, i);
+					mqtt3_context_disconnect(db, db->contexts[i]);
 				}
 			}
 		}
