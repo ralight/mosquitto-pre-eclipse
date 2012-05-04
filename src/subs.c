@@ -85,6 +85,13 @@ static int _subs_process(struct _mosquitto_db *db, struct _mosquitto_subhier *hi
 	leaf = hier->subs;
 
 	if(retain){
+#ifdef WITH_PERSISTENCE
+		if(strncmp(topic, "$SYS", 4)){
+			/* Retained messages count as a persistence change, but only if
+			 * they aren't for $SYS. */
+			db->persistence_changes++;
+		}
+#endif
 		if(hier->retained){
 			hier->retained->ref_count--;
 			/* FIXME - it would be nice to be able to remove the message from the store at this point if ref_count == 0 */

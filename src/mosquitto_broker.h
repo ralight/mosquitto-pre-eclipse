@@ -87,6 +87,7 @@ typedef struct {
 	char *acl_file;
 	bool allow_anonymous;
 	int autosave_interval;
+	bool autosave_on_changes;
 	char *clientid_prefixes;
 	bool connection_messages;
 	bool daemon;
@@ -187,6 +188,7 @@ typedef struct _mosquitto_db{
 	struct mosquitto_msg_store *msg_store;
 	int msg_store_count;
 	mqtt3_config *config;
+	int persistence_changes;
 } mosquitto_db;
 
 enum mqtt3_bridge_direction{

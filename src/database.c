@@ -304,6 +304,12 @@ int mqtt3_db_message_insert(mosquitto_db *db, struct mosquitto *context, uint16_
 	}
 	assert(state != ms_invalid);
 
+#ifdef WITH_PERSISTENCE
+	if(state == ms_queued){
+		db->persistence_changes++;
+	}
+#endif
+
 	msg = _mosquitto_malloc(sizeof(mosquitto_client_msg));
 	if(!msg) return MOSQ_ERR_NOMEM;
 	msg->next = NULL;

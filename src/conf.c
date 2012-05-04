@@ -47,6 +47,7 @@ static void _config_init_reload(mqtt3_config *config)
 	config->acl_file = NULL;
 	config->allow_anonymous = true;
 	config->autosave_interval = 1800;
+	config->autosave_on_changes = false;
 	if(config->clientid_prefixes) _mosquitto_free(config->clientid_prefixes);
 	config->connection_messages = true;
 	config->clientid_prefixes = NULL;
@@ -333,6 +334,8 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 				}else if(!strcmp(token, "autosave_interval")){
 					if(_conf_parse_int(&token, "autosave_interval", &config->autosave_interval, saveptr)) return MOSQ_ERR_INVAL;
 					if(config->autosave_interval < 0) config->autosave_interval = 0;
+				}else if(!strcmp(token, "autosave_on_changes")){
+					if(_conf_parse_bool(&token, "autosave_on_changes", &config->autosave_on_changes, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "bind_address")){
 					if(reload) continue; // Listener not valid for reloading.
 					if(_conf_parse_string(&token, "default listener bind_address", &config->default_listener.host, saveptr)) return MOSQ_ERR_INVAL;
@@ -829,14 +832,10 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 				}else if(!strcmp(token, "db_port")){
 					if(_conf_parse_int(&token, "db_port", &config->db_port, saveptr)) return MOSQ_ERR_INVAL;
 #endif
-				}else if(!strcmp(token, "autosave_on_changes")
-						|| !strcmp(token, "connection_messages")
-						|| !strcmp(token, "trace_level")
+				}else if(!strcmp(token, "trace_level")
 						|| !strcmp(token, "addresses")
-						|| !strcmp(token, "idle_timeout")
 						|| !strcmp(token, "notification_topic")
 						|| !strcmp(token, "round_robin")
-						|| !strcmp(token, "threshold")
 						|| !strcmp(token, "try_private")
 						|| !strcmp(token, "ffdc_output")
 						|| !strcmp(token, "max_log_entries")

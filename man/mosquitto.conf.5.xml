@@ -118,6 +118,18 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>autosave_on_changes</option> <replaceable>seconds</replaceable></term>
+				<listitem>
+					<para>If true, mosquitto will count the number of
+					subscription changes, retained messages received and queued
+					messages and if the total exceeds autosave_interval then
+					the in-memory database will be saved to disk. If false,
+					mosquitto will save the in-memory database to disk by
+					treating autosave_interval as a time in seconds.</para>
+					<para>Reloaded on reload signal.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>bind_address</option> <replaceable>address</replaceable></term>
 				<listitem>
 					<para>Listen for incoming network connections on the
