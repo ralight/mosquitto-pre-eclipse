@@ -289,7 +289,7 @@ int main(int argc, char *argv[])
 	mqtt3_log_close();
 
 #ifdef WITH_PERSISTENCE
-	if(config.persistence && config.autosave_interval){
+	if(config.persistence){
 		mqtt3_db_backup(&int_db, true, true);
 	}
 #endif

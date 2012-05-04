@@ -259,6 +259,11 @@ int mqtt3_handle_connect(mosquitto_db *db, struct mosquitto *context)
 	context->id = client_id;
 	context->clean_session = clean_session;
 
+#ifdef WITH_PERSISTENCE
+	if(!clean_session){
+		db->persistence_changes++;
+	}
+#endif
 	context->will = will_struct;
 	if(context->will){
 		context->will->topic = will_topic;
@@ -417,6 +422,10 @@ int mqtt3_handle_subscribe(mosquitto_db *db, struct mosquitto *context)
 	if(_mosquitto_send_suback(context, mid, payloadlen, payload)) rc = 1;
 	_mosquitto_free(payload);
 	
+#ifdef WITH_PERSISTENCE
+	db->persistence_changes++;
+#endif
+
 	return rc;
 }
 
@@ -442,6 +451,9 @@ int mqtt3_handle_unsubscribe(mosquitto_db *db, struct mosquitto *context)
 			_mosquitto_free(sub);
 		}
 	}
+#ifdef WITH_PERSISTENCE
+	db->persistence_changes++;
+#endif
 
 	return _mosquitto_send_command_with_mid(context, UNSUBACK, mid, false);
 }
