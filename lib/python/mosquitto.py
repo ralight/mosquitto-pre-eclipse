@@ -305,7 +305,7 @@ class Mosquitto:
         return MOSQ_ERR_SUCCESS
 
     def disconnect(self):
-        if self._sock < 0:
+        if self._sock == None:
             return MOSQ_ERR_NO_CONN
 
         #pthread_mutex_lock(&mosq->state_mutex)
@@ -315,13 +315,13 @@ class Mosquitto:
         return self._send_disconnect()
     
     def subscribe(self, topic, qos):
-        if self._sock < 0:
+        if self._sock == None:
             return MOSQ_ERR_NO_CONN
 
         return self._send_subscribe(False, topic, qos)
 
     def unsubscribe(self, topic):
-        if self._sock < 0:
+        if self._sock == None:
             return MOSQ_ERR_NO_CONN
 
         return self._send_unsubscribe(False, topic)
@@ -528,7 +528,7 @@ class Mosquitto:
                 return packet
 
     def _send_publish(self, mid, topic, payload=None, qos=0, retain=False, dup=False):
-        if self._sock == -1:
+        if self._sock == None:
             return MOSQ_ERR_NO_CONN
 
         # FIXME _mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Sending PUBLISH (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", dup, qos, retain, mid, topic, (long)payloadlen)
