@@ -1,7 +1,9 @@
-This is my first attempt at a python wrapper. I'm not a python programmer so it
-works, but ain't pretty. If you can make it more pythonic I'd love to hear from
-you!
+This directory contains two Python modules, mosquitto.py and mosquitto-wrap.py.
 
-Thanks,
+mosquitto.py is a pure Python implementation of an MQTT client.
+mosquitto-wrap.py is a Python wrapper around the mosquitto C client library.
 
-Roger
+mosquitto-wrap.py is more mature that mosquitto.py
+
+At some point, mosquitto.py will become the only offering but it needs a lot of
+improvement first.

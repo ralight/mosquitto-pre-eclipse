@@ -7,5 +7,5 @@ setup(name='mosquitto',
 	url='http://mosquitto.org/',
 	download_url='http://mosquitto.org/files/',
 	license='BSD License',
-	py_modules=['mosquitto']
+	py_modules=['mosquitto','mosquitto-wrap]
 	)
