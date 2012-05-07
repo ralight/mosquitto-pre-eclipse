@@ -129,7 +129,7 @@ class MosquittoPacket:
 class Mosquitto:
     def __init__(self, client_id="", clean_session=True, obj=None):
         if clean_session == False and client_id == "":
-            raise Something
+            raise ValueError('A client id must be provided if clean session is False.')
 
         self._obj = None
         self._sock = None
@@ -145,7 +145,7 @@ class Mosquitto:
         self._username = ""
         self._password = ""
         self._in_packet = MosquittoInPacket()
-        self._out_packet = [] # FIXME use collections.deque() ?
+        self._out_packet = []
         self._last_msg_in = time.time()
         self._last_msg_out = time.time()
         self._ping_t = 0
@@ -186,8 +186,10 @@ class Mosquitto:
         return self.reconnect()
 
     def connect_async(self, host, port=1883, keepalive=60):
-        if len(host) == 0 or port <= 0:
-            return MOSQ_ERR_INVAL
+        if len(host) == 0:
+            raise ValueError('Invalid host.')
+        if port <= 0:
+            raise ValueError('Invalid port number.')
 
         self._host = host
         self._port = port
@@ -199,8 +201,10 @@ class Mosquitto:
         return MOSQ_ERR_SUCCESS
 
     def reconnect(self):
-        if len(self._host) == 0 or self._port <= 0:
-            return MOSQ_ERR_INVAL
+        if len(host) == 0:
+            raise ValueError('Invalid host.')
+        if port <= 0:
+            raise ValueError('Invalid port number.')
 
         #pthread_mutex_lock(&mosq->state_mutex)
         self._state = mosq_cs_new
@@ -263,11 +267,12 @@ class Mosquitto:
         return self.loop_misc()
 
     def publish(self, topic, payload=None, qos=0, retain=False):
-        if len(topic) == 0 or qos<0 or qos>2:
-            return MOSQ_ERR_INVAL
-
+        if len(topic) == 0:
+            raise ValueError('Invalid port number.')
+        if qos<0 or qos>2:
+            raise ValueError('Invalid QoS level.')
         if len(payload) > 268435455:
-            return MOSQ_ERR_PAYLOAD_SIZE
+            raise ValueError('Payload too large.')
 
         if self._topic_wildcard_len_check(topic) != MOSQ_ERR_SUCCESS:
             return MOSQ_ERR_INVAL
@@ -369,7 +374,7 @@ class Mosquitto:
         self._will_retain = retain
 
     def will_clear(self):
-        self._will = True
+        self._will = False
         self._will_topic = ""
         self._will_payload = None
         self._will_qos = 0
