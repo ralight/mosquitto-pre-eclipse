@@ -179,10 +179,7 @@ class Mosquitto:
         pass
 
     def connect(self, host, port=1883, keepalive=60):
-        rc = self.connect_async(host, port, keepalive)
-        if rc:
-            return rc
-
+        self.connect_async(host, port, keepalive)
         return self.reconnect()
 
     def connect_async(self, host, port=1883, keepalive=60):
@@ -198,7 +195,6 @@ class Mosquitto:
         #pthread_mutex_lock(&mosq->state_mutex)
         self._state = mosq_cs_connect_async
         #pthread_mutex_unlock(&mosq->state_mutex)
-        return MOSQ_ERR_SUCCESS
 
     def reconnect(self):
         if len(host) == 0:
@@ -275,7 +271,7 @@ class Mosquitto:
             raise ValueError('Payload too large.')
 
         if self._topic_wildcard_len_check(topic) != MOSQ_ERR_SUCCESS:
-            return MOSQ_ERR_INVAL
+            raise ValueError('Publish topic cannot contain wildcards.')
 
         local_mid = self._mid_generate()
 
@@ -307,7 +303,6 @@ class Mosquitto:
     def username_ps_set(self, username, password=None):
         self._username = username
         self._password = password
-        return MOSQ_ERR_SUCCESS
 
     def disconnect(self):
         if self._sock == None:
@@ -332,10 +327,107 @@ class Mosquitto:
         return self._send_unsubscribe(False, topic)
 
     def loop_read(self):
-        return self._packet_read()
+        # This gets called if pselect() indicates that there is network data
+         # available - ie. at least one byte.  What we do depends on what data we
+         # already have.
+         # If we've not got a command, attempt to read one and save it. This should
+         # always work because it's only a single byte.
+         # Then try to read the remaining length. This may fail because it is may
+         # be more than one byte - will need to save data pending next read if it
+         # does fail.
+         # Then try to read the remaining payload, where 'payload' here means the
+         # combined variable header and actual payload. This is the most likely to
+         # fail due to longer length, so save current data and current position.
+         # After all data is read, send to _mosquitto_handle_packet() to deal with.
+         # Finally, free the memory and reset everything to starting conditions.
+        if self._in_packet.command == 0:
+            try:
+                command = self._sock.recv(1)
+            except socket.error as err:
+                (msg) = err
+                if msg.errno == 11:
+                    return 0
+                print(msg)
+                return 1
+            else:
+                command = struct.unpack("!B", command)
+                self._in_packet.command = command[0]
+
+        if self._in_packet.have_remaining == 0:
+            # Read remaining
+             # Algorithm for decoding taken from pseudo code at
+             # http://publib.boulder.ibm.com/infocenter/wmbhelp/v6r0m0/topic/com.ibm.etools.mft.doc/ac10870_.htm
+            while True:
+                try:
+                    byte = self._sock.recv(1)
+                except socket.error as err:
+                    (msg) = err
+                    if msg.errno == 11:
+                        return 0
+                    print(msg)
+                    return 1
+                else:
+                    byte = struct.unpack("!B", byte)
+                    byte = byte[0]
+                    self._in_packet.remaining_count.append(byte)
+                    # Max 4 bytes length for remaining length as defined by protocol.
+                     # Anything more likely means a broken/malicious client.
+                    if len(self._in_packet.remaining_count) > 4:
+                        return MOSQ_ERR_PROTOCOL
+
+                    self._in_packet.remaining_length = self._in_packet.remaining_length + (byte & 127)*self._in_packet.remaining_mult
+                    self._in_packet.remaining_mult = self._in_packet.remaining_mult * 128
+
+                if (byte & 128) == 0:
+                    break
+
+            self._in_packet.have_remaining = 1
+            self._in_packet.to_process = self._in_packet.remaining_length
+
+        while self._in_packet.to_process > 0:
+            try:
+                data = self._sock.recv(self._in_packet.to_process)
+            except socket.error as err:
+                (msg) = err
+                if msg.errno == 11:
+                    return 0
+                print(msg)
+                return 1
+            else:
+                self._in_packet.to_process = self._in_packet.to_process - len(data)
+                self._in_packet.packet = self._in_packet.packet + data
+
+        # All data for this packet is read.
+        self._in_packet.pos = 0
+        rc = self._packet_handle()
+
+        # Free data and reset values 
+        self._in_packet.cleanup()
+
+        #pthread_mutex_lock(&mosq->msgtime_mutex)
+        self._last_msg_in = time.time()
+        #pthread_mutex_unlock(&mosq->msgtime_mutex)
+        return rc
+
 
     def loop_write(self):
-        return self._packet_write()
+        if self._sock == None:
+            return MOSQ_ERR_NO_CONN
+
+        while len(self._out_packet) > 0:
+            packet = self._out_packet[0]
+
+            write_length = self._sock.send(packet.packet[packet.pos:])
+            if write_length > 0:
+                packet.to_process = packet.to_process - write_length
+                packet.pos = packet.pos + write_length
+
+                if packet.to_process == 0:
+                    self._out_packet.pop(0)
+            else:
+                pass
+        
+        return MOSQ_ERR_SUCCESS
 
     def want_write(self):
         if self._out_packet == None:
@@ -683,7 +775,7 @@ class Mosquitto:
         #pthread_mutex_unlock(&mosq->out_packet_mutex)
 
         if self._in_callback == False:
-            return self._packet_write()
+            return self.loop_write()
         else:
             return MOSQ_ERR_SUCCESS
 
@@ -731,108 +823,6 @@ class Mosquitto:
         self._ping_t = 0
         # FIXME _mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Received PINGRESP")
         return MOSQ_ERR_SUCCESS
-
-    def _packet_write(self):
-        if self._sock == None:
-            return MOSQ_ERR_NO_CONN
-
-        while len(self._out_packet) > 0:
-            packet = self._out_packet[0]
-
-            write_length = self._sock.send(packet.packet[packet.pos:])
-            if write_length > 0:
-                packet.to_process = packet.to_process - write_length
-                packet.pos = packet.pos + write_length
-
-                if packet.to_process == 0:
-                    self._out_packet.pop(0)
-            else:
-                pass
-        
-        return MOSQ_ERR_SUCCESS
-
-    def _packet_read(self):
-        # This gets called if pselect() indicates that there is network data
-         # available - ie. at least one byte.  What we do depends on what data we
-         # already have.
-         # If we've not got a command, attempt to read one and save it. This should
-         # always work because it's only a single byte.
-         # Then try to read the remaining length. This may fail because it is may
-         # be more than one byte - will need to save data pending next read if it
-         # does fail.
-         # Then try to read the remaining payload, where 'payload' here means the
-         # combined variable header and actual payload. This is the most likely to
-         # fail due to longer length, so save current data and current position.
-         # After all data is read, send to _mosquitto_handle_packet() to deal with.
-         # Finally, free the memory and reset everything to starting conditions.
-        if self._in_packet.command == 0:
-            try:
-                command = self._sock.recv(1)
-            except socket.error as err:
-                (msg) = err
-                if msg.errno == 11:
-                    return 0
-                print(msg)
-                return 1
-            else:
-                command = struct.unpack("!B", command)
-                self._in_packet.command = command[0]
-
-        if self._in_packet.have_remaining == 0:
-            # Read remaining
-             # Algorithm for decoding taken from pseudo code at
-             # http://publib.boulder.ibm.com/infocenter/wmbhelp/v6r0m0/topic/com.ibm.etools.mft.doc/ac10870_.htm
-            while True:
-                try:
-                    byte = self._sock.recv(1)
-                except socket.error as err:
-                    (msg) = err
-                    if msg.errno == 11:
-                        return 0
-                    print(msg)
-                    return 1
-                else:
-                    byte = struct.unpack("!B", byte)
-                    byte = byte[0]
-                    self._in_packet.remaining_count.append(byte)
-                    # Max 4 bytes length for remaining length as defined by protocol.
-                     # Anything more likely means a broken/malicious client.
-                    if len(self._in_packet.remaining_count) > 4:
-                        return MOSQ_ERR_PROTOCOL
-
-                    self._in_packet.remaining_length = self._in_packet.remaining_length + (byte & 127)*self._in_packet.remaining_mult
-                    self._in_packet.remaining_mult = self._in_packet.remaining_mult * 128
-
-                if (byte & 128) == 0:
-                    break
-
-            self._in_packet.have_remaining = 1
-            self._in_packet.to_process = self._in_packet.remaining_length
-
-        while self._in_packet.to_process > 0:
-            try:
-                data = self._sock.recv(self._in_packet.to_process)
-            except socket.error as err:
-                (msg) = err
-                if msg.errno == 11:
-                    return 0
-                print(msg)
-                return 1
-            else:
-                self._in_packet.to_process = self._in_packet.to_process - len(data)
-                self._in_packet.packet = self._in_packet.packet + data
-
-        # All data for this packet is read.
-        self._in_packet.pos = 0
-        rc = self._packet_handle()
-
-        # Free data and reset values 
-        self._in_packet.cleanup()
-
-        #pthread_mutex_lock(&mosq->msgtime_mutex)
-        self._last_msg_in = time.time()
-        #pthread_mutex_unlock(&mosq->msgtime_mutex)
-        return rc
 
     def _handle_connack(self):
         if self._strict_protocol:
