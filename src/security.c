@@ -35,6 +35,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <mosquitto_broker.h>
 #include <memory_mosq.h>
 
+static int _aclfile_parse(struct _mosquitto_db *db);
+static int _pwfile_parse(struct _mosquitto_db *db);
+
 int mosquitto_security_init(mosquitto_db *db, bool reload)
 {
 	int rc;
@@ -54,7 +57,7 @@ int mosquitto_security_init(mosquitto_db *db, bool reload)
 #else
 	/* Load username/password data if required. */
 	if(db->config->password_file){
-		rc = mqtt3_pwfile_parse(db);
+		rc = _pwfile_parse(db);
 		if(rc){
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error opening password file.");
 			return rc;
@@ -63,7 +66,7 @@ int mosquitto_security_init(mosquitto_db *db, bool reload)
 
 	/* Load acl data if required. */
 	if(db->config->acl_file){
-		rc = mqtt3_aclfile_parse(db);
+		rc = _aclfile_parse(db);
 		if(rc){
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error opening acl file.");
 			return rc;
@@ -437,7 +440,7 @@ int mosquitto_acl_check(struct _mosquitto_db *db, struct mosquitto *context, con
 	return MOSQ_ERR_ACL_DENIED;
 }
 
-int mqtt3_aclfile_parse(struct _mosquitto_db *db)
+static int _aclfile_parse(struct _mosquitto_db *db)
 {
 	FILE *aclfile;
 	char buf[1024];
@@ -588,7 +591,7 @@ void mosquitto_acl_cleanup(struct _mosquitto_db *db, bool reload)
 	}
 }
 
-int mqtt3_pwfile_parse(struct _mosquitto_db *db)
+static int _pwfile_parse(struct _mosquitto_db *db)
 {
 	FILE *pwfile;
 	struct _mosquitto_unpwd *unpwd;
