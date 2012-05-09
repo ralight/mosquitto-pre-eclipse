@@ -342,9 +342,6 @@ void mosquitto_security_cleanup(mosquitto_db *db, bool reload);
 #ifdef WITH_EXTERNAL_SECURITY_CHECKS
 int mosquitto_unpwd_init(struct _mosquitto_db *db, bool reload);
 int mosquitto_acl_init(struct _mosquitto_db *db, bool reload);
-#else
-int mqtt3_aclfile_parse(struct _mosquitto_db *db);
-int mqtt3_pwfile_parse(struct _mosquitto_db *db);
 #endif
 
 int mosquitto_acl_check(struct _mosquitto_db *db, struct mosquitto *context, const char *topic, int access);
