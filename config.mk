@@ -9,9 +9,9 @@ CFLAGS=-I. -I.. -ggdb -Wall -O2 -I../lib
 
 UNAME:=$(shell uname -s)
 ifeq ($(UNAME),QNX)
-	LIBS=-lsocket
+	LIBS=-lsocket -ldl
 else
-	LIBS=
+	LIBS=-ldl
 endif
 
 LDFLAGS=

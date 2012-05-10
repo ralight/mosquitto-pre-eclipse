@@ -46,4 +46,5 @@ POSSIBILITY OF SUCH DAMAGE.
 #	define LIB_SYM(HANDLE, SYM) dlsym(HANDLE, SYM)
 #endif
 
+#define LIB_SYM_EASY(MEMBER, HANDLE, SYM) if(!(MEMBER = LIB_SYM(HANDLE, SYM)) return 1
 #endif

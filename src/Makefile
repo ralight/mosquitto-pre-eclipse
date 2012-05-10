@@ -6,7 +6,7 @@ CFLAGS_FINAL=${CFLAGS} -I. -DVERSION="\"${VERSION}\"" -DTIMESTAMP="\"${TIMESTAMP
 
 all : mosquitto
 
-mosquitto : mosquitto.o bridge.o conf.o context.o database.o logging.o loop.o memory_mosq.o persist.o net.o net_mosq.o read_handle.o read_handle_client.o read_handle_server.o read_handle_shared.o security.o security_external.o send_client_mosq.o send_mosq.o send_server.o service.o subs.o util_mosq.o will_mosq.o
+mosquitto : mosquitto.o bridge.o conf.o context.o database.o logging.o loop.o memory_mosq.o persist.o net.o net_mosq.o read_handle.o read_handle_client.o read_handle_server.o read_handle_shared.o security.o security_default.o send_client_mosq.o send_mosq.o send_server.o service.o subs.o util_mosq.o will_mosq.o
 	${CC} $^ -o $@ ${LDFLAGS} ${LIBS}
 
 mosquitto.o : mosquitto.c mosquitto_broker.h
@@ -57,7 +57,7 @@ read_handle_shared.o : ../lib/read_handle_shared.c ../lib/read_handle.h
 security.o : security.c mosquitto_broker.h
 	${CC} $(CFLAGS_FINAL) -c $< -o $@
 
-security_external.o : security_external.c mosquitto_broker.h
+security_default.o : security_default.c mosquitto_broker.h
 	${CC} $(CFLAGS_FINAL) -c $< -o $@
 
 send_client_mosq.o : ../lib/send_client_mosq.c ../lib/send_mosq.h
