@@ -105,6 +105,15 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>auth_plugin</option> <replaceable>file path</replaceable></term>
+				<listitem>
+					<para>Specify an external module to use for authentication
+					and access control. This allows custom username/password
+					and access control functions to be created.</para>
+					<para>Not currently reloaded on reload signal.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>autosave_interval</option> <replaceable>seconds</replaceable></term>
 				<listitem>
 					<para>The number of seconds that mosquitto will wait 

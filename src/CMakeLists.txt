@@ -18,7 +18,7 @@ set (MOSQ_SRCS
 	read_handle.c read_handle_client.c read_handle_server.c
 	../lib/read_handle_shared.c ../lib/read_handle.h
 	subs.c
-	security.c security_external.c
+	security.c security_default.c
 	../lib/send_client_mosq.c ../lib/send_mosq.h
 	../lib/send_mosq.c ../lib/send_mosq.h
 	send_server.c
@@ -61,12 +61,6 @@ endif (${WITH_PERSISTENCE} STREQUAL ON)
 if (WIN32 OR CYGWIN)
 	set (MOSQ_SRCS ${MOSQ_SRCS} service.c)
 endif (WIN32 OR CYGWIN)
-
-option(WITH_EXTERNAL_SECURITY_CHECKS
-	"Use external security checks (needs additional code)?" OFF)
-if (${WITH_EXTERNAL_SECURITY_CHECKS} STREQUAL ON)
-	add_definitions("-DWITH_EXTERNAL_SECURITY_CHECKS")
-endif (${WITH_EXTERNAL_SECURITY_CHECKS} STREQUAL ON)
 
 add_definitions (-DWITH_BROKER)
 

@@ -70,7 +70,6 @@ static void _config_init_reload(mqtt3_config *config)
 	config->retry_interval = 20;
 	config->store_clean_interval = 10;
 	config->sys_interval = 10;
-#ifdef WITH_EXTERNAL_SECURITY_CHECKS
 	if(config->db_host) _mosquitto_free(config->db_host);
 	config->db_host = NULL;
 	config->db_port = 0;
@@ -80,7 +79,6 @@ static void _config_init_reload(mqtt3_config *config)
 	config->db_username = NULL;
 	if(config->db_password) _mosquitto_free(config->db_password);
 	config->db_password = NULL;
-#endif
 }
 
 void mqtt3_config_init(mqtt3_config *config)
@@ -104,6 +102,7 @@ void mqtt3_config_init(mqtt3_config *config)
 	config->bridges = NULL;
 	config->bridge_count = 0;
 #endif
+	config->auth_plugin = NULL;
 }
 
 void mqtt3_config_cleanup(mqtt3_config *config)
@@ -143,12 +142,11 @@ void mqtt3_config_cleanup(mqtt3_config *config)
 		_mosquitto_free(config->bridges);
 	}
 #endif
-#ifdef WITH_EXTERNAL_SECURITY_CHECKS
 	if(config->db_host) _mosquitto_free(config->db_host);
 	if(config->db_name) _mosquitto_free(config->db_name);
 	if(config->db_username) _mosquitto_free(config->db_username);
 	if(config->db_password) _mosquitto_free(config->db_password);
-#endif
+	if(config->auth_plugin) _mosquitto_free(config->auth_plugin);
 }
 
 static void print_usage(void)
@@ -330,6 +328,9 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 #endif
 				}else if(!strcmp(token, "allow_anonymous")){
 					if(_conf_parse_bool(&token, "allow_anonymous", &config->allow_anonymous, saveptr)) return MOSQ_ERR_INVAL;
+				}else if(!strcmp(token, "auth_plugin")){
+					if(reload) continue; // Auth plugin not currently valid for reloading.
+					if(_conf_parse_string(&token, "auth_plugin", &config->auth_plugin, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "autosave_interval")){
 					if(_conf_parse_int(&token, "autosave_interval", &config->autosave_interval, saveptr)) return MOSQ_ERR_INVAL;
 					if(config->autosave_interval < 0) config->autosave_interval = 0;
@@ -793,7 +794,6 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
-#ifdef WITH_EXTERNAL_SECURITY_CHECKS
 				}else if(!strcmp(token, "db_host")){
 					if(reload){
 						if(config->db_host){
@@ -828,7 +828,6 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 					if(_conf_parse_string(&token, "db_password", &config->db_password, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "db_port")){
 					if(_conf_parse_int(&token, "db_port", &config->db_port, saveptr)) return MOSQ_ERR_INVAL;
-#endif
 				}else if(!strcmp(token, "autosave_on_changes")
 						|| !strcmp(token, "connection_messages")
 						|| !strcmp(token, "trace_level")
