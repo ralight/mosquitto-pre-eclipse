@@ -139,6 +139,7 @@ int mqtt3_bridge_connect(mosquitto_db *db, struct mosquitto *context)
 	context->keepalive = context->bridge->keepalive;
 	context->clean_session = context->bridge->clean_session;
 	context->in_packet.payload = NULL;
+	context->ping_t = 0;
 	mqtt3_bridge_packet_cleanup(context);
 
 	for(i=0; i<context->bridge->topic_count; i++){
