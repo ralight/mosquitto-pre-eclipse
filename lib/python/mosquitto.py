@@ -197,9 +197,9 @@ class Mosquitto:
         #pthread_mutex_unlock(&mosq->state_mutex)
 
     def reconnect(self):
-        if len(host) == 0:
+        if len(self._host) == 0:
             raise ValueError('Invalid host.')
-        if port <= 0:
+        if self._port <= 0:
             raise ValueError('Invalid port number.')
 
         #pthread_mutex_lock(&mosq->state_mutex)
