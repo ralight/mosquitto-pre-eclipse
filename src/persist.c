@@ -550,7 +550,7 @@ static int _db_msg_store_chunk_restore(mosquitto_db *db, FILE *db_fptr)
 {
 	dbid_t i64temp, store_id;
 	uint32_t i32temp, payloadlen;
-	uint16_t i16temp, slen, source_mid, mid;
+	uint16_t i16temp, slen, source_mid;
 	uint8_t qos, retain, *payload = NULL;
 	char *source_id = NULL;
 	char *topic = NULL;
@@ -581,8 +581,8 @@ static int _db_msg_store_chunk_restore(mosquitto_db *db, FILE *db_fptr)
 	read_e(db_fptr, &i16temp, sizeof(uint16_t));
 	source_mid = ntohs(i16temp);
 
+	/* This is the mid - don't need it */
 	read_e(db_fptr, &i16temp, sizeof(uint16_t));
-	mid = ntohs(i16temp);
 
 	read_e(db_fptr, &i16temp, sizeof(uint16_t));
 	slen = ntohs(i16temp);
