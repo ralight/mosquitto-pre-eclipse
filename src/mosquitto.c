@@ -213,6 +213,8 @@ int main(int argc, char *argv[])
 	mqtt3_log_init(config.log_type, config.log_dest);
 	_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s (build date %s) starting", VERSION, TIMESTAMP);
 
+	rc = mosquitto_security_module_init(&int_db);
+	if(rc) return rc;
 	rc = mosquitto_security_init(&int_db, false);
 	if(rc) return rc;
 
