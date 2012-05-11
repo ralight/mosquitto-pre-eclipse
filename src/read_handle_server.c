@@ -258,6 +258,7 @@ int mqtt3_handle_connect(mosquitto_db *db, struct mosquitto *context)
 
 	context->id = client_id;
 	context->clean_session = clean_session;
+	context->ping_t = 0;
 
 #ifdef WITH_PERSISTENCE
 	if(!clean_session){
