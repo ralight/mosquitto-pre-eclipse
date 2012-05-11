@@ -264,8 +264,6 @@ libmosq_EXPORT int mosquitto_log_init(struct mosquitto *mosq, int priorities, in
  *
  * Parameters:
  * 	mosq -       a valid mosquitto instance.
- * 	will -       set to true to enable a will, false to disable. If set to true,
- *               at least "topic" but also be valid.
  * 	topic -      the topic on which to publish the will.
  * 	payloadlen - the size of the payload (bytes). Valid values are between 0 and
  *               268,435,455.
@@ -281,7 +279,22 @@ libmosq_EXPORT int mosquitto_log_init(struct mosquitto *mosq, int priorities, in
  * 	MOSQ_ERR_NOMEM -        if an out of memory condition occurred.
  * 	MOSQ_ERR_PAYLOAD_SIZE - if payloadlen is too large.
  */
-libmosq_EXPORT int mosquitto_will_set(struct mosquitto *mosq, bool will, const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain);
+libmosq_EXPORT int mosquitto_will_set(struct mosquitto *mosq, const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain);
+
+/* 
+ * Function: mosquitto_will_clear
+ *
+ * Remove a previously configured will. This must be called before calling
+ * <mosquitto_connect>.
+ *
+ * Parameters:
+ * 	mosq - a valid mosquitto instance.
+ *
+ * Returns:
+ * 	MOSQ_ERR_SUCCESS - on success.
+ * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ */
+libmosq_EXPORT int mosquitto_will_clear(struct mosquitto *mosq);
 
 /*
  * Function: mosquitto_username_pw_set

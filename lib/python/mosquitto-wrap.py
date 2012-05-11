@@ -337,13 +337,13 @@ class Mosquitto:
                 else:
                         payloadlen = len(payload)
 
-                return _mosquitto_will_set(self._mosq, True, topic, payloadlen, cast(payload, POINTER(c_uint8)), qos, retain)
+                return _mosquitto_will_set(self._mosq, topic, payloadlen, cast(payload, POINTER(c_uint8)), qos, retain)
 
         def will_clear(self):
                 """Clear a Will that was previously set with the will_set() call.
 
                 This must be called before connect() to have any effect."""
-                return _mosquitto_will_set(self._mosq, false, "", 0, cast(None, POINTER(c_uint8)), 0, 0)
+                return _mosquitto_will_clear(self._mosq)
 
         def username_pw_set(self, username, password=None):
                 """Set a username and optionally a password for broker authentication.
@@ -483,6 +483,10 @@ _mosquitto_username_pw_set.restype = c_int
 _mosquitto_will_set = _libmosq.mosquitto_will_set
 _mosquitto_will_set.argtypes = [c_void_p, c_bool, c_char_p, c_uint32, POINTER(c_uint8), c_int, c_bool]
 _mosquitto_will_set.restype = c_int
+
+_mosquitto_will_clear = _libmosq.mosquitto_will_clear
+_mosquitto_will_clear.argtypes = [c_void_p]
+_mosquitto_will_clear.restype = c_int
 
 _mosquitto_log_init = _libmosq.mosquitto_log_init
 _mosquitto_log_init.argtypes = [c_void_p, c_int, c_int]
