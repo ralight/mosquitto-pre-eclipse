@@ -102,6 +102,11 @@ void _mosquitto_check_keepalive(struct mosquitto *mosq)
 
 		if(mosq->state == mosq_cs_connected && mosq->ping_t == 0){
 			_mosquitto_send_pingreq(mosq);
+			/* Reset last msg times to give the server time to send a pingresp */
+			pthread_mutex_lock(&mosq->msgtime_mutex);
+			mosq->last_msg_in = now;
+			mosq->last_msg_out = now;
+			pthread_mutex_unlock(&mosq->msgtime_mutex);
 		}else{
 #ifdef WITH_BROKER
 			if(mosq->listener){
