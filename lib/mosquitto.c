@@ -170,10 +170,16 @@ struct mosquitto *mosquitto_new(const char *id, bool clean_session, void *obj)
 	return mosq;
 }
 
-int mosquitto_will_set(struct mosquitto *mosq, bool will, const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain)
+int mosquitto_will_set(struct mosquitto *mosq, const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain)
 {
 	if(!mosq) return MOSQ_ERR_INVAL;
-	return _mosquitto_will_set(mosq, will, topic, payloadlen, payload, qos, retain);
+	return _mosquitto_will_set(mosq, topic, payloadlen, payload, qos, retain);
+}
+
+int mosquitto_will_clear(struct mosquitto *mosq)
+{
+	if(!mosq) return MOSQ_ERR_INVAL;
+	return _mosquitto_will_clear(mosq);
 }
 
 int mosquitto_username_pw_set(struct mosquitto *mosq, const char *username, const char *password)

@@ -67,7 +67,8 @@ class mosqpp_EXPORT mosquittopp {
 		static int lib_cleanup();
 		int socket();
 		int log_init(int priorities, int destinations);
-		int will_set(bool will, const char *topic, uint32_t payloadlen=0, const uint8_t *payload=NULL, int qos=0, bool retain=false);
+		int will_set(const char *topic, uint32_t payloadlen=0, const uint8_t *payload=NULL, int qos=0, bool retain=false);
+		int will_clear();
 		int username_pw_set(const char *username, const char *password=NULL);
 		int connect(const char *host, int port=1883, int keepalive=60);
 		int connect_async(const char *host, int port=1883, int keepalive=60);

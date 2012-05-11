@@ -49,6 +49,8 @@ Client library:
 - Add mosquitto_strerror() for obtaining a string description of error numbers.
 - Add mosquitto_connack_string() for obtaining a string description of MQTT
   connection results.
+- Add mosquitto_will_clear() and change mosquitto_will_set() to only set the
+  will.
 - Client will now disconnect itself from the broker if it doesn't receive a
   PINGRESP in the keepalive period after sending a PINGREQ.
 - Client will now send a PINGREQ if it has not received a message from the

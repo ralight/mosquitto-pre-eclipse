@@ -168,7 +168,7 @@ int mqtt3_bridge_connect(mosquitto_db *db, struct mosquitto *context)
 		notification_payload[0] = '0';
 		notification_payload[1] = '\0';
 		mqtt3_db_messages_easy_queue(db, context, notification_topic, 1, 2, (uint8_t *)&notification_payload, 1);
-		rc = _mosquitto_will_set(context, true, notification_topic, 2, (uint8_t *)&notification_payload, 1, true);
+		rc = _mosquitto_will_set(context, notification_topic, 2, (uint8_t *)&notification_payload, 1, true);
 		if(rc != MOSQ_ERR_SUCCESS){
 			_mosquitto_free(notification_topic);
 			return rc;
