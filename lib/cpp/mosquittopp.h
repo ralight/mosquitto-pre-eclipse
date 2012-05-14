@@ -57,7 +57,7 @@ const char *connack_string(int connack_code);
  */
 class mosqpp_EXPORT mosquittopp {
 	private:
-		struct mosquitto *mosq;
+		struct mosquitto *m_mosq;
 	public:
 		mosquittopp(const char *id=NULL, bool clean_session=true);
 		~mosquittopp();
