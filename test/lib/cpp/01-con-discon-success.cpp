@@ -37,6 +37,8 @@ int main(int argc, char *argv[])
 {
 	struct mosquittopp_test *mosq;
 
+	mosqpp::lib_init();
+
 	mosq = new mosquittopp_test("01-con-discon-success");
 
 	mosq->connect("localhost", 1888, 60);
@@ -44,6 +46,8 @@ int main(int argc, char *argv[])
 	while(run == -1){
 		mosq->loop();
 	}
+
+	mosqpp::lib_cleanup();
 
 	return run;
 }

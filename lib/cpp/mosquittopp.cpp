@@ -69,19 +69,19 @@ static void on_unsubscribe_wrapper(struct mosquitto *mosq, void *obj, uint16_t m
 	m->on_unsubscribe(mid);
 }
 
-void mosquittopp::lib_version(int *major, int *minor, int *revision)
+void lib_version(int *major, int *minor, int *revision)
 {
 	if(major) *major = LIBMOSQUITTO_MAJOR;
 	if(minor) *minor = LIBMOSQUITTO_MINOR;
 	if(revision) *revision = LIBMOSQUITTO_REVISION;
 }
 
-int mosquittopp::lib_init()
+int lib_init()
 {
 	return mosquitto_lib_init();
 }
 
-int mosquittopp::lib_cleanup()
+int lib_cleanup()
 {
 	return mosquitto_lib_cleanup();
 }
