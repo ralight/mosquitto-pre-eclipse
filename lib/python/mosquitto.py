@@ -300,7 +300,7 @@ class Mosquitto:
             self._messages.append(message)
             return self._send_publish(message.mid, message.topic, message.payload, message.qos, message.retain, message.dup)
 
-    def username_ps_set(self, username, password=None):
+    def username_pw_set(self, username, password=None):
         self._username = username
         self._password = password
 
