@@ -17,6 +17,7 @@ connack_packet = pack('!BBBB', 32, 2, 0, 0);
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+sock.settimeout(30)
 sock.bind(('', 1888))
 sock.listen(5)
 
@@ -27,6 +28,7 @@ client = subprocess.Popen(client_args, env=env)
 
 try:
     (conn, address) = sock.accept()
+    conn.settimeout(30)
     connect_recvd = conn.recv(256)
 
     if connect_recvd != connect_packet:
