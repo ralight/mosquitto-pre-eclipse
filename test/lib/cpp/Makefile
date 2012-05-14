@@ -8,7 +8,10 @@ all : 01
 01-con-discon-success.test : 01-con-discon-success.cpp
 	$(CXX) $< -o $@ $(CFLAGS) $(LIBS)
 
-01 : 01-con-discon-success.test
+01-will-set.test : 01-will-set.cpp
+	$(CXX) $< -o $@ $(CFLAGS) $(LIBS)
+
+01 : 01-con-discon-success.test 01-will-set.test
 
 clean :
 	rm -f *.test
