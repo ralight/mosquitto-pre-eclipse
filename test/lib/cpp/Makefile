@@ -1,7 +1,7 @@
 .PHONY: all test 01
 
 CFLAGS=-I../../../lib/cpp
-LIBS=../../../lib/cpp/libmosquittopp.so.1 ../../../lib/libmosquitto.so.1
+LIBS=../../../lib/libmosquitto.so.1 ../../../lib/cpp/libmosquittopp.so.1
 
 all : 01
 
