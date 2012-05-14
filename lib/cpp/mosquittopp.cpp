@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <mosquitto.h>
 #include <mosquittopp.h>
 
-namespace mosquittopp {
+namespace mosqpp {
 
 static void on_connect_wrapper(struct mosquitto *mosq, void *obj, int rc)
 {

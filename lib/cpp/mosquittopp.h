@@ -44,7 +44,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <time.h>
 #include <mosquitto.h>
 
-namespace mosquittopp {
+namespace mosqpp {
 
 const char *strerror(int mosq_errno);
 const char *connack_string(int connack_code);

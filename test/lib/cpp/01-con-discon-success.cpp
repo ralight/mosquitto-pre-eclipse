@@ -5,7 +5,7 @@
 
 static int run = -1;
 
-class mosquittopp_test : public mosquittopp::mosquittopp
+class mosquittopp_test : public mosqpp::mosquittopp
 {
 	public:
 		mosquittopp_test(const char *id);
@@ -14,7 +14,7 @@ class mosquittopp_test : public mosquittopp::mosquittopp
 		void on_disconnect(int rc);
 };
 
-mosquittopp_test::mosquittopp_test(const char *id) : mosquittopp::mosquittopp(id)
+mosquittopp_test::mosquittopp_test(const char *id) : mosqpp::mosquittopp(id)
 {
 }
 
