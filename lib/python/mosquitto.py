@@ -682,7 +682,7 @@ class Mosquitto:
             connect_flags = connect_flags | 0x02
 
         if self._will:
-            remaining_length = remaining_length + 2+len(self._will_topic) + 2+len(payload)
+            remaining_length = remaining_length + 2+len(self._will_topic) + 2+len(self._will_payload)
             connect_flags = connect_flags | 0x04 | ((self._will_qos&0x03) << 3) | ((self._will_retain&0x01) << 5)
 
         if self._username:
@@ -701,11 +701,11 @@ class Mosquitto:
         packet = packet + struct.pack(pack_format, len(self._client_id), self._client_id)
 
         if self._will:
-            pack_format = "!H" + str(len(self._will_topic)) + "s" + str(len(self._will_payload))
+            pack_format = "!H" + str(len(self._will_topic)) + "sH"
             packet = packet + struct.pack(pack_format, len(self._will_topic), self._will_topic, len(self._will_payload))
 
             if len(self._will_payload) > 0:
-                pack_format = "!" + len(self._will_payload) + "s"
+                pack_format = "!" + str(len(self._will_payload)) + "s"
                 packet = packet + struct.pack(pack_format, self._will_payload)
 
         if self._username:
