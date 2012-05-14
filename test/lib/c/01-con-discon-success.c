@@ -24,6 +24,8 @@ int main(int argc, char *argv[])
 	int rc;
 	struct mosquitto *mosq;
 
+	mosquitto_lib_init();
+
 	mosq = mosquitto_new("01-con-discon-success", true, NULL);
 	mosquitto_connect_callback_set(mosq, on_connect);
 	mosquitto_disconnect_callback_set(mosq, on_disconnect);
@@ -34,5 +36,6 @@ int main(int argc, char *argv[])
 		mosquitto_loop(mosq, -1);
 	}
 
+	mosquitto_lib_cleanup();
 	return run;
 }
