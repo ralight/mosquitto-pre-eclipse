@@ -63,6 +63,7 @@ Client library:
 - mosquitto_new() now sets errno to indicate failure type.
 - Fix automatic client id generation on Windows.
 - mosquitto_loop_misq() can now return MOSQ_ERR_NO_CONN;
+- Rename C++ namespace from mosquittopp to mosqpp to remove ambiguity.
 - The Python library has modified to match the libmosquitto changes and
   simplified at the same time.
 - The Python library should now be compatible with Python 3.
