@@ -64,6 +64,8 @@ Client library:
 - Fix automatic client id generation on Windows.
 - mosquitto_loop_misq() can now return MOSQ_ERR_NO_CONN;
 - Rename C++ namespace from mosquittopp to mosqpp to remove ambiguity.
+- C++ lib_init(), lib_version() and lib_cleanup() are now in the mosqpp
+  namespace directly, not mosquittopp class members.
 - The Python library has modified to match the libmosquitto changes and
   simplified at the same time.
 - The Python library should now be compatible with Python 3.

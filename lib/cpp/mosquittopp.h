@@ -48,6 +48,9 @@ namespace mosqpp {
 
 const char *strerror(int mosq_errno);
 const char *connack_string(int connack_code);
+void lib_version(int *major, int *minor, int *revision);
+int lib_init();
+int lib_cleanup();
 
 /*
  * Class: mosquittopp
@@ -62,9 +65,6 @@ class mosqpp_EXPORT mosquittopp {
 		mosquittopp(const char *id=NULL, bool clean_session=true);
 		~mosquittopp();
 
-		static void lib_version(int *major, int *minor, int *revision);
-		static int lib_init();
-		static int lib_cleanup();
 		int socket();
 		int log_init(int priorities, int destinations);
 		int will_set(const char *topic, uint32_t payloadlen=0, const uint8_t *payload=NULL, int qos=0, bool retain=false);
