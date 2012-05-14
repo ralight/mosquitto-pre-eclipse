@@ -712,9 +712,9 @@ class Mosquitto:
             pack_format = "!H" + str(len(self._username)) + "s"
             packet = packet + struct.pack(pack_format, len(self._username), self._username)
 
-            if self._pasword:
-                pack_format = "!H" + str(len(self._pasword)) + "s"
-                packet = packet + struct.pack(pack_format, len(self._pasword), self._pasword)
+            if self._password:
+                pack_format = "!H" + str(len(self._password)) + "s"
+                packet = packet + struct.pack(pack_format, len(self._password), self._password)
 
         self._keepalive = keepalive
         return self._packet_queue(packet)

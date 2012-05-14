@@ -15,6 +15,9 @@ test : test-compile
 	./01-will-set.py c/01-will-set.test
 	./01-will-set.py cpp/01-will-set.test
 	./01-will-set.py python/01-will-set.py
+	./01-unpwd-set.py c/01-unpwd-set.test
+	./01-unpwd-set.py cpp/01-unpwd-set.test
+	./01-unpwd-set.py python/01-unpwd-set.py
 
 clean : 
 	$(MAKE) -C c clean
