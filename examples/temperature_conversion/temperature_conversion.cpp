@@ -7,11 +7,10 @@
 mqtt_tempconv::mqtt_tempconv(const char *id, const char *host, int port) : mosquittopp(id)
 {
 	int keepalive = 60;
-	bool clean_session = true;
 
 	/* Connect immediately. This could also be done by calling
 	 * mqtt_tempconv->connect(). */
-	connect(host, port, keepalive, clean_session);
+	connect(host, port, keepalive);
 };
 
 void mqtt_tempconv::on_connect(int rc)

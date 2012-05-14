@@ -5,7 +5,7 @@ int main(int argc, char *argv[])
 	class mqtt_tempconv *tempconv;
 	int rc;
 
-	mosquittopp::mosquittopp::lib_init();
+	mosqpp::lib_init();
 
 	tempconv = new mqtt_tempconv("tempconv", "localhost", 1883);
 	
@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	mosquittopp::mosquittopp::lib_cleanup();
+	mosqpp::lib_cleanup();
 
 	return 0;
 }
