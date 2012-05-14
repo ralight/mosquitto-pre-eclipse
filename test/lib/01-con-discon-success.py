@@ -16,6 +16,7 @@ connack_packet = pack('!BBBB', 32, 2, 0, 0);
 
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 sock.bind(('', 1888))
 sock.listen(5)
 
@@ -34,9 +35,12 @@ try:
         print("Expected: "+connect_packet+" length="+str(len(connect_packet)))
     else:
         rc = 0
+
+    conn.close()
 finally:
     client.terminate()
     client.wait()
+    sock.close()
 
 exit(rc)
 
