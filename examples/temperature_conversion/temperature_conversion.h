@@ -3,7 +3,7 @@
 
 #include <mosquittopp.h>
 
-class mqtt_tempconv : public mosquittopp::mosquittopp
+class mqtt_tempconv : public mosqpp::mosquittopp
 {
 	public:
 		mqtt_tempconv(const char *id, const char *host, int port);
