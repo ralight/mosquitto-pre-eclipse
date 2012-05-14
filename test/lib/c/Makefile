@@ -14,7 +14,10 @@ all : 01
 01-unpwd-set.test : 01-unpwd-set.c
 	$(CC) $< -o $@ $(CFLAGS) $(LIBS)
 
-01 : 01-con-discon-success.test 01-will-set.test 01-unpwd-set.test
+01-will-unpwd-set.test : 01-will-unpwd-set.c
+	$(CC) $< -o $@ $(CFLAGS) $(LIBS)
+
+01 : 01-con-discon-success.test 01-will-set.test 01-unpwd-set.test 01-will-unpwd-set.test
 
 clean :
 	rm -f *.test

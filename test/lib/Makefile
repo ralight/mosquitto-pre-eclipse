@@ -18,6 +18,9 @@ test : test-compile
 	./01-unpwd-set.py c/01-unpwd-set.test
 	./01-unpwd-set.py cpp/01-unpwd-set.test
 	./01-unpwd-set.py python/01-unpwd-set.py
+	./01-will-unpwd-set.py c/01-will-unpwd-set.test
+	./01-will-unpwd-set.py cpp/01-will-unpwd-set.test
+	./01-will-unpwd-set.py python/01-will-unpwd-set.py
 
 clean : 
 	$(MAKE) -C c clean
