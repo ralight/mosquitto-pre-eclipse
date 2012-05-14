@@ -24,6 +24,15 @@ test : test-compile
 	./01-no-clean-session.py c/01-no-clean-session.test
 	./01-no-clean-session.py cpp/01-no-clean-session.test
 	./01-no-clean-session.py python/01-no-clean-session.py
+	./02-subscribe-qos0.py c/02-subscribe-qos0.test
+	./02-subscribe-qos0.py cpp/02-subscribe-qos0.test
+	./02-subscribe-qos0.py python/02-subscribe-qos0.py
+	./02-subscribe-qos1.py c/02-subscribe-qos1.test
+	./02-subscribe-qos1.py cpp/02-subscribe-qos1.test
+	./02-subscribe-qos1.py python/02-subscribe-qos1.py
+	./02-subscribe-qos2.py c/02-subscribe-qos2.test
+	./02-subscribe-qos2.py cpp/02-subscribe-qos2.test
+	./02-subscribe-qos2.py python/02-subscribe-qos2.py
 
 clean : 
 	$(MAKE) -C c clean
