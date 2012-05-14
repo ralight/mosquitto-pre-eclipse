@@ -5,7 +5,7 @@ LDFLAGS=-L../lib ../lib/libmosquitto.so.${SOVERSION}
 INSTALL=install
 prefix=/usr/local
 
-.PHONY: all install uninstall clean
+.PHONY: all install uninstall reallyclean clean
 
 all : mosquitto_pub mosquitto_sub
 
@@ -26,6 +26,8 @@ install : all
 uninstall :
 	-rm -f ${DESTDIR}${prefix}/bin/mosquitto_pub
 	-rm -f ${DESTDIR}${prefix}/bin/mosquitto_sub
+
+reallyclean : clean
 
 clean : 
 	-rm -f *.o mosquitto_pub mosquitto_sub

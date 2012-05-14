@@ -2,7 +2,7 @@ include ../config.mk
 
 SOVERSION=1
 
-.PHONY : clean install
+.PHONY : really clean install
 
 all : libmosquitto.so.${SOVERSION}
 	make -C cpp
@@ -21,6 +21,8 @@ uninstall :
 	-rm -f ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.so.${SOVERSION}
 	-rm -f ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.so
 	-rm -f ${DESTDIR}${prefix}/include/mosquitto.h
+
+reallyclean : clean
 
 clean :
 	-rm -f *.o libmosquitto.so.${SOVERSION} libmosquitto.so
