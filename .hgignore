@@ -3,6 +3,7 @@ syntax: glob
 *.o
 *.exe
 *.db
+*.test
 
 client/mosquitto_pub
 client/mosquitto_sub
