@@ -21,6 +21,9 @@ test : test-compile
 	./01-will-unpwd-set.py c/01-will-unpwd-set.test
 	./01-will-unpwd-set.py cpp/01-will-unpwd-set.test
 	./01-will-unpwd-set.py python/01-will-unpwd-set.py
+	./01-no-clean-session.py c/01-no-clean-session.test
+	./01-no-clean-session.py cpp/01-no-clean-session.test
+	./01-no-clean-session.py python/01-no-clean-session.py
 
 clean : 
 	$(MAKE) -C c clean
