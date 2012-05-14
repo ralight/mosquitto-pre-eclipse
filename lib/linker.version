@@ -11,6 +11,7 @@ VERS_1.0 {
 		mosquitto_destroy;
 		mosquitto_log_init;
 		mosquitto_will_set;
+		mosquitto_will_clear;
 		mosquitto_username_pw_set;
 		mosquitto_connect;
 		mosquitto_connect_async;
