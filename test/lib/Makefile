@@ -33,6 +33,9 @@ test : test-compile
 	./02-subscribe-qos2.py c/02-subscribe-qos2.test
 	./02-subscribe-qos2.py cpp/02-subscribe-qos2.test
 	./02-subscribe-qos2.py python/02-subscribe-qos2.py
+	./02-unsubscribe.py c/02-unsubscribe.test
+	./02-unsubscribe.py cpp/02-unsubscribe.test
+	./02-unsubscribe.py python/02-unsubscribe.py
 
 clean : 
 	$(MAKE) -C c clean
