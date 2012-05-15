@@ -24,6 +24,9 @@ test : test-compile
 	./01-no-clean-session.py c/01-no-clean-session.test
 	./01-no-clean-session.py cpp/01-no-clean-session.test
 	./01-no-clean-session.py python/01-no-clean-session.py
+	./01-keepalive-pingreq.py c/01-keepalive-pingreq.test
+	./01-keepalive-pingreq.py cpp/01-keepalive-pingreq.test
+	./01-keepalive-pingreq.py python/01-keepalive-pingreq.py
 	./02-subscribe-qos0.py c/02-subscribe-qos0.test
 	./02-subscribe-qos0.py cpp/02-subscribe-qos0.test
 	./02-subscribe-qos0.py python/02-subscribe-qos0.py
