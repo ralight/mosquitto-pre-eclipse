@@ -350,13 +350,15 @@ class Mosquitto:
                 print(msg)
                 return 1
             else:
+                if len(command) == 0:
+                    return 1
                 command = struct.unpack("!B", command)
                 self._in_packet.command = command[0]
 
         if self._in_packet.have_remaining == 0:
             # Read remaining
-             # Algorithm for decoding taken from pseudo code at
-             # http://publib.boulder.ibm.com/infocenter/wmbhelp/v6r0m0/topic/com.ibm.etools.mft.doc/ac10870_.htm
+            # Algorithm for decoding taken from pseudo code at
+            # http://publib.boulder.ibm.com/infocenter/wmbhelp/v6r0m0/topic/com.ibm.etools.mft.doc/ac10870_.htm
             while True:
                 try:
                     byte = self._sock.recv(1)
@@ -454,6 +456,9 @@ class Mosquitto:
             return MOSQ_ERR_CONN_LOST
 
         return MOSQ_ERR_SUCCESS
+
+    def message_retry_set(self, retry):
+        self._message_retry = retry
 
     def user_data_set(self, obj):
         self._obj = obj
