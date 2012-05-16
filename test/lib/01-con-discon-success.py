@@ -14,6 +14,7 @@ keepalive = 60
 connect_packet = pack('!BBH6sBBHH21s', 16, 12+2+21,6,"MQIsdp",3,2,keepalive,21,"01-con-discon-success")
 connack_packet = pack('!BBBB', 32, 2, 0, 0);
 
+disconnect_packet = pack('!BB', 224, 0)
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -41,7 +42,16 @@ try:
         print("Received: "+connect_recvd+" length="+str(len(connect_recvd)))
         print("Expected: "+connect_packet+" length="+str(len(connect_packet)))
     else:
-        rc = 0
+        conn.send(connack_packet)
+        disconnect_recvd = conn.recv(256)
+
+        if disconnect_recvd != disconnect_packet:
+            print("FAIL: Received incorrect disconnect.")
+            (cmd, rl) = unpack('!BB', disconnect_recvd)
+            print("Received: "+str(cmd)+", " + str(rl))
+            print("Expected: 224, 0")
+        else:
+            rc = 0
 
     conn.close()
 finally:
