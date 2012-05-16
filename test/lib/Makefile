@@ -1,5 +1,4 @@
-.PHONY: all test-compile test
-
+.PHONY: all test-compile test 
 LD_LIBRARY_PATH=../../lib
 
 all :
@@ -39,6 +38,9 @@ test : test-compile
 	./02-unsubscribe.py c/02-unsubscribe.test
 	./02-unsubscribe.py cpp/02-unsubscribe.test
 	./02-unsubscribe.py python/02-unsubscribe.py
+	./03-publish-qos0.py c/03-publish-qos0.test
+	./03-publish-qos0.py cpp/03-publish-qos0.test
+	./03-publish-qos0.py python/03-publish-qos0.py
 
 clean : 
 	$(MAKE) -C c clean
