@@ -41,6 +41,9 @@ test : test-compile
 	./03-publish-qos0.py c/03-publish-qos0.test
 	./03-publish-qos0.py cpp/03-publish-qos0.test
 	./03-publish-qos0.py python/03-publish-qos0.py
+	./03-publish-qos0-no-payload.py c/03-publish-qos0-no-payload.test
+	./03-publish-qos0-no-payload.py cpp/03-publish-qos0-no-payload.test
+	./03-publish-qos0-no-payload.py python/03-publish-qos0-no-payload.py
 
 clean : 
 	$(MAKE) -C c clean

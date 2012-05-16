@@ -267,7 +267,7 @@ class Mosquitto:
             raise ValueError('Invalid port number.')
         if qos<0 or qos>2:
             raise ValueError('Invalid QoS level.')
-        if len(payload) > 268435455:
+        if payload != None and len(payload) > 268435455:
             raise ValueError('Payload too large.')
 
         if self._topic_wildcard_len_check(topic) != MOSQ_ERR_SUCCESS:
@@ -288,10 +288,10 @@ class Mosquitto:
 
             message.mid = local_mid
             message.topic = topic
-            if len(payload) > 0:
-                message.payload = payload
-            else:
+            if payload == None or len(payload) == 0:
                 message.payload = None
+            else:
+                message.payload = payload
 
             message.qos = qos
             message.retain = retain
@@ -631,7 +631,11 @@ class Mosquitto:
         # FIXME _mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Sending PUBLISH (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", dup, qos, retain, mid, topic, (long)payloadlen)
         command = PUBLISH | ((dup&0x1)<<3) | (qos<<1) | retain
         packet = struct.pack("!B", command)
-        remaining_length = 2+len(topic) + len(payload)
+        if payload == None:
+            remaining_length = 2+len(topic)
+        else:
+            remaining_length = 2+len(topic) + len(payload)
+
         if qos > 0:
             # For message id
             remaining_length = remaining_length + 2
@@ -639,16 +643,15 @@ class Mosquitto:
         packet = packet + self._pack_remaining_length(remaining_length)
 
         pack_format = "!H" + str(len(topic)) + "s"
+        packet = packet + struct.pack(pack_format, len(topic), topic)
+
         if qos > 0:
             # For message id
-            pack_format = pack_format + "H"
+            packet = packet + struct.pack("!H", mid)
 
-        pack_format = pack_format + str(len(payload)) + "s"
-
-        if qos > 0:
-            packet = packet + struct.pack(pack_format, len(topic), topic, mid, payload)
-        else:
-            packet = packet + struct.pack(pack_format, len(topic), topic, payload)
+        if payload != None:
+            pack_format = str(len(payload)) + "s"
+            packet = packet + struct.pack(pack_format, payload)
 
         return self._packet_queue(packet)
 
