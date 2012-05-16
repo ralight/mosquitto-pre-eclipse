@@ -23,7 +23,6 @@ void on_publish(struct mosquitto *mosq, void *obj, uint16_t mid)
 void on_disconnect(struct mosquitto *mosq, void *obj, int rc)
 {
 	run = 0;
-	printf("on_disco\n");
 }
 
 int main(int argc, char *argv[])
@@ -46,6 +45,5 @@ int main(int argc, char *argv[])
 	}
 
 	mosquitto_lib_cleanup();
-	printf("end\n");
 	return run;
 }
