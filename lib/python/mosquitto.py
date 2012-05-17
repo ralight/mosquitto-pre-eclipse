@@ -774,7 +774,7 @@ class Mosquitto:
                 elif m.state == mosq_ms_wait_pubcomp:
                     m.timestamp = now
                     m.dup = True
-                    self._send_pubrel(m.now, True)
+                    self._send_pubrel(m.mid, True)
 
     def _packet_queue(self, packet):
         mpkt = MosquittoPacket(packet)

@@ -47,6 +47,9 @@ test : test-compile
 	./03-publish-qos1-delay.py c/03-publish-qos1-delay.test
 	./03-publish-qos1-delay.py cpp/03-publish-qos1-delay.test
 	./03-publish-qos1-delay.py python/03-publish-qos1-delay.py
+	./03-publish-qos2-delay.py c/03-publish-qos2-delay.test
+	./03-publish-qos2-delay.py cpp/03-publish-qos2-delay.test
+	./03-publish-qos2-delay.py python/03-publish-qos2-delay.py
 
 clean : 
 	$(MAKE) -C c clean
