@@ -26,8 +26,8 @@ test-c : test-compile-c
 	./02-unsubscribe.py c/02-unsubscribe.test
 	./03-publish-qos0.py c/03-publish-qos0.test
 	./03-publish-qos0-no-payload.py c/03-publish-qos0-no-payload.test
-	./03-publish-qos1-delay.py c/03-publish-qos1-delay.test
-	./03-publish-qos2-delay.py c/03-publish-qos2-delay.test
+	./03-publish-c2b-qos1-timeout.py c/03-publish-c2b-qos1-timeout.test
+	./03-publish-c2b-qos2-timeout.py c/03-publish-c2b-qos2-timeout.test
 
 test-cpp : test-compile-cpp
 	./01-con-discon-success.py cpp/01-con-discon-success.test
@@ -42,8 +42,8 @@ test-cpp : test-compile-cpp
 	./02-unsubscribe.py cpp/02-unsubscribe.test
 	./03-publish-qos0.py cpp/03-publish-qos0.test
 	./03-publish-qos0-no-payload.py cpp/03-publish-qos0-no-payload.test
-	./03-publish-qos1-delay.py cpp/03-publish-qos1-delay.test
-	./03-publish-qos2-delay.py cpp/03-publish-qos2-delay.test
+	./03-publish-c2b-qos1-timeout.py cpp/03-publish-c2b-qos1-timeout.test
+	./03-publish-c2b-qos2-timeout.py cpp/03-publish-c2b-qos2-timeout.test
 
 test-python :
 	./01-con-discon-success.py python/01-con-discon-success.py
@@ -58,8 +58,8 @@ test-python :
 	./02-unsubscribe.py python/02-unsubscribe.py
 	./03-publish-qos0.py python/03-publish-qos0.py
 	./03-publish-qos0-no-payload.py python/03-publish-qos0-no-payload.py
-	./03-publish-qos1-delay.py python/03-publish-qos1-delay.py
-	./03-publish-qos2-delay.py python/03-publish-qos2-delay.py
+	./03-publish-c2b-qos1-timeout.py python/03-publish-c2b-qos1-timeout.py
+	./03-publish-c2b-qos2-timeout.py python/03-publish-c2b-qos2-timeout.py
 
 clean : 
 	$(MAKE) -C c clean
