@@ -20,9 +20,9 @@ int main(int argc, char *argv[])
 
 	mosquitto_lib_init();
 
-	mosq = mosquitto_new("publish-qos1-test", true, NULL);
+	mosq = mosquitto_new("publish-qos2-test", true, NULL);
 	mosquitto_connect_callback_set(mosq, on_connect);
-	mosquitto_message_retry_set(mosq, 3);
+	mosquitto_message_retry_set(mosq, 5);
 
 	rc = mosquitto_connect(mosq, "localhost", 1888, 60);
 
