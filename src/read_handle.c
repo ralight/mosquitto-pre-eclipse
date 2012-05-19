@@ -99,8 +99,17 @@ int mqtt3_handle_publish(mosquitto_db *db, struct mosquitto *context)
 	retain = (header & 0x01);
 
 	if(_mosquitto_read_string(&context->in_packet, &topic)) return 1;
-	if(_mosquitto_fix_sub_topic(&topic)) return 1;
+	if(strlen(topic) == 0){
+		/* Invalid publish topic, just swallow it. */
+		_mosquitto_free(topic);
+		return 0;
+	}
+	if(_mosquitto_fix_sub_topic(&topic)){
+		_mosquitto_free(topic);
+		return 1;
+	}
 	if(!strlen(topic)){
+		_mosquitto_free(topic);
 		return 1;
 	}
 	if(_mosquitto_topic_wildcard_len_check(topic) != MOSQ_ERR_SUCCESS){

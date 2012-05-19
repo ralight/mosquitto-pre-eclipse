@@ -264,7 +264,7 @@ class Mosquitto:
 
     def publish(self, topic, payload=None, qos=0, retain=False):
         if len(topic) == 0:
-            raise ValueError('Invalid port number.')
+            raise ValueError('Invalid topic.')
         if qos<0 or qos>2:
             raise ValueError('Invalid QoS level.')
         if payload != None and len(payload) > 268435455:
