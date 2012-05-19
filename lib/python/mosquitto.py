@@ -25,10 +25,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import collections
 import select
 import socket
 import struct
+import threading
 import time
 
 PROTOCOL_NAME = "MQIsdp"
@@ -169,11 +169,11 @@ class Mosquitto:
         self._port = 1883
         self._in_callback = False
         self._strict_protocol = False
-        #pthread_mutex_init(&self._callback_mutex, NULL)
-        #pthread_mutex_init(&self._state_mutex, NULL)
-        #pthread_mutex_init(&self._out_packet_mutex, NULL)
-        #pthread_mutex_init(&self._current_out_packet_mutex, NULL)
-        #pthread_mutex_init(&self._msgtime_mutex, NULL)
+        self._callback_mutex = threading.Lock()
+        self._state_mutex = threading.Lock()
+        self._out_packet_mutex = threading.Lock()
+        self._current_out_packet_mutex = threading.Lock()
+        self._msgtime_mutex = threading.Lock()
 
     def __del__(self):
         pass
@@ -192,9 +192,9 @@ class Mosquitto:
         self._port = port
         self._keepalive = keepalive
 
-        #pthread_mutex_lock(&mosq->state_mutex)
+        self._state_mutex.acquire()
         self._state = mosq_cs_connect_async
-        #pthread_mutex_unlock(&mosq->state_mutex)
+        self._state_mutex.release()
 
     def reconnect(self):
         if len(self._host) == 0:
@@ -202,9 +202,9 @@ class Mosquitto:
         if self._port <= 0:
             raise ValueError('Invalid port number.')
 
-        #pthread_mutex_lock(&mosq->state_mutex)
+        self._state_mutex.acquire()
         self._state = mosq_cs_new
-        #pthread_mutex_unlock(&mosq->state_mutex)
+        self._state_mutex.release()
         if self._sock:
             self._sock.close()
             self._sock = None
@@ -230,17 +230,17 @@ class Mosquitto:
             if rc != MOSQ_ERR_SUCCESS:
                 self._sock.close()
                 self._sock = None
-                #pthread_mutex_lock(&mosq->state_mutex)
+                self._state_mutex.acquire()
                 if self._state == mosq_cs_disconnecting:
                     rc = MOSQ_ERR_SUCCESS
-                #pthread_mutex_unlock(&mosq->state_mutex)
-                #pthread_mutex_lock(&mosq->callback_mutex)
+                self._state_mutex.release()
+                self._callback_mutex.acquire()
                 if self.on_disconnect:
                     self._in_callback = True
                     self.on_disconnect(self, self._obj, rc)
                     self._in_callback = False
 
-                #pthread_mutex_unlock(&mosq->callback_mutex)
+                self._callback_mutex.release()
                 return rc
 
         if self._sock in socklist[1]:
@@ -248,16 +248,16 @@ class Mosquitto:
             if rc != MOSQ_ERR_SUCCESS:
                 self._sock.close()
                 self._sock = None
-                #pthread_mutex_lock(&mosq->state_mutex)
+                self._state_mutex.acquire()
                 if self._state == mosq_cs_disconnecting:
                     rc = MOSQ_ERR_SUCCESS
-                #pthread_mutex_unlock(&mosq->state_mutex)
-                #pthread_mutex_lock(&mosq->callback_mutex)
+                self._state_mutex.release()
+                self._callback_mutex.acquire()
                 if self.on_disconnect:
                     self._in_callback = True
                     self.on_disconnect(self, self._obj, rc)
                     self._in_callback = False
-                #pthread_mutex_unlock(&mosq->callback_mutex)
+                self._callback_mutex.release()
                 return rc
 
         return self.loop_misc()
@@ -308,9 +308,9 @@ class Mosquitto:
         if self._sock == None:
             return MOSQ_ERR_NO_CONN
 
-        #pthread_mutex_lock(&mosq->state_mutex)
+        self._state_mutex.acquire()
         self._state = mosq_cs_disconnecting
-        #pthread_mutex_unlock(&mosq->state_mutex)
+        self._state_mutex.release()
 
         return self._send_disconnect()
     
@@ -406,9 +406,9 @@ class Mosquitto:
         # Free data and reset values 
         self._in_packet.cleanup()
 
-        #pthread_mutex_lock(&mosq->msgtime_mutex)
+        self._msgtime_mutex.acquire()
         self._last_msg_in = time.time()
-        #pthread_mutex_unlock(&mosq->msgtime_mutex)
+        self._msgtime_mutex.release()
         return rc
 
 
@@ -536,10 +536,10 @@ class Mosquitto:
 
     def _check_keepalive(self):
         now = time.time()
-        #pthread_mutex_lock(&mosq->msgtime_mutex)
+        self._msgtime_mutex.acquire()
         last_msg_out = self._last_msg_out
         last_msg_in = self._last_msg_in
-        #pthread_mutex_unlock(&mosq->msgtime_mutex)
+        self._msgtime_mutex.release()
         if self._sock != None and (now - last_msg_out >= self._keepalive or now - last_msg_in >= self._keepalive):
             if self._state == mosq_cs_connected and self._ping_t == 0:
                 self._send_pingreq()
@@ -778,9 +778,9 @@ class Mosquitto:
 
     def _packet_queue(self, packet):
         mpkt = MosquittoPacket(packet)
-        #pthread_mutex_lock(&mosq->out_packet_mutex)
+        self._out_packet_mutex.acquire()
         self._out_packet.append(mpkt)
-        #pthread_mutex_unlock(&mosq->out_packet_mutex)
+        self._out_packet_mutex.release()
 
         if self._in_callback == False:
             return self.loop_write()
@@ -842,12 +842,12 @@ class Mosquitto:
 
         (resvd, result) = struct.unpack("!BB", self._in_packet.packet)
         # FIXME _mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Received CONNACK")
-        # pthread_mutex_lock(&mosq->callback_mutex)
+        self._callback_mutex.acquire()
         if self.on_connect:
             self._in_callback = True
             self.on_connect(self, self._obj, result)
             self._in_callback = False
-        # pthread_mutex_unlock(&mosq->callback_mutex)
+        self._callback_mutex.release()
         if result == 0:
             self._state = mosq_cs_connected
             return MOSQ_ERR_SUCCESS
@@ -863,12 +863,12 @@ class Mosquitto:
         pack_format = "!" + "B"*len(packet)
         granted_qos = struct.unpack(pack_format, packet)
 
-        # pthread_mutex_lock(&mosq->callback_mutex)
+        self._callback_mutex.acquire()
         if self.on_subscribe:
             self._in_callback = True
             self.on_subscribe(self, self._obj, mid, granted_qos)
             self._in_callback = False
-        # pthread_mutex_unlock(&mosq->callback_mutex)
+        self._callback_mutex.release()
 
         return MOSQ_ERR_SUCCESS
 
@@ -904,23 +904,23 @@ class Mosquitto:
 
         message.timestamp = time.time()
         if message.qos == 0:
-            # pthread_mutex_lock(&mosq->callback_mutex)
+            self._callback_mutex.acquire()
             if self.on_message:
                 self._in_callback = True
                 self.on_message(self, self._obj, message)
                 self._in_callback = False
 
-            # pthread_mutex_unlock(&mosq->callback_mutex)
+            self._callback_mutex.release()
             return MOSQ_ERR_SUCCESS
         elif message.qos == 1:
             rc = self._send_puback(message.mid)
-            # pthread_mutex_lock(&mosq->callback_mutex)
+            self._callback_mutex.acquire()
             if self.on_message:
                 self._in_callback = True
                 self.on_message(self, self._obj, message)
                 self._in_callback = False
 
-            # pthread_mutex_unlock(&mosq->callback_mutex)
+            self._callback_mutex.release()
             return rc
         elif message.qos == 2:
             rc = self._send_pubrec(message.mid)
@@ -947,12 +947,12 @@ class Mosquitto:
 
                 # Only pass the message on if we have removed it from the queue - this
                 # prevents multiple callbacks for the same message.
-                #pthread_mutex_lock(&mosq->callback_mutex)
+                self._callback_mutex.acquire()
                 if self.on_message:
                     self._in_callback = True
                     self.on_message(self, self._obj, self._messages[i])
                     self._in_callback = False
-                #pthread_mutex_unlock(&mosq->callback_mutex)
+                self._callback_mutex.release()
                 self._messages.pop(i)
 
                 return self._send_pubcomp(mid)
@@ -984,12 +984,12 @@ class Mosquitto:
         mid = struct.unpack("!H", self._in_packet.packet)
         mid = mid[0]
         # _mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Received UNSUBACK")
-        # pthread_mutex_lock(&mosq->callback_mutex)
+        self._callback_mutex.acquire()
         if self.on_unsubscribe:
             self._in_callback = True
             self.on_unsubscribe(self, self._obj, mid)
             self._in_callback = False
-        # pthread_mutex_unlock(&mosq->callback_mutex)
+        self._callback_mutex.release()
         return MOSQ_ERR_SUCCESS
 
     def _handle_pubackcomp(self, cmd):
@@ -1004,13 +1004,13 @@ class Mosquitto:
         for i in range(len(self._messages)):
             if self._messages[i].direction == mosq_md_out and self._messages[i].mid == mid:
                 # Only inform the client the message has been sent once.
-                # pthread_mutex_lock(&mosq->callback_mutex)
+                self._callback_mutex.acquire()
                 if self.on_publish:
                     self._in_callback = True
                     self.on_publish(self, self._obj, mid)
                     self._in_callback = False
 
-                # pthread_mutex_unlock(&mosq->callback_mutex)
+                self._callback_mutex.release()
                 self._messages.pop(i)
 
         return MOSQ_ERR_SUCCESS
