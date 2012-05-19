@@ -30,6 +30,7 @@ test-c : test-compile-c
 	./03-publish-c2b-qos2-timeout.py c/03-publish-c2b-qos2-timeout.test
 	./03-publish-b2c-qos1.py c/03-publish-b2c-qos1.test
 	./03-publish-b2c-qos2.py c/03-publish-b2c-qos2.test
+	./04-retain-qos0.py c/04-retain-qos0.test
 
 test-cpp : test-compile-cpp
 	./01-con-discon-success.py cpp/01-con-discon-success.test
@@ -48,6 +49,7 @@ test-cpp : test-compile-cpp
 	./03-publish-c2b-qos2-timeout.py cpp/03-publish-c2b-qos2-timeout.test
 	./03-publish-b2c-qos1.py cpp/03-publish-b2c-qos1.test
 	./03-publish-b2c-qos2.py cpp/03-publish-b2c-qos2.test
+	./04-retain-qos0.py cpp/04-retain-qos0.test
 
 test-python :
 	./01-con-discon-success.py python/01-con-discon-success.py
@@ -66,6 +68,7 @@ test-python :
 	./03-publish-c2b-qos2-timeout.py python/03-publish-c2b-qos2-timeout.py
 	./03-publish-b2c-qos1.py python/03-publish-b2c-qos1.py
 	./03-publish-b2c-qos2.py python/03-publish-b2c-qos2.py
+	./04-retain-qos0.py python/04-retain-qos0.py
 
 clean : 
 	$(MAKE) -C c clean
