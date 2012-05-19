@@ -33,6 +33,7 @@ Broker:
 - Fix reloading of bridge clients from the persistent db. This means that
   outgoing bridged topics should always work.
 - Local bridges are now no longer restricted by local ACLs.
+- Discard publish messages with zero length topics.
 
 Client library:
 
@@ -61,6 +62,7 @@ Client library:
   mosquitto_new() because it is a client parameter rather than a connection
   parameter.
 - mosquitto_new() now sets errno to indicate failure type.
+- Return MOSQ_ERR_INVAL on zero length topic.
 - Fix automatic client id generation on Windows.
 - mosquitto_loop_misq() can now return MOSQ_ERR_NO_CONN;
 - Rename C++ namespace from mosquittopp to mosqpp to remove ambiguity.
