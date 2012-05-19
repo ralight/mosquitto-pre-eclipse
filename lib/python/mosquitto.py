@@ -174,6 +174,7 @@ class Mosquitto:
         self._out_packet_mutex = threading.Lock()
         self._current_out_packet_mutex = threading.Lock()
         self._msgtime_mutex = threading.Lock()
+        self._thread = None
 
     def __del__(self):
         pass
@@ -529,6 +530,21 @@ class Mosquitto:
 
     def socket(self):
         return self._sock
+
+    def loop_start(self):
+        if self._thread != None:
+            return MOSQ_ERR_INVAL
+
+        self._thread = threading.Thread(target=self._thread_main)
+        self._thread.daemon = True
+        self._thread.start()
+
+    def loop_stop(self, force=False):
+        if self._thread == None:
+            return MOSQ_ERR_INVAL
+
+        self._thread.join()
+        self._thread = None
 
     # ============================================================
     # Private functions
@@ -1014,4 +1030,27 @@ class Mosquitto:
                 self._messages.pop(i)
 
         return MOSQ_ERR_SUCCESS
+
+    def _thread_main(self):
+        run = True
+        self._state_mutex.acquire()
+        if self._state == mosq_cs_connect_async:
+            self._state_mutex.release()
+            self.reconnect()
+        else:
+            self._state_mutex.release()
+
+        while run == True:
+            rc = MOSQ_ERR_SUCCESS
+            while rc == MOSQ_ERR_SUCCESS:
+                rc = self.loop()
+
+            self._state_mutex.acquire()
+            if self._state == mosq_cs_disconnecting:
+                run = False
+                self._state_mutex.release()
+            else:
+                self._state_mutex.release()
+                time.sleep(1)
+                self.reconnect()
 
