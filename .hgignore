@@ -4,6 +4,7 @@ syntax: glob
 *.exe
 *.db
 *.test
+*.pyc
 
 client/mosquitto_pub
 client/mosquitto_sub
