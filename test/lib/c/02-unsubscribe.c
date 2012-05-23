@@ -14,6 +14,16 @@ void on_connect(struct mosquitto *mosq, void *obj, int rc)
 	}
 }
 
+void on_disconnect(struct mosquitto *mosq, void *obj, int rc)
+{
+	run = rc;
+}
+
+void on_unsubscribe(struct mosquitto *mosq, void *obj, int mid)
+{
+	mosquitto_disconnect(mosq);
+}
+
 int main(int argc, char *argv[])
 {
 	int rc;
@@ -23,6 +33,8 @@ int main(int argc, char *argv[])
 
 	mosq = mosquitto_new("unsubscribe-test", true, NULL);
 	mosquitto_connect_callback_set(mosq, on_connect);
+	mosquitto_disconnect_callback_set(mosq, on_disconnect);
+	mosquitto_unsubscribe_callback_set(mosq, on_unsubscribe);
 
 	rc = mosquitto_connect(mosq, "localhost", 1888, 60);
 

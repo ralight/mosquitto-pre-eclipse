@@ -14,8 +14,11 @@ keepalive = 60
 connect_packet = pack('!BBH6sBBHH16s', 16, 12+2+16,6,"MQIsdp",3,2,keepalive,16,"unsubscribe-test")
 connack_packet = pack('!BBBB', 32, 2, 0, 0);
 
+disconnect_packet = pack('!BB', 224, 0)
+
 mid = 1
 unsubscribe_packet = pack('!BBHH16s', 162, 2+2+16, mid, 16, "unsubscribe/test")
+unsuback_packet = pack('!BBH', 176, 2, mid)
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -51,7 +54,16 @@ try:
             print("Received: "+unsubscribe_recvd+" length="+str(len(unsubscribe_recvd)))
             print("Expected: "+unsubscribe_packet+" length="+str(len(unsubscribe_packet)))
         else:
-            rc = 0
+            conn.send(unsuback_packet)
+            disconnect_recvd = conn.recv(256)
+        
+            if disconnect_recvd != disconnect_packet:
+                print("FAIL: Received incorrect disconnect.")
+                (cmd, rl) = unpack('!BB', disconnect_recvd)
+                print("Received: "+str(cmd)+", " + str(rl))
+                print("Expected: 224, 0")
+            else:
+                rc = 0
         
     conn.close()
 finally:
