@@ -91,7 +91,7 @@ class mosqpp_EXPORT mosquittopp {
 		virtual void on_disconnect(int rc) {return;};
 		virtual void on_publish(int mid) {return;};
 		virtual void on_message(const struct mosquitto_message *message) {return;};
-		virtual void on_subscribe(int mid, int qos_count, const uint8_t *granted_qos) {return;};
+		virtual void on_subscribe(int mid, int qos_count, const int *granted_qos) {return;};
 		virtual void on_unsubscribe(int mid) {return;};
 		virtual void on_log(int level, const char *str) {return;};
 		virtual void on_error() {return;};
