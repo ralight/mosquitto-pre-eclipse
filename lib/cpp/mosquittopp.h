@@ -66,7 +66,6 @@ class mosqpp_EXPORT mosquittopp {
 		~mosquittopp();
 
 		int socket();
-		int log_init(int priorities, int destinations);
 		int will_set(const char *topic, uint32_t payloadlen=0, const uint8_t *payload=NULL, int qos=0, bool retain=false);
 		int will_clear();
 		int username_pw_set(const char *username, const char *password=NULL);
@@ -94,6 +93,7 @@ class mosqpp_EXPORT mosquittopp {
 		virtual void on_message(const struct mosquitto_message *message) {return;};
 		virtual void on_subscribe(uint16_t mid, int qos_count, const uint8_t *granted_qos) {return;};
 		virtual void on_unsubscribe(uint16_t mid) {return;};
+		virtual void on_log(int level, const char *str) {return;};
 		virtual void on_error() {return;};
 };
 

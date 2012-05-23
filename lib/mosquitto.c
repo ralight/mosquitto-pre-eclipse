@@ -151,8 +151,6 @@ struct mosquitto *mosquitto_new(const char *id, bool clean_session, void *obj)
 		mosq->on_message = NULL;
 		mosq->on_subscribe = NULL;
 		mosq->on_unsubscribe = NULL;
-		mosq->log_destinations = MOSQ_LOG_NONE;
-		mosq->log_priorities = MOSQ_LOG_ERR | MOSQ_LOG_WARNING | MOSQ_LOG_NOTICE | MOSQ_LOG_INFO;
 		mosq->host = NULL;
 		mosq->port = 1883;
 		mosq->in_callback = false;
@@ -160,6 +158,7 @@ struct mosquitto *mosquitto_new(const char *id, bool clean_session, void *obj)
 		mosq->ssl = NULL;
 #endif
 		pthread_mutex_init(&mosq->callback_mutex, NULL);
+		pthread_mutex_init(&mosq->log_callback_mutex, NULL);
 		pthread_mutex_init(&mosq->state_mutex, NULL);
 		pthread_mutex_init(&mosq->out_packet_mutex, NULL);
 		pthread_mutex_init(&mosq->current_out_packet_mutex, NULL);
@@ -239,6 +238,7 @@ void mosquitto_destroy(struct mosquitto *mosq)
 	}
 #endif
 	pthread_mutex_destroy(&mosq->callback_mutex);
+	pthread_mutex_destroy(&mosq->log_callback_mutex);
 	pthread_mutex_destroy(&mosq->state_mutex);
 	pthread_mutex_destroy(&mosq->out_packet_mutex);
 	pthread_mutex_destroy(&mosq->current_out_packet_mutex);
@@ -580,6 +580,13 @@ void mosquitto_unsubscribe_callback_set(struct mosquitto *mosq, void (*on_unsubs
 	pthread_mutex_lock(&mosq->callback_mutex);
 	mosq->on_unsubscribe = on_unsubscribe;
 	pthread_mutex_unlock(&mosq->callback_mutex);
+}
+
+void mosquitto_log_callback_set(struct mosquitto *mosq, void (*on_log)(struct mosquitto *, void *, int, const char *))
+{
+	pthread_mutex_lock(&mosq->log_callback_mutex);
+	mosq->on_log = on_log;
+	pthread_mutex_unlock(&mosq->log_callback_mutex);
 }
 
 void mosquitto_user_data_set(struct mosquitto *mosq, void *obj)

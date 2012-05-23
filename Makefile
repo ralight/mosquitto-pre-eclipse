@@ -25,7 +25,7 @@ reallyclean :
 	for d in ${DOCDIRS}; do $(MAKE) -C $${d} reallyclean; done
 	-rm -f *.orig
 
-test :
+test : all
 	$(MAKE) -C test test
 
 install : mosquitto
