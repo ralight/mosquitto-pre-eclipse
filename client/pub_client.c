@@ -62,7 +62,7 @@ static int qos = 0;
 static int retain = 0;
 static int mode = MSGMODE_NONE;
 static int status = STATUS_CONNECTING;
-static uint16_t mid_sent = 0;
+static int mid_sent = 0;
 static bool connected = true;
 static char *username = NULL;
 static char *password = NULL;
@@ -121,7 +121,7 @@ void my_disconnect_callback(struct mosquitto *mosq, void *obj, int rc)
 	connected = false;
 }
 
-void my_publish_callback(struct mosquitto *mosq, void *obj, uint16_t mid)
+void my_publish_callback(struct mosquitto *mosq, void *obj, int mid)
 {
 	if(mode != MSGMODE_STDIN_LINE && disconnect_sent == false){
 		mosquitto_disconnect(mosq);

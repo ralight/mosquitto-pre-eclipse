@@ -15,7 +15,7 @@ void on_connect(struct mosquitto *mosq, void *obj, int rc)
 	}
 }
 
-void on_publish(struct mosquitto *mosq, void *obj, uint16_t mid)
+void on_publish(struct mosquitto *mosq, void *obj, int mid)
 {
 	mosquitto_disconnect(mosq);
 }

@@ -45,7 +45,7 @@ static void on_disconnect_wrapper(struct mosquitto *mosq, void *obj, int rc)
 	m->on_disconnect(rc);
 }
 
-static void on_publish_wrapper(struct mosquitto *mosq, void *obj, uint16_t mid)
+static void on_publish_wrapper(struct mosquitto *mosq, void *obj, int mid)
 {
 	class mosquittopp *m = (class mosquittopp *)obj;
 	m->on_publish(mid);
@@ -57,13 +57,13 @@ static void on_message_wrapper(struct mosquitto *mosq, void *obj, const struct m
 	m->on_message(message);
 }
 
-static void on_subscribe_wrapper(struct mosquitto *mosq, void *obj, uint16_t mid, int qos_count, const uint8_t *granted_qos)
+static void on_subscribe_wrapper(struct mosquitto *mosq, void *obj, int mid, int qos_count, const uint8_t *granted_qos)
 {
 	class mosquittopp *m = (class mosquittopp *)obj;
 	m->on_subscribe(mid, qos_count, granted_qos);
 }
 
-static void on_unsubscribe_wrapper(struct mosquitto *mosq, void *obj, uint16_t mid)
+static void on_unsubscribe_wrapper(struct mosquitto *mosq, void *obj, int mid)
 {
 	class mosquittopp *m = (class mosquittopp *)obj;
 	m->on_unsubscribe(mid);
@@ -160,7 +160,7 @@ int mosquittopp::username_pw_set(const char *username, const char *password)
 	return mosquitto_username_pw_set(m_mosq, username, password);
 }
 
-int mosquittopp::publish(uint16_t *mid, const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain)
+int mosquittopp::publish(int *mid, const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain)
 {
 	return mosquitto_publish(m_mosq, mid, topic, payloadlen, payload, qos, retain);
 }
@@ -170,12 +170,12 @@ void mosquittopp::message_retry_set(unsigned int message_retry)
 	mosquitto_message_retry_set(m_mosq, message_retry);
 }
 
-int mosquittopp::subscribe(uint16_t *mid, const char *sub, int qos)
+int mosquittopp::subscribe(int *mid, const char *sub, int qos)
 {
 	return mosquitto_subscribe(m_mosq, mid, sub, qos);
 }
 
-int mosquittopp::unsubscribe(uint16_t *mid, const char *sub)
+int mosquittopp::unsubscribe(int *mid, const char *sub)
 {
 	return mosquitto_unsubscribe(m_mosq, mid, sub);
 }

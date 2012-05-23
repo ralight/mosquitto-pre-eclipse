@@ -158,10 +158,10 @@ struct mosquitto {
 	struct mosquitto_message_all *messages;
 	void (*on_connect)(struct mosquitto *, void *obj, int rc);
 	void (*on_disconnect)(struct mosquitto *, void *obj, int rc);
-	void (*on_publish)(struct mosquitto *, void *obj, uint16_t mid);
+	void (*on_publish)(struct mosquitto *, void *obj, int mid);
 	void (*on_message)(struct mosquitto *, void *obj, const struct mosquitto_message *message);
-	void (*on_subscribe)(struct mosquitto *, void *obj, uint16_t mid, int qos_count, const uint8_t *granted_qos);
-	void (*on_unsubscribe)(struct mosquitto *, void *obj, uint16_t mid);
+	void (*on_subscribe)(struct mosquitto *, void *obj, int mid, int qos_count, const uint8_t *granted_qos);
+	void (*on_unsubscribe)(struct mosquitto *, void *obj, int mid);
 	void (*on_log)(struct mosquitto *, void *obj, int level, const char *str);
 	//void (*on_error)();
 	char *host;

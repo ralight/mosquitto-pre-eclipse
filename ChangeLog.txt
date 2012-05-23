@@ -63,6 +63,7 @@ Client library:
 - The clean_session parameter has been moved from mosquitto_connect() to
   mosquitto_new() because it is a client parameter rather than a connection
   parameter.
+- Functions now use int instead of uint16_t where possible.
 - mosquitto_new() now sets errno to indicate failure type.
 - Return MOSQ_ERR_INVAL on zero length topic.
 - Fix automatic client id generation on Windows.

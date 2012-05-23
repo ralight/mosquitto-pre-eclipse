@@ -1,6 +1,8 @@
-.PHONY: all test
+.PHONY: all clean test
 
 all :
+
+clean : 
 
 test :
 	./01-connect-success.py

@@ -73,9 +73,9 @@ class mosqpp_EXPORT mosquittopp {
 		int connect_async(const char *host, int port=1883, int keepalive=60);
 		int reconnect();
 		int disconnect();
-		int publish(uint16_t *mid, const char *topic, uint32_t payloadlen=0, const uint8_t *payload=NULL, int qos=0, bool retain=false);
-		int subscribe(uint16_t *mid, const char *sub, int qos=0);
-		int unsubscribe(uint16_t *mid, const char *sub);
+		int publish(int *mid, const char *topic, uint32_t payloadlen=0, const uint8_t *payload=NULL, int qos=0, bool retain=false);
+		int subscribe(int *mid, const char *sub, int qos=0);
+		int unsubscribe(int *mid, const char *sub);
 		void message_retry_set(unsigned int message_retry);
 		void user_data_set(void *obj);
 
@@ -89,10 +89,10 @@ class mosqpp_EXPORT mosquittopp {
 		
 		virtual void on_connect(int rc) {return;};
 		virtual void on_disconnect(int rc) {return;};
-		virtual void on_publish(uint16_t mid) {return;};
+		virtual void on_publish(int mid) {return;};
 		virtual void on_message(const struct mosquitto_message *message) {return;};
-		virtual void on_subscribe(uint16_t mid, int qos_count, const uint8_t *granted_qos) {return;};
-		virtual void on_unsubscribe(uint16_t mid) {return;};
+		virtual void on_subscribe(int mid, int qos_count, const uint8_t *granted_qos) {return;};
+		virtual void on_unsubscribe(int mid) {return;};
 		virtual void on_log(int level, const char *str) {return;};
 		virtual void on_error() {return;};
 };
