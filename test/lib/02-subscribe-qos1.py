@@ -14,8 +14,11 @@ keepalive = 60
 connect_packet = pack('!BBH6sBBHH19s', 16, 12+2+19,6,"MQIsdp",3,2,keepalive,19,"subscribe-qos1-test")
 connack_packet = pack('!BBBB', 32, 2, 0, 0);
 
+disconnect_packet = pack('!BB', 224, 0)
+
 mid = 1
 subscribe_packet = pack('!BBHH9sB', 130, 2+2+9+1, mid, 9, "qos1/test", 1)
+suback_packet = pack('!BBHB', 144, 2+1, mid, 0)
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -51,7 +54,16 @@ try:
             print("Received: "+subscribe_recvd+" length="+str(len(subscribe_recvd)))
             print("Expected: "+subscribe_packet+" length="+str(len(subscribe_packet)))
         else:
-            rc = 0
+            conn.send(suback_packet)
+            disconnect_recvd = conn.recv(256)
+        
+            if disconnect_recvd != disconnect_packet:
+                print("FAIL: Received incorrect disconnect.")
+                (cmd, rl) = unpack('!BB', disconnect_recvd)
+                print("Received: "+str(cmd)+", " + str(rl))
+                print("Expected: 224, 0")
+            else:
+                rc = 0
         
     conn.close()
 finally:
