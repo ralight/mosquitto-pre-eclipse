@@ -11,7 +11,7 @@ class mqtt_tempconv : public mosqpp::mosquittopp
 
 		void on_connect(int rc);
 		void on_message(const struct mosquitto_message *message);
-		void on_subscribe(uint16_t mid, int qos_count, const uint8_t *granted_qos);
+		void on_subscribe(int mid, int qos_count, const int *granted_qos);
 };
 
 #endif

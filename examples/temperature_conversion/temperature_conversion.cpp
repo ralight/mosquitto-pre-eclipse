@@ -34,11 +34,11 @@ void mqtt_tempconv::on_message(const struct mosquitto_message *message)
 		temp_celsius = atof(buf);
 		temp_farenheit = temp_celsius*9.0/5.0 + 32.0;
 		snprintf(buf, 50, "%f", temp_farenheit);
-		publish(NULL, "temperature/farenheit", strlen(buf), (uint8_t *)buf);
+		publish(NULL, "temperature/farenheit", strlen(buf), buf);
 	}
 }
 
-void mqtt_tempconv::on_subscribe(uint16_t mid, int qos_count, const uint8_t *granted_qos)
+void mqtt_tempconv::on_subscribe(int mid, int qos_count, const int *granted_qos)
 {
 	printf("Subscription succeeded.\n");
 }
