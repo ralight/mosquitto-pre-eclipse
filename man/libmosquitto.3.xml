@@ -158,7 +158,7 @@
 			<para>
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_publish</function></funcdef>
 			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
-			<paramdef><parameter>uint16_t *mid</parameter></paramdef>
+			<paramdef><parameter>int *mid</parameter></paramdef>
 			<paramdef><parameter>const char *topic</parameter></paramdef>
 			<paramdef><parameter>uint32_t payloadlen</parameter></paramdef>
 			<paramdef><parameter>const uint8_t *payload</parameter></paramdef>
@@ -174,14 +174,14 @@
 			<para>
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_subscribe</function></funcdef>
 			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
-			<paramdef><parameter>uint16_t *mid</parameter></paramdef>
+			<paramdef><parameter>int *mid</parameter></paramdef>
 			<paramdef><parameter>const char *sub</parameter></paramdef>
 			<paramdef><parameter>int qos</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_unsubscribe</function></funcdef>
 			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
-			<paramdef><parameter>uint16_t *mid</parameter></paramdef>
+			<paramdef><parameter>int *mid</parameter></paramdef>
 			<paramdef><parameter>const char *sub</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 			</para>
@@ -238,10 +238,10 @@ struct mosquitto_message{
 struct mosquitto;
 
 void mosquitto_connect_callback_set(struct mosquitto *mosq, void (*on_connect)(void *, int));
-void mosquitto_publish_callback_set(struct mosquitto *mosq, void (*on_publish)(void *, uint16_t));
+void mosquitto_publish_callback_set(struct mosquitto *mosq, void (*on_publish)(void *, int));
 void mosquitto_message_callback_set(struct mosquitto *mosq, void (*on_message)(void *, struct mosquitto_message *));
-void mosquitto_subscribe_callback_set(struct mosquitto *mosq, void (*on_subscribe)(void *, uint16_t, int, uint8_t *));
-void mosquitto_unsubscribe_callback_set(struct mosquitto *mosq, void (*on_unsubscribe)(void *, uint16_t));
+void mosquitto_subscribe_callback_set(struct mosquitto *mosq, void (*on_subscribe)(void *, int, int, int *));
+void mosquitto_unsubscribe_callback_set(struct mosquitto *mosq, void (*on_unsubscribe)(void *, int));
 
 void mosquitto_message_retry_check(struct mosquitto *mosq);
 void mosquitto_message_retry_set(struct mosquitto *mosq, unsigned int message_retry);
@@ -277,7 +277,7 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 	}
 }
 
-void my_subscribe_callback(struct mosquitto *mosq, void *obj, uint16_t mid, int qos_count, const uint8_t *granted_qos)
+void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos)
 {
 	int i;
 
