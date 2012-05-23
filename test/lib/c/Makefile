@@ -1,6 +1,6 @@
 .PHONY: all test 01 02 03 04
 
-CFLAGS=-I../../../lib
+CFLAGS=-I../../../lib -Werror
 LIBS=../../../lib/libmosquitto.so.1
 
 all : 01 02 03 04
