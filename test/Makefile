@@ -84,3 +84,5 @@ util.o : ../src/util.c ../src/mqtt3.h
 
 clean : 
 	-rm -f *.o random_client qos msgsps_pub msgsps_sub fake_user test_client
+	$(MAKE) -C lib clean
+	$(MAKE) -C broker clean
