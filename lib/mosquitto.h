@@ -68,12 +68,8 @@ extern "C" {
 #define LIBMOSQUITTO_REVISION 90
 #define LIBMOSQUITTO_VERSION_NUMBER (LIBMOSQUITTO_MAJOR*1000000+LIBMOSQUITTO_MINOR*1000+LIBMOSQUITTO_REVISION)
 
-/* Log destinations */
-#define MOSQ_LOG_NONE 0x00
-#define MOSQ_LOG_STDOUT 0x04
-#define MOSQ_LOG_STDERR 0x08
-
 /* Log types */
+#define MOSQ_LOG_NONE 0x00
 #define MOSQ_LOG_INFO 0x01
 #define MOSQ_LOG_NOTICE 0x02
 #define MOSQ_LOG_WARNING 0x04
@@ -223,38 +219,6 @@ libmosq_EXPORT struct mosquitto *mosquitto_new(const char *id, bool clean_sessio
  * 	<mosquitto_new>
  */
 libmosq_EXPORT void mosquitto_destroy(struct mosquitto *mosq);
-
-/*
- * Function: mosquitto_log_init
- *
- * Configure logging options for a client instance. May be called at any point.
- *
- * Log priorities controls which types of messages are output. OR together
- * values from:
- *
- *	* MOSQ_LOG_INFO
- *	* MOSQ_LOG_NOTICE
- *	* MOSQ_LOG_WARNING
- *	* MOSQ_LOG_ERR
- *	* MOSQ_LOG_DEBUG
- *	* MOSQ_LOG_ALL
- *
- * Log destinations controls where the log messages are sent. OR together
- * values from:
- *
- *	* MOSQ_LOG_NONE
- *	* MOSQ_LOG_STDOUT
- *	* MOSQ_LOG_STDERR
- *
- * Parameters:
- *	mosq -         a valid mosquitto instance.
- *	priorities -   an integer bit mask of the log types to output.
- *	destinations - an integer bit mask of log destinations.
- *
- * Returns:
- * 	MOSQ_ERR_SUCCESS - always
- */
-libmosq_EXPORT int mosquitto_log_init(struct mosquitto *mosq, int priorities, int destinations);
 
 /* 
  * Function: mosquitto_will_set
@@ -844,6 +808,32 @@ libmosq_EXPORT void mosquitto_subscribe_callback_set(struct mosquitto *mosq, voi
  *  mid -  the message id of the unsubscribe message.
  */
 libmosq_EXPORT void mosquitto_unsubscribe_callback_set(struct mosquitto *mosq, void (*on_unsubscribe)(struct mosquitto *, void *, uint16_t));
+
+/*
+ * Function: mosquitto_log_callback_set
+ *
+ * Set the logging callback. This should be used if you want event logging
+ * information from the client library.
+ *
+ *  mosq -   a valid mosquitto instance.
+ *  on_log - a callback function in the following form:
+ *           void callback(struct mosquitto *mosq, void *obj, int level, const char *str)
+ * values from:
+ *
+ *	* MOSQ_LOG_ALL
+ *
+ * Callback Parameters:
+ *  mosq -  the mosquitto instance making the callback.
+ *  obj -   the user data provided in <mosquitto_new>
+ *  level - the log message level from the values:
+ *	        MOSQ_LOG_INFO
+ *	        MOSQ_LOG_NOTICE
+ *	        MOSQ_LOG_WARNING
+ *	        MOSQ_LOG_ERR
+ *	        MOSQ_LOG_DEBUG
+ *	str -   the message string.
+ */
+libmosq_EXPORT void mosquitto_log_callback_set(struct mosquitto *mosq, void (*on_log)(struct mosquitto *, void *, int, const char *));
 
 /*
  * Function: mosquitto_message_retry_set

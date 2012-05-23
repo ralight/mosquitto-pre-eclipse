@@ -50,6 +50,13 @@ PINGREQ = 0xC0
 PINGRESP = 0xD0
 DISCONNECT = 0xE0
 
+# Log levels
+MOSQ_LOG_INFO = 0x01
+MOSQ_LOG_NOTICE = 0x02
+MOSQ_LOG_WARNING = 0x04
+MOSQ_LOG_ERR = 0x08
+MOSQ_LOG_DEBUG = 0x10
+
 # CONNACK codes
 CONNACK_ACCEPTED = 0
 CONNACK_REFUSED_PROTOCOL_VERSION = 1
@@ -163,8 +170,7 @@ class Mosquitto:
         self.on_message = None
         self.on_subscribe = None
         self.on_unsubscribe = None
-        #self._log_destinations = MOSQ_LOG_NONE
-        #self._log_priorities = MOSQ_LOG_ERR | MOSQ_LOG_WARNING | MOSQ_LOG_NOTICE | MOSQ_LOG_INFO
+        self.on_log = None
         self._host = ""
         self._port = 1883
         self._in_callback = False
@@ -552,6 +558,10 @@ class Mosquitto:
     # Private functions
     # ============================================================
 
+    def _easy_log(self, level, buf):
+        if self.on_log:
+            self.on_log(level, buf)
+
     def _check_keepalive(self):
         now = time.time()
         self._msgtime_mutex.acquire()
@@ -613,22 +623,22 @@ class Mosquitto:
             return MOSQ_ERR_SUCCESS
 
     def _send_pingreq(self):
-        # FIXME _mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Sending PINGREQ")
+        self._easy_log(MOSQ_LOG_DEBUG, "Sending PINGREQ")
         rc = self._send_simple_command(PINGREQ)
         if rc == MOSQ_ERR_SUCCESS:
             self._ping_t = time.time()
         return rc
 
     def _send_pingresp(self):
-        #FIXME if(mosq) _mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Sending PINGRESP")
+        self._easy_log(MOSQ_LOG_DEBUG, "Sending PINGRESP")
         return self._send_simple_command(PINGRESP)
 
     def _send_puback(self, mid):
-        # FIXME _mosquitto_log_printf(MOSQ_LOG_DEBUG, "Sending PUBACK (Mid: %d)", mid)
+        self._easy_log(MOSQ_LOG_DEBUG, "Sending PUBACK (Mid: "+str(mid)+")")
         return self._send_command_with_mid(PUBACK, mid, False)
 
     def _send_pubcomp(self, mid):
-        # FIXME _mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Sending PUBCOMP (Mid: %d)", mid)
+        self._easy_log(MOSQ_LOG_DEBUG, "Sending PUBCOMP (Mid: "+str(mid)+")")
         return self._send_command_with_mid(PUBCOMP, mid, False)
 
     def _pack_remaining_length(self, remaining_length):
@@ -651,13 +661,14 @@ class Mosquitto:
         if self._sock == None:
             return MOSQ_ERR_NO_CONN
 
-        # FIXME _mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Sending PUBLISH (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", dup, qos, retain, mid, topic, (long)payloadlen)
         command = PUBLISH | ((dup&0x1)<<3) | (qos<<1) | retain
         packet = struct.pack("!B", command)
         if payload == None:
             remaining_length = 2+len(topic)
+            self._easy_log(MOSQ_LOG_DEBUG, "Sending PUBLISH (d"+str(dup)+", q"+str(qos)+", r"+str(retain)+", m"+str(mid)+", '"+topic+"' (NULL payload)")
         else:
             remaining_length = 2+len(topic) + len(payload)
+            self._easy_log(MOSQ_LOG_DEBUG, "Sending PUBLISH (d"+str(dup)+", q"+str(qos)+", r"+str(retain)+", m"+str(mid)+", '"+topic+"', ... ("+str(len(payload))+" bytes)")
 
         if qos > 0:
             # For message id
@@ -679,11 +690,11 @@ class Mosquitto:
         return self._packet_queue(packet)
 
     def _send_pubrec(self, mid):
-        # FIXME _mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Sending PUBREC (Mid: %d)", mid)
+        self._easy_log(MOSQ_LOG_DEBUG, "Sending PUBREC (Mid: "+str(mid)+")")
         return self._send_command_with_mid(PUBREC, mid, False)
 
     def _send_pubrel(self, mid, dup=False):
-        # FIXME _mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Sending PUBREL (Mid: %d)", mid)
+        self._easy_log(MOSQ_LOG_DEBUG, "Sending PUBREL (Mid: "+str(mid)+")")
         return self._send_command_with_mid(PUBREL|2, mid, dup)
 
     def _send_command_with_mid(self, command, mid, dup):
@@ -829,7 +840,7 @@ class Mosquitto:
             return self._handle_unsuback()
         else:
             # If we don't recognise the command, return an error straight away.
-            # FIXME _mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Error: Unrecognised command %d\n", (mosq->in_packet.command)&0xF0)
+            self._easy_log(MOSQ_LOG_ERR, "Error: Unrecognised command "+str(cmd))
             return MOSQ_ERR_PROTOCOL
 
     def _handle_pingreq(self):
@@ -837,7 +848,7 @@ class Mosquitto:
             if self._in_packet.remaining_length != 0:
                 return MOSQ_ERR_PROTOCOL
         
-        # FIXME _mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Received PINGREQ")
+        self._easy_log(MOSQ_LOG_DEBUG, "Received PINGREQ")
         return self._send_pingresp()
 
     def _handle_pingresp(self):
@@ -847,7 +858,7 @@ class Mosquitto:
         
         # No longer waiting for a PINGRESP.
         self._ping_t = 0
-        # FIXME _mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Received PINGRESP")
+        self._easy_log(MOSQ_LOG_DEBUG, "Received PINGRESP")
         return MOSQ_ERR_SUCCESS
 
     def _handle_connack(self):
@@ -859,7 +870,7 @@ class Mosquitto:
             return MOSQ_ERR_PROTOCOL
 
         (resvd, result) = struct.unpack("!BB", self._in_packet.packet)
-        # FIXME _mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Received CONNACK")
+        self._easy_log(MOSQ_LOG_DEBUG, "Received CONNACK ("+str(resvd)+", "+str(result)+")")
         self._callback_mutex.acquire()
         if self.on_connect:
             self._in_callback = True
@@ -875,7 +886,7 @@ class Mosquitto:
             return MOSQ_ERR_PROTOCOL
 
     def _handle_suback(self):
-        # FIXME _mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Received SUBACK")
+        self._easy_log(MOSQ_LOG_DEBUG, "Received SUBACK")
         pack_format = "!H" + str(len(self._in_packet.packet)-2) + 's'
         (mid, packet) = struct.unpack(pack_format, self._in_packet.packet)
         pack_format = "!" + "B"*len(packet)
@@ -915,10 +926,10 @@ class Mosquitto:
 
         message.payload = packet
 
-        # _mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG,
-                # "Received PUBLISH (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))",
-                # message->dup, message->msg.qos, message->msg.retain, message->msg.mid,
-                # message->msg.topic, (long)message->msg.payloadlen)
+        self._easy_log(MOSQ_LOG_DEBUG, "Received PUBLISH (d"+str(message.dup)+
+                ", q"+str(message.qos)+", r"+str(message.retain)+
+                ", m"+str(message.mid)+", '"+message.topic+
+                "', ...  ("+str(len(message.payload))+" bytes)")
 
         message.timestamp = time.time()
         if message.qos == 0:
@@ -958,7 +969,7 @@ class Mosquitto:
 
         mid = struct.unpack("!H", self._in_packet.packet)
         mid = mid[0]
-        #_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Received PUBREL (Mid: %d)", mid)
+        self._easy_log(MOSQ_LOG_DEBUG, "Received PUBREL (Mid: "+str(mid)+")")
         
         for i in range(len(self._messages)):
             if self._messages[i].direction == mosq_md_in and self._messages[i].mid == mid:
@@ -984,7 +995,7 @@ class Mosquitto:
         
         mid = struct.unpack("!H", self._in_packet.packet)
         mid = mid[0]
-        #_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Received PUBREC (Mid: %d)", mid)
+        self._easy_log(MOSQ_LOG_DEBUG, "Received PUBREC (Mid: "+str(mid)+")")
         
         for i in range(len(self._messages)):
             if self._messages[i].direction == mosq_md_out and self._messages[i].mid == mid:
@@ -1001,7 +1012,7 @@ class Mosquitto:
         
         mid = struct.unpack("!H", self._in_packet.packet)
         mid = mid[0]
-        # _mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Received UNSUBACK")
+        self._easy_log(MOSQ_LOG_DEBUG, "Received UNSUBACK (Mid: "+str(mid)+")")
         self._callback_mutex.acquire()
         if self.on_unsubscribe:
             self._in_callback = True
@@ -1017,7 +1028,7 @@ class Mosquitto:
         
         mid = struct.unpack("!H", self._in_packet.packet)
         mid = mid[0]
-        # _mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Received %s (Mid: %d)", type, mid)
+        self._easy_log(MOSQ_LOG_DEBUG, "Received "+cmd+" (Mid: "+str(mid)+")")
         
         for i in range(len(self._messages)):
             if self._messages[i].direction == mosq_md_out and self._messages[i].mid == mid:

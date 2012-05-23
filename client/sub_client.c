@@ -111,6 +111,11 @@ void my_subscribe_callback(struct mosquitto *mosq, void *obj, uint16_t mid, int 
 	if(!ud->quiet) printf("\n");
 }
 
+void my_log_callback(struct mosquitto *mosq, void *obj, int level, const char *str)
+{
+	printf("%s\n", str);
+}
+
 void print_usage(void)
 {
 	printf("mosquitto_sub is a simple mqtt client that will subscribe to a single topic and print all messages it receives.\n\n");
@@ -384,8 +389,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	if(debug){
-		mosquitto_log_init(mosq, MOSQ_LOG_DEBUG | MOSQ_LOG_ERR | MOSQ_LOG_WARNING
-				| MOSQ_LOG_NOTICE | MOSQ_LOG_INFO, MOSQ_LOG_STDERR);
+		mosquitto_log_callback_set(mosq, my_log_callback);
 	}
 	if(will_topic && mosquitto_will_set(mosq, will_topic, will_payloadlen, will_payload, will_qos, will_retain)){
 		if(!ud.quiet) fprintf(stderr, "Error: Problem setting will.\n");

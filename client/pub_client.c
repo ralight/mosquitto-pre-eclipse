@@ -129,6 +129,11 @@ void my_publish_callback(struct mosquitto *mosq, void *obj, uint16_t mid)
 	}
 }
 
+void my_log_callback(struct mosquitto *mosq, void *obj, int level, const char *str)
+{
+	printf("%s\n", str);
+}
+
 int load_stdin(void)
 {
 	long pos = 0, rlen;
@@ -508,8 +513,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	if(debug){
-		mosquitto_log_init(mosq, MOSQ_LOG_DEBUG | MOSQ_LOG_ERR | MOSQ_LOG_WARNING
-				| MOSQ_LOG_NOTICE | MOSQ_LOG_INFO, MOSQ_LOG_STDERR);
+		mosquitto_log_callback_set(mosq, my_log_callback);
 	}
 	if(will_topic && mosquitto_will_set(mosq, will_topic, will_payloadlen, will_payload, will_qos, will_retain)){
 		if(!quiet) fprintf(stderr, "Error: Problem setting will.\n");

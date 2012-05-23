@@ -69,6 +69,13 @@ static void on_unsubscribe_wrapper(struct mosquitto *mosq, void *obj, uint16_t m
 	m->on_unsubscribe(mid);
 }
 
+
+static void on_log_wrapper(struct mosquitto *mosq, void *obj, int level, const char *str)
+{
+	class mosquittopp *m = (class mosquittopp *)obj;
+	m->on_log(level, str);
+}
+
 void lib_version(int *major, int *minor, int *revision)
 {
 	if(major) *major = LIBMOSQUITTO_MAJOR;
@@ -105,6 +112,7 @@ mosquittopp::mosquittopp(const char *id, bool clean_session)
 	mosquitto_message_callback_set(m_mosq, on_message_wrapper);
 	mosquitto_subscribe_callback_set(m_mosq, on_subscribe_wrapper);
 	mosquitto_unsubscribe_callback_set(m_mosq, on_unsubscribe_wrapper);
+	mosquitto_log_callback_set(m_mosq, on_log_wrapper);
 }
 
 mosquittopp::~mosquittopp()
@@ -135,11 +143,6 @@ int mosquittopp::disconnect()
 int mosquittopp::socket()
 {
 	return mosquitto_socket(m_mosq);
-}
-
-int mosquittopp::log_init(int priorities, int destinations)
-{
-	return mosquitto_log_init(m_mosq, priorities, destinations);
 }
 
 int mosquittopp::will_set(const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain)
