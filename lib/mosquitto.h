@@ -779,7 +779,7 @@ libmosq_EXPORT void mosquitto_message_callback_set(struct mosquitto *mosq, void 
  * Parameters:
  *  mosq -         a valid mosquitto instance.
  *  on_subscribe - a callback function in the following form:
- *                 void callback(struct mosquitto *mosq, void *obj, int mid, int qos_count, const uint8_t *granted_qos)
+ *                 void callback(struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos)
  *
  * Callback Parameters:
  *  mosq -        the mosquitto instance making the callback.
@@ -789,7 +789,7 @@ libmosq_EXPORT void mosquitto_message_callback_set(struct mosquitto *mosq, void 
  *  granted_qos - an array of integers indicating the granted QoS for each of
  *                the subscriptions.
  */
-libmosq_EXPORT void mosquitto_subscribe_callback_set(struct mosquitto *mosq, void (*on_subscribe)(struct mosquitto *, void *, int, int, const uint8_t *));
+libmosq_EXPORT void mosquitto_subscribe_callback_set(struct mosquitto *mosq, void (*on_subscribe)(struct mosquitto *, void *, int, int, const int *));
 
 /*
  * Function: mosquitto_unsubscribe_callback_set

@@ -57,7 +57,7 @@ static void on_message_wrapper(struct mosquitto *mosq, void *obj, const struct m
 	m->on_message(message);
 }
 
-static void on_subscribe_wrapper(struct mosquitto *mosq, void *obj, int mid, int qos_count, const uint8_t *granted_qos)
+static void on_subscribe_wrapper(struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos)
 {
 	class mosquittopp *m = (class mosquittopp *)obj;
 	m->on_subscribe(mid, qos_count, granted_qos);

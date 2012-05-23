@@ -568,7 +568,7 @@ void mosquitto_message_callback_set(struct mosquitto *mosq, void (*on_message)(s
 	pthread_mutex_unlock(&mosq->callback_mutex);
 }
 
-void mosquitto_subscribe_callback_set(struct mosquitto *mosq, void (*on_subscribe)(struct mosquitto *, void *, int, int, const uint8_t *))
+void mosquitto_subscribe_callback_set(struct mosquitto *mosq, void (*on_subscribe)(struct mosquitto *, void *, int, int, const int *))
 {
 	pthread_mutex_lock(&mosq->callback_mutex);
 	mosq->on_subscribe = on_subscribe;
