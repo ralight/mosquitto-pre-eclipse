@@ -12,7 +12,7 @@ class mosquittopp_test : public mosqpp::mosquittopp
 
 		void on_connect(int rc);
 		void on_disconnect(int rc);
-		void on_publish(uint16_t mid);
+		void on_publish(int mid);
 };
 
 mosquittopp_test::mosquittopp_test(const char *id) : mosqpp::mosquittopp(id)
@@ -33,7 +33,7 @@ void mosquittopp_test::on_disconnect(int rc)
 	run = 0;
 }
 
-void mosquittopp_test::on_publish(uint16_t mid)
+void mosquittopp_test::on_publish(int mid)
 {
 	disconnect();
 }

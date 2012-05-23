@@ -395,7 +395,7 @@ libmosq_EXPORT int mosquitto_disconnect(struct mosquitto *mosq);
  * 
  * Parameters:
  * 	mosq -       a valid mosquitto instance.
- * 	mid -        pointer to a uint16_t. If not NULL, the function will set this
+ * 	mid -        pointer to an int. If not NULL, the function will set this
  *               to the message id of this particular message. This can be then
  *               used with the publish callback to determine when the message
  *               has been sent.
@@ -419,7 +419,7 @@ libmosq_EXPORT int mosquitto_disconnect(struct mosquitto *mosq);
  *                          broker.
  * 	MOSQ_ERR_PAYLOAD_SIZE - if payloadlen is too large.
  */
-libmosq_EXPORT int mosquitto_publish(struct mosquitto *mosq, uint16_t *mid, const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain);
+libmosq_EXPORT int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain);
 
 /*
  * Function: mosquitto_subscribe
@@ -428,7 +428,7 @@ libmosq_EXPORT int mosquitto_publish(struct mosquitto *mosq, uint16_t *mid, cons
  *
  * Parameters:
  *	mosq - a valid mosquitto instance.
- *	mid -  a pointer to a uint16_t. If not NULL, the function will set this to
+ *	mid -  a pointer to an int. If not NULL, the function will set this to
  *	       the message id of this particular message. This can be then used
  *	       with the subscribe callback to determine when the message has been
  *	       sent.
@@ -441,7 +441,7 @@ libmosq_EXPORT int mosquitto_publish(struct mosquitto *mosq, uint16_t *mid, cons
  * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
  * 	MOSQ_ERR_NO_CONN - if the client isn't connected to a broker.
  */
-libmosq_EXPORT int mosquitto_subscribe(struct mosquitto *mosq, uint16_t *mid, const char *sub, int qos);
+libmosq_EXPORT int mosquitto_subscribe(struct mosquitto *mosq, int *mid, const char *sub, int qos);
 
 /*
  * Function: mosquitto_unsubscribe
@@ -450,7 +450,7 @@ libmosq_EXPORT int mosquitto_subscribe(struct mosquitto *mosq, uint16_t *mid, co
  *
  * Parameters:
  *	mosq - a valid mosquitto instance.
- *	mid -  a pointer to a uint16_t. If not NULL, the function will set this to
+ *	mid -  a pointer to an int. If not NULL, the function will set this to
  *	       the message id of this particular message. This can be then used
  *	       with the unsubscribe callback to determine when the message has been
  *	       sent.
@@ -462,7 +462,7 @@ libmosq_EXPORT int mosquitto_subscribe(struct mosquitto *mosq, uint16_t *mid, co
  * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
  * 	MOSQ_ERR_NO_CONN - if the client isn't connected to a broker.
  */
-libmosq_EXPORT int mosquitto_unsubscribe(struct mosquitto *mosq, uint16_t *mid, const char *sub);
+libmosq_EXPORT int mosquitto_unsubscribe(struct mosquitto *mosq, int *mid, const char *sub);
 
 /*
  * Function: mosquitto_message_copy
@@ -738,14 +738,14 @@ libmosq_EXPORT void mosquitto_disconnect_callback_set(struct mosquitto *mosq, vo
  * Parameters:
  *  mosq -       a valid mosquitto instance.
  *  on_publish - a callback function in the following form:
- *               void callback(struct mosquitto *mosq, void *obj, uint16_t mid)
+ *               void callback(struct mosquitto *mosq, void *obj, int mid)
  *
  * Callback Parameters:
  *  mosq - the mosquitto instance making the callback.
  *  obj -  the user data provided in <mosquitto_new>
  *  mid -  the message id of the sent message.
  */
-libmosq_EXPORT void mosquitto_publish_callback_set(struct mosquitto *mosq, void (*on_publish)(struct mosquitto *, void *, uint16_t));
+libmosq_EXPORT void mosquitto_publish_callback_set(struct mosquitto *mosq, void (*on_publish)(struct mosquitto *, void *, int));
 
 /*
  * Function: mosquitto_message_callback_set
@@ -779,7 +779,7 @@ libmosq_EXPORT void mosquitto_message_callback_set(struct mosquitto *mosq, void 
  * Parameters:
  *  mosq -         a valid mosquitto instance.
  *  on_subscribe - a callback function in the following form:
- *                 void callback(struct mosquitto *mosq, void *obj, uint16_t mid, int qos_count, const uint8_t *granted_qos)
+ *                 void callback(struct mosquitto *mosq, void *obj, int mid, int qos_count, const uint8_t *granted_qos)
  *
  * Callback Parameters:
  *  mosq -        the mosquitto instance making the callback.
@@ -789,7 +789,7 @@ libmosq_EXPORT void mosquitto_message_callback_set(struct mosquitto *mosq, void 
  *  granted_qos - an array of integers indicating the granted QoS for each of
  *                the subscriptions.
  */
-libmosq_EXPORT void mosquitto_subscribe_callback_set(struct mosquitto *mosq, void (*on_subscribe)(struct mosquitto *, void *, uint16_t, int, const uint8_t *));
+libmosq_EXPORT void mosquitto_subscribe_callback_set(struct mosquitto *mosq, void (*on_subscribe)(struct mosquitto *, void *, int, int, const uint8_t *));
 
 /*
  * Function: mosquitto_unsubscribe_callback_set
@@ -800,14 +800,14 @@ libmosq_EXPORT void mosquitto_subscribe_callback_set(struct mosquitto *mosq, voi
  * Parameters:
  *  mosq -           a valid mosquitto instance.
  *  on_unsubscribe - a callback function in the following form:
- *                   void callback(struct mosquitto *mosq, void *obj, uint16_t mid)
+ *                   void callback(struct mosquitto *mosq, void *obj, int mid)
  *
  * Callback Parameters:
  *  mosq - the mosquitto instance making the callback.
  *  obj -  the user data provided in <mosquitto_new>
  *  mid -  the message id of the unsubscribe message.
  */
-libmosq_EXPORT void mosquitto_unsubscribe_callback_set(struct mosquitto *mosq, void (*on_unsubscribe)(struct mosquitto *, void *, uint16_t));
+libmosq_EXPORT void mosquitto_unsubscribe_callback_set(struct mosquitto *mosq, void (*on_unsubscribe)(struct mosquitto *, void *, int));
 
 /*
  * Function: mosquitto_log_callback_set

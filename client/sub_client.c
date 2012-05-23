@@ -96,7 +96,7 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 	}
 }
 
-void my_subscribe_callback(struct mosquitto *mosq, void *obj, uint16_t mid, int qos_count, const uint8_t *granted_qos)
+void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_count, const uint8_t *granted_qos)
 {
 	int i;
 	struct userdata *ud;

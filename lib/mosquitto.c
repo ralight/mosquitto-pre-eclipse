@@ -308,7 +308,7 @@ int mosquitto_disconnect(struct mosquitto *mosq)
 	return _mosquitto_send_disconnect(mosq);
 }
 
-int mosquitto_publish(struct mosquitto *mosq, uint16_t *mid, const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain)
+int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain)
 {
 	struct mosquitto_message_all *message;
 	uint16_t local_mid;
@@ -367,7 +367,7 @@ int mosquitto_publish(struct mosquitto *mosq, uint16_t *mid, const char *topic, 
 	}
 }
 
-int mosquitto_subscribe(struct mosquitto *mosq, uint16_t *mid, const char *sub, int qos)
+int mosquitto_subscribe(struct mosquitto *mosq, int *mid, const char *sub, int qos)
 {
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
@@ -375,7 +375,7 @@ int mosquitto_subscribe(struct mosquitto *mosq, uint16_t *mid, const char *sub, 
 	return _mosquitto_send_subscribe(mosq, mid, false, sub, qos);
 }
 
-int mosquitto_unsubscribe(struct mosquitto *mosq, uint16_t *mid, const char *sub)
+int mosquitto_unsubscribe(struct mosquitto *mosq, int *mid, const char *sub)
 {
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
@@ -554,7 +554,7 @@ void mosquitto_disconnect_callback_set(struct mosquitto *mosq, void (*on_disconn
 	pthread_mutex_unlock(&mosq->callback_mutex);
 }
 
-void mosquitto_publish_callback_set(struct mosquitto *mosq, void (*on_publish)(struct mosquitto *, void *, uint16_t))
+void mosquitto_publish_callback_set(struct mosquitto *mosq, void (*on_publish)(struct mosquitto *, void *, int))
 {
 	pthread_mutex_lock(&mosq->callback_mutex);
 	mosq->on_publish = on_publish;
@@ -568,14 +568,14 @@ void mosquitto_message_callback_set(struct mosquitto *mosq, void (*on_message)(s
 	pthread_mutex_unlock(&mosq->callback_mutex);
 }
 
-void mosquitto_subscribe_callback_set(struct mosquitto *mosq, void (*on_subscribe)(struct mosquitto *, void *, uint16_t, int, const uint8_t *))
+void mosquitto_subscribe_callback_set(struct mosquitto *mosq, void (*on_subscribe)(struct mosquitto *, void *, int, int, const uint8_t *))
 {
 	pthread_mutex_lock(&mosq->callback_mutex);
 	mosq->on_subscribe = on_subscribe;
 	pthread_mutex_unlock(&mosq->callback_mutex);
 }
 
-void mosquitto_unsubscribe_callback_set(struct mosquitto *mosq, void (*on_unsubscribe)(struct mosquitto *, void *, uint16_t))
+void mosquitto_unsubscribe_callback_set(struct mosquitto *mosq, void (*on_unsubscribe)(struct mosquitto *, void *, int))
 {
 	pthread_mutex_lock(&mosq->callback_mutex);
 	mosq->on_unsubscribe = on_unsubscribe;

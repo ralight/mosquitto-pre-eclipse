@@ -112,7 +112,7 @@ int _mosquitto_send_disconnect(struct mosquitto *mosq)
 	return _mosquitto_send_simple_command(mosq, DISCONNECT);
 }
 
-int _mosquitto_send_subscribe(struct mosquitto *mosq, uint16_t *mid, bool dup, const char *topic, uint8_t topic_qos)
+int _mosquitto_send_subscribe(struct mosquitto *mosq, int *mid, bool dup, const char *topic, uint8_t topic_qos)
 {
 	/* FIXME - only deals with a single topic */
 	struct _mosquitto_packet *packet = NULL;
@@ -138,7 +138,7 @@ int _mosquitto_send_subscribe(struct mosquitto *mosq, uint16_t *mid, bool dup, c
 
 	/* Variable header */
 	local_mid = _mosquitto_mid_generate(mosq);
-	if(mid) *mid = local_mid;
+	if(mid) *mid = (int)local_mid;
 	_mosquitto_write_uint16(packet, local_mid);
 
 	/* Payload */
@@ -149,7 +149,7 @@ int _mosquitto_send_subscribe(struct mosquitto *mosq, uint16_t *mid, bool dup, c
 }
 
 
-int _mosquitto_send_unsubscribe(struct mosquitto *mosq, uint16_t *mid, bool dup, const char *topic)
+int _mosquitto_send_unsubscribe(struct mosquitto *mosq, int *mid, bool dup, const char *topic)
 {
 	/* FIXME - only deals with a single topic */
 	struct _mosquitto_packet *packet = NULL;
@@ -175,7 +175,7 @@ int _mosquitto_send_unsubscribe(struct mosquitto *mosq, uint16_t *mid, bool dup,
 
 	/* Variable header */
 	local_mid = _mosquitto_mid_generate(mosq);
-	if(mid) *mid = local_mid;
+	if(mid) *mid = (int)local_mid;
 	_mosquitto_write_uint16(packet, local_mid);
 
 	/* Payload */
