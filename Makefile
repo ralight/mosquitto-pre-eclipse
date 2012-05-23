@@ -19,6 +19,7 @@ mosquitto :
 clean :
 	for d in ${DIRS}; do $(MAKE) -C $${d} clean; done
 	for d in ${DOCDIRS}; do $(MAKE) -C $${d} clean; done
+	make -C test clean
 
 reallyclean : 
 	for d in ${DIRS}; do $(MAKE) -C $${d} reallyclean; done
