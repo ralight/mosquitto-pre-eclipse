@@ -123,7 +123,7 @@
 			<paramdef><parameter>bool will</parameter></paramdef>
 			<paramdef><parameter>const char *topic</parameter></paramdef>
 			<paramdef><parameter>uint32_t payloadlen</parameter></paramdef>
-			<paramdef><parameter>const uint8_t *payload</parameter></paramdef>
+			<paramdef><parameter>const void *payload</parameter></paramdef>
 			<paramdef><parameter>int qos</parameter></paramdef>
 			<paramdef><parameter>bool retain</parameter></paramdef>
 			</funcprototype></funcsynopsis>
@@ -161,7 +161,7 @@
 			<paramdef><parameter>int *mid</parameter></paramdef>
 			<paramdef><parameter>const char *topic</parameter></paramdef>
 			<paramdef><parameter>uint32_t payloadlen</parameter></paramdef>
-			<paramdef><parameter>const uint8_t *payload</parameter></paramdef>
+			<paramdef><parameter>const void *payload</parameter></paramdef>
 			<paramdef><parameter>int qos</parameter></paramdef>
 			<paramdef><parameter>bool retain</parameter></paramdef>
 			</funcprototype></funcsynopsis>
@@ -226,9 +226,9 @@ struct mosquitto_message{
 	time_t timestamp;
 	enum mosquitto_msg_direction direction;
 	enum mosquitto_msg_state state;
-	uint16_t mid;
+	int mid;
 	char *topic;
-	uint8_t *payload;
+	void *payload;
 	uint32_t payloadlen;
 	int qos;
 	bool retain;
