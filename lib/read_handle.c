@@ -78,6 +78,7 @@ int _mosquitto_handle_publish(struct mosquitto *mosq)
 	uint8_t header;
 	struct mosquitto_message_all *message;
 	int rc = 0;
+	uint16_t mid;
 
 	assert(mosq);
 
@@ -107,11 +108,12 @@ int _mosquitto_handle_publish(struct mosquitto *mosq)
 	}
 
 	if(message->msg.qos > 0){
-		rc = _mosquitto_read_uint16(&mosq->in_packet, &message->msg.mid);
+		rc = _mosquitto_read_uint16(&mosq->in_packet, &mid);
 		if(rc){
 			_mosquitto_message_cleanup(&message);
 			return rc;
 		}
+		message->msg.mid = (int)mid;
 	}
 
 	message->msg.payloadlen = mosq->in_packet.remaining_length - mosq->in_packet.pos;

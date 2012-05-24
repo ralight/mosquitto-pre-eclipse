@@ -100,7 +100,7 @@ enum mosq_err_t {
 #define MOSQ_MQTT_ID_MAX_LENGTH 23
 
 struct mosquitto_message{
-	uint16_t mid;
+	int mid;
 	char *topic;
 	void *payload;
 	uint32_t payloadlen;
