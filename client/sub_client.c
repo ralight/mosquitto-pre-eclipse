@@ -64,14 +64,14 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 
 	if(ud->verbose){
 		if(message->payloadlen){
-			printf("%s %s\n", message->topic, message->payload);
+			printf("%s %s\n", message->topic, (const char *)message->payload);
 		}else{
 			printf("%s (null)\n", message->topic);
 		}
 		fflush(stdout);
 	}else{
 		if(message->payloadlen){
-			printf("%s\n", message->payload);
+			printf("%s\n", (const char *)message->payload);
 			fflush(stdout);
 		}
 	}
