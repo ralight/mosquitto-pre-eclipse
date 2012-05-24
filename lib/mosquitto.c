@@ -169,7 +169,7 @@ struct mosquitto *mosquitto_new(const char *id, bool clean_session, void *obj)
 	return mosq;
 }
 
-int mosquitto_will_set(struct mosquitto *mosq, const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain)
+int mosquitto_will_set(struct mosquitto *mosq, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain)
 {
 	if(!mosq) return MOSQ_ERR_INVAL;
 	return _mosquitto_will_set(mosq, topic, payloadlen, payload, qos, retain);
@@ -308,7 +308,7 @@ int mosquitto_disconnect(struct mosquitto *mosq)
 	return _mosquitto_send_disconnect(mosq);
 }
 
-int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain)
+int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain)
 {
 	struct mosquitto_message_all *message;
 	uint16_t local_mid;

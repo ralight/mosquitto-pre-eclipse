@@ -102,7 +102,7 @@ enum mosq_err_t {
 struct mosquitto_message{
 	uint16_t mid;
 	char *topic;
-	uint8_t *payload;
+	void *payload;
 	uint32_t payloadlen;
 	int qos;
 	bool retain;
@@ -243,7 +243,7 @@ libmosq_EXPORT void mosquitto_destroy(struct mosquitto *mosq);
  * 	MOSQ_ERR_NOMEM -        if an out of memory condition occurred.
  * 	MOSQ_ERR_PAYLOAD_SIZE - if payloadlen is too large.
  */
-libmosq_EXPORT int mosquitto_will_set(struct mosquitto *mosq, const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain);
+libmosq_EXPORT int mosquitto_will_set(struct mosquitto *mosq, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain);
 
 /* 
  * Function: mosquitto_will_clear
@@ -419,7 +419,7 @@ libmosq_EXPORT int mosquitto_disconnect(struct mosquitto *mosq);
  *                          broker.
  * 	MOSQ_ERR_PAYLOAD_SIZE - if payloadlen is too large.
  */
-libmosq_EXPORT int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain);
+libmosq_EXPORT int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain);
 
 /*
  * Function: mosquitto_subscribe
