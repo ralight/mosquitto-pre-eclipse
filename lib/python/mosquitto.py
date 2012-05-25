@@ -191,10 +191,12 @@ class Mosquitto:
         return self.reconnect()
 
     def connect_async(self, host, port=1883, keepalive=60):
-        if len(host) == 0:
+        if host == None or len(host) == 0:
             raise ValueError('Invalid host.')
         if port <= 0:
             raise ValueError('Invalid port number.')
+        if keepalive < 0:
+            raise ValueError('Keepalive must be >=0.')
 
         self._host = host
         self._port = port
@@ -225,6 +227,9 @@ class Mosquitto:
         return self._send_connect(self._keepalive, self._clean_session)
 
     def loop(self, timeout=1.0):
+        if timeout < 0.0:
+            raise ValueError('Invalid timeout.')
+
         if len(self._out_packet) > 0:
             wlist = [self._sock]
         else:
@@ -322,13 +327,20 @@ class Mosquitto:
 
         return self._send_disconnect()
     
-    def subscribe(self, topic, qos):
+    def subscribe(self, topic, qos=0):
+        if qos<0 or qos>2:
+            raise ValueError('Invalid QoS level.')
+        if topic == None or len(topic) == 0:
+            raise ValueError('Invalid topic.')
+
         if self._sock == None:
             return MOSQ_ERR_NO_CONN
 
         return self._send_subscribe(False, topic, qos)
 
     def unsubscribe(self, topic):
+        if topic == None or len(topic) == 0:
+            raise ValueError('Invalid topic.')
         if self._sock == None:
             return MOSQ_ERR_NO_CONN
 
@@ -466,12 +478,20 @@ class Mosquitto:
         return MOSQ_ERR_SUCCESS
 
     def message_retry_set(self, retry):
+        if retry < 0:
+            raise ValueError('Invalid retry.')
+
         self._message_retry = retry
 
     def user_data_set(self, obj):
         self._obj = obj
 
     def will_set(self, topic, payload=None, qos=0, retain=False):
+        if topic == None or len(topic) == 0:
+            raise ValueError('Invalid topic.')
+        if qos<0 or qos>2:
+            raise ValueError('Invalid QoS level.')
+
         self._will = True
         self._will_topic = topic
         self._will_payload = payload
