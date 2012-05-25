@@ -50,12 +50,13 @@ typedef int ssize_t;
 #include <send_mosq.h>
 #include <util_mosq.h>
 
-int _mosquitto_will_set(struct mosquitto *mosq, const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain)
+int _mosquitto_will_set(struct mosquitto *mosq, const char *topic, int payloadlen, const void *payload, int qos, bool retain)
 {
 	int rc = MOSQ_ERR_SUCCESS;
 
 	if(!mosq || !topic) return MOSQ_ERR_INVAL;
-	if(payloadlen > 268435455) return MOSQ_ERR_PAYLOAD_SIZE;
+	if(payloadlen < 0 || payloadlen > MQTT_MAX_PAYLOAD) return MOSQ_ERR_PAYLOAD_SIZE;
+	if(payloadlen > 0 && !payload) return MOSQ_ERR_INVAL;
 
 	if(mosq->will){
 		if(mosq->will->topic){
@@ -107,10 +108,8 @@ cleanup:
 	return rc;
 }
 
-int _mosquitto_will_clear(struct mosquitto *mosq, const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain)
+int _mosquitto_will_clear(struct mosquitto *mosq)
 {
-	int rc = MOSQ_ERR_SUCCESS;
-
 	if(mosq->will->topic){
 		_mosquitto_free(mosq->will->topic);
 		mosq->will->topic = NULL;
@@ -122,6 +121,6 @@ int _mosquitto_will_clear(struct mosquitto *mosq, const char *topic, uint32_t pa
 	_mosquitto_free(mosq->will);
 	mosq->will = NULL;
 
-	return rc;
+	return MOSQ_ERR_SUCCESS;
 }
 

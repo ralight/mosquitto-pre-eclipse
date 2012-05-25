@@ -122,7 +122,7 @@
 			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
 			<paramdef><parameter>bool will</parameter></paramdef>
 			<paramdef><parameter>const char *topic</parameter></paramdef>
-			<paramdef><parameter>uint32_t payloadlen</parameter></paramdef>
+			<paramdef><parameter>int payloadlen</parameter></paramdef>
 			<paramdef><parameter>const void *payload</parameter></paramdef>
 			<paramdef><parameter>int qos</parameter></paramdef>
 			<paramdef><parameter>bool retain</parameter></paramdef>
@@ -160,7 +160,7 @@
 			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
 			<paramdef><parameter>int *mid</parameter></paramdef>
 			<paramdef><parameter>const char *topic</parameter></paramdef>
-			<paramdef><parameter>uint32_t payloadlen</parameter></paramdef>
+			<paramdef><parameter>int payloadlen</parameter></paramdef>
 			<paramdef><parameter>const void *payload</parameter></paramdef>
 			<paramdef><parameter>int qos</parameter></paramdef>
 			<paramdef><parameter>bool retain</parameter></paramdef>
@@ -229,7 +229,7 @@ struct mosquitto_message{
 	int mid;
 	char *topic;
 	void *payload;
-	uint32_t payloadlen;
+	int payloadlen;
 	int qos;
 	bool retain;
 	bool dup;
