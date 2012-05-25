@@ -66,14 +66,14 @@ class mosqpp_EXPORT mosquittopp {
 		~mosquittopp();
 
 		int socket();
-		int will_set(const char *topic, uint32_t payloadlen=0, const uint8_t *payload=NULL, int qos=0, bool retain=false);
+		int will_set(const char *topic, int payloadlen=0, const void *payload=NULL, int qos=0, bool retain=false);
 		int will_clear();
 		int username_pw_set(const char *username, const char *password=NULL);
 		int connect(const char *host, int port=1883, int keepalive=60);
 		int connect_async(const char *host, int port=1883, int keepalive=60);
 		int reconnect();
 		int disconnect();
-		int publish(int *mid, const char *topic, uint32_t payloadlen=0, const uint8_t *payload=NULL, int qos=0, bool retain=false);
+		int publish(int *mid, const char *topic, int payloadlen=0, const void *payload=NULL, int qos=0, bool retain=false);
 		int subscribe(int *mid, const char *sub, int qos=0);
 		int unsubscribe(int *mid, const char *sub);
 		void message_retry_set(unsigned int message_retry);
