@@ -51,6 +51,19 @@ POSSIBILITY OF SUCH DAMAGE.
 #  include <dummypthread.h>
 #endif
 
+#ifdef WIN32
+#	if _MSC_VER < 1600
+		typedef unsigned char uint8_t;
+		typedef unsigned short uint16_t;
+		typedef unsigned int uint32_t;
+		typedef unsigned long long uint64_t;
+#	else
+#		include <stdint.h>
+#	endif
+#else
+#	include <stdint.h>
+#endif
+
 #include <mosquitto.h>
 #ifdef WITH_BROKER
 struct _mosquitto_client_msg;
