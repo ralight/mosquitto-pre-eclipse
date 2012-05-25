@@ -169,7 +169,7 @@ struct mosquitto *mosquitto_new(const char *id, bool clean_session, void *obj)
 	return mosq;
 }
 
-int mosquitto_will_set(struct mosquitto *mosq, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain)
+int mosquitto_will_set(struct mosquitto *mosq, const char *topic, int payloadlen, const void *payload, int qos, bool retain)
 {
 	if(!mosq) return MOSQ_ERR_INVAL;
 	return _mosquitto_will_set(mosq, topic, payloadlen, payload, qos, retain);
@@ -308,14 +308,14 @@ int mosquitto_disconnect(struct mosquitto *mosq)
 	return _mosquitto_send_disconnect(mosq);
 }
 
-int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain)
+int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int payloadlen, const void *payload, int qos, bool retain)
 {
 	struct mosquitto_message_all *message;
 	uint16_t local_mid;
 
 	if(!mosq || !topic || qos<0 || qos>2) return MOSQ_ERR_INVAL;
 	if(strlen(topic) == 0) return MOSQ_ERR_INVAL;
-	if(payloadlen > 268435455) return MOSQ_ERR_PAYLOAD_SIZE;
+	if(payloadlen < 0 || payloadlen > MQTT_MAX_PAYLOAD) return MOSQ_ERR_PAYLOAD_SIZE;
 
 	if(_mosquitto_topic_wildcard_len_check(topic) != MOSQ_ERR_SUCCESS){
 		return MOSQ_ERR_INVAL;
