@@ -145,7 +145,7 @@ int mosquittopp::socket()
 	return mosquitto_socket(m_mosq);
 }
 
-int mosquittopp::will_set(const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain)
+int mosquittopp::will_set(const char *topic, int payloadlen, const void *payload, int qos, bool retain)
 {
 	return mosquitto_will_set(m_mosq, topic, payloadlen, payload, qos, retain);
 }
@@ -160,7 +160,7 @@ int mosquittopp::username_pw_set(const char *username, const char *password)
 	return mosquitto_username_pw_set(m_mosq, username, password);
 }
 
-int mosquittopp::publish(int *mid, const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain)
+int mosquittopp::publish(int *mid, const char *topic, int payloadlen, const void *payload, int qos, bool retain)
 {
 	return mosquitto_publish(m_mosq, mid, topic, payloadlen, payload, qos, retain);
 }
