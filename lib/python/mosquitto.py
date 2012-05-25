@@ -661,9 +661,8 @@ class Mosquitto:
         self._easy_log(MOSQ_LOG_DEBUG, "Sending PUBCOMP (Mid: "+str(mid)+")")
         return self._send_command_with_mid(PUBCOMP, mid, False)
 
-    def _pack_remaining_length(self, remaining_length):
+    def _pack_remaining_length(self, packet, remaining_length):
         remaining_bytes = []
-        packet = ""
         while True:
             byte = remaining_length % 128
             remaining_length = remaining_length / 128
@@ -672,7 +671,7 @@ class Mosquitto:
                 byte = byte | 0x80
 
             remaining_bytes.append(byte)
-            packet = packet + struct.pack("!B", byte)
+            packet.extend(struct.pack("!B", byte))
             if remaining_length == 0:
                 # FIXME - this doesn't deal with incorrectly large payloads
                 return packet
@@ -682,7 +681,8 @@ class Mosquitto:
             return MOSQ_ERR_NO_CONN
 
         command = PUBLISH | ((dup&0x1)<<3) | (qos<<1) | retain
-        packet = struct.pack("!B", command)
+        packet = bytearray()
+        packet.extend(struct.pack("!B", command))
         if payload == None:
             remaining_length = 2+len(topic)
             self._easy_log(MOSQ_LOG_DEBUG, "Sending PUBLISH (d"+str(dup)+", q"+str(qos)+", r"+str(retain)+", m"+str(mid)+", '"+topic+"' (NULL payload)")
@@ -694,18 +694,18 @@ class Mosquitto:
             # For message id
             remaining_length = remaining_length + 2
 
-        packet = packet + self._pack_remaining_length(remaining_length)
+        self._pack_remaining_length(packet, remaining_length)
 
         pack_format = "!H" + str(len(topic)) + "s"
-        packet = packet + struct.pack(pack_format, len(topic), topic)
+        packet.extend(struct.pack(pack_format, len(topic), topic))
 
         if qos > 0:
             # For message id
-            packet = packet + struct.pack("!H", mid)
+            packet.extend(struct.pack("!H", mid))
 
         if payload != None:
             pack_format = str(len(payload)) + "s"
-            packet = packet + struct.pack(pack_format, payload)
+            packet.extend(struct.pack(pack_format, payload))
 
         return self._packet_queue(packet)
 
@@ -750,28 +750,29 @@ class Mosquitto:
                 remaining_length = remaining_length + 2+len(self._password)
 
         command = CONNECT
-        packet = struct.pack("!B", command)
-        packet = packet + self._pack_remaining_length(remaining_length)
-        packet = packet + struct.pack("!H6sBBH", len(PROTOCOL_NAME), PROTOCOL_NAME, PROTOCOL_VERSION, connect_flags, keepalive)
+        packet = bytearray()
+        packet.extend(struct.pack("!B", command))
+        self._pack_remaining_length(packet, remaining_length)
+        packet.extend(struct.pack("!H6sBBH", len(PROTOCOL_NAME), PROTOCOL_NAME, PROTOCOL_VERSION, connect_flags, keepalive))
 
         pack_format = "!H" + str(len(self._client_id)) + "s"
-        packet = packet + struct.pack(pack_format, len(self._client_id), self._client_id)
+        packet.extend(struct.pack(pack_format, len(self._client_id), self._client_id))
 
         if self._will:
             pack_format = "!H" + str(len(self._will_topic)) + "sH"
-            packet = packet + struct.pack(pack_format, len(self._will_topic), self._will_topic, len(self._will_payload))
+            packet.extend(struct.pack(pack_format, len(self._will_topic), self._will_topic, len(self._will_payload)))
 
             if len(self._will_payload) > 0:
                 pack_format = "!" + str(len(self._will_payload)) + "s"
-                packet = packet + struct.pack(pack_format, self._will_payload)
+                packet.extend(struct.pack(pack_format, self._will_payload))
 
         if self._username:
             pack_format = "!H" + str(len(self._username)) + "s"
-            packet = packet + struct.pack(pack_format, len(self._username), self._username)
+            packet.extend(struct.pack(pack_format, len(self._username), self._username))
 
             if self._password:
                 pack_format = "!H" + str(len(self._password)) + "s"
-                packet = packet + struct.pack(pack_format, len(self._password), self._password)
+                packet.extend(struct.pack(pack_format, len(self._password), self._password))
 
         self._keepalive = keepalive
         return self._packet_queue(packet)
@@ -782,21 +783,23 @@ class Mosquitto:
     def _send_subscribe(self, dup, topic, topic_qos):
         remaining_length = 2 + 2+len(topic) + 1
         command = SUBSCRIBE | (dup<<3) | (1<<1)
-        packet = struct.pack("!B", command)
-        packet = packet + self._pack_remaining_length(remaining_length)
+        packet = bytearray()
+        packet.extend(struct.pack("!B", command))
+        self._pack_remaining_length(packet, remaining_length)
         local_mid = self._mid_generate()
         pack_format = "!HH" + str(len(topic)) + "sB"
-        packet = packet + struct.pack(pack_format, local_mid, len(topic), topic, topic_qos)
+        packet.extend(struct.pack(pack_format, local_mid, len(topic), topic, topic_qos))
         return self._packet_queue(packet)
 
     def _send_unsubscribe(self, dup, topic):
         remaining_length = 2 + 2+len(topic)
         command = UNSUBSCRIBE | (dup<<3) | (1<<1)
-        packet = struct.pack("!B", command)
-        packet = packet + self._pack_remaining_length(remaining_length)
+        packet = bytearray()
+        packet.extend(struct.pack("!B", command))
+        self._pack_remaining_length(packet, remaining_length)
         local_mid = self._mid_generate()
         pack_format = "!HH" + str(len(topic)) + "s"
-        packet = packet + struct.pack(pack_format, local_mid, len(topic), topic)
+        packet.extend(struct.pack(pack_format, local_mid, len(topic), topic))
         return self._packet_queue(packet)
 
     def _message_update(self, mid, direction, state):
