@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
 	char err[1024];
 	struct userdata ud;
 	
-	char *will_payload = NULL;
+	uint8_t *will_payload = NULL;
 	long will_payloadlen = 0;
 	int will_qos = 0;
 	bool will_retain = false;
@@ -294,8 +294,8 @@ int main(int argc, char *argv[])
 				print_usage();
 				return 1;
 			}else{
-				will_payload = argv[i+1];
-				will_payloadlen = strlen(will_payload);
+				will_payload = (uint8_t *)argv[i+1];
+				will_payloadlen = strlen((char *)will_payload);
 			}
 			i++;
 		}else if(!strcmp(argv[i], "--will-qos")){
