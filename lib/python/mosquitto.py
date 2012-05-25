@@ -491,6 +491,8 @@ class Mosquitto:
             raise ValueError('Invalid topic.')
         if qos<0 or qos>2:
             raise ValueError('Invalid QoS level.')
+        if isinstance(payload, str) == False and isinstance(payload, bytearray) == False:
+            raise TypeError('payload must be a string or a bytearray.')
 
         self._will = True
         self._will_topic = topic
@@ -704,8 +706,13 @@ class Mosquitto:
             packet.extend(struct.pack("!H", mid))
 
         if payload != None:
-            pack_format = str(len(payload)) + "s"
-            packet.extend(struct.pack(pack_format, payload))
+            if isinstance(payload, str):
+                pack_format = str(len(payload)) + "s"
+                packet.extend(struct.pack(pack_format, payload))
+            elif isinstance(payload, bytearray):
+                packet.extend(payload)
+            else:
+                raise TypeError('payload must be a string or a bytearray.')
 
         return self._packet_queue(packet)
 
@@ -763,8 +770,13 @@ class Mosquitto:
             packet.extend(struct.pack(pack_format, len(self._will_topic), self._will_topic, len(self._will_payload)))
 
             if len(self._will_payload) > 0:
-                pack_format = "!" + str(len(self._will_payload)) + "s"
-                packet.extend(struct.pack(pack_format, self._will_payload))
+                if isinstance(self._will_payload, str):
+                    pack_format = str(len(self._will_payload)) + "s"
+                    packet.extend(struct.pack(pack_format, self._will_payload))
+                elif isinstance(self._will_payload, bytearray):
+                    packet.extend(self._will_payload)
+                else:
+                    raise TypeError('will_payload must be a string or a bytearray.')
 
         if self._username:
             pack_format = "!H" + str(len(self._username)) + "s"
