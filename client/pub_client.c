@@ -78,7 +78,7 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 			case MSGMODE_CMD:
 			case MSGMODE_FILE:
 			case MSGMODE_STDIN_FILE:
-				rc = mosquitto_publish(mosq, &mid_sent, topic, msglen, (uint8_t *)message, qos, retain);
+				rc = mosquitto_publish(mosq, &mid_sent, topic, msglen, message, qos, retain);
 				break;
 			case MSGMODE_NULL:
 				rc = mosquitto_publish(mosq, &mid_sent, topic, 0, NULL, qos, retain);
@@ -251,7 +251,7 @@ int main(int argc, char *argv[])
 	char hostname[MOSQ_MQTT_ID_MAX_LENGTH - 9];
 	char err[1024];
 
-	uint8_t *will_payload = NULL;
+	char *will_payload = NULL;
 	long will_payloadlen = 0;
 	int will_qos = 0;
 	bool will_retain = false;
@@ -421,8 +421,8 @@ int main(int argc, char *argv[])
 				print_usage();
 				return 1;
 			}else{
-				will_payload = (uint8_t *)argv[i+1];
-				will_payloadlen = strlen((char *)will_payload);
+				will_payload = argv[i+1];
+				will_payloadlen = strlen(will_payload);
 			}
 			i++;
 		}else if(!strcmp(argv[i], "--will-qos")){
@@ -552,7 +552,7 @@ int main(int argc, char *argv[])
 		if(mode == MSGMODE_STDIN_LINE && status == STATUS_CONNACK_RECVD){
 			if(fgets(buf, 1024, stdin)){
 				buf[strlen(buf)-1] = '\0';
-				rc2 = mosquitto_publish(mosq, &mid_sent, topic, strlen(buf), (uint8_t *)buf, qos, retain);
+				rc2 = mosquitto_publish(mosq, &mid_sent, topic, strlen(buf), buf, qos, retain);
 				if(rc2){
 					if(!quiet) fprintf(stderr, "Error: Publish returned %d, disconnecting.\n", rc2);
 					mosquitto_disconnect(mosq);
