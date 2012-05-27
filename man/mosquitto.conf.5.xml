@@ -575,6 +575,20 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>try_private</option> [ true | false ]</term>
+				<listitem>
+					<para>If try_private is set to true, the bridge will
+						attempt to indicate to the remote broker that it is a
+						bridge not an ordinary client. If successful, this
+						means that loop detection will be more effective and
+						that retained messages will be propagated correctly.
+						Not all brokers support this feature so it may be
+						necessary to set try_private to false if your bridge
+						does not connect properly.</para>
+					<para>Defaults to true.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>username</option> <replaceable>name</replaceable></term>
 				<listitem>
 					<para>Configure a username for the bridge. This is used for
