@@ -10,6 +10,21 @@ from struct import *
 import mosquitto
 
 
+def on_message(mosq, obj, msg):
+    global run
+    if msg.mid != 13423:
+        exit(1)
+    if msg.topic != "pub/qos2/receive":
+        exit(1)
+    if msg.payload != "message":
+        exit(1)
+    if msg.qos != 2:
+        exit(1)
+    if msg.retain != False:
+        exit(1)
+
+    run = 0
+
 def on_connect(mosq, obj, rc):
     if rc != 0:
         exit(rc)
@@ -18,6 +33,7 @@ run = -1
 mosq = mosquitto.Mosquitto("publish-qos2-test", run)
 mosq.message_retry_set(3)
 mosq.on_connect = on_connect
+mosq.on_message = on_message
 
 mosq.connect("localhost", 1888)
 rc = 0

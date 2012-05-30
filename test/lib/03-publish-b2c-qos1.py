@@ -59,8 +59,15 @@ try:
 
     conn.close()
 finally:
+    for i in range(0, 5):
+        if client.returncode != None:
+            break
+        time.sleep(0.1)
+
     client.terminate()
     client.wait()
     sock.close()
+    if client.returncode != 0:
+        exit(1)
 
 exit(rc)

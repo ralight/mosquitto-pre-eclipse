@@ -9,19 +9,31 @@ from struct import *
 
 import mosquitto
 
+def on_message(mosq, obj, msg):
+    if msg.mid != 123:
+        exit(1)
+    if msg.topic != "pub/qos1/receive":
+        exit(1)
+    if msg.payload != "message":
+        exit(1)
+    if msg.qos != 1:
+        exit(1)
+    if msg.retain != False:
+        exit(1)
+    exit(0)
 
 def on_connect(mosq, obj, rc):
     if rc != 0:
         exit(rc)
 
-run = -1
-mosq = mosquitto.Mosquitto("publish-qos1-test", run)
+mosq = mosquitto.Mosquitto("publish-qos1-test")
 mosq.message_retry_set(3)
 mosq.on_connect = on_connect
+mosq.on_message = on_message
 
 mosq.connect("localhost", 1888)
 rc = 0
-while run == -1 and rc == 0:
+while rc == 0:
     rc = mosq.loop()
 
-exit(run)
+exit(1)
