@@ -21,7 +21,7 @@ void mosquittopp_test::on_connect(int rc)
 	if(rc){
 		exit(1);
 	}else{
-		publish(NULL, "retain/qos0/test", strlen("retained message"), (const uint8_t *)"retained message", 0, true);
+		publish(NULL, "retain/qos0/test", strlen("retained message"), "retained message", 0, true);
 	}
 }
 

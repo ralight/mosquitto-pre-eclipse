@@ -24,7 +24,7 @@ void mosquittopp_test::on_connect(int rc)
 	if(rc){
 		exit(1);
 	}else{
-		publish(NULL, "pub/qos2/test", strlen("message"), (const uint8_t *)"message", 2, false);
+		publish(NULL, "pub/qos2/test", strlen("message"), "message", 2, false);
 	}
 }
 
