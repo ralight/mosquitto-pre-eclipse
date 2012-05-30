@@ -667,7 +667,7 @@ class Mosquitto:
         remaining_bytes = []
         while True:
             byte = remaining_length % 128
-            remaining_length = remaining_length / 128
+            remaining_length = remaining_length // 128
             # If there are more digits to encode, set the top bit of this digit
             if remaining_length > 0:
                 byte = byte | 0x80
