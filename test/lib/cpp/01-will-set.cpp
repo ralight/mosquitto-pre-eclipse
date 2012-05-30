@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 	mosqpp::lib_init();
 
 	mosq = new mosquittopp_test("01-will-set");
-	mosq->will_set("topic/on/unexpected/disconnect", strlen("will message"), (const uint8_t*)"will message", 1, true);
+	mosq->will_set("topic/on/unexpected/disconnect", strlen("will message"), "will message", 1, true);
 
 	mosq->connect("localhost", 1888, 60);
 
