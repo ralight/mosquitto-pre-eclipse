@@ -28,10 +28,15 @@
 import select
 import socket
 import struct
+import sys
 import threading
 import time
 
-PROTOCOL_NAME = "MQIsdp"
+if sys.version_info.major < 3:
+    PROTOCOL_NAME = "MQIsdp"
+else:
+    PROTOCOL_NAME = b"MQIsdp"
+
 PROTOCOL_VERSION = 3
 
 # Message types 
@@ -120,7 +125,7 @@ class MosquittoInPacket:
         self.remaining_count = []
         self.remaining_mult = 1
         self.remaining_length = 0
-        self.packet = ""
+        self.packet = b""
         self.to_process = 0
         self.pos = 0
 
@@ -678,6 +683,31 @@ class Mosquitto:
                 # FIXME - this doesn't deal with incorrectly large payloads
                 return packet
 
+    def _pack_str16(self, packet, data):
+        if sys.version_info.major < 3:
+            if isinstance(data, bytearray):
+                packet.extend(struct.pack("!H", len(data)))
+                packet.extend(data)
+            elif isinstance(data, str):
+                pack_format = "!H" + str(len(data)) + "s"
+                packet.extend(struct.pack(pack_format, len(data), data))
+            elif isinstance(data, unicode):
+                udata = data.encode('utf-8')
+                pack_format = "!H" + str(len(udata)) + "s"
+                packet.extend(struct.pack(pack_format, len(udata), udata))
+            else:
+                raise TypeError
+        else:
+            if isinstance(data, bytearray):
+                packet.extend(struct.pack("!H", len(data)))
+                packet.extend(data)
+            elif isinstance(data, str):
+                udata = data.encode('utf-8')
+                pack_format = "!H" + str(len(udata)) + "s"
+                packet.extend(struct.pack(pack_format, len(udata), udata))
+            else:
+                raise TypeError
+
     def _send_publish(self, mid, topic, payload=None, qos=0, retain=False, dup=False):
         if self._sock == None:
             return MOSQ_ERR_NO_CONN
@@ -697,9 +727,7 @@ class Mosquitto:
             remaining_length = remaining_length + 2
 
         self._pack_remaining_length(packet, remaining_length)
-
-        pack_format = "!H" + str(len(topic)) + "s"
-        packet.extend(struct.pack(pack_format, len(topic), topic))
+        self._pack_str16(packet, topic)
 
         if qos > 0:
             # For message id
@@ -707,12 +735,21 @@ class Mosquitto:
 
         if payload != None:
             if isinstance(payload, str):
-                pack_format = str(len(payload)) + "s"
-                packet.extend(struct.pack(pack_format, payload))
+                if sys.version_info.major < 3:
+                    pack_format = str(len(payload)) + "s"
+                    packet.extend(struct.pack(pack_format, payload))
+                else:
+                    upayload = payload.encode('utf-8')
+                    pack_format = str(len(upayload)) + "s"
+                    packet.extend(struct.pack(pack_format, upayload))
             elif isinstance(payload, bytearray):
                 packet.extend(payload)
+            elif isinstance(payload, unicode):
+                    upayload = payload.encode('utf-8')
+                    pack_format = str(len(upayload)) + "s"
+                    packet.extend(struct.pack(pack_format, upayload))
             else:
-                raise TypeError('payload must be a string or a bytearray.')
+                raise TypeError('payload must be a string, unicode or a bytearray.')
 
         return self._packet_queue(packet)
 
@@ -762,29 +799,20 @@ class Mosquitto:
         self._pack_remaining_length(packet, remaining_length)
         packet.extend(struct.pack("!H6sBBH", len(PROTOCOL_NAME), PROTOCOL_NAME, PROTOCOL_VERSION, connect_flags, keepalive))
 
-        pack_format = "!H" + str(len(self._client_id)) + "s"
-        packet.extend(struct.pack(pack_format, len(self._client_id), self._client_id))
+        self._pack_str16(packet, self._client_id)
 
         if self._will:
-            pack_format = "!H" + str(len(self._will_topic)) + "sH"
-            packet.extend(struct.pack(pack_format, len(self._will_topic), self._will_topic, len(self._will_payload)))
-
+            self._pack_str16(packet, self._will_topic)
             if len(self._will_payload) > 0:
-                if isinstance(self._will_payload, str):
-                    pack_format = str(len(self._will_payload)) + "s"
-                    packet.extend(struct.pack(pack_format, self._will_payload))
-                elif isinstance(self._will_payload, bytearray):
-                    packet.extend(self._will_payload)
-                else:
-                    raise TypeError('will_payload must be a string or a bytearray.')
+                self._pack_str16(packet, self._will_payload)
+            else:
+                packet.extend(struct.pack("!H", 0))
 
         if self._username:
-            pack_format = "!H" + str(len(self._username)) + "s"
-            packet.extend(struct.pack(pack_format, len(self._username), self._username))
+            self._pack_str16(packet, self._username)
 
             if self._password:
-                pack_format = "!H" + str(len(self._password)) + "s"
-                packet.extend(struct.pack(pack_format, len(self._password), self._password))
+                self._pack_str16(packet, self._password)
 
         self._keepalive = keepalive
         return self._packet_queue(packet)
@@ -800,7 +828,9 @@ class Mosquitto:
         self._pack_remaining_length(packet, remaining_length)
         local_mid = self._mid_generate()
         pack_format = "!HH" + str(len(topic)) + "sB"
-        packet.extend(struct.pack(pack_format, local_mid, len(topic), topic, topic_qos))
+        packet.extend(struct.pack("!H", local_mid))
+        self._pack_str16(packet, topic)
+        packet.extend(struct.pack("B", topic_qos))
         return self._packet_queue(packet)
 
     def _send_unsubscribe(self, dup, topic):
@@ -810,8 +840,9 @@ class Mosquitto:
         packet.extend(struct.pack("!B", command))
         self._pack_remaining_length(packet, remaining_length)
         local_mid = self._mid_generate()
-        pack_format = "!HH" + str(len(topic)) + "s"
-        packet.extend(struct.pack(pack_format, local_mid, len(topic), topic))
+        pack_format = "!HH" + str(len(topic)) + "sB"
+        packet.extend(struct.pack("!H", local_mid))
+        self._pack_str16(packet, topic)
         return self._packet_queue(packet)
 
     def _message_update(self, mid, direction, state):
@@ -954,6 +985,9 @@ class Mosquitto:
         rc = self._fix_sub_topic(message.topic)
         if len(message.topic) == 0:
             return MOSQ_ERR_PROTOCOL
+
+        if sys.version_info.major >= 3:
+            message.topic = message.topic.decode('utf-8')
 
         if message.qos > 0:
             pack_format = "!H" + str(len(packet)-2) + 's'
