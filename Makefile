@@ -24,6 +24,7 @@ clean :
 reallyclean : 
 	for d in ${DIRS}; do $(MAKE) -C $${d} reallyclean; done
 	for d in ${DOCDIRS}; do $(MAKE) -C $${d} reallyclean; done
+	make -C test reallyclean
 	-rm -f *.orig
 
 test : all

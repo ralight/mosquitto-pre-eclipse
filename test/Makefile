@@ -6,7 +6,7 @@ LDFLAGS=
 OBJS=context.o database.o logging.o memory.o net.o raw_send.o raw_send_client.o read_handle.o read_handle_client.o util.o
 SOVERSION=1
 
-.PHONY: all test clean
+.PHONY: all test clean reallyclean
 
 test :
 	$(MAKE) -C broker test
@@ -81,6 +81,9 @@ read_handle_client.o : ../src/read_handle_client.c ../src/mqtt3.h
 
 util.o : ../src/util.c ../src/mqtt3.h
 	${CC} $(CFLAGS) -c $< -o $@
+
+reallyclean : clean
+	-rm -f *.orig
 
 clean : 
 	-rm -f *.o random_client qos msgsps_pub msgsps_sub fake_user test_client
