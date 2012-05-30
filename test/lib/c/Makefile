@@ -1,4 +1,4 @@
-.PHONY: all test 01 02 03 04
+.PHONY: all test 01 02 03 04 clean reallyclean
 
 CFLAGS=-I../../../lib -Werror
 LIBS=../../../lib/libmosquitto.so.1
@@ -63,6 +63,9 @@ all : 01 02 03 04
 03 : 03-publish-qos0.test 03-publish-qos0-no-payload.test 03-publish-c2b-qos1-timeout.test 03-publish-c2b-qos2-timeout.test 03-publish-b2c-qos1.test 03-publish-b2c-qos2.test
 
 04 : 04-retain-qos0.test
+
+reallyclean : clean
+	-rm -f *.orig
 
 clean :
 	rm -f *.test
