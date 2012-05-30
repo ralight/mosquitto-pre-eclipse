@@ -89,7 +89,7 @@ int _mosquitto_send_pubcomp(struct mosquitto *mosq, uint16_t mid)
 	return _mosquitto_send_command_with_mid(mosq, PUBCOMP, mid, false);
 }
 
-int _mosquitto_send_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain, bool dup)
+int _mosquitto_send_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain, bool dup)
 {
 #ifdef WITH_BROKER
 	int len;
@@ -184,7 +184,7 @@ int _mosquitto_send_simple_command(struct mosquitto *mosq, uint8_t command)
 	return _mosquitto_packet_queue(mosq, packet);
 }
 
-int _mosquitto_send_real_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain, bool dup)
+int _mosquitto_send_real_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain, bool dup)
 {
 	struct _mosquitto_packet *packet = NULL;
 	int packetlen;

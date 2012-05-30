@@ -84,7 +84,7 @@ int _mosquitto_will_set(struct mosquitto *mosq, const char *topic, int payloadle
 			rc = MOSQ_ERR_INVAL;
 			goto cleanup;
 		}
-		mosq->will->payload = _mosquitto_malloc(sizeof(uint8_t)*mosq->will->payloadlen);
+		mosq->will->payload = _mosquitto_malloc(sizeof(char)*mosq->will->payloadlen);
 		if(!mosq->will->payload){
 			rc = MOSQ_ERR_NOMEM;
 			goto cleanup;

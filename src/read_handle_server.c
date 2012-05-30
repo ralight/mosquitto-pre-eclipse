@@ -269,7 +269,7 @@ int mqtt3_handle_connect(mosquitto_db *db, struct mosquitto *context)
 	if(context->will){
 		context->will->topic = will_topic;
 		if(will_message){
-			context->will->payload = (uint8_t *)will_message;
+			context->will->payload = will_message;
 			context->will->payloadlen = strlen(will_message);
 		}else{
 			context->will->payload = NULL;
