@@ -32,7 +32,7 @@ import sys
 import threading
 import time
 
-if sys.version_info.[0] < 3:
+if sys.version_info[0] < 3:
     PROTOCOL_NAME = "MQIsdp"
 else:
     PROTOCOL_NAME = b"MQIsdp"
@@ -684,7 +684,7 @@ class Mosquitto:
                 return packet
 
     def _pack_str16(self, packet, data):
-        if sys.version_info.[0] < 3:
+        if sys.version_info[0] < 3:
             if isinstance(data, bytearray):
                 packet.extend(struct.pack("!H", len(data)))
                 packet.extend(data)
@@ -735,7 +735,7 @@ class Mosquitto:
 
         if payload != None:
             if isinstance(payload, str):
-                if sys.version_info.[0] < 3:
+                if sys.version_info[0] < 3:
                     pack_format = str(len(payload)) + "s"
                     packet.extend(struct.pack(pack_format, payload))
                 else:
@@ -986,7 +986,7 @@ class Mosquitto:
         if len(message.topic) == 0:
             return MOSQ_ERR_PROTOCOL
 
-        if sys.version_info.[0] >= 3:
+        if sys.version_info[0] >= 3:
             message.topic = message.topic.decode('utf-8')
 
         if message.qos > 0:
