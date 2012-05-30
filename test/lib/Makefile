@@ -1,11 +1,11 @@
-.PHONY: all test test-compile test-compile-c test-compile-cpp c cpp python
+.PHONY: all test test-compile test-compile-c test-compile-cpp c cpp python python3
 .NOTPARALLEL:
 
 LD_LIBRARY_PATH=../../lib
 
 all :
 
-test : c cpp python
+test : c cpp python python3
 
 test-compile : test-compile-c test-compile-cpp
 
@@ -15,7 +15,7 @@ test-compile-c :
 test-compile-cpp : 
 	$(MAKE) -C cpp
 
-c cpp python : test-compile
+c cpp python python3 : test-compile
 	./01-con-discon-success.py $@/01-con-discon-success.test
 	./01-will-set.py $@/01-will-set.test
 	./01-unpwd-set.py $@/01-unpwd-set.test

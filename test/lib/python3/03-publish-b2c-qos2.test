@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import os
 import subprocess
@@ -18,7 +18,7 @@ def on_message(mosq, obj, msg):
     if msg.topic != "pub/qos2/receive":
         print("Invalid topic ("+str(msg.topic)+")")
         exit(1)
-    if msg.payload != "message":
+    if msg.payload != b"message":
         print("Invalid payload ("+str(msg.payload)+")")
         exit(1)
     if msg.qos != 2:
