@@ -278,7 +278,7 @@ void _mosquitto_write_byte(struct _mosquitto_packet *packet, uint8_t byte)
 	packet->pos++;
 }
 
-int _mosquitto_read_bytes(struct _mosquitto_packet *packet, uint8_t *bytes, uint32_t count)
+int _mosquitto_read_bytes(struct _mosquitto_packet *packet, void *bytes, uint32_t count)
 {
 	assert(packet);
 	if(packet->pos+count > packet->remaining_length) return MOSQ_ERR_PROTOCOL;
@@ -289,7 +289,7 @@ int _mosquitto_read_bytes(struct _mosquitto_packet *packet, uint8_t *bytes, uint
 	return MOSQ_ERR_SUCCESS;
 }
 
-void _mosquitto_write_bytes(struct _mosquitto_packet *packet, const uint8_t *bytes, uint32_t count)
+void _mosquitto_write_bytes(struct _mosquitto_packet *packet, const void *bytes, uint32_t count)
 {
 	assert(packet);
 	assert(packet->pos+count <= packet->packet_length);

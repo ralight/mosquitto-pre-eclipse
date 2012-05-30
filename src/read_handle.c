@@ -83,7 +83,7 @@ int mqtt3_packet_handle(mosquitto_db *db, struct mosquitto *context)
 int mqtt3_handle_publish(mosquitto_db *db, struct mosquitto *context)
 {
 	char *topic;
-	uint8_t *payload = NULL;
+	void *payload = NULL;
 	uint32_t payloadlen;
 	uint8_t dup, qos, retain;
 	uint16_t mid = 0;
