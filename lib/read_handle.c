@@ -119,7 +119,7 @@ int _mosquitto_handle_publish(struct mosquitto *mosq)
 	message->msg.payloadlen = mosq->in_packet.remaining_length - mosq->in_packet.pos;
 	if(message->msg.payloadlen){
 		message->msg.payload = _mosquitto_calloc(message->msg.payloadlen+1, sizeof(uint8_t));
-		_mosquitto_read_bytes(&mosq->in_packet, message->msg.payload, message->msg.payloadlen);
+		rc = _mosquitto_read_bytes(&mosq->in_packet, message->msg.payload, message->msg.payloadlen);
 		if(rc){
 			_mosquitto_message_cleanup(&message);
 			return rc;
