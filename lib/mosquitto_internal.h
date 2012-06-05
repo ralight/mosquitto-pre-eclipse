@@ -38,10 +38,36 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <time.h>
 #ifdef WIN32
-#include <winsock2.h>
+#  include <winsock2.h>
+#endif
+
+#ifdef WITH_THREADING
+#  ifdef WIN32
+#    include <winpthreads.h>
+#  else
+#    include <pthread.h>
+#  endif
+#else
+#  include <dummypthread.h>
+#endif
+
+#ifdef WIN32
+#	if _MSC_VER < 1600
+		typedef unsigned char uint8_t;
+		typedef unsigned short uint16_t;
+		typedef unsigned int uint32_t;
+		typedef unsigned long long uint64_t;
+#	else
+#		include <stdint.h>
+#	endif
+#else
+#	include <stdint.h>
 #endif
 
 #include <mosquitto.h>
+#ifdef WITH_BROKER
+struct _mosquitto_client_msg;
+#endif
 
 enum mosquitto_msg_direction {
 	mosq_md_in = 0,
@@ -59,7 +85,8 @@ enum mosquitto_msg_state {
 enum mosquitto_client_state {
 	mosq_cs_new = 0,
 	mosq_cs_connected = 1,
-	mosq_cs_disconnecting = 2
+	mosq_cs_disconnecting = 2,
+	mosq_cs_connect_async = 3
 };
 
 struct _mosquitto_packet{
@@ -95,8 +122,7 @@ struct _mosquitto_ssl{
 };
 #endif
 
-struct _mosquitto_core
-{
+struct mosquitto {
 #ifndef WIN32
 	int sock;
 #else
@@ -111,30 +137,49 @@ struct _mosquitto_core
 	enum mosquitto_client_state state;
 	time_t last_msg_in;
 	time_t last_msg_out;
+	time_t ping_t;
 	uint16_t last_mid;
 	struct _mosquitto_packet in_packet;
+	struct _mosquitto_packet *current_out_packet;
 	struct _mosquitto_packet *out_packet;
 	struct mosquitto_message *will;
 #ifdef WITH_SSL
 	struct _mosquitto_ssl *ssl;
 #endif
-};
-
-struct mosquitto {
-	struct _mosquitto_core core;
+#ifdef WITH_THREADING
+	pthread_mutex_t callback_mutex;
+	pthread_mutex_t log_callback_mutex;
+	pthread_mutex_t msgtime_mutex;
+	pthread_mutex_t out_packet_mutex;
+	pthread_mutex_t current_out_packet_mutex;
+	pthread_mutex_t state_mutex;
+	pthread_t thread_id;
+#endif
+#ifdef WITH_BROKER
+	bool is_bridge;
+	struct _mqtt3_bridge *bridge;
+	struct _mosquitto_client_msg *msgs;
+	struct _mosquitto_acl_user *acl_list;
+	struct _mqtt3_listener *listener;
+	time_t disconnect_t;
+	int pollfd_index;
+#else
 	void *obj;
+	bool in_callback;
 	unsigned int message_retry;
 	time_t last_retry_check;
 	struct mosquitto_message_all *messages;
-	int log_priorities;
-	int log_destinations;
-	void (*on_connect)(void *obj, int rc);
-	void (*on_disconnect)(void *obj);
-	void (*on_publish)(void *obj, uint16_t mid);
-	void (*on_message)(void *obj, const struct mosquitto_message *message);
-	void (*on_subscribe)(void *obj, uint16_t mid, int qos_count, const uint8_t *granted_qos);
-	void (*on_unsubscribe)(void *obj, uint16_t mid);
+	void (*on_connect)(struct mosquitto *, void *obj, int rc);
+	void (*on_disconnect)(struct mosquitto *, void *obj, int rc);
+	void (*on_publish)(struct mosquitto *, void *obj, int mid);
+	void (*on_message)(struct mosquitto *, void *obj, const struct mosquitto_message *message);
+	void (*on_subscribe)(struct mosquitto *, void *obj, int mid, int qos_count, const int *granted_qos);
+	void (*on_unsubscribe)(struct mosquitto *, void *obj, int mid);
+	void (*on_log)(struct mosquitto *, void *obj, int level, const char *str);
 	//void (*on_error)();
+	char *host;
+	int port;
+#endif
 };
 
 #endif

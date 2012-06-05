@@ -2,7 +2,17 @@ include ../config.mk
 
 .PHONY : all clean install uninstall dist 
 
-DOCBOOK2MAN=docbook2man.pl
+DB2M:=$(shell which docbook2man.pl 2> /dev/null)
+ifeq ($(strip $(DB2M)),)
+  DB2XM:=$(shell which docbook2x-man 2> /dev/null)
+  ifeq ($(strip $(DB2XM)),)
+    DOCBOOK2MAN=docbook2man
+  else
+    DOCBOOK2MAN=docbook2x-man
+  endif
+else
+  DOCBOOK2MAN=docbook2man.pl
+endif
 
 all :  mosquitto.8 mosquitto.conf.5 mosquitto_control.1 mosquitto_pub.1 mosquitto_sub.1 mqtt.7 libmosquitto.3
 

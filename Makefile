@@ -1,24 +1,38 @@
 include config.mk
 
-DIRS=lib client control src man
+DIRS=lib client control src
+DOCDIRS=man
 DISTDIRS=man
 
-.PHONY : all mosquitto clean reallyclean install uninstall dist sign copy
+.PHONY : all mosquitto docs binary clean reallyclean test install uninstall dist sign copy
 
-all : mosquitto
+all : mosquitto docs
+
+docs :
+	for d in ${DOCDIRS}; do $(MAKE) -C $${d}; done
+
+binary : mosquitto
 
 mosquitto :
 	for d in ${DIRS}; do $(MAKE) -C $${d}; done
 
 clean :
 	for d in ${DIRS}; do $(MAKE) -C $${d} clean; done
+	for d in ${DOCDIRS}; do $(MAKE) -C $${d} clean; done
+	make -C test clean
 
 reallyclean : 
 	for d in ${DIRS}; do $(MAKE) -C $${d} reallyclean; done
+	for d in ${DOCDIRS}; do $(MAKE) -C $${d} reallyclean; done
+	make -C test reallyclean
 	-rm -f *.orig
+
+test : all
+	$(MAKE) -C test test
 
 install : mosquitto
 	@for d in ${DIRS}; do $(MAKE) -C $${d} install; done
+	@for d in ${DOCDIRS}; do $(MAKE) -C $${d} install; done
 	$(INSTALL) -d ${DESTDIR}/etc/mosquitto
 	$(INSTALL) -m 644 mosquitto.conf ${DESTDIR}/etc/mosquitto/mosquitto.conf
 	$(INSTALL) -m 644 aclfile.example ${DESTDIR}/etc/mosquitto/aclfile.example
@@ -31,21 +45,21 @@ dist : reallyclean
 	@for d in ${DISTDIRS}; do $(MAKE) -C $${d} dist; done
 	
 	mkdir -p dist/mosquitto-${VERSION}
-	cp -r client control lib logo man misc security service src ChangeLog.txt CMakeLists.txt COPYING Makefile compiling.txt config.h config.mk readme.txt mosquitto.conf aclfile.example pwfile.example dist/mosquitto-${VERSION}/
+	cp -r client control installer lib logo man misc security service src test ChangeLog.txt CMakeLists.txt COPYING Makefile compiling.txt config.h config.mk external_security_checks.txt readme.txt readme-windows.txt mosquitto.conf aclfile.example pwfile.example dist/mosquitto-${VERSION}/
 	cd dist; tar -zcf mosquitto-${VERSION}.tar.gz mosquitto-${VERSION}/
 	for m in libmosquitto.3 mosquitto.8 mosquitto.conf.5 mosquitto_control.1 mosquitto_pub.1 mosquitto_sub.1 mqtt.7; \
 		do \
 		hfile=$$(echo $${m} | sed -e 's/\./-/g'); \
 		man2html man/$${m} > dist/$${hfile}.html; \
-		sed -i 's#http://localhost/cgi-bin/man/man2html?8+mosquitto#mosquitto-8.html#' dist/$${hfile}.html; \
-		sed -i 's#http://localhost/cgi-bin/man/man2html?3+libmosquitto#libmosquitto-3.html#' dist/$${hfile}.html; \
-		sed -i 's#http://localhost/cgi-bin/man/man2html?5+mosquitto.conf#mosquitto-conf-5.html#' dist/$${hfile}.html; \
+		sed -i 's#\(http://localhost\)\?/cgi-bin/man/man2html?8+mosquitto#mosquitto-8.html#' dist/$${hfile}.html; \
+		sed -i 's#\(http://localhost\)\?/cgi-bin/man/man2html?3+libmosquitto#libmosquitto-3.html#' dist/$${hfile}.html; \
+		sed -i 's#\(http://localhost\)\?/cgi-bin/man/man2html?5+mosquitto.conf#mosquitto-conf-5.html#' dist/$${hfile}.html; \
 		sed -i 's#http://localhost/cgi-bin/man/man2html?1+mosquitto_control#mosquitto_control-1.html#' dist/$${hfile}.html; \
-		sed -i 's#http://localhost/cgi-bin/man/man2html?1+mosquitto_pub#mosquitto_pub-1.html#' dist/$${hfile}.html; \
-		sed -i 's#http://localhost/cgi-bin/man/man2html?1+mosquitto_sub#mosquitto_sub-1.html#' dist/$${hfile}.html; \
-		sed -i 's#http://localhost/cgi-bin/man/man2html?7+mqtt#mqtt-7.html#' dist/$${hfile}.html; \
-		sed -i 's#http://localhost/cgi-bin/man/man2html?5+hosts_access#http://www.linuxmanpages.com/man5/hosts_access.5.php#' dist/$${hfile}.html; \
-		sed -i 's#http://localhost/cgi-bin/man/man2html#http://mosquitto.org/#' dist/$${hfile}.html; \
+		sed -i 's#\(http://localhost\)\?/cgi-bin/man/man2html?1+mosquitto_pub#mosquitto_pub-1.html#' dist/$${hfile}.html; \
+		sed -i 's#\(http://localhost\)\?/cgi-bin/man/man2html?1+mosquitto_sub#mosquitto_sub-1.html#' dist/$${hfile}.html; \
+		sed -i 's#\(http://localhost\)\?/cgi-bin/man/man2html?7+mqtt#mqtt-7.html#' dist/$${hfile}.html; \
+		sed -i 's#\(http://localhost\)\?/cgi-bin/man/man2html?5+hosts_access#http://www.linuxmanpages.com/man5/hosts_access.5.php#' dist/$${hfile}.html; \
+		sed -i 's#\(http://localhost\)\?/cgi-bin/man/man2html#http://mosquitto.org/#' dist/$${hfile}.html; \
 		sed -i '1,2d' dist/$${hfile}.html; \
 	done
 

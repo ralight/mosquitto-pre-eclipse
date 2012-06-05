@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2010,2011 Roger Light <roger@atchoo.org>
+Copyright (c) 2010-2012 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -27,13 +27,44 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
+/* A note on matching topic subscriptions.
+ *
+ * Topics can be up to 32767 characters in length. The / character is used as a
+ * hierarchy delimiter. Messages are published to a particular topic.
+ * Clients may subscribe to particular topics directly, but may also use
+ * wildcards in subscriptions.  The + and # characters are used as wildcards.
+ * The # wildcard can be used at the end of a subscription only, and is a
+ * wildcard for the level of hierarchy at which it is placed and all subsequent
+ * levels.
+ * The + wildcard may be used at any point within the subscription and is a
+ * wildcard for only the level of hierarchy at which it is placed.
+ * Neither wildcard may be used as part of a substring.
+ * Valid:
+ * 	a/b/+
+ * 	a/+/c
+ * 	a/#
+ * 	a/b/#
+ * 	#
+ * 	+/b/c
+ * 	+/+/+
+ * Invalid:
+ *	a/#/c
+ *	a+/b/c
+ * Valid but non-matching:
+ *	a/b
+ *	a/+
+ *	+/b
+ *	b/c/a
+ *	a/b/d
+ */
+
 #include <config.h>
 
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
-#include <mqtt3.h>
+#include <mosquitto_broker.h>
 #include <memory_mosq.h>
 #include <util_mosq.h>
 
@@ -49,10 +80,18 @@ static int _subs_process(struct _mosquitto_db *db, struct _mosquitto_subhier *hi
 	int client_qos, msg_qos;
 	uint16_t mid;
 	struct _mosquitto_subleaf *leaf;
+	bool client_retain;
 
 	leaf = hier->subs;
 
 	if(retain){
+#ifdef WITH_PERSISTENCE
+		if(strncmp(topic, "$SYS", 4)){
+			/* Retained messages count as a persistence change, but only if
+			 * they aren't for $SYS. */
+			db->persistence_changes++;
+		}
+#endif
 		if(hier->retained){
 			hier->retained->ref_count--;
 			/* FIXME - it would be nice to be able to remove the message from the store at this point if ref_count == 0 */
@@ -64,8 +103,8 @@ static int _subs_process(struct _mosquitto_db *db, struct _mosquitto_subhier *hi
 			hier->retained = NULL;
 		}
 	}
-	while(leaf){
-		if(source_id && leaf->context->bridge && !strcmp(leaf->context->core.id, source_id)){
+	while(source_id && leaf){
+		if(leaf->context->is_bridge && !strcmp(leaf->context->id, source_id)){
 			leaf = leaf->next;
 			continue;
 		}
@@ -74,25 +113,36 @@ static int _subs_process(struct _mosquitto_db *db, struct _mosquitto_subhier *hi
 		if(rc2 == MOSQ_ERR_ACL_DENIED){
 			leaf = leaf->next;
 			continue;
-		}else if(rc2 != MOSQ_ERR_SUCCESS){
+		}else if(rc2 == MOSQ_ERR_SUCCESS){
+			client_qos = leaf->qos;
+
+			if(qos > client_qos){
+				msg_qos = client_qos;
+			}else{
+				msg_qos = qos;
+			}
+			if(msg_qos){
+				mid = _mosquitto_mid_generate(leaf->context);
+			}else{
+				mid = 0;
+			}
+			if(leaf->context->is_bridge){
+				/* If we know the client is a bridge then we should set retain
+				 * even if the message is fresh. If we don't do this, retained
+				 * messages won't be propagated. */
+				client_retain = retain;
+			}else{
+				/* Client is not a bridge and this isn't a stale message so
+				 * retain should be false. */
+				client_retain = false;
+			}
+			if(mqtt3_db_message_insert(db, leaf->context, mid, mosq_md_out, msg_qos, client_retain, stored) == 1) rc = 1;
+		}else{
 			rc = 1;
 		}
-		client_qos = leaf->qos;
-
-		if(qos > client_qos){
-			msg_qos = client_qos;
-		}else{
-			msg_qos = qos;
-		}
-		if(msg_qos){
-			mid = _mosquitto_mid_generate(&leaf->context->core);
-		}else{
-			mid = 0;
-		}
-		if(mqtt3_db_message_insert(leaf->context, mid, mosq_md_out, msg_qos, false, stored) == 1) rc = 1;
 		leaf = leaf->next;
 	}
-	return MOSQ_ERR_SUCCESS;
+	return rc;
 }
 
 static int _sub_topic_tokenise(const char *subtopic, struct _sub_token **topics)
@@ -100,14 +150,30 @@ static int _sub_topic_tokenise(const char *subtopic, struct _sub_token **topics)
 	struct _sub_token *new_topic, *tail = NULL;
 	char *token;
 	char *local_subtopic = NULL;
+	char *saveptr = NULL;
+	char *real_subtopic;
 
 	assert(subtopic);
 	assert(topics);
 
 	local_subtopic = _mosquitto_strdup(subtopic);
 	if(!local_subtopic) return MOSQ_ERR_NOMEM;
+	real_subtopic = local_subtopic;
 
-	token = strtok(local_subtopic, "/");
+	if(local_subtopic[0] == '/'){
+		new_topic = _mosquitto_malloc(sizeof(struct _sub_token));
+		if(!new_topic) goto cleanup;
+		new_topic->next = NULL;
+		new_topic->topic = _mosquitto_strdup("/");
+		if(!new_topic->topic) goto cleanup;
+
+		*topics = new_topic;
+		tail = new_topic;
+
+		local_subtopic++;
+	}
+
+	token = strtok_r(local_subtopic, "/", &saveptr);
 	while(token){
 		new_topic = _mosquitto_malloc(sizeof(struct _sub_token));
 		if(!new_topic) goto cleanup;
@@ -122,15 +188,15 @@ static int _sub_topic_tokenise(const char *subtopic, struct _sub_token **topics)
 			tail = new_topic;
 			*topics = tail;
 		}
-		token = strtok(NULL, "/");
+		token = strtok_r(NULL, "/", &saveptr);
 	}
 	
-	_mosquitto_free(local_subtopic);
+	_mosquitto_free(real_subtopic);
 
 	return MOSQ_ERR_SUCCESS;
 
 cleanup:
-	_mosquitto_free(local_subtopic);
+	_mosquitto_free(real_subtopic);
 
 	tail = *topics;
 	*topics = NULL;
@@ -143,7 +209,7 @@ cleanup:
 	return 1;
 }
 
-static int _sub_add(mqtt3_context *context, int qos, struct _mosquitto_subhier *subhier, struct _sub_token *tokens)
+static int _sub_add(struct mosquitto *context, int qos, struct _mosquitto_subhier *subhier, struct _sub_token *tokens)
 {
 	struct _mosquitto_subhier *branch, *last = NULL;
 	struct _mosquitto_subleaf *leaf, *last_leaf;
@@ -153,11 +219,12 @@ static int _sub_add(mqtt3_context *context, int qos, struct _mosquitto_subhier *
 			leaf = subhier->subs;
 			last_leaf = NULL;
 			while(leaf){
-				if(!strcmp(leaf->context->core.id, context->core.id)){
+				if(!strcmp(leaf->context->id, context->id)){
 					/* Client making a second subscription to same topic. Only
-					 * need to update QoS. */
+					 * need to update QoS. Return -1 to indicate this to the
+					 * calling function. */
 					leaf->qos = qos;
-					return MOSQ_ERR_SUCCESS;
+					return -1;
 				}
 				last_leaf = leaf;
 				leaf = leaf->next;
@@ -199,7 +266,7 @@ static int _sub_add(mqtt3_context *context, int qos, struct _mosquitto_subhier *
 	return _sub_add(context, qos, branch, tokens->next);
 }
 
-static int _sub_remove(mqtt3_context *context, struct _mosquitto_subhier *subhier, struct _sub_token *tokens)
+static int _sub_remove(struct mosquitto *context, struct _mosquitto_subhier *subhier, struct _sub_token *tokens)
 {
 	struct _mosquitto_subhier *branch, *last = NULL;
 	struct _mosquitto_subleaf *leaf;
@@ -249,30 +316,31 @@ static int _sub_search(struct _mosquitto_db *db, struct _mosquitto_subhier *subh
 {
 	/* FIXME - need to take into account source_id if the client is a bridge */
 	struct _mosquitto_subhier *branch;
+	int flag = 0;
 
 	branch = subhier->children;
 	while(branch){
-		if(!strcmp(branch->topic, tokens->topic) || !strcmp(branch->topic, "+")){
+		if(tokens && tokens->topic && (!strcmp(branch->topic, tokens->topic) || !strcmp(branch->topic, "+"))){
 			/* The topic matches this subscription.
 			 * Doesn't include # wildcards */
-			if(tokens->next){
-				_sub_search(db, branch, tokens->next, source_id, topic, qos, retain, stored);
-			}else{
+			_sub_search(db, branch, tokens->next, source_id, topic, qos, retain, stored);
+			if(!tokens->next){
 				_subs_process(db, branch, source_id, topic, qos, retain, stored);
 			}
-		}else if(!strcmp(branch->topic, "#") && !branch->children){
+		}else if(!strcmp(branch->topic, "#") && !branch->children && (!tokens || strcmp(tokens->topic, "/"))){
 			/* The topic matches due to a # wildcard - process the
 			 * subscriptions but *don't* return. Although this branch has ended
 			 * there may still be other subscriptions to deal with.
 			 */
 			_subs_process(db, branch, source_id, topic, qos, retain, stored);
+			flag = -1;
 		}
 		branch = branch->next;
 	}
-	return MOSQ_ERR_SUCCESS;
+	return flag;
 }
 
-int mqtt3_sub_add(mqtt3_context *context, const char *sub, int qos, struct _mosquitto_subhier *root)
+int mqtt3_sub_add(struct mosquitto *context, const char *sub, int qos, struct _mosquitto_subhier *root)
 {
 	int tree;
 	int rc = 0;
@@ -286,10 +354,6 @@ int mqtt3_sub_add(mqtt3_context *context, const char *sub, int qos, struct _mosq
 		tree = 2;
 		if(strlen(sub+5) == 0) return MOSQ_ERR_SUCCESS;
 		if(_sub_topic_tokenise(sub+5, &tokens)) return 1;
-	}else if(sub[0] == '/'){
-		tree = 1;
-		if(strlen(sub+1) == 0) return MOSQ_ERR_SUCCESS;
-		if(_sub_topic_tokenise(sub+1, &tokens)) return 1;
 	}else{
 		tree = 0;
 		if(strlen(sub) == 0) return MOSQ_ERR_SUCCESS;
@@ -299,9 +363,6 @@ int mqtt3_sub_add(mqtt3_context *context, const char *sub, int qos, struct _mosq
 	subhier = root->children;
 	while(subhier){
 		if(!strcmp(subhier->topic, "") && tree == 0){
-			rc = _sub_add(context, qos, subhier, tokens);
-			break;
-		}else if(!strcmp(subhier->topic, "/") && tree == 1){
 			rc = _sub_add(context, qos, subhier, tokens);
 			break;
 		}else if(!strcmp(subhier->topic, "$SYS") && tree == 2){
@@ -317,10 +378,12 @@ int mqtt3_sub_add(mqtt3_context *context, const char *sub, int qos, struct _mosq
 		_mosquitto_free(tokens);
 		tokens = tail;
 	}
+	/* We aren't worried about -1 (already subscribed) return codes. */
+	if(rc == -1) rc = MOSQ_ERR_SUCCESS;
 	return rc;
 }
 
-int mqtt3_sub_remove(mqtt3_context *context, const char *sub, struct _mosquitto_subhier *root)
+int mqtt3_sub_remove(struct mosquitto *context, const char *sub, struct _mosquitto_subhier *root)
 {
 	int rc = 0;
 	int tree;
@@ -333,9 +396,6 @@ int mqtt3_sub_remove(mqtt3_context *context, const char *sub, struct _mosquitto_
 	if(!strncmp(sub, "$SYS/", 5)){
 		tree = 2;
 		if(_sub_topic_tokenise(sub+5, &tokens)) return 1;
-	}else if(sub[0] == '/'){
-		tree = 1;
-		if(_sub_topic_tokenise(sub, &tokens)) return 1;
 	}else{
 		tree = 0;
 		if(_sub_topic_tokenise(sub, &tokens)) return 1;
@@ -344,9 +404,6 @@ int mqtt3_sub_remove(mqtt3_context *context, const char *sub, struct _mosquitto_
 	subhier = root->children;
 	while(subhier){
 		if(!strcmp(subhier->topic, "") && tree == 0){
-			rc = _sub_remove(context, subhier, tokens);
-			break;
-		}else if(!strcmp(subhier->topic, "/") && tree == 1){
 			rc = _sub_remove(context, subhier, tokens);
 			break;
 		}else if(!strcmp(subhier->topic, "$SYS") && tree == 2){
@@ -366,14 +423,14 @@ int mqtt3_sub_remove(mqtt3_context *context, const char *sub, struct _mosquitto_
 	return rc;
 }
 
-int mqtt3_sub_search(struct _mosquitto_db *db, struct _mosquitto_subhier *root, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored)
+int mqtt3_db_messages_queue(struct _mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored)
 {
 	int rc = 0;
 	int tree;
 	struct _mosquitto_subhier *subhier;
 	struct _sub_token *tokens = NULL, *tail;
 
-	assert(root);
+	assert(db);
 	assert(topic);
 
 	if(!strncmp(topic, "$SYS/", 5)){
@@ -385,15 +442,12 @@ int mqtt3_sub_search(struct _mosquitto_db *db, struct _mosquitto_subhier *root, 
 #endif
 		tree = 2;
 		if(_sub_topic_tokenise(topic+5, &tokens)) return 1;
-	}else if(topic[0] == '/'){
-		tree = 1;
-		if(_sub_topic_tokenise(topic+1, &tokens)) return 1;
 	}else{
 		tree = 0;
 		if(_sub_topic_tokenise(topic, &tokens)) return 1;
 	}
 
-	subhier = root->children;
+	subhier = db->subs.children;
 	while(subhier){
 		if(!strcmp(subhier->topic, "") && tree == 0){
 			if(retain){
@@ -403,14 +457,10 @@ int mqtt3_sub_search(struct _mosquitto_db *db, struct _mosquitto_subhier *root, 
 				_sub_add(NULL, 0, subhier, tokens);
 			}
 			rc = _sub_search(db, subhier, tokens, source_id, topic, qos, retain, stored);
-		}else if(!strcmp(subhier->topic, "/") && tree == 1){
-			if(retain){
-				/* We have a message that needs to be retained, so ensure that the subscription
-				 * tree for its topic exists.
-				 */
-				_sub_add(NULL, 0, subhier, tokens);
+			if(rc == -1){
+				_subs_process(db, subhier, source_id, topic, qos, retain, stored);
+				rc = 0;
 			}
-			rc = _sub_search(db, subhier, tokens, source_id, topic, qos, retain, stored);
 		}else if(!strcmp(subhier->topic, "$SYS") && tree == 2){
 			if(retain){
 				/* We have a message that needs to be retained, so ensure that the subscription
@@ -419,6 +469,10 @@ int mqtt3_sub_search(struct _mosquitto_db *db, struct _mosquitto_subhier *root, 
 				_sub_add(NULL, 0, subhier, tokens);
 			}
 			rc = _sub_search(db, subhier, tokens, source_id, topic, qos, retain, stored);
+			if(rc == -1){
+				_subs_process(db, subhier, source_id, topic, qos, retain, stored);
+				rc = 0;
+			}
 		}
 		subhier = subhier->next;
 	}
@@ -432,7 +486,7 @@ int mqtt3_sub_search(struct _mosquitto_db *db, struct _mosquitto_subhier *root, 
 	return rc;
 }
 
-static int _subs_clean_session(mqtt3_context *context, struct _mosquitto_subhier *root)
+static int _subs_clean_session(struct mosquitto *context, struct _mosquitto_subhier *root)
 {
 	int rc = 0;
 	struct _mosquitto_subhier *child, *last = NULL;
@@ -485,7 +539,7 @@ static int _subs_clean_session(mqtt3_context *context, struct _mosquitto_subhier
 
 /* Remove all subscriptions for a client.
  */
-int mqtt3_subs_clean_session(mqtt3_context *context, struct _mosquitto_subhier *root)
+int mqtt3_subs_clean_session(struct mosquitto *context, struct _mosquitto_subhier *root)
 {
 	struct _mosquitto_subhier *child;
 
@@ -510,7 +564,11 @@ void mqtt3_sub_tree_print(struct _mosquitto_subhier *root, int level)
 	printf("%s", root->topic);
 	leaf = root->subs;
 	while(leaf){
-		printf(" (%s, %d)", "", leaf->qos);
+		if(leaf->context){
+			printf(" (%s, %d)", leaf->context->id, leaf->qos);
+		}else{
+			printf(" (%s, %d)", "", leaf->qos);
+		}
 		leaf = leaf->next;
 	}
 	if(root->retained){
@@ -525,7 +583,7 @@ void mqtt3_sub_tree_print(struct _mosquitto_subhier *root, int level)
 	}
 }
 
-static int _retain_process(struct _mosquitto_db *db, struct mosquitto_msg_store *retained, mqtt3_context *context, const char *sub, int sub_qos)
+static int _retain_process(struct _mosquitto_db *db, struct mosquitto_msg_store *retained, struct mosquitto *context, const char *sub, int sub_qos)
 {
 	int rc = 0;
 	int qos;
@@ -542,14 +600,14 @@ static int _retain_process(struct _mosquitto_db *db, struct mosquitto_msg_store 
 
 	if(qos > sub_qos) qos = sub_qos;
 	if(qos > 0){
-		mid = _mosquitto_mid_generate(&context->core);
+		mid = _mosquitto_mid_generate(context);
 	}else{
 		mid = 0;
 	}
-	return mqtt3_db_message_insert(context, mid, mosq_md_out, qos, true, retained);
+	return mqtt3_db_message_insert(db, context, mid, mosq_md_out, qos, true, retained);
 }
 
-static int _retain_search(struct _mosquitto_db *db, struct _mosquitto_subhier *subhier, struct _sub_token *tokens, mqtt3_context *context, const char *sub, int sub_qos)
+static int _retain_search(struct _mosquitto_db *db, struct _mosquitto_subhier *subhier, struct _sub_token *tokens, struct mosquitto *context, const char *sub, int sub_qos)
 {
 	struct _mosquitto_subhier *branch;
 
@@ -558,13 +616,13 @@ static int _retain_search(struct _mosquitto_db *db, struct _mosquitto_subhier *s
 		/* Subscriptions with wildcards in aren't really valid topics to publish to
 		 * so they can't have retained messages.
 		 */
-		if(strcmp(branch->topic, "+") && strcmp(branch->topic, "#")){
+		if(_mosquitto_topic_wildcard_len_check(branch->topic) == MOSQ_ERR_SUCCESS){
 			if(!strcmp(tokens->topic, "#") && !tokens->next){
 				if(branch->retained){
 					_retain_process(db, branch->retained, context, sub, sub_qos);
 				}
 				_retain_search(db, branch, tokens, context, sub, sub_qos);
-			}else if(!strcmp(branch->topic, tokens->topic) || !strcmp(branch->topic, "+")){
+			}else if(!strcmp(branch->topic, tokens->topic) || !strcmp(tokens->topic, "+")){
 				if(tokens->next){
 					_retain_search(db, branch, tokens->next, context, sub, sub_qos);
 				}else{
@@ -579,7 +637,7 @@ static int _retain_search(struct _mosquitto_db *db, struct _mosquitto_subhier *s
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mqtt3_retain_queue(mosquitto_db *db, mqtt3_context *context, const char *sub, int sub_qos)
+int mqtt3_retain_queue(mosquitto_db *db, struct mosquitto *context, const char *sub, int sub_qos)
 {
 	int rc = 0;
 	int tree;
@@ -593,9 +651,6 @@ int mqtt3_retain_queue(mosquitto_db *db, mqtt3_context *context, const char *sub
 	if(!strncmp(sub, "$SYS/", 5)){
 		tree = 2;
 		if(_sub_topic_tokenise(sub+5, &tokens)) return 1;
-	}else if(sub[0] == '/'){
-		tree = 1;
-		if(_sub_topic_tokenise(sub+1, &tokens)) return 1;
 	}else{
 		tree = 0;
 		if(_sub_topic_tokenise(sub, &tokens)) return 1;
@@ -604,9 +659,6 @@ int mqtt3_retain_queue(mosquitto_db *db, mqtt3_context *context, const char *sub
 	subhier = db->subs.children;
 	while(subhier){
 		if(!strcmp(subhier->topic, "") && tree == 0){
-			rc = _retain_search(db, subhier, tokens, context, sub, sub_qos);
-			break;
-		}else if(!strcmp(subhier->topic, "/") && tree == 1){
 			rc = _retain_search(db, subhier, tokens, context, sub, sub_qos);
 			break;
 		}else if(!strcmp(subhier->topic, "$SYS") && tree == 2){

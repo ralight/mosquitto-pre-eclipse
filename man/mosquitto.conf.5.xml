@@ -41,7 +41,7 @@
 		<title>Variables</title>
 		<variablelist>
 			<varlistentry>
-				<term><option>acl_file</option></term>
+				<term><option>acl_file</option> <replaceable>file path</replaceable></term>
 				<listitem>
 					<para>Set the path to an access control list file. If
 					defined, the contents of the file are used to control
@@ -65,20 +65,47 @@
 
 					<para>The username referred to here is the same as in
 					password_file. It is not the clientid.</para>
+
+					<para>It is also possible to define ACLs based on pattern
+					substitution within the topic. The form is the same as for
+					the topic keyword, but using pattern as the keyword.</para>
+					<para><code>pattern [read|write] &lt;topic&gt;</code></para>
+					
+					<para>The patterns available for substition are:</para>
+					<itemizedlist mark="circle">
+						<listitem><para>%c to match the client id of the client</para></listitem>
+						<listitem><para>%u to match the username of the client</para></listitem>
+					<!-- BUG - putting itemizedlist close tag here breaks the
+						 indentation of the man page. -->
+					<para>The substitution pattern must be the only text for
+					that level of hierarchy. Pattern ACLs apply to all users
+					even if the "user" keyword has previously been
+					given.</para>
+
+					<para>Example:</para>
+					<para><code>pattern write sensor/%u/data</code></para>
+
+					<para>Reloaded on reload signal. The currently loaded ACLs will be
+					freed and reloaded. Existing subscriptions will be affected
+					after the reload.</para>
+
+					<!-- BUG - this should be above. -->
+					</itemizedlist>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>allow_anonymous</option></term>
+				<term><option>allow_anonymous</option> [ true | false ]</term>
 				<listitem>
 					<para>Boolean value that determines whether clients that
 					connect without providing a username are allowed to
 					connect. If set to false then a password file should be
 					created (see the password_file option) to control
 					authenticated client access. Defaults to true.</para>
+					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>autosave_interval</option></term>
+				<term><option>autosave_interval</option> <replaceable>seconds</replaceable></term>
 				<listitem>
 					<para>The number of seconds that mosquitto will wait 
 					between each time it saves the in-memory database to 
@@ -87,10 +114,23 @@
 					SIGUSR1 signal. Note that this setting only has an 
 					effect if persistence is enabled.  Defaults to 1800 
 					seconds (30 minutes).</para>
+					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>bind_address</option></term>
+				<term><option>autosave_on_changes</option> <replaceable>seconds</replaceable></term>
+				<listitem>
+					<para>If true, mosquitto will count the number of
+					subscription changes, retained messages received and queued
+					messages and if the total exceeds autosave_interval then
+					the in-memory database will be saved to disk. If false,
+					mosquitto will save the in-memory database to disk by
+					treating autosave_interval as a time in seconds.</para>
+					<para>Reloaded on reload signal.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>bind_address</option> <replaceable>address</replaceable></term>
 				<listitem>
 					<para>Listen for incoming network connections on the
 					specified IP address/hostname only. This is useful to
@@ -98,10 +138,11 @@
 					access to mosquitto to the local host only, use "bind_address
 					localhost". This only applies to the default listener. Use
 					the listener variable to control other listeners.</para>
+					<para>Not reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>clientid_prefixes</option></term>
+				<term><option>clientid_prefixes</option> <replaceable>prefix</replaceable></term>
 				<listitem>
 					<para>If defined, only clients that have a clientid with a
 					prefix that matches clientid_prefixes will be allowed to
@@ -109,10 +150,21 @@
 					would mean a client "secure-client" could connect but
 					another with clientid "mqtt" couldn't. By default, all
 					client ids are valid.</para>
+					<para>Reloaded on reload signal. Note that currently connected
+					clients will be unaffected by any changes.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>listener</option></term>
+				<term><option>connection_messages</option> &lt; true | false &gt;</term>
+				<listitem>
+					<para>If set to true, the log will include entries when
+					clients connect and disconnect. If set to false, these
+					entries will not appear.</para>
+					<para>Reloaded on reload signal.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>listener</option> <replaceable>port</replaceable></term>
 				<listitem>
 					<para>Listen for incoming network connection on the
 					specified port. A second optional argument allows the
@@ -121,10 +173,11 @@
 					used then the default listener will not be started. This
 					option may be specified multiple times. See also the
 					mount_point option.</para>
+					<para>Not reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>log_dest</option></term>
+				<term><option>log_dest</option> <replaceable>destinations</replaceable></term>
 				<listitem>
 					<para>Send log messages to a particular destination.
 					Possible destinations are: stdout stderr syslog topic.
@@ -136,10 +189,19 @@
 					notice and information. Use "log_dest none" if you wish to
 					disable logging. Defaults to stderr. This option
 					may be specified multiple times.</para>
+					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>log_type</option></term>
+				<term><option>log_timestamp</option> [ true | false ]</term>
+				<listitem>
+					<para>Boolean value, if set to true a timestamp value will
+					be added to each log entry. The default is true.</para>
+					<para>Reloaded on reload signal.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>log_type</option> <replaceable>types</replaceable></term>
 				<listitem>
 					<para>Choose types of messages to log. Possible types are:
 					debug, error, warning, notice, information, none. Defaults
@@ -147,10 +209,11 @@
 					be specified multiple times. Note that the debug type (used
 					for decoding incoming network packets) is never logged in
 					syslog or topics.</para>
+					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>max_connections</option></term>
+				<term><option>max_connections</option> <replaceable>count</replaceable></term>
 				<listitem>
 					<para>Limit the total number of clients connected for the
 					current listener. Set to <literal>-1</literal> to have
@@ -158,10 +221,11 @@
 					imposed that are outside the control of mosquitto.  See
 					e.g.
 					<citerefentry><refentrytitle>limits.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+					<para>Not reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>max_inflight_messages</option></term>
+				<term><option>max_inflight_messages</option> <replaceable>count</replaceable></term>
 				<listitem>
 					<para>The maximum number of QoS 1 or 2 messages that can be
 					in the process of being transmitted simultaneously.  This
@@ -169,19 +233,21 @@
 					messages that are being retried. Defaults to 20. Set to 0
 					for no maximum. If set to 1, this will guarantee in-order
 					delivery of messages.</para>
+					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>max_queued_messages</option></term>
+				<term><option>max_queued_messages</option> <replaceable>count</replaceable></term>
 				<listitem>
 					<para>The maximum number of QoS 1 or 2 messages to hold in
 					the queue above those messages that are currently in
 					flight. Defaults to 100. Set to 0 for no maximum (not
-					recommended).</para>
+					recommended). See also the queue_qos0_messages option.</para>
+					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>mount_point</option></term>
+				<term><option>mount_point</option> <replaceable>topic prefix</replaceable></term>
 				<listitem>
 					<para>This option is used with the listener option to
 					isolate groups of clients. When a client connects to a
@@ -192,10 +258,11 @@
 					point <option>example</option> can only see messages that
 					are published in the topic hierarchy
 					<option>example</option> and above.</para>
+					<para>Not reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>password_file</option></term>
+				<term><option>password_file</option> <replaceable>file path</replaceable></term>
 				<listitem>
 					<para>Set the path to a password file. If defined, the
 					contents of the file are used to control client access to
@@ -207,10 +274,12 @@
 					is defined is valid and could be used with acl_file to have
 					e.g. read only guest/anonymous accounts and defined users
 					that can publish.</para>
-				</listitem>
-			</varlistentry>
+					<para>Reloaded on reload signal. The currently loaded username and
+					password data will be freed and reloaded. Clients that are
+					already connected will not be affected.</para>
+				</listitem> </varlistentry>
 			<varlistentry>
-				<term><option>persistence</option></term>
+				<term><option>persistence</option> [ true | false ]</term>
 				<listitem>
 					<para>Can be true or false. If true, connection,
 					subscription and message data will be written to the disk
@@ -222,24 +291,55 @@
 					of the persistence database may also be forced by sending
 					mosquitto the SIGUSR1 signal. If false, the data will be
 					stored in memory only. Defaults to false.</para>
+					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>persistence_file</option></term>
+				<term><option>persistence_file</option> <replaceable>file name</replaceable></term>
 				<listitem>
 					<para>The filename to use for the persistent database. Defaults to mosquitto.db.</para>
+					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>persistence_location</option></term>
+				<term><option>persistence_location</option> <replaceable>path</replaceable></term>
 				<listitem>
 					<para>The path where the persistence database should be
 					stored. Must end in a trailing slash. If not given, then
 					the current directory is used.</para>
+					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>pid_file</option></term>
+				<term><option>persistent_client_expiration</option> <replaceable>duration</replaceable></term>
+				<listitem>
+					<para>This option allows persistent clients (those with
+					clean session set to false) to be removed if they do not
+					reconnect within a certain time frame. This is a
+					non-standard option. As far as the MQTT spec is concerned,
+					persistent clients persist forever.</para>
+					<para>Badly designed clients may set clean session to false
+					whilst using a randomly generated client id. This leads to
+					persistent clients that will never reconnect. This option
+					allows these clients to be removed.</para>
+					<para>The expiration period should be an integer followed
+					by one of d w m y for day, week, month and year
+					respectively. For example:</para>
+					<itemizedlist mark="circle">
+						<listitem><para>persistent_client_expiration 2m</para></listitem>
+						<listitem><para>persistent_client_expiration 14d</para></listitem>
+						<listitem><para>persistent_client_expiration 1y</para></listitem>
+					<!-- BUG - putting itemizedlist close tag here breaks the
+						 indentation of the man page. -->
+					<para>As this is a non-standard option, the default if not
+					set is to never expire persistent clients.</para>
+					<para>Reloaded on reload signal.</para>
+					<!-- BUG - this should be above. -->
+					</itemizedlist>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>pid_file</option> <replaceable>file path</replaceable></term>
 				<listitem>
 					<para>Write a pid file to the file specified. If not given
 					(the default), no pid file will be written. If the pid file
@@ -249,13 +349,28 @@
 					init script it will usually be required to write a pid
 					file. This should then be configured as
 					/var/run/mosquitto.pid</para>
+					<para>Not reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>port</option></term>
+				<term><option>port</option> <replaceable>port number</replaceable></term>
 				<listitem>
 					<para>Set the network port for the default listener to
 					listen on. Defaults to 1883.</para>
+					<para>Not reloaded on reload signal.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>queue_qos0_messages</option> [ true | false ]</term>
+				<listitem>
+					<para>Set to true to queue messages with QoS 0 when a
+					persistent client is disconnected. These messages are
+					included in the limit imposed by max_queued_messages.
+					Defaults to false.</para>
+					<para>Note that the MQTT v3.1 spec states that only QoS 1
+					and 2 messages should be saved in this situation so this is
+					a non-standard option.</para>
+					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -278,24 +393,25 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>retained_persistence</option></term>
+				<term><option>retained_persistence</option> [ true | false ]</term>
 				<listitem>
 					<para>This is a synonym of the <option>persistence</option>
 					option.</para>
+					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-			<varlistentry>
-				<term><option>retry_interval</option></term>
+				<term><option>retry_interval</option> <replaceable>seconds</replaceable></term>
 				<listitem>
 					<para>The integer number of seconds after a QoS=1 or QoS=2
 					message has been sent that mosquitto will wait before
 					retrying when no response is received. If unset, defaults
 					to 20 seconds.</para>
+					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>store_clean_interval</option></term>
+				<term><option>store_clean_interval</option> <replaceable>seconds</replaceable></term>
 				<listitem>
 					<para>The integer number of seconds between the internal
 					message store being cleaned of messages that are no longer
@@ -304,19 +420,21 @@
 					opposite effect. Setting a value of 0 means the
 					unreferenced messages will be disposed of as quickly as
 					possible. Defaults to 10 seconds.</para>
+					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>sys_interval</option></term>
+				<term><option>sys_interval</option> <replaceable>seconds</replaceable></term>
 				<listitem>
 					<para>The integer number of seconds between updates of the
 					$SYS subscription hierarchy, which provides status
 					information about the broker. If unset, defaults to 10
 					seconds.</para>
+					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>user</option></term>
+				<term><option>user</option> <replaceable>username</replaceable></term>
 				<listitem>
 					<para>When run as root, change to this user and its primary
 					group on startup.  If mosquitto is unable to change to this
@@ -327,6 +445,7 @@
 					<para>This setting has no effect on Windows and so you
 					should run mosquitto as the user you wish it to run
 					as.</para>
+					<para>Not reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
 		</variablelist>
@@ -336,6 +455,7 @@
 		<title>Configuring Bridges</title>
 		<para>Multiple bridges (connections to other brokers) can be configured
 		using the following variables.</para>
+		<para>Bridges cannot currently be reloaded on reload signal.</para>
 		<variablelist>
 			<varlistentry>
 				<term><option>address</option> <replaceable>address[:port]</replaceable></term>
@@ -391,6 +511,25 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>idle_timeout</option> <replaceable>seconds</replaceable></term>
+				<listitem>
+					<para>Set the amount of time a bridge using the lazy start
+					type must be idle before it will be stopped. Defaults to
+					60 seconds.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>notifications</option> [ true | false ]</term>
+				<listitem>
+					<para>If set to true, publish notification messages to the
+					local and remote brokers giving information about the state
+					of the bridge connection. Retained messages are published
+					to the topic $SYS/bridge/connection/&lt;clientid&gt;/state.
+					If the message is 1 then the connection is active, or 0 if
+					the connection has failed. Defaults to true.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>password</option> <replaceable>value</replaceable></term>
 				<listitem>
 					<para>Configure a password for the bridge. This is used for
@@ -398,6 +537,40 @@
 					support MQTT v3.1 and requires a username and/or password
 					to connect. This option is only valid if a username is also
 					supplied.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>start_type</option> [ automatic | lazy | once ]</term>
+				<listitem>
+					<para>Set the start type of the bridge. This controls how
+					the bridge starts and can be one of three types: automatic,
+					lazy and once. Note that RSMB provides a fourth start type
+					"manual" which isn't currently supported by
+					mosquitto.</para>
+
+					<para>"automatic" is the default start type and means that
+					the bridge connection will be started automatically when
+					the broker starts and also restarted after a short delay
+					(30 seconds) if the connection fails.</para>
+
+					<para>Bridges using the "lazy" start type will be started
+					automatically when the number of queued messages exceeds
+					the number set with the "threshold" parameter. It will be
+					stopped automatically after the time set by the
+					"idle_timeout" parameter. Use this start type if you wish
+					the connection to only be active when it is needed.</para>
+
+					<para>A bridge using the "once" start type will be started
+					automatically when the broker starts but will not be
+					restarted if the connection fails.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>threshold</option> <replaceable>count</replaceable></term>
+				<listitem>
+					<para>Set the number of messages that need to be queued
+					for a bridge with lazy start type to be restarted.
+					Defaults to 10 messages.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -418,6 +591,20 @@
 					load from a broker, it is possible that you have a loop
 					where each broker is forever forwarding each other the same
 					messages.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>try_private</option> [ true | false ]</term>
+				<listitem>
+					<para>If try_private is set to true, the bridge will
+						attempt to indicate to the remote broker that it is a
+						bridge not an ordinary client. If successful, this
+						means that loop detection will be more effective and
+						that retained messages will be propagated correctly.
+						Not all brokers support this feature so it may be
+						necessary to set try_private to false if your bridge
+						does not connect properly.</para>
+					<para>Defaults to true.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -442,30 +629,35 @@
 				<term><option>db_host</option> <replaceable>hostname</replaceable></term>
 				<listitem>
 					<para>Database host name.</para>
+					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
 				<term><option>db_port</option> <replaceable>port</replaceable></term>
 				<listitem>
 					<para>Database port.</para>
+					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
 				<term><option>db_name</option> <replaceable>name</replaceable></term>
 				<listitem>
 					<para>Database name.</para>
+					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
 				<term><option>db_username</option> <replaceable>username</replaceable></term>
 				<listitem>
 					<para>Database username.</para>
+					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
 				<term><option>db_password</option> <replaceable>password</replaceable></term>
 				<listitem>
 					<para>Database password.</para>
+					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
 		</variablelist>

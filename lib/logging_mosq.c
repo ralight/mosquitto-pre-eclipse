@@ -35,16 +35,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <mosquitto.h>
 #include <memory_mosq.h>
 
-int mosquitto_log_init(struct mosquitto *mosq, int priorities, int destinations)
-{
-	assert(mosq);
-
-	mosq->log_priorities = priorities;
-	mosq->log_destinations = destinations;
-
-	return MOSQ_ERR_SUCCESS;
-}
-
 int _mosquitto_log_printf(struct mosquitto *mosq, int priority, const char *fmt, ...)
 {
 	va_list va;
@@ -54,26 +44,25 @@ int _mosquitto_log_printf(struct mosquitto *mosq, int priority, const char *fmt,
 	assert(mosq);
 	assert(fmt);
 
-	if((mosq->log_priorities & priority) && mosq->log_destinations != MOSQ_LOG_NONE){
+	pthread_mutex_lock(&mosq->log_callback_mutex);
+	if(mosq->on_log){
 		len = strlen(fmt) + 500;
 		s = _mosquitto_malloc(len*sizeof(char));
-		if(!s) return MOSQ_ERR_NOMEM;
+		if(!s){
+			pthread_mutex_unlock(&mosq->log_callback_mutex);
+			return MOSQ_ERR_NOMEM;
+		}
 
 		va_start(va, fmt);
 		vsnprintf(s, len, fmt, va);
 		va_end(va);
 		s[len-1] = '\0'; /* Ensure string is null terminated. */
 
-		if(mosq->log_destinations & MOSQ_LOG_STDOUT){
-			fprintf(stdout, "%s\n", s);
-			fflush(stdout);
-		}
-		if(mosq->log_destinations & MOSQ_LOG_STDERR){
-			fprintf(stderr, "%s\n", s);
-			fflush(stderr);
-		}
+		mosq->on_log(mosq, mosq->obj, priority, s);
+
 		_mosquitto_free(s);
 	}
+	pthread_mutex_unlock(&mosq->log_callback_mutex);
 
 	return MOSQ_ERR_SUCCESS;
 }

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2011 Roger Light <roger@atchoo.org>
+Copyright (c) 2011,2012 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -50,7 +50,6 @@ POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <fcntl.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -78,12 +77,11 @@ static char *username = NULL;
 static char *password = NULL;
 static int action = ACTION_ADD;
 static int object = OBJECT_USER;
-static uint16_t subscribe_mid = 0;
+static int subscribe_mid = 0;
 static char *id = NULL;
 
-void my_connect_callback(void *obj, int result)
+void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 {
-	struct mosquitto *mosq = (struct mosquitto *)obj;
 	char *sub;
 	int len;
 
@@ -123,36 +121,34 @@ void my_connect_callback(void *obj, int result)
 	}
 }
 
-void my_disconnect_callback(void *obj)
+void my_disconnect_callback(struct mosquitto *mosq, void *obj, int rc)
 {
 	connected = false;
 }
 
-void my_message_callback(void *obj, const struct mosquitto_message *msg)
+void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *msg)
 {
-	struct mosquitto *mosq = (struct mosquitto *)obj;
 	if(msg->payload){
-		printf("%s\n", msg->payload);
+		printf("%s\n", (char *)msg->payload);
 	}else{
 		/* Zero length message indicates end of data. */
 		mosquitto_disconnect(mosq);
 	}
 }
 
-void my_publish_callback(void *obj, uint16_t mid)
+void my_publish_callback(struct mosquitto *mosq, void *obj, int mid)
 {
 }
 
-void my_subscribe_callback(void *obj, uint16_t mid, int qos_count, const uint8_t *qos)
+void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *qos)
 {
-	struct mosquitto *mosq = (struct mosquitto *)obj;
 	char *str;
 
 	if(mid == subscribe_mid){
 		switch(action){
 			case ACTION_ADD:
-				str = strdup("bob:bob");
-				mosquitto_publish(mosq, NULL, "$SYS/control/user/add", strlen(str), (uint8_t *)str, 2, false);
+				str = strdup("bob:bob"); // FIXME
+				mosquitto_publish(mosq, NULL, "$SYS/control/user/add", strlen(str), str, 2, false);
 				break;
 			case ACTION_LIST:
 				mosquitto_publish(mosq, NULL, "$SYS/control/user/list", 0, NULL, 2, false);
@@ -162,6 +158,12 @@ void my_subscribe_callback(void *obj, uint16_t mid, int qos_count, const uint8_t
 		}
 	}
 }
+
+void my_log_callback(struct mosquitto *mosq, void *obj, int level, const char *str)
+{
+	printf("%s\n", str);
+}
+
 
 void print_usage(void)
 {
@@ -257,15 +259,14 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Warning: Not using password since username not set.\n");
 	}
 	mosquitto_lib_init();
-	mosq = mosquitto_new(id, NULL);
+	mosq = mosquitto_new(id, true, NULL);
 	if(!mosq){
 		fprintf(stderr, "Error: Out of memory.\n");
 		return 1;
 	}
 	if(debug){
-		mosquitto_log_init(mosq, MOSQ_LOG_DEBUG | MOSQ_LOG_ERR | MOSQ_LOG_WARNING
-				| MOSQ_LOG_NOTICE | MOSQ_LOG_INFO, MOSQ_LOG_STDERR);
-	}
+		mosquitto_log_callback_set(mosq, my_log_callback);
+ 	}
 	if(username && mosquitto_username_pw_set(mosq, username, password)){
 		fprintf(stderr, "Error: Problem setting username and password.\n");
 		return 1;
@@ -277,7 +278,7 @@ int main(int argc, char *argv[])
 	mosquitto_publish_callback_set(mosq, my_publish_callback);
 	mosquitto_subscribe_callback_set(mosq, my_subscribe_callback);
 
-	if(mosquitto_connect(mosq, host, port, keepalive, true)){
+	if(mosquitto_connect(mosq, host, port, keepalive)){
 		fprintf(stderr, "Unable to connect.\n");
 		return 1;
 	}

@@ -8,7 +8,7 @@ add_library(mosquittopp SHARED
 target_link_libraries(mosquittopp libmosquitto)
 set_target_properties(mosquittopp PROPERTIES
 	VERSION ${VERSION}
-	SOVERSION 0
+	SOVERSION 1
 )
 install(TARGETS mosquittopp RUNTIME DESTINATION ${BINDIR} LIBRARY DESTINATION ${LIBDIR})
 install(FILES mosquittopp.h DESTINATION ${INCLUDEDIR})

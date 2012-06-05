@@ -122,8 +122,8 @@
 			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
 			<paramdef><parameter>bool will</parameter></paramdef>
 			<paramdef><parameter>const char *topic</parameter></paramdef>
-			<paramdef><parameter>uint32_t payloadlen</parameter></paramdef>
-			<paramdef><parameter>const uint8_t *payload</parameter></paramdef>
+			<paramdef><parameter>int payloadlen</parameter></paramdef>
+			<paramdef><parameter>const void *payload</parameter></paramdef>
 			<paramdef><parameter>int qos</parameter></paramdef>
 			<paramdef><parameter>bool retain</parameter></paramdef>
 			</funcprototype></funcsynopsis>
@@ -142,6 +142,10 @@
 			<paramdef><parameter>bool clean_session</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
+			<funcsynopsis><funcprototype><funcdef>void <function>mosquitto_reconnect</function></funcdef>
+			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
+			</funcprototype></funcsynopsis>
+
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_disconnect</function></funcdef>
 			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
 			</funcprototype></funcsynopsis>
@@ -154,10 +158,10 @@
 			<para>
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_publish</function></funcdef>
 			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
-			<paramdef><parameter>uint16_t *mid</parameter></paramdef>
+			<paramdef><parameter>int *mid</parameter></paramdef>
 			<paramdef><parameter>const char *topic</parameter></paramdef>
-			<paramdef><parameter>uint32_t payloadlen</parameter></paramdef>
-			<paramdef><parameter>const uint8_t *payload</parameter></paramdef>
+			<paramdef><parameter>int payloadlen</parameter></paramdef>
+			<paramdef><parameter>const void *payload</parameter></paramdef>
 			<paramdef><parameter>int qos</parameter></paramdef>
 			<paramdef><parameter>bool retain</parameter></paramdef>
 			</funcprototype></funcsynopsis>
@@ -170,14 +174,14 @@
 			<para>
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_subscribe</function></funcdef>
 			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
-			<paramdef><parameter>uint16_t *mid</parameter></paramdef>
+			<paramdef><parameter>int *mid</parameter></paramdef>
 			<paramdef><parameter>const char *sub</parameter></paramdef>
 			<paramdef><parameter>int qos</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_unsubscribe</function></funcdef>
 			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
-			<paramdef><parameter>uint16_t *mid</parameter></paramdef>
+			<paramdef><parameter>int *mid</parameter></paramdef>
 			<paramdef><parameter>const char *sub</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 			</para>
@@ -222,10 +226,10 @@ struct mosquitto_message{
 	time_t timestamp;
 	enum mosquitto_msg_direction direction;
 	enum mosquitto_msg_state state;
-	uint16_t mid;
+	int mid;
 	char *topic;
-	uint8_t *payload;
-	uint32_t payloadlen;
+	void *payload;
+	int payloadlen;
 	int qos;
 	bool retain;
 	bool dup;
@@ -234,10 +238,10 @@ struct mosquitto_message{
 struct mosquitto;
 
 void mosquitto_connect_callback_set(struct mosquitto *mosq, void (*on_connect)(void *, int));
-void mosquitto_publish_callback_set(struct mosquitto *mosq, void (*on_publish)(void *, uint16_t));
+void mosquitto_publish_callback_set(struct mosquitto *mosq, void (*on_publish)(void *, int));
 void mosquitto_message_callback_set(struct mosquitto *mosq, void (*on_message)(void *, struct mosquitto_message *));
-void mosquitto_subscribe_callback_set(struct mosquitto *mosq, void (*on_subscribe)(void *, uint16_t, int, uint8_t *));
-void mosquitto_unsubscribe_callback_set(struct mosquitto *mosq, void (*on_unsubscribe)(void *, uint16_t));
+void mosquitto_subscribe_callback_set(struct mosquitto *mosq, void (*on_subscribe)(void *, int, int, int *));
+void mosquitto_unsubscribe_callback_set(struct mosquitto *mosq, void (*on_unsubscribe)(void *, int));
 
 void mosquitto_message_retry_check(struct mosquitto *mosq);
 void mosquitto_message_retry_set(struct mosquitto *mosq, unsigned int message_retry);
@@ -249,9 +253,10 @@ void mosquitto_message_cleanup(struct mosquitto_message **message);
 	<refsect1>
 		<title>Examples</title>
 		<para><programlisting language="C">
+#include &lt;stdio.h&gt;
 #include &lt;mosquitto.h&gt;
 
-void my_message_callback(void *obj, struct mosquitto_message *message)
+void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
 {
 	if(message->payloadlen){
 		printf("%s %s\n", message->topic, message->payload);
@@ -261,19 +266,18 @@ void my_message_callback(void *obj, struct mosquitto_message *message)
 	fflush(stdout);
 }
 
-void my_connect_callback(void *obj, int result)
+void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 {
-	struct mosquitto *mosq = obj;
-
 	int i;
 	if(!result){
-		mosquitto_subscribe(mosq, topics[i], topic_qos);
+		/* Subscribe to broker information topics on successful connect. */
+		mosquitto_subscribe(mosq, NULL, "$SYS/#", 2);
 	}else{
 		fprintf(stderr, "Connect failed\n");
 	}
 }
 
-void my_subscribe_callback(void *obj, uint16_t mid, int qos_count, const uint8_t *granted_qos)
+void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos)
 {
 	int i;
 
@@ -282,6 +286,12 @@ void my_subscribe_callback(void *obj, uint16_t mid, int qos_count, const uint8_t
 		printf(", %d", granted_qos[i]);
 	}
 	printf("\n");
+}
+
+void my_log_callback(struct mosquitto *mosq, void *obj, int level, const char *str)
+{
+	/* Pring all log messages regardless of level. */
+	printf("%s\n", str);
 }
 
 int main(int argc, char *argv[])
@@ -294,19 +304,18 @@ int main(int argc, char *argv[])
 	bool clean_session = true;
 	struct mosquitto *mosq = NULL;
 
-	mosq = mosquitto_new(id, NULL);
+	mosq = mosquitto_new(id, clean_session, NULL);
 	if(!mosq){
 		fprintf(stderr, "Error: Out of memory.\n");
 		return 1;
 	}
-	mosquitto_log_init(mosq, MOSQ_LOG_DEBUG | MOSQ_LOG_ERR | MOSQ_LOG_WARNING
-			| MOSQ_LOG_NOTICE | MOSQ_LOG_INFO, MOSQ_LOG_STDERR);
+	mosquitto_log_callback_set(mosq, my_log_callback);
 
 	mosquitto_connect_callback_set(mosq, my_connect_callback);
 	mosquitto_message_callback_set(mosq, my_message_callback);
 	mosquitto_subscribe_callback_set(mosq, my_subscribe_callback);
 
-	if(mosquitto_connect(mosq, host, port, keepalive, clean_session)){
+	if(mosquitto_connect(mosq, host, port, keepalive)){
 		fprintf(stderr, "Unable to connect.\n");
 		return 1;
 	}
