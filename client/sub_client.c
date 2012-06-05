@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2011 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2012 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,8 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,98 +36,107 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <unistd.h>
 #else
 #include <process.h>
+#include <winsock2.h>
 #define snprintf sprintf_s
 #endif
 
 #include <mosquitto.h>
 
-static char **topics = NULL;
-static int topic_count = 0;
-static int topic_qos = 0;
-static char *username = NULL;
-static char *password = NULL;
-int verbose = 0;
-bool quiet = false;
+/* This struct is used to pass data to callbacks.
+ * An instance "ud" is created in main() and populated, then passed to
+ * mosquitto_new(). */
+struct userdata {
+	char **topics;
+	int topic_count;
+	int topic_qos;
+	char *username;
+	char *password;
+	int verbose;
+	bool quiet;
+};
 
-void my_message_callback(void *obj, const struct mosquitto_message *message)
+void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
 {
-	if(verbose){
+	struct userdata *ud;
+
+	assert(obj);
+	ud = (struct userdata *)obj;
+
+	if(ud->verbose){
 		if(message->payloadlen){
-			printf("%s %s\n", message->topic, message->payload);
+			printf("%s %s\n", message->topic, (const char *)message->payload);
 		}else{
 			printf("%s (null)\n", message->topic);
 		}
 		fflush(stdout);
 	}else{
 		if(message->payloadlen){
-			printf("%s\n", message->payload);
+			printf("%s\n", (const char *)message->payload);
 			fflush(stdout);
 		}
 	}
 }
 
-void my_connect_callback(void *obj, int result)
+void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 {
-	struct mosquitto *mosq = obj;
-
 	int i;
+	struct userdata *ud;
+
+	assert(obj);
+	ud = (struct userdata *)obj;
+
 	if(!result){
-		for(i=0; i<topic_count; i++){
-			mosquitto_subscribe(mosq, NULL, topics[i], topic_qos);
+		for(i=0; i<ud->topic_count; i++){
+			mosquitto_subscribe(mosq, NULL, ud->topics[i], ud->topic_qos);
 		}
 	}else{
-		switch(result){
-			case 1:
-				if(!quiet) fprintf(stderr, "Connection Refused: unacceptable protocol version\n");
-				break;
-			case 2:
-				if(!quiet) fprintf(stderr, "Connection Refused: identifier rejected\n");
-				break;
-			case 3:
-				if(!quiet) fprintf(stderr, "Connection Refused: broker unavailable\n");
-				break;
-			case 4:
-				if(!quiet) fprintf(stderr, "Connection Refused: bad user name or password\n");
-				break;
-			case 5:
-				if(!quiet) fprintf(stderr, "Connection Refused: not authorised\n");
-				break;
-			default:
-				if(!quiet) fprintf(stderr, "Connection Refused: unknown reason\n");
-				break;
+		if(result && !ud->quiet){
+			fprintf(stderr, "%s\n", mosquitto_connack_string(result));
 		}
 	}
 }
 
-void my_subscribe_callback(void *obj, uint16_t mid, int qos_count, const uint8_t *granted_qos)
+void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos)
 {
 	int i;
+	struct userdata *ud;
 
-	if(!quiet) printf("Subscribed (mid: %d): %d", mid, granted_qos[0]);
+	assert(obj);
+	ud = (struct userdata *)obj;
+
+	if(!ud->quiet) printf("Subscribed (mid: %d): %d", mid, granted_qos[0]);
 	for(i=1; i<qos_count; i++){
-		if(!quiet) printf(", %d", granted_qos[i]);
+		if(!ud->quiet) printf(", %d", granted_qos[i]);
 	}
-	if(!quiet) printf("\n");
+	if(!ud->quiet) printf("\n");
+}
+
+void my_log_callback(struct mosquitto *mosq, void *obj, int level, const char *str)
+{
+	printf("%s\n", str);
 }
 
 void print_usage(void)
 {
 	printf("mosquitto_sub is a simple mqtt client that will subscribe to a single topic and print all messages it receives.\n\n");
-	printf("Usage: mosquitto_sub [-c] [-i id] [-k keepalive] [-p port] [-q qos] [-v] -t topic ...\n");
+	printf("Usage: mosquitto_sub [-c] [-h host] [-k keepalive] [-p port] [-q qos] [-v] -t topic ...\n");
+	printf("                     [-i id] [-I id_prefix]\n");
 	printf("                     [-d] [--quiet]\n");
-	printf("                     [-u username [--pw password]]\n");
+	printf("                     [-u username [-P password]]\n");
 	printf("                     [--will-topic [--will-payload payload] [--will-qos qos] [--will-retain]]\n\n");
 	printf(" -c : disable 'clean session' (store subscription and pending messages when client disconnects).\n");
 	printf(" -d : enable debug messages.\n");
 	printf(" -h : mqtt host to connect to. Defaults to localhost.\n");
 	printf(" -i : id to use for this client. Defaults to mosquitto_sub_ appended with the process id.\n");
+	printf(" -I : define the client id as id_prefix appended with the process id. Useful for when the\n");
+	printf("      broker is using the clientid_prefixes option.\n");
 	printf(" -k : keep alive in seconds for this client. Defaults to 60.\n");
 	printf(" -p : network port to connect to. Defaults to 1883.\n");
 	printf(" -q : quality of service level to use for the subscription. Defaults to 0.\n");
 	printf(" -t : mqtt topic to subscribe to. May be repeated multiple times.\n");
 	printf(" -u : provide a username (requires MQTT 3.1 broker)\n");
 	printf(" -v : print published messages verbosely.\n");
-	printf(" --pw : provide a password (requires MQTT 3.1 broker)\n");
+	printf(" -P : provide a password (requires MQTT 3.1 broker)\n");
 	printf(" --quiet : don't print error messages.\n");
 	printf(" --will-payload : payload for the client Will, which is sent by the broker in case of\n");
 	printf("                  unexpected disconnection. If not given and will-topic is set, a zero\n");
@@ -139,6 +150,7 @@ void print_usage(void)
 int main(int argc, char *argv[])
 {
 	char *id = NULL;
+	char *id_prefix = NULL;
 	int i;
 	char *host = "localhost";
 	int port = 1883;
@@ -147,12 +159,17 @@ int main(int argc, char *argv[])
 	bool debug = false;
 	struct mosquitto *mosq = NULL;
 	int rc;
+	char hostname[MOSQ_MQTT_ID_MAX_LENGTH - 9];
+	char err[1024];
+	struct userdata ud;
 	
-	uint8_t *will_payload = NULL;
+	char *will_payload = NULL;
 	long will_payloadlen = 0;
 	int will_qos = 0;
 	bool will_retain = false;
 	char *will_topic = NULL;
+
+	memset(&ud, 0, sizeof(struct userdata));
 
 	for(i=1; i<argc; i++){
 		if(!strcmp(argv[i], "-p") || !strcmp(argv[i], "--port")){
@@ -183,12 +200,31 @@ int main(int argc, char *argv[])
 			}
 			i++;
 		}else if(!strcmp(argv[i], "-i") || !strcmp(argv[i], "--id")){
+			if(id_prefix){
+				fprintf(stderr, "Error: -i and -I argument cannot be used together.\n\n");
+				print_usage();
+				return 1;
+			}
 			if(i==argc-1){
 				fprintf(stderr, "Error: -i argument given but no id specified.\n\n");
 				print_usage();
 				return 1;
 			}else{
 				id = argv[i+1];
+			}
+			i++;
+		}else if(!strcmp(argv[i], "-I") || !strcmp(argv[i], "--id-prefix")){
+			if(id){
+				fprintf(stderr, "Error: -i and -I argument cannot be used together.\n\n");
+				print_usage();
+				return 1;
+			}
+			if(i==argc-1){
+				fprintf(stderr, "Error: -I argument given but no id prefix specified.\n\n");
+				print_usage();
+				return 1;
+			}else{
+				id_prefix = argv[i+1];
 			}
 			i++;
 		}else if(!strcmp(argv[i], "-k") || !strcmp(argv[i], "--keepalive")){
@@ -211,25 +247,25 @@ int main(int argc, char *argv[])
 				print_usage();
 				return 1;
 			}else{
-				topic_qos = atoi(argv[i+1]);
-				if(topic_qos<0 || topic_qos>2){
-					fprintf(stderr, "Error: Invalid QoS given: %d\n", topic_qos);
+				ud.topic_qos = atoi(argv[i+1]);
+				if(ud.topic_qos<0 || ud.topic_qos>2){
+					fprintf(stderr, "Error: Invalid QoS given: %d\n", ud.topic_qos);
 					print_usage();
 					return 1;
 				}
 			}
 			i++;
 		}else if(!strcmp(argv[i], "--quiet")){
-			quiet = true;
+			ud.quiet = true;
 		}else if(!strcmp(argv[i], "-t") || !strcmp(argv[i], "--topic")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: -t argument given but no topic specified.\n\n");
 				print_usage();
 				return 1;
 			}else{
-				topic_count++;
-				topics = realloc(topics, topic_count*sizeof(char *));
-				topics[topic_count-1] = argv[i+1];
+				ud.topic_count++;
+				ud.topics = realloc(ud.topics, ud.topic_count*sizeof(char *));
+				ud.topics[ud.topic_count-1] = argv[i+1];
 			}
 			i++;
 		}else if(!strcmp(argv[i], "-u") || !strcmp(argv[i], "--username")){
@@ -238,18 +274,18 @@ int main(int argc, char *argv[])
 				print_usage();
 				return 1;
 			}else{
-				username = argv[i+1];
+				ud.username = argv[i+1];
 			}
 			i++;
 		}else if(!strcmp(argv[i], "-v") || !strcmp(argv[i], "--verbose")){
-			verbose = 1;
-		}else if(!strcmp(argv[i], "--pw")){
+			ud.verbose = 1;
+		}else if(!strcmp(argv[i], "-P") || !strcmp(argv[i], "--pw")){
 			if(i==argc-1){
-				fprintf(stderr, "Error: --pw argument given but no password specified.\n\n");
+				fprintf(stderr, "Error: -P argument given but no password specified.\n\n");
 				print_usage();
 				return 1;
 			}else{
-				password = argv[i+1];
+				ud.password = argv[i+1];
 			}
 			i++;
 		}else if(!strcmp(argv[i], "--will-payload")){
@@ -258,8 +294,8 @@ int main(int argc, char *argv[])
 				print_usage();
 				return 1;
 			}else{
-				will_payload = (uint8_t *)argv[i+1];
-				will_payloadlen = strlen((char *)will_payload);
+				will_payload = argv[i+1];
+				will_payloadlen = strlen(will_payload);
 			}
 			i++;
 		}else if(!strcmp(argv[i], "--will-qos")){
@@ -292,16 +328,12 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 	}
-	if(!id){
-		id = malloc(30);
-		if(!id){
-			if(!quiet) fprintf(stderr, "Error: Out of memory.\n");
-			return 1;
-		}
-		snprintf(id, 30, "mosquitto_sub_%d", getpid());
+	if(clean_session == false && (id_prefix || !id)){
+		if(!ud.quiet) fprintf(stderr, "Error: You must provide a client id if you are using the -c option.\n");
+		return 1;
 	}
 
-	if(topic_count == 0){
+	if(ud.topic_count == 0){
 		fprintf(stderr, "Error: You must specify a topic to subscribe to.\n");
 		print_usage();
 		return 1;
@@ -316,25 +348,57 @@ int main(int argc, char *argv[])
 		print_usage();
 		return 1;
 	}
-	if(password && !username){
-		if(!quiet) fprintf(stderr, "Warning: Not using password since username not set.\n");
+	if(ud.password && !ud.username){
+		if(!ud.quiet) fprintf(stderr, "Warning: Not using password since username not set.\n");
 	}
 	mosquitto_lib_init();
-	mosq = mosquitto_new(id, NULL);
+
+	if(id_prefix){
+		id = malloc(strlen(id_prefix)+10);
+		if(!id){
+			if(!ud.quiet) fprintf(stderr, "Error: Out of memory.\n");
+			mosquitto_lib_cleanup();
+			return 1;
+		}
+		snprintf(id, strlen(id_prefix)+10, "%s%d", id_prefix, getpid());
+	}else if(!id){
+		id = malloc(MOSQ_MQTT_ID_MAX_LENGTH + 1);
+		if(!id){
+			if(!ud.quiet) fprintf(stderr, "Error: Out of memory.\n");
+			mosquitto_lib_cleanup();
+			return 1;
+		}
+		hostname[0] = '\0';
+		gethostname(hostname, MOSQ_MQTT_ID_MAX_LENGTH - 10);
+		hostname[MOSQ_MQTT_ID_MAX_LENGTH - 10] = '\0';
+		snprintf(id, MOSQ_MQTT_ID_MAX_LENGTH, "mosqsub/%d-%s", getpid(), hostname);
+		id[MOSQ_MQTT_ID_MAX_LENGTH] = '\0';
+	}
+
+	mosq = mosquitto_new(id, clean_session, &ud);
 	if(!mosq){
-		if(!quiet) fprintf(stderr, "Error: Out of memory.\n");
+		switch(errno){
+			case ENOMEM:
+				if(!ud.quiet) fprintf(stderr, "Error: Out of memory.\n");
+				break;
+			case EINVAL:
+				if(!ud.quiet) fprintf(stderr, "Error: Invalid id and/or clean_session.\n");
+				break;
+		}
+		mosquitto_lib_cleanup();
 		return 1;
 	}
 	if(debug){
-		mosquitto_log_init(mosq, MOSQ_LOG_DEBUG | MOSQ_LOG_ERR | MOSQ_LOG_WARNING
-				| MOSQ_LOG_NOTICE | MOSQ_LOG_INFO, MOSQ_LOG_STDERR);
+		mosquitto_log_callback_set(mosq, my_log_callback);
 	}
-	if(will_topic && mosquitto_will_set(mosq, true, will_topic, will_payloadlen, will_payload, will_qos, will_retain)){
-		if(!quiet) fprintf(stderr, "Error: Problem setting will.\n");
+	if(will_topic && mosquitto_will_set(mosq, will_topic, will_payloadlen, will_payload, will_qos, will_retain)){
+		if(!ud.quiet) fprintf(stderr, "Error: Problem setting will.\n");
+		mosquitto_lib_cleanup();
 		return 1;
 	}
-	if(username && mosquitto_username_pw_set(mosq, username, password)){
-		if(!quiet) fprintf(stderr, "Error: Problem setting username and password.\n");
+	if(ud.username && mosquitto_username_pw_set(mosq, ud.username, ud.password)){
+		if(!ud.quiet) fprintf(stderr, "Error: Problem setting username and password.\n");
+		mosquitto_lib_cleanup();
 		return 1;
 	}
 	mosquitto_connect_callback_set(mosq, my_connect_callback);
@@ -343,10 +407,22 @@ int main(int argc, char *argv[])
 		mosquitto_subscribe_callback_set(mosq, my_subscribe_callback);
 	}
 
-	rc = mosquitto_connect(mosq, host, port, keepalive, clean_session);
+	rc = mosquitto_connect(mosq, host, port, keepalive);
 	if(rc){
-		if(!quiet) fprintf(stderr, "Unable to connect (%d).\n", rc);
+		if(!ud.quiet){
+			if(rc == MOSQ_ERR_ERRNO){
+#ifndef WIN32
+				strerror_r(errno, err, 1024);
+#else
+				FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, errno, 0, (LPTSTR)&err, 1024, NULL);
+#endif
+				fprintf(stderr, "Error: %s\n", err);
+			}else{
+				fprintf(stderr, "Unable to connect (%d).\n", rc);
+			}
+		}
 		return rc;
+		mosquitto_lib_cleanup();
 	}
 
 	do{

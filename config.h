@@ -25,11 +25,8 @@
  * retained messages and durable subscriptions to a file periodically and on
  * shutdown. This is usually desirable (and is suggested by the MQTT spec), but
  * it can be disabled by commenting out this define if required.
- * Not available on Windows.
  */
-#ifndef WIN32
 #define WITH_PERSISTENCE
-#endif
 
 /* Compile with bridge support included. This allow the broker to connect to
  * other brokers and subscribe/publish to topics. You probably want to leave
@@ -37,6 +34,21 @@
  * CPU time.
  */
 #define WITH_BRIDGE
+
+/* IMPORTANT: WITH_SYSTEM_METRICS is currently ONLY supported on LINUX !
+ * Compile with system metrics support. These are published on $SYS/system/
+ * such that critical system resources can be monitored.
+ */
+#define WITH_SYSTEM_METRICS
+
+/* Compile with strict protocol support. This means that both the client
+ * library and the broker will be very strict about protocol compliance on
+ * incoming data. Neither of them will return an error on incorrect "remaining
+ * length" values if this is commented out. The old behaviour (prior to 0.12)
+ * is equivalent to compiling with WITH_STRICT_PROTOCOL defined and means that
+ * clients will be immediately disconnected from the broker on non-compliance.
+ */
+//#define WITH_STRICT_PROTOCOL
 
 /* Use the username/password and ACL checks defined in security_external.c
  * This is empty by default, but gives a more straightforward way of adding
@@ -48,6 +60,10 @@
  * system.
  */
 //#define WITH_EXTERNAL_SECURITY_CHECKS
+
+/* Compile with client threading support */
+#define WITH_THREADING
+
 #endif
 
 /* Compile with remote control support included. Remote control must be enabled
@@ -63,4 +79,6 @@
 #ifdef WIN32
 #define snprintf sprintf_s
 #define strcasecmp strcmpi
+#define strtok_r strtok_s
+#define strerror_r(e, b, l) strerror_s(b, l, e)
 #endif

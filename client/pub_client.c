@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2011 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2012 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,6 +37,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <unistd.h>
 #else
 #include <process.h>
+#include <winsock2.h>
 #define snprintf sprintf_s
 #endif
 
@@ -51,6 +53,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #define STATUS_CONNECTING 0
 #define STATUS_CONNACK_RECVD 1
 
+/* Global variables for use in callbacks. See sub_client.c for an example of
+ * using a struct to hold variables for use in callbacks. */
 static char *topic = NULL;
 static char *message = NULL;
 static long msglen = 0;
@@ -58,16 +62,15 @@ static int qos = 0;
 static int retain = 0;
 static int mode = MSGMODE_NONE;
 static int status = STATUS_CONNECTING;
-static uint16_t mid_sent = 0;
+static int mid_sent = 0;
 static bool connected = true;
 static char *username = NULL;
 static char *password = NULL;
 static bool disconnect_sent = false;
 static bool quiet = false;
 
-void my_connect_callback(void *obj, int result)
+void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 {
-	struct mosquitto *mosq = obj;
 	int rc = MOSQ_ERR_SUCCESS;
 
 	if(!result){
@@ -75,7 +78,7 @@ void my_connect_callback(void *obj, int result)
 			case MSGMODE_CMD:
 			case MSGMODE_FILE:
 			case MSGMODE_STDIN_FILE:
-				rc = mosquitto_publish(mosq, &mid_sent, topic, msglen, (uint8_t *)message, qos, retain);
+				rc = mosquitto_publish(mosq, &mid_sent, topic, msglen, message, qos, retain);
 				break;
 			case MSGMODE_NULL:
 				rc = mosquitto_publish(mosq, &mid_sent, topic, 0, NULL, qos, retain);
@@ -85,46 +88,50 @@ void my_connect_callback(void *obj, int result)
 				break;
 		}
 		if(rc){
-			if(!quiet) fprintf(stderr, "Error: Publish returned %d, disconnecting.\n", rc);
+			if(!quiet){
+				switch(rc){
+					case MOSQ_ERR_INVAL:
+						fprintf(stderr, "Error: Invalid input. Does your topic contain '+' or '#'?\n");
+						break;
+					case MOSQ_ERR_NOMEM:
+						fprintf(stderr, "Error: Out of memory when trying to publish message.\n");
+						break;
+					case MOSQ_ERR_NO_CONN:
+						fprintf(stderr, "Error: Client not connected when trying to publish.\n");
+						break;
+					case MOSQ_ERR_PROTOCOL:
+						fprintf(stderr, "Error: Protocol error when communicating with broker.\n");
+						break;
+					case MOSQ_ERR_PAYLOAD_SIZE:
+						fprintf(stderr, "Error: Message payload is too large.\n");
+						break;
+				}
+			}
 			mosquitto_disconnect(mosq);
 		}
 	}else{
-		switch(result){
-			case 1:
-				if(!quiet) fprintf(stderr, "Connection Refused: unacceptable protocol version\n");
-				break;
-			case 2:
-				if(!quiet) fprintf(stderr, "Connection Refused: identifier rejected\n");
-				break;
-			case 3:
-				if(!quiet) fprintf(stderr, "Connection Refused: broker unavailable\n");
-				break;
-			case 4:
-				if(!quiet) fprintf(stderr, "Connection Refused: bad user name or password\n");
-				break;
-			case 5:
-				if(!quiet) fprintf(stderr, "Connection Refused: not authorised\n");
-				break;
-			default:
-				if(!quiet) fprintf(stderr, "Connection Refused: unknown reason\n");
-				break;
+		if(result && !quiet){
+			fprintf(stderr, "%s\n", mosquitto_connack_string(result));
 		}
 	}
 }
 
-void my_disconnect_callback(void *obj)
+void my_disconnect_callback(struct mosquitto *mosq, void *obj, int rc)
 {
 	connected = false;
 }
 
-void my_publish_callback(void *obj, uint16_t mid)
+void my_publish_callback(struct mosquitto *mosq, void *obj, int mid)
 {
-	struct mosquitto *mosq = obj;
-
 	if(mode != MSGMODE_STDIN_LINE && disconnect_sent == false){
 		mosquitto_disconnect(mosq);
 		disconnect_sent = true;
 	}
+}
+
+void my_log_callback(struct mosquitto *mosq, void *obj, int level, const char *str)
+{
+	printf("%s\n", str);
 }
 
 int load_stdin(void)
@@ -196,14 +203,17 @@ int load_file(const char *filename)
 void print_usage(void)
 {
 	printf("mosquitto_pub is a simple mqtt client that will publish a message on a single topic and exit.\n\n");
-	printf("Usage: mosquitto_pub [-h host] [-i id] [-p port] [-q qos] [-r] {-f file | -l | -n | -m message} -t topic\n");
+	printf("Usage: mosquitto_pub [-h host] [-p port] [-q qos] [-r] {-f file | -l | -n | -m message} -t topic\n");
+	printf("                     [-i id] [-I id_prefix]\n");
 	printf("                     [-d] [--quiet]\n");
-	printf("                     [-u username [--pw password]]\n");
+	printf("                     [-u username [-P password]]\n");
 	printf("                     [--will-topic [--will-payload payload] [--will-qos qos] [--will-retain]]\n\n");
 	printf(" -d : enable debug messages.\n");
 	printf(" -f : send the contents of a file as the message.\n");
 	printf(" -h : mqtt host to connect to. Defaults to localhost.\n");
 	printf(" -i : id to use for this client. Defaults to mosquitto_pub_ appended with the process id.\n");
+	printf(" -I : define the client id as id_prefix appended with the process id. Useful for when the\n");
+	printf("      broker is using the clientid_prefixes option.\n");
 	printf(" -l : read messages from stdin, sending a separate message for each line.\n");
 	printf(" -m : message payload to send.\n");
 	printf(" -n : send a null (zero length) message.\n");
@@ -213,7 +223,7 @@ void print_usage(void)
 	printf(" -s : read message from stdin, sending the entire input as a message.\n");
 	printf(" -t : mqtt topic to publish to.\n");
 	printf(" -u : provide a username (requires MQTT 3.1 broker)\n");
-	printf(" --pw : provide a password (requires MQTT 3.1 broker)\n");
+	printf(" -P : provide a password (requires MQTT 3.1 broker)\n");
 	printf(" --quiet : don't print error messages.\n");
 	printf(" --will-payload : payload for the client Will, which is sent by the broker in case of\n");
 	printf("                  unexpected disconnection. If not given and will-topic is set, a zero\n");
@@ -227,6 +237,7 @@ void print_usage(void)
 int main(int argc, char *argv[])
 {
 	char *id = NULL;
+	char *id_prefix = NULL;
 	int i;
 	char *host = "localhost";
 	int port = 1883;
@@ -237,8 +248,10 @@ int main(int argc, char *argv[])
 	struct mosquitto *mosq = NULL;
 	int rc;
 	int rc2;
+	char hostname[MOSQ_MQTT_ID_MAX_LENGTH - 9];
+	char err[1024];
 
-	uint8_t *will_payload = NULL;
+	char *will_payload = NULL;
 	long will_payloadlen = 0;
 	int will_qos = 0;
 	bool will_retain = false;
@@ -284,12 +297,31 @@ int main(int argc, char *argv[])
 			}
 			i++;
 		}else if(!strcmp(argv[i], "-i") || !strcmp(argv[i], "--id")){
+			if(id_prefix){
+				fprintf(stderr, "Error: -i and -I argument cannot be used together.\n\n");
+				print_usage();
+				return 1;
+			}
 			if(i==argc-1){
 				fprintf(stderr, "Error: -i argument given but no id specified.\n\n");
 				print_usage();
 				return 1;
 			}else{
 				id = argv[i+1];
+			}
+			i++;
+		}else if(!strcmp(argv[i], "-I") || !strcmp(argv[i], "--id-prefix")){
+			if(id){
+				fprintf(stderr, "Error: -i and -I argument cannot be used together.\n\n");
+				print_usage();
+				return 1;
+			}
+			if(i==argc-1){
+				fprintf(stderr, "Error: -I argument given but no id prefix specified.\n\n");
+				print_usage();
+				return 1;
+			}else{
+				id_prefix = argv[i+1];
 			}
 			i++;
 		}else if(!strcmp(argv[i], "-l") || !strcmp(argv[i], "--stdin-line")){
@@ -374,9 +406,9 @@ int main(int argc, char *argv[])
 				username = argv[i+1];
 			}
 			i++;
-		}else if(!strcmp(argv[i], "--pw")){
+		}else if(!strcmp(argv[i], "-P") || !strcmp(argv[i], "--pw")){
 			if(i==argc-1){
-				fprintf(stderr, "Error: --pw argument given but no password specified.\n\n");
+				fprintf(stderr, "Error: -P argument given but no password specified.\n\n");
 				print_usage();
 				return 1;
 			}else{
@@ -389,8 +421,8 @@ int main(int argc, char *argv[])
 				print_usage();
 				return 1;
 			}else{
-				will_payload = (uint8_t *)argv[i+1];
-				will_payloadlen = strlen((char *)will_payload);
+				will_payload = argv[i+1];
+				will_payloadlen = strlen(will_payload);
 			}
 			i++;
 		}else if(!strcmp(argv[i], "--will-qos")){
@@ -423,14 +455,6 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 	}
-	if(!id){
-		id = malloc(30);
-		if(!id){
-			if(!quiet) fprintf(stderr, "Error: Out of memory.\n");
-			return 1;
-		}
-		snprintf(id, 30, "mosquitto_pub_%d", getpid());
-	}
 
 	if(!topic || mode == MSGMODE_NONE){
 		fprintf(stderr, "Error: Both topic and message must be supplied.\n");
@@ -452,21 +476,53 @@ int main(int argc, char *argv[])
 		if(!quiet) fprintf(stderr, "Warning: Not using password since username not set.\n");
 	}
 	mosquitto_lib_init();
-	mosq = mosquitto_new(id, NULL);
+
+	if(id_prefix){
+		id = malloc(strlen(id_prefix)+10);
+		if(!id){
+			if(!quiet) fprintf(stderr, "Error: Out of memory.\n");
+			mosquitto_lib_cleanup();
+			return 1;
+		}
+		snprintf(id, strlen(id_prefix)+10, "%s%d", id_prefix, getpid());
+	}else if(!id){
+		id = malloc(MOSQ_MQTT_ID_MAX_LENGTH + 1);
+		if(!id){
+			if(!quiet) fprintf(stderr, "Error: Out of memory.\n");
+			mosquitto_lib_cleanup();
+			return 1;
+		}
+		hostname[0] = '\0';
+		gethostname(hostname, MOSQ_MQTT_ID_MAX_LENGTH - 10);
+		hostname[MOSQ_MQTT_ID_MAX_LENGTH - 10] = '\0';
+		snprintf(id, MOSQ_MQTT_ID_MAX_LENGTH, "mosqpub/%d-%s", getpid(), hostname);
+		id[MOSQ_MQTT_ID_MAX_LENGTH] = '\0';
+	}
+
+	mosq = mosquitto_new(id, true, NULL);
 	if(!mosq){
-		if(!quiet) fprintf(stderr, "Error: Out of memory.\n");
+		switch(errno){
+			case ENOMEM:
+				if(!quiet) fprintf(stderr, "Error: Out of memory.\n");
+				break;
+			case EINVAL:
+				if(!quiet) fprintf(stderr, "Error: Invalid id.\n");
+				break;
+		}
+		mosquitto_lib_cleanup();
 		return 1;
 	}
 	if(debug){
-		mosquitto_log_init(mosq, MOSQ_LOG_DEBUG | MOSQ_LOG_ERR | MOSQ_LOG_WARNING
-				| MOSQ_LOG_NOTICE | MOSQ_LOG_INFO, MOSQ_LOG_STDERR);
+		mosquitto_log_callback_set(mosq, my_log_callback);
 	}
-	if(will_topic && mosquitto_will_set(mosq, true, will_topic, will_payloadlen, will_payload, will_qos, will_retain)){
+	if(will_topic && mosquitto_will_set(mosq, will_topic, will_payloadlen, will_payload, will_qos, will_retain)){
 		if(!quiet) fprintf(stderr, "Error: Problem setting will.\n");
+		mosquitto_lib_cleanup();
 		return 1;
 	}
 	if(username && mosquitto_username_pw_set(mosq, username, password)){
 		if(!quiet) fprintf(stderr, "Error: Problem setting username and password.\n");
+		mosquitto_lib_cleanup();
 		return 1;
 	}
 
@@ -474,9 +530,21 @@ int main(int argc, char *argv[])
 	mosquitto_disconnect_callback_set(mosq, my_disconnect_callback);
 	mosquitto_publish_callback_set(mosq, my_publish_callback);
 
-	rc = mosquitto_connect(mosq, host, port, keepalive, true);
+	rc = mosquitto_connect(mosq, host, port, keepalive);
 	if(rc){
-		if(!quiet) fprintf(stderr, "Unable to connect (%d).\n", rc);
+		if(!quiet){
+			if(rc == MOSQ_ERR_ERRNO){
+#ifndef WIN32
+				strerror_r(errno, err, 1024);
+#else
+				FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, errno, 0, (LPTSTR)&err, 1024, NULL);
+#endif
+				fprintf(stderr, "Error: %s\n", err);
+			}else{
+				fprintf(stderr, "Unable to connect (%d).\n", rc);
+			}
+		}
+		mosquitto_lib_cleanup();
 		return rc;
 	}
 
@@ -484,7 +552,7 @@ int main(int argc, char *argv[])
 		if(mode == MSGMODE_STDIN_LINE && status == STATUS_CONNACK_RECVD){
 			if(fgets(buf, 1024, stdin)){
 				buf[strlen(buf)-1] = '\0';
-				rc2 = mosquitto_publish(mosq, &mid_sent, topic, strlen(buf), (uint8_t *)buf, qos, retain);
+				rc2 = mosquitto_publish(mosq, &mid_sent, topic, strlen(buf), buf, qos, retain);
 				if(rc2){
 					if(!quiet) fprintf(stderr, "Error: Publish returned %d, disconnecting.\n", rc2);
 					mosquitto_disconnect(mosq);

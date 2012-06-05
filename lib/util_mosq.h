@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2011 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2012 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@ POSSIBILITY OF SUCH DAMAGE.
 int _mosquitto_packet_alloc(struct _mosquitto_packet *packet);
 void _mosquitto_check_keepalive(struct mosquitto *mosq);
 int _mosquitto_fix_sub_topic(char **subtopic);
-uint16_t _mosquitto_mid_generate(struct _mosquitto_core *core);
-bool _mosquitto_wildcard_check(const char *str);
+uint16_t _mosquitto_mid_generate(struct mosquitto *mosq);
+int _mosquitto_topic_wildcard_len_check(const char *str);
 
 #endif

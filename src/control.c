@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2011 Roger Light <roger@atchoo.org>
+Copyright (c) 2011,2012 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -34,9 +34,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 
 #include <memory_mosq.h>
-#include <mqtt3.h>
+#include <mosquitto_broker.h>
 
-static int _control_user_add(struct _mosquitto_db *db, mqtt3_context *context, struct mosquitto_msg_store *stored, const char *topic)
+static int _control_user_add(struct _mosquitto_db *db, struct mosquitto *context, struct mosquitto_msg_store *stored, const char *topic)
 {
 	int rc = MOSQ_ERR_SUCCESS;
 	char *username, *password;
@@ -55,7 +55,7 @@ static int _control_user_add(struct _mosquitto_db *db, mqtt3_context *context, s
 	return rc;
 }
 
-static int _control_user_list(struct _mosquitto_db *db, mqtt3_context *context, const char *topic)
+static int _control_user_list(struct _mosquitto_db *db, struct mosquitto *context, const char *topic)
 {
 	struct _mosquitto_unpwd *unpwd = NULL;
 	int rc = 0;
@@ -86,7 +86,7 @@ static int _control_user_list(struct _mosquitto_db *db, mqtt3_context *context, 
 int mosquitto_control_process(struct _mosquitto_db *db, const char *source_id, const char *topic, struct mosquitto_msg_store *stored)
 {
 	int rc = MOSQ_ERR_SUCCESS;
-	mqtt3_context *context;
+	struct mosquitto *context;
 	int len;
 	char *result_topic;
 
@@ -95,10 +95,10 @@ int mosquitto_control_process(struct _mosquitto_db *db, const char *source_id, c
 	context = mqtt3_context_find(db, source_id);
 	if(!context) return MOSQ_ERR_UNKNOWN;
 
-	len = strlen(context->core.id) + strlen("$SYS/control/result/");
+	len = strlen(context->id) + strlen("$SYS/control/result/");
 	result_topic = _mosquitto_calloc(len + 1, sizeof(char));
 	if(!result_topic) return MOSQ_ERR_NOMEM;
-	snprintf(result_topic, len, "$SYS/control/result/%s", context->core.id);
+	snprintf(result_topic, len, "$SYS/control/result/%s", context->id);
 
 	if(!strcmp(topic, "$SYS/control/user/add")){
 		if(stored->msg.payloadlen && stored->msg.payload){

@@ -1,17 +1,17 @@
-# Copyright (c) 2010, Roger Light <roger@atchoo.org>
+# Copyright (c) 2012 Roger Light <roger@atchoo.org>
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 # 
 # 1. Redistributions of source code must retain the above copyright notice,
-#   this list of conditions and the following disclaimer.
+#    this list of conditions and the following disclaimer.
 # 2. Redistributions in binary form must reproduce the above copyright
-#   notice, this list of conditions and the following disclaimer in the
-#   documentation and/or other materials provided with the distribution.
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
 # 3. Neither the name of mosquitto nor the names of its
-#   contributors may be used to endorse or promote products derived from
-#   this software without specific prior written permission.
+#    contributors may be used to endorse or promote products derived from
+#    this software without specific prior written permission.
 # 
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -19,477 +19,1124 @@
 # ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
 # LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 # CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# SUBSTITUTE GOODS OR SERVICES LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
 # INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import select
+import socket
+import struct
 import sys
-from ctypes import *
-from ctypes.util import find_library
+import threading
+import time
+
+if sys.version_info[0] < 3:
+    PROTOCOL_NAME = "MQIsdp"
+else:
+    PROTOCOL_NAME = b"MQIsdp"
+
+PROTOCOL_VERSION = 3
+
+# Message types 
+CONNECT = 0x10
+CONNACK = 0x20
+PUBLISH = 0x30
+PUBACK = 0x40
+PUBREC = 0x50
+PUBREL = 0x60
+PUBCOMP = 0x70
+SUBSCRIBE = 0x80
+SUBACK = 0x90
+UNSUBSCRIBE = 0xA0
+UNSUBACK = 0xB0
+PINGREQ = 0xC0
+PINGRESP = 0xD0
+DISCONNECT = 0xE0
+
+# Log levels
+MOSQ_LOG_INFO = 0x01
+MOSQ_LOG_NOTICE = 0x02
+MOSQ_LOG_WARNING = 0x04
+MOSQ_LOG_ERR = 0x08
+MOSQ_LOG_DEBUG = 0x10
+
+# CONNACK codes
+CONNACK_ACCEPTED = 0
+CONNACK_REFUSED_PROTOCOL_VERSION = 1
+CONNACK_REFUSED_IDENTIFIER_REJECTED = 2
+CONNACK_REFUSED_SERVER_UNAVAILABLE = 3
+CONNACK_REFUSED_BAD_USERNAME_PASSWORD = 4
+CONNACK_REFUSED_NOT_AUTHORIZED = 5
+
+# Connection state
+mosq_cs_new = 0
+mosq_cs_connected = 1
+mosq_cs_disconnecting = 2
+mosq_cs_connect_async = 3
+
+# Message direction
+mosq_md_invalid = 0
+mosq_md_in = 1
+mosq_md_out = 2
+
+# Message state
+mosq_ms_invalid = 0,
+mosq_ms_wait_puback = 1
+mosq_ms_wait_pubrec = 2
+mosq_ms_wait_pubrel = 3
+mosq_ms_wait_pubcomp = 4
+
+# Error values
+MOSQ_ERR_SUCCESS = 0
+MOSQ_ERR_NOMEM = 1
+MOSQ_ERR_PROTOCOL = 2
+MOSQ_ERR_INVAL = 3
+MOSQ_ERR_NO_CONN = 4
+MOSQ_ERR_CONN_REFUSED = 5
+MOSQ_ERR_NOT_FOUND = 6
+MOSQ_ERR_CONN_LOST = 7
+MOSQ_ERR_SSL = 8
+MOSQ_ERR_PAYLOAD_SIZE = 9
+MOSQ_ERR_NOT_SUPPORTED = 10
+MOSQ_ERR_AUTH = 11
+MOSQ_ERR_ACL_DENIED = 12
+MOSQ_ERR_UNKNOWN = 13
+MOSQ_ERR_ERRNO = 14
 
-if sys.version_info < (2,6,0):
-	c_bool = c_int
-
-# Log destinations
-MOSQ_LOG_NONE=0x00
-MOSQ_LOG_STDOUT=0x04
-MOSQ_LOG_STDERR=0x08
-
-# Log types
-MOSQ_LOG_INFO=0x01
-MOSQ_LOG_NOTICE=0x02
-MOSQ_LOG_WARNING=0x04
-MOSQ_LOG_ERR=0x08
-MOSQ_LOG_DEBUG=0x10
-
-class Mosquitto:
-	"""MQTT version 3.1 client class.
-	
-	This is the main class for use communicating with an MQTT broker.
-
-	General usage flow:
-
-	* Use connect() to connect to a broker
-	* Call loop() frequently to maintain network traffic flow with the broker
-	* Use subscribe() to subscribe to a topic and receive messages
-	* Use publish() to send messages
-	* Use disconnect() to disconnect from the broker
-
-	Data returned from the broker is made available with the use of callback
-	functions as described below.
-
-	Callbacks
-	=========
-
-	A number of callback functions are available to receive data back from the
-	broker. To use a callback, define a function and then assign it to the
-	client. The callback function may be a class member if desired. All of the
-	callbacks as described below have an "obj" argument. This variable
-	corresponds directly to the obj argument passed when creating the client
-	instance. It is however optional when defining the callback functions, so
-	the on connect callback function can be defined as on_connect(obj, rc) or
-	on_connect(rc) for example.
-
-	The callbacks:
-
-	on_connect(obj, rc): called when the broker responds to our connection
-	  request. The value of rc determines success or not:
-	  0: Connection successful
-	  1: Connection refused - incorrect protocol version
-	  2: Connection refused - invalid client identifier
-	  3: Connection refused - server unavailable
-	  4: Connection refused - bad username or password
-	  5: Connection refused - not authorised
-	  6-255: Currently unused.
-
-	on_disconnect(obj): called when the client disconnects from the broker, but
-	  only after having sent a disconnection message to the broker. This will
-	  not be called if the client is disconnected unexpectedly.
-
-	on_message(obj, message): called when a message has been received on a
-	  topic that the client subscribes to. The message variable is a
-	  MosquittoMessage that describs all of the message parameters.
-
-	on_publish(obj, mid): called when a message that was to be sent using the
-	  publish() call has completed transmission to the broker. For messages
-	  with QoS levels 1 and 2, this means that the appropriate handshakes have
-	  completed. For QoS 0, this simply means that the message has left the
-	  client. The mid variable matches the mid variable returned from the
-	  corresponding publish() call, to allow outgoing messages to be tracked.
-	  This callback is important because even if the publish() call returns
-	  success, it does not means that the message has been sent.
-
-	on_subscribe(obj, mid, granted_qos): called when the broker responds to a
-	  subscribe request. The mid variable matches the mid variable returned
-	  from the corresponding subscribe() call. The granted_qos variable is a
-	  list of integers that give the QoS level the broker has granted for each
-	  of the different subscription requests.
-
-	on_unsubscribe(obj, mid): called when the broker responds to an unsubscribe
-	  request. The mid variable matches the mid variable returned from the
-	  corresponding unsubscribe() call.
-
-	Example:
-
-	def on_connect(rc):
-		if rc == 0:
-			print "Connected ok"
-	
-	client = mosquitto.Mosquitto("id")
-	client.on_connect = on_connect
-	...
-
-	"""
-
-	def __init__(self, id, obj=None):
-		"""Constructor
-
-		id: The 23 character or less client id used to identify this client to
-		  the broker. This must be unique on the broker.
-		obj: An optional object of any type that will be passed to any of the
-		  callback function when they are called. If not set, or set to None,
-		  this instance of the Mosquitto class will be passed to the callback
-		  functions.
-		"""
-		if obj==None:
-			self.obj = self
-		else:
-			self.obj = obj
-
-		_mosquitto_lib_init()
-		self._mosq = _mosquitto_new(id, None)
-
-		#==================================================
-		# Configure callbacks
-		#==================================================
-		self._internal_on_connect_cast = _MOSQ_CONNECT_FUNC(self._internal_on_connect)
-		_mosquitto_connect_callback_set(self._mosq, self._internal_on_connect_cast)
-		self._on_connect = None
-	
-		self._internal_on_disconnect_cast = _MOSQ_DISCONNECT_FUNC(self._internal_on_disconnect)
-		_mosquitto_disconnect_callback_set(self._mosq, self._internal_on_disconnect_cast)
-		self._on_disconnect = None
-	
-		self._internal_on_message_cast = _MOSQ_MESSAGE_FUNC(self._internal_on_message)
-		_mosquitto_message_callback_set(self._mosq, self._internal_on_message_cast)
-		self.on_message = None
-
-		self._internal_on_publish_cast = _MOSQ_PUBLISH_FUNC(self._internal_on_publish)
-		_mosquitto_publish_callback_set(self._mosq, self._internal_on_publish_cast)
-		self.on_publish = None
-	
-		self._internal_on_subscribe_cast = _MOSQ_SUBSCRIBE_FUNC(self._internal_on_subscribe)
-		_mosquitto_subscribe_callback_set(self._mosq, self._internal_on_subscribe_cast)
-		self.on_subscribe = None
-	
-		self._internal_on_unsubscribe_cast = _MOSQ_UNSUBSCRIBE_FUNC(self._internal_on_unsubscribe)
-		_mosquitto_unsubscribe_callback_set(self._mosq, self._internal_on_unsubscribe_cast)
-		self.on_unsubscribe = None
-		#==================================================
-		# End configure callbacks
-		#==================================================
-
-	def __del__(self):
-		_mosquitto_lib_cleanup()
-		
-	def __del__(self):
-		if self._mosq:
-			_mosquitto_destroy(self._mosq)
-
-	def connect(self, hostname="localhost", port=1883, keepalive=60, clean_session=True):
-		"""Connect the client to an MQTT broker.
-		
-		hostname: The hostname or ip address of the broker. Defaults to localhost.
-		port: The network port of the server host to connect to. Defaults to 1883.
-		keepalive: Maximum period in seconds between communications with the
-		  broker. If no other messages are being exchanged, this controls the
-		  rate at which the client will send ping messages to the broker.
-		clean_session: If set to True, the broker will clean any previous
-		  information about this client on connection, and will also not store
-		  anything after disconnect. If set to False, the broker will store all
-		  of the client subscriptions even after the client disconnects, and
-		  will also queue messages with QoS 1 and 2 until the client
-		  reconnects.
-
-		Returns 0 on success (note that this just means a network connection
-		  has been established between the broker and client, and the
-		  connection request sent. To monitor the success of the connection
-		  request, use the on_connect() callback)
-		Returns >0 on error.
-		"""
-		return _mosquitto_connect(self._mosq, hostname, port, keepalive, clean_session)
-
-	def disconnect(self):
-		"""Disconnect a connected client from the broker."""
-		return _mosquitto_disconnect(self._mosq)
-
-	def log_init(self, priorities, destinations):
-		"""Set the logging preferences for this client.
-		
-		Set priorities to a logically OR'd combination of:
-
-		MOSQ_LOG_INFO
-		MOSQ_LOG_NOTICE
-		MOSQ_LOG_WARNING
-		MOSQ_LOG_ERR
-		MOSQ_LOG_DEBUG
-		
-		Set destinations to either MOSQ_LOG_NONE or a logically OR'd
-		combination of:
-
-		MOSQ_LOG_STDOUT=0x04
-		MOSQ_LOG_STDERR=0x08
-		"""
-		return _mosquitto_log_init(self._mosq, priorities, destinations)
-
-	def loop(self, timeout=-1):
-		"""Process network events.
-		
-		This function must be called regularly to ensure communication with the broker is carried out.
-		
-		timeout: The time in milliseconds to wait for incoming/outgoing network
-		  traffic before timing out and returning. If set to -1 or not given,
-		  the default value of 1000 (1 second) will be used.
-
-		Returns 0 on success.
-		Returns >0 on error."""
-
-		return _mosquitto_loop(self._mosq, timeout)
-
-	def subscribe(self, sub, qos=0):
-		"""Subscribe the client to a topic.
-		
-		sub: The subscription topic to subscribe to.
-		qos: The desired quality of service level for the subscription.
-
-		Returns a tuple (result, mid), where result being 0 indicates success
-		  and mid is the message ID for the subscribe request. The mid value
-		  can be used to track the subscribe request by checking against the
-		  mid argument in the on_subscribe() callback if it is defined."""
-
-		mid = c_uint16(0)
-		result = _mosquitto_subscribe(self._mosq, mid, sub, qos)
-		return result, mid.value
-
-	def unsubscribe(self, sub):
-		"""Unsubscribe the client from a topic.
-		
-		sub: The subscription topic to unsubscribe from.
-
-		Returns a tuple (result, mid), where result being 0 indicates success
-		  and mid is the message ID for the unsubscribe request. The mid value
-		  can be used to track the unsubscribe request by checking against the
-		  mid argument in the on_unsubscribe() callback if it is defined."""
-
-		mid = c_uint16(0)
-		result = _mosquitto_unsubscribe(self._mosq, mid, sub)
-		return result, mid.value
-
-	def publish(self, topic, payload=None, qos=0, retain=False):
-		"""Publish a message on a topic.
-		
-		This causes a message to be sent to the broker and subsequently from
-		the broker to any clients subscribing to matching topics.
-		
-		topic: The topic that the message should be published on.
-		payload: The actual message to send. If not given, or set to None a
-		  zero length message will be used.
-		qos: The quality of service level to use.
-		retain: If set to true, the message will be set as the "last known
-		  good"/retained message for the topic.
-
-		Returns a tuple (result, mid), where result being 0 indicates success
-		  and mid is the message ID for the publish request. The mid value
-		  can be used to track the publish request by checking against the
-		  mid argument in the on_publish() callback if it is defined."""
-
-		mid = c_uint16(0)
-		result = _mosquitto_publish(self._mosq, mid, topic, len(payload), cast(payload, POINTER(c_uint8)), qos, retain)
-		return result, mid.value
-
-	def will_set(self, topic, payload=None, qos=0, retain=False):
-		"""Set a Will to be sent by the broker in case the client disconnects unexpectedly.
-
-		This must be called before connect() to have any effect.
-
-		topic: The topic that the will message should be published on.
-		payload: The message to send as a will. If not given, or set to None a
-		  zero length message will be used as the will.
-		qos: The quality of service level to use for the will.
-		retain: If set to true, the will message will be set as the "last known
-		  good"/retained message for the topic.
-
-		Returns 0 on success.
-		Returns >1 on error."""
-
-		return _mosquitto_will_set(self._mosq, true, topic, len(payloadlen), cast(payload, POINTER(c_uint8)), qos, retain)
-
-	def will_clear(self):
-		"""Clear a Will that was previously set with the will_set() call.
-
-		This must be called before connect() to have any effect."""
-		return _mosquitto_will_set(self._mosq, false, "", 0, cast(None, POINTER(c_uint8)), 0, 0)
-
-	def username_pw_set(self, username, password=None):
-		"""Set a username and optionally a password for broker authentication.
-
-		Must be called before connect() to have any effect.
-		Requires a broker that supports MQTT v3.1.
-		
-		username: The username to authenticate with. Need have no relationship to the client id.
-		password: The password to authenticate with. Optional.
-		
-		Returns 0 on success.
-		Returns >0 on error."""
-		return _mosquitto_username_pw_set(self._mosq, username, password)
-
-	def _internal_on_connect(self, obj, rc):
-		if self.on_connect:
-			argcount = self.on_connect.func_code.co_argcount
-
-			if argcount == 1:
-				self.on_connect(rc)
-			elif argcount == 2:
-				self.on_connect(self.obj, rc)
-
-	def _internal_on_disconnect(self, obj):
-		if self.on_disconnect:
-			argcount = self.on_disconnect.func_code.co_argcount
-
-			if argcount == 0:
-				self.on_disconnect()
-			elif argcount == 1:
-				self.on_disconnect(self.obj)
-
-	def _internal_on_message(self, obj, message):
-		if self.on_message:
-			topic = message.contents.topic
-			payload = message.contents.payload
-			qos = message.contents.qos
-			retain = message.contents.retain
-			msg = MosquittoMessage(topic, payload, qos, retain)
-			argcount = self.on_message.func_code.co_argcount
-
-			if argcount == 1:
-				self.on_message(msg)
-			elif argcount == 2:
-				self.on_message(self.obj, msg)
-
-	def _internal_on_publish(self, obj, mid):
-		if self.on_publish:
-			argcount = self.on_publish.func_code.co_argcount
-
-			if argcount == 1:
-				self.on_publish(mid)
-			elif argcount == 2:
-				self.on_publish(self.obj, mid)
-
-	def _internal_on_subscribe(self, obj, mid, qos_count, granted_qos):
-		if self.on_subscribe:
-			qos_list = []
-			for i in range(qos_count):
-				qos_list.append(granted_qos[i])
-			argcount = self.on_subscribe.func_code.co_argcount
-
-			if argcount == 2:
-				self.on_subscribe(mid, qos_list)
-			elif argcount == 3:
-				self.on_subscribe(self.obj, mid, qos_list)
-
-	def _internal_on_unsubscribe(self, obj, mid):
-		if self.on_unsubscribe:
-			argcount = self.on_unsubscribe.func_code.co_argcount
-
-			if argcount == 1:
-				self.on_unsubscribe(mid)
-			elif argcount == 2:
-				self.on_unsubscribe(self.obj, mid)
-
-class c_MosquittoMessage(Structure):
-	"""Internal message class used for communicating with C library.
-
-	Don't use."""
-	_fields_ = [("mid", c_uint16),
-				("topic", c_char_p),
-				("payload", c_char_p),
-				("payloadlen", c_uint32),
-				("qos", c_int),
-				("retain", c_bool)]
 
 class MosquittoMessage:
-	"""MQTT message class"""
-	def __init__(self, topic, payload, qos, retain):
-		self.topic = topic
-		self.payload = payload
-		self.qos = qos
-		self.retain = retain
+    def __init__(self):
+        self.timestamp = 0
+        self.direction = mosq_md_invalid
+        self.state = mosq_ms_invalid
+        self.dup = False
+        self.mid = 0
+        self.topic = ""
+        self.payload = None
+        self.qos = 0
+        self.retain = False
 
-#==================================================
-# Library loading
-#==================================================
-_libmosq = cdll.LoadLibrary(find_library("mosquitto"))
+class MosquittoInPacket:
+    def __init__(self):
+        self.command = 0
+        self.have_remaining = 0
+        self.remaining_count = []
+        self.remaining_mult = 1
+        self.remaining_length = 0
+        self.packet = b""
+        self.to_process = 0
+        self.pos = 0
 
-_mosquitto_lib_init = _libmosq.mosquitto_lib_init
-_mosquitto_lib_init.argtypes = None
-_mosquitto_lib_init.restype = c_int
+    def cleanup(self):
+        self.__init__()
 
-_mosquitto_lib_cleanup = _libmosq.mosquitto_lib_cleanup
-_mosquitto_lib_cleanup.argtypes = None
-_mosquitto_lib_cleanup.restype = c_int
+class MosquittoPacket:
+    def __init__(self, packet):
+        self.pos = 0
+        self.to_process = len(packet)
+        self.packet = packet
 
-_mosquitto_new = _libmosq.mosquitto_new
-_mosquitto_new.argtypes = [c_char_p, c_void_p]
-_mosquitto_new.restype = c_void_p
+class Mosquitto:
+    def __init__(self, client_id="", clean_session=True, obj=None):
+        if clean_session == False and client_id == "":
+            raise ValueError('A client id must be provided if clean session is False.')
 
-_mosquitto_destroy = _libmosq.mosquitto_destroy
-_mosquitto_destroy.argtypes = [c_void_p]
-_mosquitto_destroy.restype = None
+        self._obj = None
+        self._sock = None
+        self._keepalive = 60
+        self._message_retry = 20
+        self._last_retry_check = 0
+        self._clean_session = clean_session
+        if client_id == "":
+            self._id = "mosq/" + "".join(random.choice("0123456789ADCDEF") for x in range(23-5))
+        else:
+            self._client_id = client_id
 
-_mosquitto_connect = _libmosq.mosquitto_connect
-_mosquitto_connect.argtypes = [c_void_p, c_char_p, c_int, c_int, c_bool]
-_mosquitto_connect.restype = c_int
+        self._username = ""
+        self._password = ""
+        self._in_packet = MosquittoInPacket()
+        self._out_packet = []
+        self._last_msg_in = time.time()
+        self._last_msg_out = time.time()
+        self._ping_t = 0
+        self._last_mid = 0
+        self._state = mosq_cs_new
+        self._messages = []
+        self._will = False
+        self._will_topic = ""
+        self._will_payload = None
+        self._will_qos = 0
+        self._will_retain = False
+        self.on_disconnect = None
+        self.on_connect = None
+        self.on_publish = None
+        self.on_message = None
+        self.on_subscribe = None
+        self.on_unsubscribe = None
+        self.on_log = None
+        self._host = ""
+        self._port = 1883
+        self._in_callback = False
+        self._strict_protocol = False
+        self._callback_mutex = threading.Lock()
+        self._state_mutex = threading.Lock()
+        self._out_packet_mutex = threading.Lock()
+        self._current_out_packet_mutex = threading.Lock()
+        self._msgtime_mutex = threading.Lock()
+        self._thread = None
+        self._thread_terminate = False
 
-_mosquitto_disconnect = _libmosq.mosquitto_disconnect
-_mosquitto_disconnect.argtypes = [c_void_p]
-_mosquitto_disconnect.restype = c_int
+    def __del__(self):
+        pass
 
-_mosquitto_publish = _libmosq.mosquitto_publish
-_mosquitto_publish.argtypes = [c_void_p, POINTER(c_uint16), c_char_p, c_uint32, POINTER(c_uint8), c_int, c_bool]
-_mosquitto_publish.restype = c_int
+    def connect(self, host, port=1883, keepalive=60):
+        self.connect_async(host, port, keepalive)
+        return self.reconnect()
 
-_mosquitto_subscribe = _libmosq.mosquitto_subscribe
-_mosquitto_subscribe.argtypes = [c_void_p, POINTER(c_uint16), c_char_p, c_int]
-_mosquitto_subscribe.restype = c_int
+    def connect_async(self, host, port=1883, keepalive=60):
+        if host == None or len(host) == 0:
+            raise ValueError('Invalid host.')
+        if port <= 0:
+            raise ValueError('Invalid port number.')
+        if keepalive < 0:
+            raise ValueError('Keepalive must be >=0.')
 
-_mosquitto_unsubscribe = _libmosq.mosquitto_unsubscribe
-_mosquitto_unsubscribe.argtypes = [c_void_p, POINTER(c_uint16), c_char_p]
-_mosquitto_unsubscribe.restype = c_int
+        self._host = host
+        self._port = port
+        self._keepalive = keepalive
 
-_mosquitto_loop = _libmosq.mosquitto_loop
-_mosquitto_loop.argtypes = [c_void_p, c_int]
-_mosquitto_loop.restype = c_int
+        self._state_mutex.acquire()
+        self._state = mosq_cs_connect_async
+        self._state_mutex.release()
 
-_mosquitto_will_set = _libmosq.mosquitto_will_set
-_mosquitto_will_set.argtypes = [c_void_p, c_bool, c_char_p, c_uint32, POINTER(c_uint8), c_int, c_bool]
-_mosquitto_will_set.restype = c_int
+    def reconnect(self):
+        if len(self._host) == 0:
+            raise ValueError('Invalid host.')
+        if self._port <= 0:
+            raise ValueError('Invalid port number.')
 
-_mosquitto_log_init = _libmosq.mosquitto_log_init
-_mosquitto_log_init.argtypes = [c_void_p, c_int, c_int]
-_mosquitto_log_init.restype = c_int
+        self._state_mutex.acquire()
+        self._state = mosq_cs_new
+        self._state_mutex.release()
+        if self._sock:
+            self._sock.close()
+            self._sock = None
 
-_mosquitto_connect_callback_set = _libmosq.mosquitto_connect_callback_set
-_mosquitto_connect_callback_set.argtypes = [c_void_p, c_void_p]
-_mosquitto_connect_callback_set.restype = None
+        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # FIXME use create_connection here
 
-_mosquitto_disconnect_callback_set = _libmosq.mosquitto_disconnect_callback_set
-_mosquitto_disconnect_callback_set.argtypes = [c_void_p, c_void_p]
-_mosquitto_disconnect_callback_set.restype = None
+        self._sock.connect((self._host, self._port))
+        self._sock.setblocking(0)
+        return self._send_connect(self._keepalive, self._clean_session)
 
-_mosquitto_publish_callback_set = _libmosq.mosquitto_publish_callback_set
-_mosquitto_publish_callback_set.argtypes = [c_void_p, c_void_p]
-_mosquitto_publish_callback_set.restype = None
+    def loop(self, timeout=1.0):
+        if timeout < 0.0:
+            raise ValueError('Invalid timeout.')
 
-_mosquitto_message_callback_set = _libmosq.mosquitto_message_callback_set
-_mosquitto_message_callback_set.argtypes = [c_void_p, c_void_p]
-_mosquitto_message_callback_set.restype = None
+        if len(self._out_packet) > 0:
+            wlist = [self._sock]
+        else:
+            wlist = []
 
-_mosquitto_subscribe_callback_set = _libmosq.mosquitto_subscribe_callback_set
-_mosquitto_subscribe_callback_set.argtypes = [c_void_p, c_void_p]
-_mosquitto_subscribe_callback_set.restype = None
+        rlist = [self._sock]
+        socklist = select.select(rlist, wlist, [], timeout)
 
-_mosquitto_unsubscribe_callback_set = _libmosq.mosquitto_unsubscribe_callback_set
-_mosquitto_unsubscribe_callback_set.argtypes = [c_void_p, c_void_p]
-_mosquitto_unsubscribe_callback_set.restype = None
+        if self._sock in socklist[0]:
+            rc = self.loop_read()
+            if rc != MOSQ_ERR_SUCCESS:
+                self._sock.close()
+                self._sock = None
+                self._state_mutex.acquire()
+                if self._state == mosq_cs_disconnecting:
+                    rc = MOSQ_ERR_SUCCESS
+                self._state_mutex.release()
+                self._callback_mutex.acquire()
+                if self.on_disconnect:
+                    self._in_callback = True
+                    self.on_disconnect(self, self._obj, rc)
+                    self._in_callback = False
 
-_MOSQ_CONNECT_FUNC = CFUNCTYPE(None, c_void_p, c_int)
-_MOSQ_DISCONNECT_FUNC = CFUNCTYPE(None, c_void_p)
-_MOSQ_PUBLISH_FUNC = CFUNCTYPE(None, c_void_p, c_uint16)
-_MOSQ_MESSAGE_FUNC = CFUNCTYPE(None, c_void_p, POINTER(c_MosquittoMessage))
-_MOSQ_SUBSCRIBE_FUNC = CFUNCTYPE(None, c_void_p, c_uint16, c_int, POINTER(c_uint8))
-_MOSQ_UNSUBSCRIBE_FUNC = CFUNCTYPE(None, c_void_p, c_uint16)
-#==================================================
-# End library loading
-#==================================================
+                self._callback_mutex.release()
+                return rc
+
+        if self._sock in socklist[1]:
+            rc = self.loop_write()
+            if rc != MOSQ_ERR_SUCCESS:
+                self._sock.close()
+                self._sock = None
+                self._state_mutex.acquire()
+                if self._state == mosq_cs_disconnecting:
+                    rc = MOSQ_ERR_SUCCESS
+                self._state_mutex.release()
+                self._callback_mutex.acquire()
+                if self.on_disconnect:
+                    self._in_callback = True
+                    self.on_disconnect(self, self._obj, rc)
+                    self._in_callback = False
+                self._callback_mutex.release()
+                return rc
+
+        return self.loop_misc()
+
+    def publish(self, topic, payload=None, qos=0, retain=False):
+        if len(topic) == 0:
+            raise ValueError('Invalid topic.')
+        if qos<0 or qos>2:
+            raise ValueError('Invalid QoS level.')
+        if payload != None and len(payload) > 268435455:
+            raise ValueError('Payload too large.')
+
+        if self._topic_wildcard_len_check(topic) != MOSQ_ERR_SUCCESS:
+            raise ValueError('Publish topic cannot contain wildcards.')
+
+        local_mid = self._mid_generate()
+
+        if qos == 0:
+            return self._send_publish(local_mid, topic, payload, qos, retain, False)
+        else:
+            message = MosquittoMessage()
+            message.timestamp = time.time()
+            message.direction = mosq_md_out
+            if qos == 1:
+                message.state = mosq_ms_wait_puback
+            elif qos == 2:
+                message.state = mosq_ms_wait_pubrec
+
+            message.mid = local_mid
+            message.topic = topic
+            if payload == None or len(payload) == 0:
+                message.payload = None
+            else:
+                message.payload = payload
+
+            message.qos = qos
+            message.retain = retain
+            message.dup = False
+
+            self._messages.append(message)
+            return self._send_publish(message.mid, message.topic, message.payload, message.qos, message.retain, message.dup)
+
+    def username_pw_set(self, username, password=None):
+        self._username = username
+        self._password = password
+
+    def disconnect(self):
+        if self._sock == None:
+            return MOSQ_ERR_NO_CONN
+
+        self._state_mutex.acquire()
+        self._state = mosq_cs_disconnecting
+        self._state_mutex.release()
+
+        return self._send_disconnect()
+    
+    def subscribe(self, topic, qos=0):
+        if qos<0 or qos>2:
+            raise ValueError('Invalid QoS level.')
+        if topic == None or len(topic) == 0:
+            raise ValueError('Invalid topic.')
+
+        if self._sock == None:
+            return MOSQ_ERR_NO_CONN
+
+        return self._send_subscribe(False, topic, qos)
+
+    def unsubscribe(self, topic):
+        if topic == None or len(topic) == 0:
+            raise ValueError('Invalid topic.')
+        if self._sock == None:
+            return MOSQ_ERR_NO_CONN
+
+        return self._send_unsubscribe(False, topic)
+
+    def loop_read(self):
+        # This gets called if pselect() indicates that there is network data
+         # available - ie. at least one byte.  What we do depends on what data we
+         # already have.
+         # If we've not got a command, attempt to read one and save it. This should
+         # always work because it's only a single byte.
+         # Then try to read the remaining length. This may fail because it is may
+         # be more than one byte - will need to save data pending next read if it
+         # does fail.
+         # Then try to read the remaining payload, where 'payload' here means the
+         # combined variable header and actual payload. This is the most likely to
+         # fail due to longer length, so save current data and current position.
+         # After all data is read, send to _mosquitto_handle_packet() to deal with.
+         # Finally, free the memory and reset everything to starting conditions.
+        if self._in_packet.command == 0:
+            try:
+                command = self._sock.recv(1)
+            except socket.error as err:
+                (msg) = err
+                if msg.errno == 11:
+                    return 0
+                print(msg)
+                return 1
+            else:
+                if len(command) == 0:
+                    return 1
+                command = struct.unpack("!B", command)
+                self._in_packet.command = command[0]
+
+        if self._in_packet.have_remaining == 0:
+            # Read remaining
+            # Algorithm for decoding taken from pseudo code at
+            # http://publib.boulder.ibm.com/infocenter/wmbhelp/v6r0m0/topic/com.ibm.etools.mft.doc/ac10870_.htm
+            while True:
+                try:
+                    byte = self._sock.recv(1)
+                except socket.error as err:
+                    (msg) = err
+                    if msg.errno == 11:
+                        return 0
+                    print(msg)
+                    return 1
+                else:
+                    byte = struct.unpack("!B", byte)
+                    byte = byte[0]
+                    self._in_packet.remaining_count.append(byte)
+                    # Max 4 bytes length for remaining length as defined by protocol.
+                     # Anything more likely means a broken/malicious client.
+                    if len(self._in_packet.remaining_count) > 4:
+                        return MOSQ_ERR_PROTOCOL
+
+                    self._in_packet.remaining_length = self._in_packet.remaining_length + (byte & 127)*self._in_packet.remaining_mult
+                    self._in_packet.remaining_mult = self._in_packet.remaining_mult * 128
+
+                if (byte & 128) == 0:
+                    break
+
+            self._in_packet.have_remaining = 1
+            self._in_packet.to_process = self._in_packet.remaining_length
+
+        while self._in_packet.to_process > 0:
+            try:
+                data = self._sock.recv(self._in_packet.to_process)
+            except socket.error as err:
+                (msg) = err
+                if msg.errno == 11:
+                    return 0
+                print(msg)
+                return 1
+            else:
+                self._in_packet.to_process = self._in_packet.to_process - len(data)
+                self._in_packet.packet = self._in_packet.packet + data
+
+        # All data for this packet is read.
+        self._in_packet.pos = 0
+        rc = self._packet_handle()
+
+        # Free data and reset values 
+        self._in_packet.cleanup()
+
+        self._msgtime_mutex.acquire()
+        self._last_msg_in = time.time()
+        self._msgtime_mutex.release()
+        return rc
+
+
+    def loop_write(self):
+        if self._sock == None:
+            return MOSQ_ERR_NO_CONN
+
+        while len(self._out_packet) > 0:
+            packet = self._out_packet[0]
+
+            write_length = self._sock.send(packet.packet[packet.pos:])
+            if write_length > 0:
+                packet.to_process = packet.to_process - write_length
+                packet.pos = packet.pos + write_length
+
+                if packet.to_process == 0:
+                    self._out_packet.pop(0)
+            else:
+                pass
+        
+        return MOSQ_ERR_SUCCESS
+
+    def want_write(self):
+        if self._out_packet == None:
+            return False
+        else:
+            return True
+
+    def loop_misc(self):
+        if self._sock == None:
+            return MOSQ_ERR_NO_CONN
+
+        now = time.time()
+        self._check_keepalive()
+        if self._last_retry_check+1 < now:
+            # Only check once a second at most
+            self._message_retry_check()
+            self._last_retry_check = now
+
+        if self._ping_t > 0 and now - self._ping_t >= self._keepalive:
+            # mosq->ping_t != 0 means we are waiting for a pingresp.
+            # This hasn''t happened in the keepalive time so we should disconnect.
+            self._sock.close()
+            self._sock = None
+            return MOSQ_ERR_CONN_LOST
+
+        return MOSQ_ERR_SUCCESS
+
+    def message_retry_set(self, retry):
+        if retry < 0:
+            raise ValueError('Invalid retry.')
+
+        self._message_retry = retry
+
+    def user_data_set(self, obj):
+        self._obj = obj
+
+    def will_set(self, topic, payload=None, qos=0, retain=False):
+        if topic == None or len(topic) == 0:
+            raise ValueError('Invalid topic.')
+        if qos<0 or qos>2:
+            raise ValueError('Invalid QoS level.')
+        if isinstance(payload, str) == False and isinstance(payload, bytearray) == False:
+            raise TypeError('payload must be a string or a bytearray.')
+
+        self._will = True
+        self._will_topic = topic
+        self._will_payload = payload
+        self._will_qos = qos
+        self._will_retain = retain
+
+    def will_clear(self):
+        self._will = False
+        self._will_topic = ""
+        self._will_payload = None
+        self._will_qos = 0
+        self._will_retain = False
+
+    def error_string(self, mosq_errno):
+        if mosq_errno == MOSQ_ERR_SUCESS:
+            return "No error."
+        elif mosq_errno == MOSQ_ERR_NOMEM:
+            return "Out of memory."
+        elif mosq_errno == MOSQ_ERR_PROTOCOL:
+            return "A network protocol error occurred when communicating with the broker."
+        elif mosq_errno == MOSQ_ERR_INVAL:
+            return "Invalid function arguments provided."
+        elif mosq_errno == MOSQ_ERR_NO_CONN:
+            return "The client is not currently connected."
+        elif mosq_errno == MOSQ_ERR_CONN_REFUSED:
+            return "The connection was refused."
+        elif mosq_errno == MOSQ_ERR_NOT_FOUND:
+            return "Message not found (internal error)."
+        elif mosq_errno == MOSQ_ERR_CONN_LOST:
+            return "The connection was lost."
+        elif mosq_errno == MOSQ_ERR_SSL:
+            return "An SSL error occurred."
+        elif mosq_errno == MOSQ_ERR_PAYLOAD_SIZE:
+            return "Payload too large."
+        elif mosq_errno == MOSQ_ERR_NOT_SUPPORTED:
+            return "This feature is not supported."
+        elif mosq_errno == MOSQ_ERR_AUTH:
+            return "Authorisation failed."
+        elif mosq_errno == MOSQ_ERR_ACL_DENIED:
+            return "Access denied by ACL."
+        elif mosq_errno == MOSQ_ERR_UNKNOWN:
+            return "Unknown error."
+        elif mosq_errno == MOSQ_ERR_ERRNO:
+            return "Error defined by errno."
+        else:
+            return "Unknown error."
+
+    def connack_string(self, connack_code):
+        if connack_code == 0:
+            return "Connection Accepted."
+        elif connack_code == 1:
+            return "Connection Refused: unacceptable protocol version."
+        elif connack_code == 2:
+            return "Connection Refused: identifier rejected."
+        elif connack_code == 3:
+            return "Connection Refused: broker unavailable."
+        elif connack_code == 4:
+            return "Connection Refused: bad user name or password."
+        elif connack_code == 5:
+            return "Connection Refused: not authorised."
+        else:
+            return "Connection Refused: unknown reason."
+
+    def socket(self):
+        return self._sock
+
+    def loop_start(self):
+        if self._thread != None:
+            return MOSQ_ERR_INVAL
+
+        self._thread = threading.Thread(target=self._thread_main)
+        self._thread.daemon = True
+        self._thread.start()
+
+    def loop_stop(self, force=False):
+        if self._thread == None:
+            return MOSQ_ERR_INVAL
+
+        self._thread_terminate = True
+        self._thread.join()
+        self._thread = None
+
+    # ============================================================
+    # Private functions
+    # ============================================================
+
+    def _easy_log(self, level, buf):
+        if self.on_log:
+            self.on_log(level, buf)
+
+    def _check_keepalive(self):
+        now = time.time()
+        self._msgtime_mutex.acquire()
+        last_msg_out = self._last_msg_out
+        last_msg_in = self._last_msg_in
+        self._msgtime_mutex.release()
+        if self._sock != None and (now - last_msg_out >= self._keepalive or now - last_msg_in >= self._keepalive):
+            if self._state == mosq_cs_connected and self._ping_t == 0:
+                self._send_pingreq()
+            else:
+                self._sock.close()
+                self._sock = None
+
+    def _fix_sub_topic(self, subtopic):
+        # Convert ////some////over/slashed///topic/etc/etc//
+         # into some/over/slashed/topic/etc/etc
+        pass
+        # FIXME
+        #char *fixed = NULL
+        #char *token
+        #char *saveptr = NULL
+
+        #assert(subtopic)
+        #assert(*subtopic)
+
+        #/* size of fixed here is +1 for the terminating 0 and +1 for the spurious /
+         #* that gets appended. */
+        #fixed = _mosquitto_calloc(strlen(*subtopic)+2, 1)
+        #if(!fixed) return MOSQ_ERR_NOMEM
+
+        #if((*subtopic)[0] == '/'){
+            #fixed[0] = '/'
+        #}
+        #token = strtok_r(*subtopic, "/", &saveptr)
+        #while(token){
+            #strcat(fixed, token)
+            #strcat(fixed, "/")
+            #token = strtok_r(NULL, "/", &saveptr)
+        #}
+
+        #fixed[strlen(fixed)-1] = '\0'
+        #_mosquitto_free(*subtopic)
+        #*subtopic = fixed
+        #return MOSQ_ERR_SUCCESS
+
+    def _mid_generate(self):
+        self._last_mid = self._last_mid + 1
+        if self._last_mid == 65536:
+            self._last_mid = 1
+        return self._last_mid
+
+    def _topic_wildcard_len_check(self, topic):
+        # Search for + or # in a topic. Return MOSQ_ERR_INVAL if found.
+         # Also returns MOSQ_ERR_INVAL if the topic string is too long.
+         # Returns MOSQ_ERR_SUCCESS if everything is fine.
+        if '+' in topic or '#' in topic or len(topic) == 0 or len(topic) > 65535:
+            return MOSQ_ERR_INVAL
+        else:
+            return MOSQ_ERR_SUCCESS
+
+    def _send_pingreq(self):
+        self._easy_log(MOSQ_LOG_DEBUG, "Sending PINGREQ")
+        rc = self._send_simple_command(PINGREQ)
+        if rc == MOSQ_ERR_SUCCESS:
+            self._ping_t = time.time()
+        return rc
+
+    def _send_pingresp(self):
+        self._easy_log(MOSQ_LOG_DEBUG, "Sending PINGRESP")
+        return self._send_simple_command(PINGRESP)
+
+    def _send_puback(self, mid):
+        self._easy_log(MOSQ_LOG_DEBUG, "Sending PUBACK (Mid: "+str(mid)+")")
+        return self._send_command_with_mid(PUBACK, mid, False)
+
+    def _send_pubcomp(self, mid):
+        self._easy_log(MOSQ_LOG_DEBUG, "Sending PUBCOMP (Mid: "+str(mid)+")")
+        return self._send_command_with_mid(PUBCOMP, mid, False)
+
+    def _pack_remaining_length(self, packet, remaining_length):
+        remaining_bytes = []
+        while True:
+            byte = remaining_length % 128
+            remaining_length = remaining_length // 128
+            # If there are more digits to encode, set the top bit of this digit
+            if remaining_length > 0:
+                byte = byte | 0x80
+
+            remaining_bytes.append(byte)
+            packet.extend(struct.pack("!B", byte))
+            if remaining_length == 0:
+                # FIXME - this doesn't deal with incorrectly large payloads
+                return packet
+
+    def _pack_str16(self, packet, data):
+        if sys.version_info[0] < 3:
+            if isinstance(data, bytearray):
+                packet.extend(struct.pack("!H", len(data)))
+                packet.extend(data)
+            elif isinstance(data, str):
+                pack_format = "!H" + str(len(data)) + "s"
+                packet.extend(struct.pack(pack_format, len(data), data))
+            elif isinstance(data, unicode):
+                udata = data.encode('utf-8')
+                pack_format = "!H" + str(len(udata)) + "s"
+                packet.extend(struct.pack(pack_format, len(udata), udata))
+            else:
+                raise TypeError
+        else:
+            if isinstance(data, bytearray):
+                packet.extend(struct.pack("!H", len(data)))
+                packet.extend(data)
+            elif isinstance(data, str):
+                udata = data.encode('utf-8')
+                pack_format = "!H" + str(len(udata)) + "s"
+                packet.extend(struct.pack(pack_format, len(udata), udata))
+            else:
+                raise TypeError
+
+    def _send_publish(self, mid, topic, payload=None, qos=0, retain=False, dup=False):
+        if self._sock == None:
+            return MOSQ_ERR_NO_CONN
+
+        command = PUBLISH | ((dup&0x1)<<3) | (qos<<1) | retain
+        packet = bytearray()
+        packet.extend(struct.pack("!B", command))
+        if payload == None:
+            remaining_length = 2+len(topic)
+            self._easy_log(MOSQ_LOG_DEBUG, "Sending PUBLISH (d"+str(dup)+", q"+str(qos)+", r"+str(retain)+", m"+str(mid)+", '"+topic+"' (NULL payload)")
+        else:
+            remaining_length = 2+len(topic) + len(payload)
+            self._easy_log(MOSQ_LOG_DEBUG, "Sending PUBLISH (d"+str(dup)+", q"+str(qos)+", r"+str(retain)+", m"+str(mid)+", '"+topic+"', ... ("+str(len(payload))+" bytes)")
+
+        if qos > 0:
+            # For message id
+            remaining_length = remaining_length + 2
+
+        self._pack_remaining_length(packet, remaining_length)
+        self._pack_str16(packet, topic)
+
+        if qos > 0:
+            # For message id
+            packet.extend(struct.pack("!H", mid))
+
+        if payload != None:
+            if isinstance(payload, str):
+                if sys.version_info[0] < 3:
+                    pack_format = str(len(payload)) + "s"
+                    packet.extend(struct.pack(pack_format, payload))
+                else:
+                    upayload = payload.encode('utf-8')
+                    pack_format = str(len(upayload)) + "s"
+                    packet.extend(struct.pack(pack_format, upayload))
+            elif isinstance(payload, bytearray):
+                packet.extend(payload)
+            elif isinstance(payload, unicode):
+                    upayload = payload.encode('utf-8')
+                    pack_format = str(len(upayload)) + "s"
+                    packet.extend(struct.pack(pack_format, upayload))
+            else:
+                raise TypeError('payload must be a string, unicode or a bytearray.')
+
+        return self._packet_queue(packet)
+
+    def _send_pubrec(self, mid):
+        self._easy_log(MOSQ_LOG_DEBUG, "Sending PUBREC (Mid: "+str(mid)+")")
+        return self._send_command_with_mid(PUBREC, mid, False)
+
+    def _send_pubrel(self, mid, dup=False):
+        self._easy_log(MOSQ_LOG_DEBUG, "Sending PUBREL (Mid: "+str(mid)+")")
+        return self._send_command_with_mid(PUBREL|2, mid, dup)
+
+    def _send_command_with_mid(self, command, mid, dup):
+        # For PUBACK, PUBCOMP, PUBREC, and PUBREL
+        if dup:
+            command = command | 8
+
+        remaining_length = 2
+        packet = struct.pack('!BBH', command, remaining_length, mid)
+        return self._packet_queue(packet)
+
+    def _send_simple_command(self, command):
+        # For DISCONNECT, PINGREQ and PINGRESP
+        remaining_length = 0
+        packet = struct.pack('!BB', command, remaining_length)
+        return self._packet_queue(packet)
+
+    def _send_connect(self, keepalive, clean_session):
+        remaining_length = 12 + 2+len(self._client_id)
+        connect_flags = 0
+        if clean_session:
+            connect_flags = connect_flags | 0x02
+
+        if self._will:
+            remaining_length = remaining_length + 2+len(self._will_topic) + 2+len(self._will_payload)
+            connect_flags = connect_flags | 0x04 | ((self._will_qos&0x03) << 3) | ((self._will_retain&0x01) << 5)
+
+        if self._username:
+            remaining_length = remaining_length + 2+len(self._username)
+            connect_flags = connect_flags | 0x80
+            if self._password:
+                connect_flags = connect_flags | 0x40
+                remaining_length = remaining_length + 2+len(self._password)
+
+        command = CONNECT
+        packet = bytearray()
+        packet.extend(struct.pack("!B", command))
+        self._pack_remaining_length(packet, remaining_length)
+        packet.extend(struct.pack("!H6sBBH", len(PROTOCOL_NAME), PROTOCOL_NAME, PROTOCOL_VERSION, connect_flags, keepalive))
+
+        self._pack_str16(packet, self._client_id)
+
+        if self._will:
+            self._pack_str16(packet, self._will_topic)
+            if len(self._will_payload) > 0:
+                self._pack_str16(packet, self._will_payload)
+            else:
+                packet.extend(struct.pack("!H", 0))
+
+        if self._username:
+            self._pack_str16(packet, self._username)
+
+            if self._password:
+                self._pack_str16(packet, self._password)
+
+        self._keepalive = keepalive
+        return self._packet_queue(packet)
+
+    def _send_disconnect(self):
+        return self._send_simple_command(DISCONNECT)
+
+    def _send_subscribe(self, dup, topic, topic_qos):
+        remaining_length = 2 + 2+len(topic) + 1
+        command = SUBSCRIBE | (dup<<3) | (1<<1)
+        packet = bytearray()
+        packet.extend(struct.pack("!B", command))
+        self._pack_remaining_length(packet, remaining_length)
+        local_mid = self._mid_generate()
+        pack_format = "!HH" + str(len(topic)) + "sB"
+        packet.extend(struct.pack("!H", local_mid))
+        self._pack_str16(packet, topic)
+        packet.extend(struct.pack("B", topic_qos))
+        return self._packet_queue(packet)
+
+    def _send_unsubscribe(self, dup, topic):
+        remaining_length = 2 + 2+len(topic)
+        command = UNSUBSCRIBE | (dup<<3) | (1<<1)
+        packet = bytearray()
+        packet.extend(struct.pack("!B", command))
+        self._pack_remaining_length(packet, remaining_length)
+        local_mid = self._mid_generate()
+        pack_format = "!HH" + str(len(topic)) + "sB"
+        packet.extend(struct.pack("!H", local_mid))
+        self._pack_str16(packet, topic)
+        return self._packet_queue(packet)
+
+    def _message_update(self, mid, direction, state):
+        for m in self._messages:
+            if m.mid == mid and m.direction == direction:
+                m.state = state
+                m.timestamp = time.time()
+                return MOSQ_ERR_SUCCESS
+
+        return MOSQ_ERR_NOT_FOUND
+
+    def _message_retry_check(self):
+        now = time.time()
+        for m in self._messages:
+            if m.timestamp + self._message_retry < now:
+                if m.state == mosq_ms_wait_puback or m.state == mosq_ms_wait_pubrec:
+                    m.timestamp = now
+                    m.dup = True
+                    self._send_publish(m.mid, m.topic, m.payload, m.qos, m.retain, m.dup)
+                elif m.state == mosq_ms_wait_pubrel:
+                    m.timestamp = now
+                    m.dup = True
+                    self._send_pubrec(m.mid)
+                elif m.state == mosq_ms_wait_pubcomp:
+                    m.timestamp = now
+                    m.dup = True
+                    self._send_pubrel(m.mid, True)
+
+    def _packet_queue(self, packet):
+        mpkt = MosquittoPacket(packet)
+        self._out_packet_mutex.acquire()
+        self._out_packet.append(mpkt)
+        self._out_packet_mutex.release()
+
+        if self._in_callback == False:
+            return self.loop_write()
+        else:
+            return MOSQ_ERR_SUCCESS
+
+    def _packet_handle(self):
+        cmd = self._in_packet.command&0xF0
+        if cmd == PINGREQ:
+            return self._handle_pingreq()
+        elif cmd == PINGRESP:
+            return self._handle_pingresp()
+        elif cmd == PUBACK:
+            return self._handle_pubackcomp("PUBACK")
+        elif cmd == PUBCOMP:
+            return self._handle_pubackcomp("PUBCOMP")
+        elif cmd == PUBLISH:
+            return self._handle_publish()
+        elif cmd == PUBREC:
+            return self._handle_pubrec()
+        elif cmd == PUBREL:
+            return self._handle_pubrel()
+        elif cmd == CONNACK:
+            return self._handle_connack()
+        elif cmd == SUBACK:
+            return self._handle_suback()
+        elif cmd == UNSUBACK:
+            return self._handle_unsuback()
+        else:
+            # If we don't recognise the command, return an error straight away.
+            self._easy_log(MOSQ_LOG_ERR, "Error: Unrecognised command "+str(cmd))
+            return MOSQ_ERR_PROTOCOL
+
+    def _handle_pingreq(self):
+        if self._strict_protocol:
+            if self._in_packet.remaining_length != 0:
+                return MOSQ_ERR_PROTOCOL
+        
+        self._easy_log(MOSQ_LOG_DEBUG, "Received PINGREQ")
+        return self._send_pingresp()
+
+    def _handle_pingresp(self):
+        if self._strict_protocol:
+            if self._in_packet.remaining_length != 0:
+                return MOSQ_ERR_PROTOCOL
+        
+        # No longer waiting for a PINGRESP.
+        self._ping_t = 0
+        self._easy_log(MOSQ_LOG_DEBUG, "Received PINGRESP")
+        return MOSQ_ERR_SUCCESS
+
+    def _handle_connack(self):
+        if self._strict_protocol:
+            if self._in_packet.remaining_length != 2:
+                return MOSQ_ERR_PROTOCOL
+
+        if len(self._in_packet.packet) != 2:
+            return MOSQ_ERR_PROTOCOL
+
+        (resvd, result) = struct.unpack("!BB", self._in_packet.packet)
+        self._easy_log(MOSQ_LOG_DEBUG, "Received CONNACK ("+str(resvd)+", "+str(result)+")")
+        self._callback_mutex.acquire()
+        if self.on_connect:
+            self._in_callback = True
+            self.on_connect(self, self._obj, result)
+            self._in_callback = False
+        self._callback_mutex.release()
+        if result == 0:
+            self._state = mosq_cs_connected
+            return MOSQ_ERR_SUCCESS
+        elif result > 0 and result < 6:
+            return MOSQ_ERR_CONN_REFUSED
+        else:
+            return MOSQ_ERR_PROTOCOL
+
+    def _handle_suback(self):
+        self._easy_log(MOSQ_LOG_DEBUG, "Received SUBACK")
+        pack_format = "!H" + str(len(self._in_packet.packet)-2) + 's'
+        (mid, packet) = struct.unpack(pack_format, self._in_packet.packet)
+        pack_format = "!" + "B"*len(packet)
+        granted_qos = struct.unpack(pack_format, packet)
+
+        self._callback_mutex.acquire()
+        if self.on_subscribe:
+            self._in_callback = True
+            self.on_subscribe(self, self._obj, mid, granted_qos)
+            self._in_callback = False
+        self._callback_mutex.release()
+
+        return MOSQ_ERR_SUCCESS
+
+    def _handle_publish(self):
+        rc = 0
+
+        header = self._in_packet.command
+        message = MosquittoMessage()
+        message.direction = mosq_md_in
+        message.dup = (header & 0x08)>>3
+        message.qos = (header & 0x06)>>1
+        message.retain = (header & 0x01)
+
+        pack_format = "!H" + str(len(self._in_packet.packet)-2) + 's'
+        (slen, packet) = struct.unpack(pack_format, self._in_packet.packet)
+        pack_format = '!' + str(slen) + 's' + str(len(packet)-slen) + 's'
+        (message.topic, packet) = struct.unpack(pack_format, packet)
+
+        rc = self._fix_sub_topic(message.topic)
+        if len(message.topic) == 0:
+            return MOSQ_ERR_PROTOCOL
+
+        if sys.version_info[0] >= 3:
+            message.topic = message.topic.decode('utf-8')
+
+        if message.qos > 0:
+            pack_format = "!H" + str(len(packet)-2) + 's'
+            (message.mid, packet) = struct.unpack(pack_format, packet)
+
+        message.payload = packet
+
+        self._easy_log(MOSQ_LOG_DEBUG, "Received PUBLISH (d"+str(message.dup)+
+                ", q"+str(message.qos)+", r"+str(message.retain)+
+                ", m"+str(message.mid)+", '"+message.topic+
+                "', ...  ("+str(len(message.payload))+" bytes)")
+
+        message.timestamp = time.time()
+        if message.qos == 0:
+            self._callback_mutex.acquire()
+            if self.on_message:
+                self._in_callback = True
+                self.on_message(self, self._obj, message)
+                self._in_callback = False
+
+            self._callback_mutex.release()
+            return MOSQ_ERR_SUCCESS
+        elif message.qos == 1:
+            rc = self._send_puback(message.mid)
+            self._callback_mutex.acquire()
+            if self.on_message:
+                self._in_callback = True
+                self.on_message(self, self._obj, message)
+                self._in_callback = False
+
+            self._callback_mutex.release()
+            return rc
+        elif message.qos == 2:
+            rc = self._send_pubrec(message.mid)
+            message.state = mosq_ms_wait_pubrel
+            self._messages.append(message)
+            return rc
+        else:
+            return MOSQ_ERR_PROTOCOL
+
+    def _handle_pubrel(self):
+        if self._strict_protocol:
+            if self._in_packet.remaining_length != 2:
+                return MOSQ_ERR_PROTOCOL
+        
+        if len(self._in_packet.packet) != 2:
+            return MOSQ_ERR_PROTOCOL
+
+        mid = struct.unpack("!H", self._in_packet.packet)
+        mid = mid[0]
+        self._easy_log(MOSQ_LOG_DEBUG, "Received PUBREL (Mid: "+str(mid)+")")
+        
+        for i in range(len(self._messages)):
+            if self._messages[i].direction == mosq_md_in and self._messages[i].mid == mid:
+
+                # Only pass the message on if we have removed it from the queue - this
+                # prevents multiple callbacks for the same message.
+                self._callback_mutex.acquire()
+                if self.on_message:
+                    self._in_callback = True
+                    self.on_message(self, self._obj, self._messages[i])
+                    self._in_callback = False
+                self._callback_mutex.release()
+                self._messages.pop(i)
+
+                return self._send_pubcomp(mid)
+
+        return MOSQ_ERR_SUCCESS
+
+    def _handle_pubrec(self):
+        if self._strict_protocol:
+            if self._in_packet.remaining_length != 2:
+                return MOSQ_ERR_PROTOCOL
+        
+        mid = struct.unpack("!H", self._in_packet.packet)
+        mid = mid[0]
+        self._easy_log(MOSQ_LOG_DEBUG, "Received PUBREC (Mid: "+str(mid)+")")
+        
+        for i in range(len(self._messages)):
+            if self._messages[i].direction == mosq_md_out and self._messages[i].mid == mid:
+                self._messages[i].state = mosq_ms_wait_pubcomp
+                self._messages[i].timestamp = time.time()
+                return self._send_pubrel(mid, False)
+        
+        return MOSQ_ERR_SUCCESS
+
+    def _handle_unsuback(self):
+        if self._strict_protocol:
+            if self._in_packet.remaining_length != 2:
+                return MOSQ_ERR_PROTOCOL
+        
+        mid = struct.unpack("!H", self._in_packet.packet)
+        mid = mid[0]
+        self._easy_log(MOSQ_LOG_DEBUG, "Received UNSUBACK (Mid: "+str(mid)+")")
+        self._callback_mutex.acquire()
+        if self.on_unsubscribe:
+            self._in_callback = True
+            self.on_unsubscribe(self, self._obj, mid)
+            self._in_callback = False
+        self._callback_mutex.release()
+        return MOSQ_ERR_SUCCESS
+
+    def _handle_pubackcomp(self, cmd):
+        if self._strict_protocol:
+            if self._in_packet.remaining_length != 2:
+                return MOSQ_ERR_PROTOCOL
+        
+        mid = struct.unpack("!H", self._in_packet.packet)
+        mid = mid[0]
+        self._easy_log(MOSQ_LOG_DEBUG, "Received "+cmd+" (Mid: "+str(mid)+")")
+        
+        for i in range(len(self._messages)):
+            if self._messages[i].direction == mosq_md_out and self._messages[i].mid == mid:
+                # Only inform the client the message has been sent once.
+                self._callback_mutex.acquire()
+                if self.on_publish:
+                    self._in_callback = True
+                    self.on_publish(self, self._obj, mid)
+                    self._in_callback = False
+
+                self._callback_mutex.release()
+                self._messages.pop(i)
+
+        return MOSQ_ERR_SUCCESS
+
+    def _thread_main(self):
+        run = True
+        self._thread_terminate = False
+        self._state_mutex.acquire()
+        if self._state == mosq_cs_connect_async:
+            self._state_mutex.release()
+            self.reconnect()
+        else:
+            self._state_mutex.release()
+
+        while run == True:
+            rc = MOSQ_ERR_SUCCESS
+            while rc == MOSQ_ERR_SUCCESS:
+                rc = self.loop()
+                if self._thread_terminate == True:
+                    rc = 1
+                    run = False
+
+            self._state_mutex.acquire()
+            if self._state == mosq_cs_disconnecting:
+                run = False
+                self._state_mutex.release()
+            else:
+                self._state_mutex.release()
+                time.sleep(1)
+                self.reconnect()
 

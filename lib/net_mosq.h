@@ -39,10 +39,22 @@ typedef int ssize_t;
 #include <mosquitto_internal.h>
 #include <mosquitto.h>
 
+#ifdef WITH_BROKER
+struct _mosquitto_db;
+#endif
+
 #ifdef WIN32
 #  define COMPAT_CLOSE(a) closesocket(a)
+#  define COMPAT_ECONNRESET WSAECONNRESET
+#  define COMPAT_EWOULDBLOCK WSAEWOULDBLOCK
 #else
 #  define COMPAT_CLOSE(a) close(a)
+#  define COMPAT_ECONNRESET ECONNRESET
+#  define COMPAT_EWOULDBLOCK EWOULDBLOCK
+#endif
+
+#ifndef WIN32
+#else
 #endif
 
 /* For when not using winsock libraries. */
@@ -58,21 +70,28 @@ void _mosquitto_net_init(void);
 void _mosquitto_net_cleanup(void);
 
 void _mosquitto_packet_cleanup(struct _mosquitto_packet *packet);
-void _mosquitto_packet_queue(struct _mosquitto_core *core, struct _mosquitto_packet *packet);
-int _mosquitto_socket_connect(struct _mosquitto_core *core, const char *host, uint16_t port);
-int _mosquitto_socket_close(struct _mosquitto_core *core);
+int _mosquitto_packet_queue(struct mosquitto *mosq, struct _mosquitto_packet *packet);
+int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t port);
+int _mosquitto_socket_close(struct mosquitto *mosq);
 
 int _mosquitto_read_byte(struct _mosquitto_packet *packet, uint8_t *byte);
-int _mosquitto_read_bytes(struct _mosquitto_packet *packet, uint8_t *bytes, uint32_t count);
+int _mosquitto_read_bytes(struct _mosquitto_packet *packet, void *bytes, uint32_t count);
 int _mosquitto_read_string(struct _mosquitto_packet *packet, char **str);
 int _mosquitto_read_uint16(struct _mosquitto_packet *packet, uint16_t *word);
 
 void _mosquitto_write_byte(struct _mosquitto_packet *packet, uint8_t byte);
-void _mosquitto_write_bytes(struct _mosquitto_packet *packet, const uint8_t *bytes, uint32_t count);
+void _mosquitto_write_bytes(struct _mosquitto_packet *packet, const void *bytes, uint32_t count);
 void _mosquitto_write_string(struct _mosquitto_packet *packet, const char *str, uint16_t length);
 void _mosquitto_write_uint16(struct _mosquitto_packet *packet, uint16_t word);
 
-ssize_t _mosquitto_net_read(struct _mosquitto_core *core, void *buf, size_t count);
-ssize_t _mosquitto_net_write(struct _mosquitto_core *core, void *buf, size_t count);
+ssize_t _mosquitto_net_read(struct mosquitto *mosq, void *buf, size_t count);
+ssize_t _mosquitto_net_write(struct mosquitto *mosq, void *buf, size_t count);
+
+int _mosquitto_packet_write(struct mosquitto *mosq);
+#ifdef WITH_BROKER
+int _mosquitto_packet_read(struct _mosquitto_db *db, struct mosquitto *mosq);
+#else
+int _mosquitto_packet_read(struct mosquitto *mosq);
+#endif
 
 #endif
