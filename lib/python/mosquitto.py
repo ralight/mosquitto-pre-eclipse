@@ -133,7 +133,10 @@ class MosquittoInPacket:
         self.__init__()
 
 class MosquittoPacket:
-    def __init__(self, packet):
+    def __init__(self, command, packet, mid, qos):
+        self.command = command
+        self.mid = mid
+        self.qos = qos
         self.pos = 0
         self.to_process = len(packet)
         self.packet = packet
@@ -294,7 +297,8 @@ class Mosquitto:
         local_mid = self._mid_generate()
 
         if qos == 0:
-            return self._send_publish(local_mid, topic, payload, qos, retain, False)
+            rc = self._send_publish(local_mid, topic, payload, qos, retain, False)
+            return (rc, local_mid)
         else:
             message = MosquittoMessage()
             message.timestamp = time.time()
@@ -316,7 +320,8 @@ class Mosquitto:
             message.dup = False
 
             self._messages.append(message)
-            return self._send_publish(message.mid, message.topic, message.payload, message.qos, message.retain, message.dup)
+            rc = self._send_publish(message.mid, message.topic, message.payload, message.qos, message.retain, message.dup)
+            return (rc, local_mid)
 
     def username_pw_set(self, username, password=None):
         self._username = username
@@ -450,6 +455,15 @@ class Mosquitto:
                 packet.pos = packet.pos + write_length
 
                 if packet.to_process == 0:
+                    if (packet.command & 0xF0) == PUBLISH and packet.qos == 0:
+                        self._callback_mutex.acquire()
+                        if self.on_publish:
+                            self._in_callback = True
+                            self.on_publish(self, self._obj, packet.mid)
+                            self._in_callback = False
+
+                        self._callback_mutex.release()
+
                     self._out_packet.pop(0)
             else:
                 pass
@@ -751,7 +765,7 @@ class Mosquitto:
             else:
                 raise TypeError('payload must be a string, unicode or a bytearray.')
 
-        return self._packet_queue(packet)
+        return self._packet_queue(PUBLISH, packet, mid, qos)
 
     def _send_pubrec(self, mid):
         self._easy_log(MOSQ_LOG_DEBUG, "Sending PUBREC (Mid: "+str(mid)+")")
@@ -768,13 +782,13 @@ class Mosquitto:
 
         remaining_length = 2
         packet = struct.pack('!BBH', command, remaining_length, mid)
-        return self._packet_queue(packet)
+        return self._packet_queue(command, packet, mid, 1)
 
     def _send_simple_command(self, command):
         # For DISCONNECT, PINGREQ and PINGRESP
         remaining_length = 0
         packet = struct.pack('!BB', command, remaining_length)
-        return self._packet_queue(packet)
+        return self._packet_queue(command, packet, 0, 0)
 
     def _send_connect(self, keepalive, clean_session):
         remaining_length = 12 + 2+len(self._client_id)
@@ -815,7 +829,7 @@ class Mosquitto:
                 self._pack_str16(packet, self._password)
 
         self._keepalive = keepalive
-        return self._packet_queue(packet)
+        return self._packet_queue(command, packet, 0, 0)
 
     def _send_disconnect(self):
         return self._send_simple_command(DISCONNECT)
@@ -831,7 +845,7 @@ class Mosquitto:
         packet.extend(struct.pack("!H", local_mid))
         self._pack_str16(packet, topic)
         packet.extend(struct.pack("B", topic_qos))
-        return self._packet_queue(packet)
+        return (self._packet_queue(command, packet, local_mid, 1), local_mid)
 
     def _send_unsubscribe(self, dup, topic):
         remaining_length = 2 + 2+len(topic)
@@ -843,7 +857,7 @@ class Mosquitto:
         pack_format = "!HH" + str(len(topic)) + "sB"
         packet.extend(struct.pack("!H", local_mid))
         self._pack_str16(packet, topic)
-        return self._packet_queue(packet)
+        return (self._packet_queue(command, packet, local_mid, 1), local_mid)
 
     def _message_update(self, mid, direction, state):
         for m in self._messages:
@@ -871,8 +885,8 @@ class Mosquitto:
                     m.dup = True
                     self._send_pubrel(m.mid, True)
 
-    def _packet_queue(self, packet):
-        mpkt = MosquittoPacket(packet)
+    def _packet_queue(self, command, packet, mid, qos):
+        mpkt = MosquittoPacket(command, packet, mid, qos)
         self._out_packet_mutex.acquire()
         self._out_packet.append(mpkt)
         self._out_packet_mutex.release()
