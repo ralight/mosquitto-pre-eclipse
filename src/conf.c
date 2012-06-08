@@ -620,10 +620,13 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 						switch(token[strlen(token)-1]){
 							case 'd':
 								expiration_mult = 86400;
+								break;
 							case 'w':
 								expiration_mult = 86400*7;
+								break;
 							case 'm':
 								expiration_mult = 86400*30;
+								break;
 							case 'y':
 								expiration_mult = 86400*365;
 								break;
