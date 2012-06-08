@@ -16,6 +16,8 @@ connack_packet = pack('!BBBB', 32, 2, 0, 0);
 
 publish_packet = pack('!BBH13s7s', 48, 2+13+7, 13, "pub/qos0/test", "message")
 
+disconnect_packet = pack('!BB', 224, 0)
+
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 sock.settimeout(10)
@@ -50,7 +52,15 @@ try:
             print("Received: "+publish_recvd+" length="+str(len(publish_recvd)))
             print("Expected: "+publish_packet+" length="+str(len(publish_packet)))
         else:
-            rc = 0
+            disconnect_recvd = conn.recv(256)
+
+            if disconnect_recvd != disconnect_packet:
+                print("FAIL: Received incorrect disconnect.")
+                (cmd, rl) = unpack('!BB', disconnect_recvd)
+                print("Received: "+str(cmd)+", " + str(rl))
+                print("Expected: 224, 0")
+            else:
+                rc = 0
         
     conn.close()
 finally:
