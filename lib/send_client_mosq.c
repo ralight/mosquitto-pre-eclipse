@@ -48,6 +48,7 @@ int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 	uint8_t will = 0;
 	uint8_t byte;
 	int rc;
+	uint8_t version = PROTOCOL_VERSION;
 
 	assert(mosq);
 	assert(mosq->id);
@@ -70,11 +71,6 @@ int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 	}
 
 	packet->command = CONNECT;
-#if defined(WITH_BROKER) && defined(WITH_BRIDGE)
-	if(mosq->bridge && mosq->bridge->try_private && mosq->bridge->try_private_accepted){
-		packet->command |= 0x80;
-	}
-#endif
 	packet->remaining_length = 12+payloadlen;
 	rc = _mosquitto_packet_alloc(packet);
 	if(rc){
@@ -84,7 +80,13 @@ int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 
 	/* Variable header */
 	_mosquitto_write_string(packet, PROTOCOL_NAME, strlen(PROTOCOL_NAME));
-	_mosquitto_write_byte(packet, PROTOCOL_VERSION);
+#if defined(WITH_BROKER) && defined(WITH_BRIDGE)
+	if(mosq->bridge && mosq->bridge->try_private && mosq->bridge->try_private_accepted){
+		version |= 0x80;
+	}else{
+	}
+#endif
+	_mosquitto_write_byte(packet, version);
 	byte = (clean_session&0x1)<<1;
 	if(will){
 		byte = byte | ((mosq->will->retain&0x1)<<5) | ((mosq->will->qos&0x3)<<3) | ((will&0x1)<<2);
