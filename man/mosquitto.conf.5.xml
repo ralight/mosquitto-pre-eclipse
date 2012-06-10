@@ -505,9 +505,19 @@
 					<para>If set to true, publish notification messages to the
 					local and remote brokers giving information about the state
 					of the bridge connection. Retained messages are published
-					to the topic $SYS/bridge/connection/&lt;clientid&gt;/state.
-					If the message is 1 then the connection is active, or 0 if
-					the connection has failed. Defaults to true.</para>
+					to the topic $SYS/bridge/connection/&lt;clientid&gt;/state
+					unless otherwise set with notification_topics.  If the
+					message is 1 then the connection is active, or 0 if the
+					connection has failed. Defaults to true.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>notification_topic</option> <replaceable>topic</replaceable></term>
+				<listitem>
+					<para>Choose the topic on which notifications will be
+						published for this bridge. If not set the messages will
+						be sent on the topic
+						$SYS/bridge/connection/&lt;clientid&gt;/state.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

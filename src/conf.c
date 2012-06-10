@@ -140,6 +140,7 @@ void mqtt3_config_cleanup(mqtt3_config *config)
 				}
 				_mosquitto_free(config->bridges[i].topics);
 			}
+			if(config->bridges[i].notification_topic) _mosquitto_free(config->bridges[i].notification_topic);
 		}
 		_mosquitto_free(config->bridges);
 	}
@@ -407,6 +408,7 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 						cur_bridge->username = NULL;
 						cur_bridge->password = NULL;
 						cur_bridge->notifications = true;
+						cur_bridge->notification_topic = NULL;
 						cur_bridge->start_type = bst_automatic;
 						cur_bridge->idle_timeout = 60;
 						cur_bridge->threshold = 10;
@@ -572,6 +574,17 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 						return MOSQ_ERR_INVAL;
 					}
 					if(_conf_parse_bool(&token, "notifications", &cur_bridge->notifications, saveptr)) return MOSQ_ERR_INVAL;
+#else
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+#endif
+				}else if(!strcmp(token, "notification_topic")){
+#ifdef WITH_BRIDGE
+					if(reload) continue; // FIXME
+					if(!cur_bridge){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
+						return MOSQ_ERR_INVAL;
+					}
+					if(_conf_parse_string(&token, "notification_topic", &cur_bridge->notification_topic, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
