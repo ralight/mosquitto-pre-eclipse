@@ -66,6 +66,11 @@ int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 	}
 
 	packet->command = CONNECT;
+#if defined(WITH_BROKER) && defined(WITH_BRIDGE)
+	if(mosq->bridge && mosq->bridge->try_private && mosq->bridge->try_private_accepted)
+		packet->command |= 0x80;
+	}
+#endif
 	packet->remaining_length = 12+payloadlen;
 	rc = _mosquitto_packet_alloc(packet);
 	if(rc){
