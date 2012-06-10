@@ -862,9 +862,7 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 #endif
 				}else if(!strcmp(token, "trace_level")
 						|| !strcmp(token, "addresses")
-						|| !strcmp(token, "notification_topic")
 						|| !strcmp(token, "round_robin")
-						|| !strcmp(token, "try_private")
 						|| !strcmp(token, "ffdc_output")
 						|| !strcmp(token, "max_log_entries")
 						|| !strcmp(token, "trace_output")){
