@@ -57,7 +57,7 @@ int mqtt3_handle_connack(mosquitto_db *db, struct mosquitto *context)
 	if(_mosquitto_read_byte(&context->in_packet, &byte)) return 1; // Reserved byte, not used
 	if(_mosquitto_read_byte(&context->in_packet, &rc)) return 1;
 	switch(rc){
-		case 0:
+		case CONNACK_ACCEPTED:
 			if(context->bridge){
 				if(context->bridge->notifications){
 					notification_payload[0] = '1';
@@ -104,14 +104,26 @@ int mqtt3_handle_connack(mosquitto_db *db, struct mosquitto *context)
 			}
 			context->state = mosq_cs_connected;
 			return MOSQ_ERR_SUCCESS;
-		case 1:
+		case CONNACK_REFUSED_PROTOCOL_VERSION:
+			if(context->bridge){
+				context->bridge->try_private_accepted = false;
+			}
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Connection Refused: unacceptable protocol version");
 			return 1;
-		case 2:
+		case CONNACK_REFUSED_IDENTIFIER_REJECTED:
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Connection Refused: identifier rejected");
 			return 1;
-		case 3:
+		case CONNACK_REFUSED_SERVER_UNAVAILABLE:
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Connection Refused: broker unavailable");
+			return 1;
+		case CONNACK_REFUSED_BAD_USERNAME_PASSWORD:
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Connection Refused: broker unavailable");
+			return 1;
+		case CONNACK_REFUSED_NOT_AUTHORIZED:
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Connection Refused: not authorised");
+			return 1;
+		default:
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Connection Refused: unknown reason");
 			return 1;
 	}
 	return 1;

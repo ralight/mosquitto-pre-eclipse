@@ -228,6 +228,7 @@ struct _mqtt3_bridge{
 	int idle_timeout;
 	int threshold;
 	bool try_private;
+	bool try_private_accepted;
 };
 
 #include <net_mosq.h>

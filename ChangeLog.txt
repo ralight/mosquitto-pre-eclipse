@@ -14,6 +14,7 @@ Broker:
 - Add $SYS/system/ hierarchy to provide information on the system. Only
   supported on Linux and when compiled with WITH_SYSTEM_METRICS.
 - Fix reloading of log configuration.
+- Add support for try_private config option for bridge connections.
 - Add support for autosave_on_changes config option.
 - Usernames were being lost when a non clean-session client reconnected,
   potentially causing problems with ACLs. This has been fixed.
