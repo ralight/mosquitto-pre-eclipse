@@ -161,20 +161,28 @@ int mqtt3_bridge_connect(mosquitto_db *db, struct mosquitto *context)
 	}
 
 	if(context->bridge->notifications){
-		notification_topic_len = strlen(context->id)+strlen("$SYS/broker/connection//state");
-		notification_topic = _mosquitto_malloc(sizeof(char)*(notification_topic_len+1));
-		if(!notification_topic) return MOSQ_ERR_NOMEM;
-
-		snprintf(notification_topic, notification_topic_len+1, "$SYS/broker/connection/%s/state", context->id);
 		notification_payload[0] = '0';
 		notification_payload[1] = '\0';
-		mqtt3_db_messages_easy_queue(db, context, notification_topic, 1, 2, &notification_payload, 1);
-		rc = _mosquitto_will_set(context, notification_topic, 2, &notification_payload, 1, true);
-		if(rc != MOSQ_ERR_SUCCESS){
+		if(context->bridge->notification_topic){
+			mqtt3_db_messages_easy_queue(db, context, context->bridge->notification_topic, 1, 2, &notification_payload, 1);
+			rc = _mosquitto_will_set(context, context->bridge->notification_topic, 2, &notification_payload, 1, true);
+			if(rc != MOSQ_ERR_SUCCESS){
+				return rc;
+			}
+		}else{
+			notification_topic_len = strlen(context->id)+strlen("$SYS/broker/connection//state");
+			notification_topic = _mosquitto_malloc(sizeof(char)*(notification_topic_len+1));
+			if(!notification_topic) return MOSQ_ERR_NOMEM;
+
+			snprintf(notification_topic, notification_topic_len+1, "$SYS/broker/connection/%s/state", context->id);
+			mqtt3_db_messages_easy_queue(db, context, notification_topic, 1, 2, &notification_payload, 1);
+			rc = _mosquitto_will_set(context, notification_topic, 2, &notification_payload, 1, true);
+			if(rc != MOSQ_ERR_SUCCESS){
+				_mosquitto_free(notification_topic);
+				return rc;
+			}
 			_mosquitto_free(notification_topic);
-			return rc;
 		}
-		_mosquitto_free(notification_topic);
 	}
 
 	return _mosquitto_send_connect(context, context->keepalive, context->clean_session);
