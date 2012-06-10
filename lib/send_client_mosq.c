@@ -37,6 +37,10 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <send_mosq.h>
 #include <util_mosq.h>
 
+#ifdef WITH_BROKER
+#include <mosquitto_broker.h>
+#endif
+
 int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session)
 {
 	struct _mosquitto_packet *packet = NULL;
@@ -67,7 +71,7 @@ int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 
 	packet->command = CONNECT;
 #if defined(WITH_BROKER) && defined(WITH_BRIDGE)
-	if(mosq->bridge && mosq->bridge->try_private && mosq->bridge->try_private_accepted)
+	if(mosq->bridge && mosq->bridge->try_private && mosq->bridge->try_private_accepted){
 		packet->command |= 0x80;
 	}
 #endif
