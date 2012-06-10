@@ -21,10 +21,19 @@ add_library(libmosquitto SHARED
 	util_mosq.c util_mosq.h
 	will_mosq.c will_mosq.h)
 
+option(WITH_THREADING
+	"Include client library threading support?" ON)
+if (${WITH_THREADING} STREQUAL ON)
+	add_definitions("-DWITH_THREADING")
+	set (PTHREAD_LIBRARIES pthread)
+else (${WITH_THREADING} STREQUAL ON)
+	set (PTHREAD_LIBRARIES "")
+endif (${WITH_THREADING} STREQUAL ON)
+
 if (WIN32)
 	target_link_libraries(libmosquitto ws2_32 ${OPENSSL_LIBRARIES})
 else (WIN32)
-	target_link_libraries(libmosquitto ${OPENSSL_LIBRARIES})
+	target_link_libraries(libmosquitto ${OPENSSL_LIBRARIES} ${PTHREAD_LIBRARIES})
 endif (WIN32)
 
 set_target_properties(libmosquitto PROPERTIES

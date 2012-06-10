@@ -62,7 +62,9 @@
 //#define WITH_EXTERNAL_SECURITY_CHECKS
 
 /* Compile with client threading support */
+#ifndef WITH_BROKER
 #define WITH_THREADING
+#endif
 
 #endif
 
