@@ -84,7 +84,7 @@ void *_mosquitto_thread_main(void *obj)
 
 	while(run){
 		do{
-			rc = mosquitto_loop(mosq, -1);
+			rc = mosquitto_loop(mosq, -1, 1);
 		}while(rc == MOSQ_ERR_SUCCESS);
 		pthread_mutex_lock(&mosq->state_mutex);
 		if(mosq->state == mosq_cs_disconnecting){
