@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2010, Roger Light <roger@atchoo.org>
+Copyright (c) 2010-2012 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -79,10 +79,10 @@ class mosqpp_EXPORT mosquittopp {
 		void message_retry_set(unsigned int message_retry);
 		void user_data_set(void *obj);
 
-		int loop(int timeout=-1);
+		int loop(int timeout=-1, int max_packets=1);
 		int loop_misc();
-		int loop_read();
-		int loop_write();
+		int loop_read(int max_packets=1);
+		int loop_write(int max_packets=1);
 		int loop_start();
 		int loop_stop(bool force=false);
 		bool want_write();

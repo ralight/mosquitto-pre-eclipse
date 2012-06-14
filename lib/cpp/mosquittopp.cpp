@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2010, Roger Light <roger@atchoo.org>
+Copyright (c) 2010-2012 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -180,9 +180,9 @@ int mosquittopp::unsubscribe(int *mid, const char *sub)
 	return mosquitto_unsubscribe(m_mosq, mid, sub);
 }
 
-int mosquittopp::loop(int timeout)
+int mosquittopp::loop(int timeout, int max_packets)
 {
-	return mosquitto_loop(m_mosq, timeout);
+	return mosquitto_loop(m_mosq, timeout, max_packets);
 }
 
 int mosquittopp::loop_misc()
@@ -190,14 +190,14 @@ int mosquittopp::loop_misc()
 	return mosquitto_loop_misc(m_mosq);
 }
 
-int mosquittopp::loop_read()
+int mosquittopp::loop_read(int max_packets)
 {
-	return mosquitto_loop_read(m_mosq);
+	return mosquitto_loop_read(m_mosq, max_packets);
 }
 
-int mosquittopp::loop_write()
+int mosquittopp::loop_write(int max_packets)
 {
-	return mosquitto_loop_write(m_mosq);
+	return mosquitto_loop_write(m_mosq, max_packets);
 }
 
 int mosquittopp::loop_start()

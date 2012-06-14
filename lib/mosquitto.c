@@ -404,7 +404,7 @@ int mosquitto_ssl_set(struct mosquitto *mosq, const char *pemfile, const char *p
 }
 #endif
 
-int mosquitto_loop(struct mosquitto *mosq, int timeout)
+int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 {
 #ifdef HAVE_PSELECT
 	struct timespec local_timeout;
@@ -415,7 +415,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout)
 	int fdcount;
 	int rc;
 
-	if(!mosq) return MOSQ_ERR_INVAL;
+	if(!mosq || max_packets < 1) return MOSQ_ERR_INVAL;
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
 
 	FD_ZERO(&readfds);
@@ -458,7 +458,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout)
 		return MOSQ_ERR_ERRNO;
 	}else{
 		if(FD_ISSET(mosq->sock, &readfds)){
-			rc = mosquitto_loop_read(mosq);
+			rc = mosquitto_loop_read(mosq, max_packets);
 			if(rc){
 				_mosquitto_socket_close(mosq);
 				pthread_mutex_lock(&mosq->state_mutex);
@@ -477,7 +477,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout)
 			}
 		}
 		if(FD_ISSET(mosq->sock, &writefds)){
-			rc = mosquitto_loop_write(mosq);
+			rc = mosquitto_loop_write(mosq, max_packets);
 			if(rc){
 				_mosquitto_socket_close(mosq);
 				pthread_mutex_lock(&mosq->state_mutex);
@@ -521,14 +521,30 @@ int mosquitto_loop_misc(struct mosquitto *mosq)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto_loop_read(struct mosquitto *mosq)
+int mosquitto_loop_read(struct mosquitto *mosq, int max_packets)
 {
-	return _mosquitto_packet_read(mosq);
+	int rc;
+	int i;
+	if(max_packets < 1) return MOSQ_ERR_INVAL;
+
+	for(i=0; i<max_packets; i++){
+		rc = _mosquitto_packet_read(mosq);
+		if(rc) return rc;
+	}
+	return rc;
 }
 
-int mosquitto_loop_write(struct mosquitto *mosq)
+int mosquitto_loop_write(struct mosquitto *mosq, int max_packets)
 {
-	return _mosquitto_packet_write(mosq);
+	int rc;
+	int i;
+	if(max_packets < 1) return MOSQ_ERR_INVAL;
+
+	for(i=0; i<max_packets; i++){
+		rc = _mosquitto_packet_write(mosq);
+		if(rc) return rc;
+	}
+	return rc;
 }
 
 bool mosquitto_want_write(struct mosquitto *mosq)

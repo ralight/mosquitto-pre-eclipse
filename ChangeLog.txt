@@ -62,6 +62,9 @@ Client library:
   broker in keepalive seconds.
 - mosquitto_new() will now generate a random client id if the id parameter is
   NULL.
+- Added max_packets to mosquitto_loop(), mosquitto_loop_read() and
+  mosquitto_loop_write() to control the maximum number of packets that are
+  handled per call.
 - Payload parameters are now void * instead of uint8_t *.
 - The clean_session parameter has been moved from mosquitto_connect() to
   mosquitto_new() because it is a client parameter rather than a connection

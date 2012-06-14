@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
 	rc = mosquitto_connect(mosq, "localhost", 1888, 60);
 
 	while(run == -1){
-		mosquitto_loop(mosq, 300);
+		mosquitto_loop(mosq, 300, 1);
 	}
 
 	mosquitto_lib_cleanup();

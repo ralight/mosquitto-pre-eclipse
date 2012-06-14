@@ -562,7 +562,7 @@ int main(int argc, char *argv[])
 				disconnect_sent = true;
 			}
 		}
-		rc = mosquitto_loop(mosq, -1);
+		rc = mosquitto_loop(mosq, -1, 1);
 	}while(rc == MOSQ_ERR_SUCCESS && connected);
 
 	if(message && mode == MSGMODE_FILE){
