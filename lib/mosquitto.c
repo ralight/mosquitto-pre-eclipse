@@ -529,7 +529,9 @@ int mosquitto_loop_read(struct mosquitto *mosq, int max_packets)
 
 	for(i=0; i<max_packets; i++){
 		rc = _mosquitto_packet_read(mosq);
-		if(rc) return rc;
+		if(rc || errno == EAGAIN || errno == COMPAT_EWOULDBLOCK){
+			return rc;
+		}
 	}
 	return rc;
 }
@@ -542,7 +544,9 @@ int mosquitto_loop_write(struct mosquitto *mosq, int max_packets)
 
 	for(i=0; i<max_packets; i++){
 		rc = _mosquitto_packet_write(mosq);
-		if(rc) return rc;
+		if(rc || errno == EAGAIN || errno == COMPAT_EWOULDBLOCK){
+			return rc;
+		}
 	}
 	return rc;
 }

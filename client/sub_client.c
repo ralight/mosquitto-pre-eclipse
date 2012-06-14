@@ -426,7 +426,7 @@ int main(int argc, char *argv[])
 	}
 
 	do{
-		rc = mosquitto_loop(mosq, -1, 1);
+		rc = mosquitto_loop(mosq, -1, 100);
 	}while(rc == MOSQ_ERR_SUCCESS);
 
 	mosquitto_destroy(mosq);
