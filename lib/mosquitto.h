@@ -504,10 +504,14 @@ libmosq_EXPORT void mosquitto_message_free(struct mosquitto_message **message);
  * Threads:
  *	
  * Parameters:
- *	mosq -    a valid mosquitto instance.
- *	timeout - Maximum number of milliseconds to wait for network activity in
- *            the select() call before timing out. Set to 0 for instant return.
- *            Set negative to use the default of 1000ms.
+ *	mosq -        a valid mosquitto instance.
+ *	timeout -     Maximum number of milliseconds to wait for network activity
+ *	              in the select() call before timing out. Set to 0 for instant
+ *	              return.  Set negative to use the default of 1000ms.
+ *	max_packets - the maximum number of packets to process in this call. Must
+ *	              be >0. If set to 1, only a single packet will be processed
+ *	              per call. Avoid setting too high if you have a high incoming
+ *	              message rate.
  * 
  * Returns:
  *	MOSQ_ERR_SUCCESS -   on success.
@@ -524,7 +528,7 @@ libmosq_EXPORT void mosquitto_message_free(struct mosquitto_message **message);
  * See Also:
  *	<mosquitto_loop_start>, <mosquitto_loop_stop>
  */
-libmosq_EXPORT int mosquitto_loop(struct mosquitto *mosq, int timeout);
+libmosq_EXPORT int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets);
 
 /*
  * Function: mosquitto_loop_start
@@ -592,7 +596,11 @@ libmosq_EXPORT int mosquitto_socket(struct mosquitto *mosq);
  * monitoring the client network socket for activity yourself.
  *
  * Parameters:
- *	mosq - a valid mosquitto instance.
+ *	mosq -        a valid mosquitto instance.
+ *	max_packets - the maximum number of packets to process in this call. Must
+ *	              be >0. If set to 1, only a single packet will be processed
+ *	              per call. Avoid setting too high if you have a high incoming
+ *	              message rate.
  *
  * Returns:
  *	MOSQ_ERR_SUCCESS -   on success.
@@ -610,7 +618,7 @@ libmosq_EXPORT int mosquitto_socket(struct mosquitto *mosq);
  * See Also:
  *	<mosquitto_socket>, <mosquitto_loop_write>, <mosquitto_loop_misc>
  */
-libmosq_EXPORT int mosquitto_loop_read(struct mosquitto *mosq);
+libmosq_EXPORT int mosquitto_loop_read(struct mosquitto *mosq, int max_packets);
 
 /*
  * Function: mosquitto_loop_write
@@ -620,7 +628,10 @@ libmosq_EXPORT int mosquitto_loop_read(struct mosquitto *mosq);
  * monitoring the client network socket for activity yourself.
  *
  * Parameters:
- *	mosq - a valid mosquitto instance.
+ *	mosq -        a valid mosquitto instance.
+ *	max_packets - the maximum number of packets to process in this call. Must
+ *	              be >0. If set to 1, only a single packet will be processed
+ *	              per call.
  *
  * Returns:
  *	MOSQ_ERR_SUCCESS -   on success.
@@ -638,7 +649,7 @@ libmosq_EXPORT int mosquitto_loop_read(struct mosquitto *mosq);
  * See Also:
  *	<mosquitto_socket>, <mosquitto_loop_read>, <mosquitto_loop_misc>, <mosquitto_want_write>
  */
-libmosq_EXPORT int mosquitto_loop_write(struct mosquitto *mosq);
+libmosq_EXPORT int mosquitto_loop_write(struct mosquitto *mosq, int max_packets);
 
 /*
  * Function: mosquitto_loop_misc
