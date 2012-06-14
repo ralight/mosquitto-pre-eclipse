@@ -89,6 +89,7 @@ mosq_ms_wait_pubrel = 3
 mosq_ms_wait_pubcomp = 4
 
 # Error values
+MOSQ_ERR_AGAIN = -1
 MOSQ_ERR_SUCCESS = 0
 MOSQ_ERR_NOMEM = 1
 MOSQ_ERR_PROTOCOL = 2
@@ -365,8 +366,10 @@ class Mosquitto:
 
         for i in range(0, max_packets):
             rc = self._packet_read()
-            if rc:
+            if rc > 0:
                 return rc
+            elif rc == MOSQ_ERR_AGAIN:
+                return MOSQ_ERR_SUCCESS
         return MOSQ_ERR_SUCCESS
 
     def loop_write(self, max_packets=1):
@@ -378,8 +381,10 @@ class Mosquitto:
 
         for i in range(0, max_packets):
             rc = self._packet_write()
-            if rc:
+            if rc > 0:
                 return rc
+            elif rc == MOSQ_ERR_AGAIN:
+                return MOSQ_ERR_SUCCESS
         return MOSQ_ERR_SUCCESS
 
     def want_write(self):
@@ -531,7 +536,7 @@ class Mosquitto:
             except socket.error as err:
                 (msg) = err
                 if msg.errno == 11:
-                    return 0
+                    return MOSQ_ERR_AGAIN
                 print(msg)
                 return 1
             else:
@@ -550,7 +555,7 @@ class Mosquitto:
                 except socket.error as err:
                     (msg) = err
                     if msg.errno == 11:
-                        return 0
+                        return MOSQ_ERR_AGAIN
                     print(msg)
                     return 1
                 else:
@@ -577,7 +582,7 @@ class Mosquitto:
             except socket.error as err:
                 (msg) = err
                 if msg.errno == 11:
-                    return 0
+                    return MOSQ_ERR_AGAIN
                 print(msg)
                 return 1
             else:
@@ -617,7 +622,7 @@ class Mosquitto:
 
                     self._out_packet.pop(0)
             else:
-                pass
+                pass # FIXME
         
         return MOSQ_ERR_SUCCESS
 
