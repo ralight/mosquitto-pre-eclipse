@@ -239,10 +239,20 @@ int mqtt3_db_message_insert(mosquitto_db *db, struct mosquitto *context, uint16_
 	enum mqtt3_msg_state state = ms_invalid;
 	int msg_count = 0;
 	int rc = 0;
+	int i;
+	char **dest_ids;
 
 	assert(stored);
 	if(!context) return MOSQ_ERR_INVAL;
 
+	if(stored->dest_ids){
+		for(i=0; i<stored->dest_id_count; i++){
+			if(!strcmp(stored->dest_ids[i], context->id)){
+				/* We have already sent this message to this client. */
+				return MOSQ_ERR_SUCCESS;
+			}
+		}
+	}
 	if(context->sock == INVALID_SOCKET){
 		/* Client is not connected only queue messages with QoS>0. */
 		if(qos == 0){
@@ -328,6 +338,18 @@ int mqtt3_db_message_insert(mosquitto_db *db, struct mosquitto *context, uint16_
 		context->msgs = msg;
 	}
 
+	/* Record which client ids this message has been sent to so we can avoid duplicates. */
+	dest_ids = _mosquitto_realloc(stored->dest_ids, sizeof(char *)*(stored->dest_id_count+1));
+	if(dest_ids){
+		stored->dest_ids = dest_ids;
+		stored->dest_id_count++;
+		stored->dest_ids[stored->dest_id_count-1] = _mosquitto_strdup(context->id);
+		if(!stored->dest_ids[stored->dest_id_count-1]){
+			return MOSQ_ERR_NOMEM;
+		}
+	}else{
+		return MOSQ_ERR_NOMEM;
+	}
 #ifdef WITH_BRIDGE
 	msg_count++; /* We've just added a message to the list */
 	if(context->bridge && context->bridge->start_type == bst_lazy
@@ -453,6 +475,8 @@ int mqtt3_db_message_store(mosquitto_db *db, const char *source, uint16_t source
 		_mosquitto_free(temp);
 		return 1;
 	}
+	temp->dest_ids = NULL;
+	temp->dest_id_count = 0;
 	db->msg_store_count++;
 	db->msg_store = temp;
 	(*stored) = temp;
@@ -688,12 +712,19 @@ void mqtt3_db_store_clean(mosquitto_db *db)
 {
 	/* FIXME - this may not be necessary if checks are made when messages are removed. */
 	struct mosquitto_msg_store *tail, *last = NULL;
+	int i;
 	assert(db);
 
 	tail = db->msg_store;
 	while(tail){
 		if(tail->ref_count == 0){
 			if(tail->source_id) _mosquitto_free(tail->source_id);
+			if(tail->dest_ids){
+				for(i=0; i<tail->dest_id_count; i++){
+					if(tail->dest_ids[i]) _mosquitto_free(tail->dest_ids[i]);
+				}
+				_mosquitto_free(tail->dest_ids);
+			}
 			if(tail->msg.topic) _mosquitto_free(tail->msg.topic);
 			if(tail->msg.payload) _mosquitto_free(tail->msg.payload);
 			if(last){
