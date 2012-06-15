@@ -142,6 +142,8 @@ struct mosquitto_msg_store{
 	dbid_t db_id;
 	int ref_count;
 	char *source_id;
+	char **dest_ids;
+	int dest_id_count;
 	uint16_t source_mid;
 	struct mosquitto_message msg;
 };
