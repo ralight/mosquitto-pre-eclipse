@@ -31,6 +31,11 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef WIN32
+#else
+#  include <dirent.h>
+#endif
+
 #include <config.h>
 
 #include <mosquitto_broker.h>
@@ -48,7 +53,7 @@ struct config_recurse {
 static int _conf_parse_bool(char **token, const char *name, bool *value, char *saveptr);
 static int _conf_parse_int(char **token, const char *name, int *value, char *saveptr);
 static int _conf_parse_string(char **token, const char *name, char **value, char *saveptr);
-static int _config_read_file(mqtt3_config *config, bool reload, const char *file, struct config_recurse *config_tmp);
+static int _config_read_file(mqtt3_config *config, bool reload, const char *file, struct config_recurse *config_tmp, int level);
 
 static void _config_init_reload(mqtt3_config *config)
 {
@@ -281,7 +286,7 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 		/* Re-initialise appropriate config vars to default for reload. */
 		_config_init_reload(config);
 	}
-	rc = _config_read_file(config, reload, config->config_file, &cr);
+	rc = _config_read_file(config, reload, config->config_file, &cr, 0);
 	if(rc) return rc;
 
 #ifdef WITH_PERSISTENCE
@@ -327,8 +332,9 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int _config_read_file(mqtt3_config *config, bool reload, const char *file, struct config_recurse *cr)
+int _config_read_file(mqtt3_config *config, bool reload, const char *file, struct config_recurse *cr, int level)
 {
+	int rc;
 	FILE *fptr = NULL;
 	char buf[1024];
 	char *token;
@@ -338,6 +344,13 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 	struct _mqtt3_bridge *cur_bridge = NULL;
 #endif
 	time_t expiration_mult;
+	char *conf_file;
+#ifdef WIN32
+#else
+	DIR *dh;
+	struct dirent *de;
+	int len;
+#endif
 	
 	fptr = fopen(file, "rt");
 	if(!fptr) return 1;
@@ -499,6 +512,41 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
+				}else if(!strcmp(token, "include_dir")){
+					if(level == 0){
+						/* Only process include_dir from the main config file. */
+						token = strtok_r(NULL, " ", &saveptr);
+#ifdef WIN32
+
+#else
+						dh = opendir(token);
+						if(!dh){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open include_dir '%s'.", token);
+							return 1;
+						}
+						while((de = readdir(dh)) != NULL){
+							if(strlen(de->d_name) > 5){
+								if(!strcmp(&de->d_name[strlen(de->d_name)-5], ".conf")){
+									len = strlen(token)+1+strlen(de->d_name)+1;
+									conf_file = _mosquitto_calloc(len+1, sizeof(char));
+									if(!conf_file){
+										closedir(dh);
+										return MOSQ_ERR_NOMEM;
+									}
+									snprintf(conf_file, len, "%s/%s", token, de->d_name);
+									
+									rc = _config_read_file(config, reload, conf_file, cr, level+1);
+									_mosquitto_free(conf_file);
+									if(rc){
+										closedir(dh);
+										return rc;
+									}
+								}
+							}
+						}
+						closedir(dh);
+#endif
+					}
 				}else if(!strcmp(token, "keepalive_interval")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
