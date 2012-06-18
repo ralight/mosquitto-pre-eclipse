@@ -196,18 +196,22 @@ class Mosquitto:
         self._ssl_certfile = None
         self._ssl_keyfile = None
         self._ssl_ca_certs = None
+        self._ssl_cert_reqs = None
+        self._ssl_ciphers = None
 
     def __del__(self):
         pass
 
-    def ssl_set(self, ca_certs, certfile=None, keyfile=None, verify=2):
+    def ssl_set(self, ca_certs, certfile=None, keyfile=None, cert_reqs=ssl.CERT_REQUIRED, ssl_version=ssl.PROTOCOL_TLSv1, ciphers=None):
         if ca_certs == None:
             raise ValueError('ca_certs must not be None.')
 
         self._ssl_ca_certs = ca_certs
         self._ssl_certfile = certfile
         self._ssl_keyfile = keyfile
-        self._ssl_verify = verify
+        self._ssl_cert_reqs = cert_reqs
+        self._ssl_version = ssl_version
+        self._ssl_ciphers = ciphers
 
     def connect(self, host, port=1883, keepalive=60):
         self.connect_async(host, port, keepalive)
@@ -255,8 +259,9 @@ class Mosquitto:
                     certfile=self._ssl_certfile,
                     keyfile=self._ssl_keyfile,
                     ca_certs=self._ssl_ca_certs,
-                    cert_reqs=ssl.CERT_REQUIRED,
-                    ssl_version=ssl.PROTOCOL_TLSv1)
+                    cert_reqs=self._ssl_cert_reqs,
+                    ssl_version=self._ssl_version,
+                    ciphers=self._ssl_ciphers)
 
         try:
             self.socket().connect((self._host, self._port))
