@@ -231,8 +231,14 @@ class Mosquitto:
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # FIXME use create_connection here
 
-        self._sock.connect((self._host, self._port))
         self._sock.setblocking(0)
+        try:
+            self._sock.connect((self._host, self._port))
+        except socket.error as err:
+            (msg) = err
+            if msg.errno != 115:
+                print(msg)
+                return 1
         return self._send_connect(self._keepalive, self._clean_session)
 
     def loop(self, timeout=1.0, max_packets=1):
