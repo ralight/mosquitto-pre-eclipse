@@ -2,6 +2,16 @@
 
 # Test whether a client sends a correct SUBSCRIBE to a topic with QoS 2.
 
+# The client should connect to port 1888 with keepalive=60, clean session set,
+# and client id subscribe-qos2-test
+# The test will send a CONNACK message to the client with rc=0. Upon receiving
+# the CONNACK and verifying that rc=0, the client should send a SUBSCRIBE
+# message to subscribe to topic "qos2/test" with QoS=2. If rc!=0, the client
+# should exit with an error.
+# Upon receiving the correct SUBSCRIBE message, the test will reply with a
+# SUBACK message with the accepted QoS set to 2. On receiving the SUBACK
+# message, the client should send a DISCONNECT message.
+
 import os
 import subprocess
 import socket

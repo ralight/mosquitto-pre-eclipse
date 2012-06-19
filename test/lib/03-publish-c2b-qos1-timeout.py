@@ -2,6 +2,20 @@
 
 # Test whether a client sends a correct PUBLISH to a topic with QoS 1 and responds to a delay.
 
+# The client should connect to port 1888 with keepalive=60, clean session set,
+# and client id publish-qos1-test
+# The test will send a CONNACK message to the client with rc=0. Upon receiving
+# the CONNACK the client should verify that rc==0. If not, it should exit with
+# return code=1.
+# On a successful CONNACK, the client should send a PUBLISH message with topic
+# "pub/qos1/test", payload "message" and QoS=1.
+# The test will not respond to the first PUBLISH message, so the client must
+# resend the PUBLISH message with dup=1. Note that to keep test durations low, a
+# message retry timeout of less than 5 seconds is required for this test.
+# On receiving the second PUBLISH message, the test will send the correct
+# PUBACK response. On receiving the correct PUBACK response, the client should
+# send a DISCONNECT message.
+
 import os
 import subprocess
 import socket

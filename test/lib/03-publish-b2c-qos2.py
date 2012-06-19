@@ -2,6 +2,20 @@
 
 # Test whether a client responds correctly to a PUBLISH with QoS 1.
 
+# The client should connect to port 1888 with keepalive=60, clean session set,
+# and client id publish-qos2-test
+# The test will send a CONNACK message to the client with rc=0. Upon receiving
+# the CONNACK the client should verify that rc==0.
+# The test will send the client a PUBLISH message with topic
+# "pub/qos2/receive", payload of "message", QoS=2 and mid=13423. The client
+# should handle this as per the spec by sending a PUBREC message.
+# The test will not respond to the first PUBREC message, so the client must
+# resend the PUBREC message with dup=1. Note that to keep test durations low, a
+# message retry timeout of less than 5 seconds is required for this test.
+# On receiving the second PUBREC with dup==1, the test will send the correct
+# PUBREL message. The client should respond to this with the correct PUBCOMP
+# message and then exit with return code=0.
+
 import os
 import subprocess
 import socket
