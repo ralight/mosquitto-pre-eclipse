@@ -4,7 +4,21 @@ SOVERSION=1
 
 .PHONY : really clean install
 
-all : libmosquitto.so.${SOVERSION}
+MOSQ_OBJS=mosquitto.o \
+		  logging_mosq.o \
+		  memory_mosq.o \
+		  messages_mosq.o \
+		  net_mosq.o \
+		  read_handle.o \
+		  read_handle_client.o \
+		  read_handle_shared.o \
+		  send_mosq.o \
+		  send_client_mosq.o \
+		  thread_mosq.o \
+		  util_mosq.o \
+		  will_mosq.o
+
+all : libmosquitto.so.${SOVERSION} libmosquitto.a
 	make -C cpp
 	make -C python
 
@@ -29,9 +43,11 @@ clean :
 	make -C cpp clean
 	make -C python clean
 
-libmosquitto.so.${SOVERSION} : mosquitto.o logging_mosq.o memory_mosq.o messages_mosq.o net_mosq.o read_handle.o read_handle_client.o read_handle_shared.o send_mosq.o send_client_mosq.o thread_mosq.o util_mosq.o will_mosq.o
+libmosquitto.so.${SOVERSION} : ${MOSQ_OBJS}
 	$(CC) -shared -Wl,--version-script=linker.version -Wl,-soname,libmosquitto.so.${SOVERSION} $^ -o $@ ${LIBS} -lpthread
 
+libmosquitto.a : ${MOSQ_OBJS}
+	$(AR) cr $@ $^
 mosquitto.o : mosquitto.c mosquitto.h
 	$(CC) $(CFLAGS) -fPIC -c $< -o $@
 
