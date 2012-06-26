@@ -247,6 +247,10 @@ int mqtt3_config_parse_args(mqtt3_config *config, int argc, char *argv[])
 		config->listeners[config->listener_count-1].client_count = 0;
 	}
 
+	/* Default to drop to mosquitto user if we are privileged and no user specified. */
+	if(!config->user){
+		config->user = "mosquitto";
+	}
 	return MOSQ_ERR_SUCCESS;
 }
 
@@ -895,6 +899,9 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 		}
 	}
 #endif
+	/* Default to drop to mosquitto user if no other user specified. This must
+	 * remain here even though it is covered in mqtt3_parse_args() because this
+	 * function may be called on its own. */
 	if(!config->user){
 		config->user = "mosquitto";
 	}
