@@ -37,6 +37,7 @@ Broker:
   outgoing bridged topics should always work.
 - Local bridges are now no longer restricted by local ACLs.
 - Discard publish messages with zero length topics.
+- Drop to "mosquitto" user even if no config file specified.
 
 Client library:
 
