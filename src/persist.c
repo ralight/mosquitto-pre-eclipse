@@ -763,8 +763,8 @@ int mqtt3_db_restore(mosquitto_db *db)
 					read_e(fptr, &i8temp, sizeof(uint8_t)); // shutdown
 					read_e(fptr, &i8temp, sizeof(uint8_t)); // sizeof(dbid_t)
 					if(i8temp != sizeof(dbid_t)){
-						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Incompatible database configuration (dbid size is %d bytes, expected %ld)",
-								i8temp, sizeof(dbid_t));
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Incompatible database configuration (dbid size is %d bytes, expected %lu)",
+								i8temp, (unsigned long)sizeof(dbid_t));
 						fclose(fptr);
 						return 1;
 					}
