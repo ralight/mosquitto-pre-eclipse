@@ -80,6 +80,11 @@ struct _mqtt3_listener {
 	int *socks;
 	int sock_count;
 	int client_count;
+	char *cafile;
+	char *capath;
+	char *certfile;
+	char *keyfile;
+	/* FIXME verification type */
 };
 
 typedef struct {

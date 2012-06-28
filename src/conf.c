@@ -97,6 +97,11 @@ void mqtt3_config_init(mqtt3_config *config)
 	config->default_listener.socks = NULL;
 	config->default_listener.sock_count = 0;
 	config->default_listener.client_count = 0;
+	config->default_listener.cafile = NULL;
+	config->default_listener.capath = NULL;
+	config->default_listener.certfile = NULL;
+	config->default_listener.keyfile = NULL;
+	/* FIXME config->default_listener.verification_type = NULL; */
 	config->listeners = NULL;
 	config->listener_count = 0;
 	config->pid_file = NULL;
@@ -230,21 +235,18 @@ int mqtt3_config_parse_args(mqtt3_config *config, int argc, char *argv[])
 		}else{
 			config->listeners[config->listener_count-1].port = 1883;
 		}
-		if(config->default_listener.host){
-			config->listeners[config->listener_count-1].host = config->default_listener.host;
-		}else{
-			config->listeners[config->listener_count-1].host = NULL;
-		}
-		if(config->default_listener.mount_point){
-			config->listeners[config->listener_count-1].mount_point = config->default_listener.host;
-		}else{
-			config->listeners[config->listener_count-1].mount_point = NULL;
-		}
+		config->listeners[config->listener_count-1].host = config->default_listener.host;
+		config->listeners[config->listener_count-1].mount_point = config->default_listener.host;
 		config->listeners[config->listener_count-1].max_connections = config->default_listener.max_connections;
 		config->listeners[config->listener_count-1].client_count = 0;
 		config->listeners[config->listener_count-1].socks = NULL;
 		config->listeners[config->listener_count-1].sock_count = 0;
 		config->listeners[config->listener_count-1].client_count = 0;
+		config->listeners[config->listener_count-1].cafile = config->default_listener.cafile;
+		config->listeners[config->listener_count-1].capath = config->default_listener.capath;
+		config->listeners[config->listener_count-1].certfile = config->default_listener.certfile;
+		config->listeners[config->listener_count-1].keyfile = config->default_listener.keyfile;
+		/* FIXME config->listeners[config->listener_count-1].verification_type = config->default_listener.verification_type; */
 	}
 
 	/* Default to drop to mosquitto user if we are privileged and no user specified. */
@@ -344,6 +346,27 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 				}else if(!strcmp(token, "bind_address")){
 					if(reload) continue; // Listener not valid for reloading.
 					if(_conf_parse_string(&token, "default listener bind_address", &config->default_listener.host, saveptr)) return MOSQ_ERR_INVAL;
+				}else if(!strcmp(token, "cafile")){
+					if(reload) continue; // Listeners not valid for reloading.
+					if(config->listener_count == 0){
+						if(_conf_parse_string(&token, "cafile", &config->default_listener.cafile, saveptr)) return MOSQ_ERR_INVAL;
+					}else{
+						if(_conf_parse_string(&token, "cafile", &config->listeners[config->listener_count-1].cafile, saveptr)) return MOSQ_ERR_INVAL;
+					}
+				}else if(!strcmp(token, "capath")){
+					if(reload) continue; // Listeners not valid for reloading.
+					if(config->listener_count == 0){
+						if(_conf_parse_string(&token, "capath", &config->default_listener.capath, saveptr)) return MOSQ_ERR_INVAL;
+					}else{
+						if(_conf_parse_string(&token, "capath", &config->listeners[config->listener_count-1].capath, saveptr)) return MOSQ_ERR_INVAL;
+					}
+				}else if(!strcmp(token, "certfile")){
+					if(reload) continue; // Listeners not valid for reloading.
+					if(config->listener_count == 0){
+						if(_conf_parse_string(&token, "certfile", &config->default_listener.certfile, saveptr)) return MOSQ_ERR_INVAL;
+					}else{
+						if(_conf_parse_string(&token, "certfile", &config->listeners[config->listener_count-1].certfile, saveptr)) return MOSQ_ERR_INVAL;
+					}
 				}else if(!strcmp(token, "clientid")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
@@ -456,6 +479,13 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
+				}else if(!strcmp(token, "keyfile")){
+					if(reload) continue; // Listeners not valid for reloading.
+					if(config->listener_count == 0){
+						if(_conf_parse_string(&token, "keyfile", &config->default_listener.keyfile, saveptr)) return MOSQ_ERR_INVAL;
+					}else{
+						if(_conf_parse_string(&token, "keyfile", &config->listeners[config->listener_count-1].keyfile, saveptr)) return MOSQ_ERR_INVAL;
+					}
 				}else if(!strcmp(token, "listener")){
 					if(reload) continue; // Listeners not valid for reloading.
 					token = strtok_r(NULL, " ", &saveptr);
@@ -476,6 +506,11 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 						config->listeners[config->listener_count-1].socks = NULL;
 						config->listeners[config->listener_count-1].sock_count = 0;
 						config->listeners[config->listener_count-1].client_count = 0;
+						config->listeners[config->listener_count-1].cafile = NULL;
+						config->listeners[config->listener_count-1].capath = NULL;
+						config->listeners[config->listener_count-1].certfile = NULL;
+						config->listeners[config->listener_count-1].keyfile = NULL;
+						/* FIXME config->listeners[config->listener_count-1].verification_type = 0; */
 						token = strtok_r(NULL, " ", &saveptr);
 						if(token){
 							config->listeners[config->listener_count-1].host = _mosquitto_strdup(token);
