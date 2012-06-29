@@ -101,7 +101,7 @@ void mqtt3_config_init(mqtt3_config *config)
 	config->default_listener.capath = NULL;
 	config->default_listener.certfile = NULL;
 	config->default_listener.keyfile = NULL;
-	/* FIXME config->default_listener.verification_type = NULL; */
+	config->default_listener.require_certificate = false;
 	config->listeners = NULL;
 	config->listener_count = 0;
 	config->pid_file = NULL;
@@ -246,7 +246,7 @@ int mqtt3_config_parse_args(mqtt3_config *config, int argc, char *argv[])
 		config->listeners[config->listener_count-1].capath = config->default_listener.capath;
 		config->listeners[config->listener_count-1].certfile = config->default_listener.certfile;
 		config->listeners[config->listener_count-1].keyfile = config->default_listener.keyfile;
-		/* FIXME config->listeners[config->listener_count-1].verification_type = config->default_listener.verification_type; */
+		config->listeners[config->listener_count-1].require_certificate = config->default_listener.require_certificate;
 	}
 
 	/* Default to drop to mosquitto user if we are privileged and no user specified. */
@@ -510,7 +510,7 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 						config->listeners[config->listener_count-1].capath = NULL;
 						config->listeners[config->listener_count-1].certfile = NULL;
 						config->listeners[config->listener_count-1].keyfile = NULL;
-						/* FIXME config->listeners[config->listener_count-1].verification_type = 0; */
+						config->listeners[config->listener_count-1].require_certificate = false;
 						token = strtok_r(NULL, " ", &saveptr);
 						if(token){
 							config->listeners[config->listener_count-1].host = _mosquitto_strdup(token);
@@ -711,6 +711,13 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 					config->default_listener.port = port_tmp;
 				}else if(!strcmp(token, "queue_qos0_messages")){
 					if(_conf_parse_bool(&token, token, &config->queue_qos0_messages, saveptr)) return MOSQ_ERR_INVAL;
+				}else if(!strcmp(token, "require_certificate")){
+					if(reload) continue; // Listeners not valid for reloading.
+					if(config->listener_count == 0){
+						if(_conf_parse_bool(&token, "require_certificate", &config->default_listener.require_certificate, saveptr)) return MOSQ_ERR_INVAL;
+					}else{
+						if(_conf_parse_bool(&token, "require_certificate", &config->listeners[config->listener_count-1].require_certificate, saveptr)) return MOSQ_ERR_INVAL;
+					}
 				}else if(!strcmp(token, "retry_interval")){
 					if(_conf_parse_int(&token, "retry_interval", &config->retry_interval, saveptr)) return MOSQ_ERR_INVAL;
 					if(config->retry_interval < 1 || config->retry_interval > 3600){

@@ -44,7 +44,7 @@ clean :
 	make -C python clean
 
 libmosquitto.so.${SOVERSION} : ${MOSQ_OBJS}
-	$(CC) -shared -Wl,--version-script=linker.version -Wl,-soname,libmosquitto.so.${SOVERSION} $^ -o $@ ${LIBS} -lpthread
+	$(CC) -shared -Wl,--version-script=linker.version -Wl,-soname,libmosquitto.so.${SOVERSION} $^ -o $@ ${LIBS} -lpthread -lssl
 
 libmosquitto.a : ${MOSQ_OBJS}
 	$(AR) cr $@ $^

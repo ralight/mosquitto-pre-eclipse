@@ -228,13 +228,10 @@ void mosquitto_destroy(struct mosquitto *mosq)
 	}
 #ifdef WITH_SSL
 	if(mosq->ssl){
-		if(mosq->ssl->ssl){
-			SSL_free(mosq->ssl->ssl);
-		}
-		if(mosq->ssl->ssl_ctx){
-			SSL_CTX_free(mosq->ssl->ssl_ctx);
-		}
-		_mosquitto_free(mosq->ssl);
+		SSL_free(mosq->ssl);
+	}
+	if(mosq->ssl_ctx){
+		SSL_CTX_free(mosq->ssl_ctx);
 	}
 #endif
 	pthread_mutex_destroy(&mosq->callback_mutex);
@@ -425,7 +422,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 	if(mosq->out_packet || mosq->current_out_packet){
 		FD_SET(mosq->sock, &writefds);
 #ifdef WITH_SSL
-	}else if(mosq->ssl && mosq->ssl->want_write){
+	}else if(mosq->ssl && mosq->want_write){
 		FD_SET(mosq->sock, &writefds);
 #endif
 	}

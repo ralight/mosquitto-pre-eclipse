@@ -66,6 +66,10 @@ int mqtt3_socket_accept(struct _mosquitto_db *db, int listensock)
 	struct mosquitto **tmp_contexts = NULL;
 	struct mosquitto *new_context;
 	int opt = 1;
+#ifdef WITH_SSL
+	BIO *bio;
+	int rc;
+#endif
 #ifdef WITH_WRAP
 	struct request_info wrap_req;
 #endif
@@ -139,11 +143,50 @@ int mqtt3_socket_accept(struct _mosquitto_db *db, int listensock)
 			}
 		}
 		new_context->listener->client_count++;
+
+#ifdef WITH_SSL
+		/* SSL init */
+		for(i=0; i<db->config->listener_count; i++){
+			for(j=0; j<db->config->listeners[i].sock_count; j++){
+				if(db->config->listeners[i].socks[j] == listensock){
+					if(db->config->listeners[i].ssl_ctx){
+						new_context->ssl = SSL_new(db->config->listeners[i].ssl_ctx);
+						new_context->want_read = true;
+						new_context->want_write = true;
+						bio = BIO_new_socket(new_sock, BIO_NOCLOSE);
+						SSL_set_bio(new_context->ssl, bio, bio);
+						rc = SSL_accept(new_context->ssl);
+						if(rc != 1){
+							rc = SSL_get_error(new_context->ssl, rc);
+							if(rc == SSL_ERROR_WANT_READ){
+								new_context->want_read = true;
+							}else if(rc == SSL_ERROR_WANT_WRITE){
+								new_context->want_write = true;
+							}
+						}
+					}
+				}
+			}
+		}
+#endif
+
 #ifdef WITH_WRAP
 	}
 #endif
 	return new_sock;
 }
+
+#ifdef WITH_SSL
+static int client_certificate_verify(int preverify_ok, X509_STORE_CTX *ctx)
+{
+	/* FIXME
+	 * check validity of all certificates - dates
+	 * get CN as username if desired.
+	 * check not revoked
+	 */
+	return preverify_ok;
+}
+#endif
 
 /* Creates a socket and listens on port 'port'.
  * Returns 1 on failure
@@ -160,6 +203,9 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 	int ss_opt = 1;
 #else
 	char ss_opt = 1;
+#endif
+#ifdef WITH_SSL
+	int rc;
 #endif
 	char err[256];
 
@@ -240,6 +286,46 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 
 	/* We need to have at least one working socket. */
 	if(listener->sock_count > 0){
+#ifdef WITH_SSL
+		if((listener->cafile || listener->capath) && listener->certfile && listener->keyfile){
+			listener->ssl_ctx = SSL_CTX_new(TLSv1_server_method());
+			if(!listener->ssl_ctx){
+				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create SSL context.");
+				COMPAT_CLOSE(sock);
+				return 1;
+			}
+			rc = SSL_CTX_load_verify_locations(listener->ssl_ctx, listener->cafile, listener->capath);
+			if(rc == 0){
+				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check cafile and/or capath.");
+				COMPAT_CLOSE(sock);
+				return 1;
+			}
+			/* FIXME user data? */
+			if(listener->require_certificate){
+				SSL_CTX_set_verify(listener->ssl_ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, client_certificate_verify);
+			}else{
+				SSL_CTX_set_verify(listener->ssl_ctx, SSL_VERIFY_PEER, client_certificate_verify);
+			}
+			rc = SSL_CTX_use_certificate_file(listener->ssl_ctx, listener->certfile, SSL_FILETYPE_PEM);
+			if(rc != 1){
+				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load server certificate. Check certfile.");
+				COMPAT_CLOSE(sock);
+				return 1;
+			}
+			rc = SSL_CTX_use_PrivateKey_file(listener->ssl_ctx, listener->keyfile, SSL_FILETYPE_PEM);
+			if(rc != 1){
+				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load server key file. Check keyfile.");
+				COMPAT_CLOSE(sock);
+				return 1;
+			}
+			rc = SSL_CTX_check_private_key(listener->ssl_ctx);
+			if(rc != 1){
+				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Server certificate/key are inconsistent.");
+				COMPAT_CLOSE(sock);
+				return 1;
+			}
+		}
+#endif
 		return 0;
 	}else{
 		return 1;
