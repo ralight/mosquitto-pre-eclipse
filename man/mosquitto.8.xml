@@ -394,6 +394,10 @@
 				<manvolnum>7</manvolnum>
 			</citerefentry>
 			<citerefentry>
+				<refentrytitle>mosquitto-ssl</refentrytitle>
+				<manvolnum>7</manvolnum>
+			</citerefentry>
+			<citerefentry>
 				<refentrytitle>mosquitto.conf</refentrytitle>
 				<manvolnum>5</manvolnum>
 			</citerefentry>

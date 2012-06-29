@@ -1,0 +1,85 @@
+<?xml version='1.0' encoding='ISO-8859-1'?>
+<?xml-stylesheet type="text/xsl" href="http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN" "/usr/share/sgml/docbook/xml-dtd-4.4/docbookx.dtd">
+
+<refentry xml:id="mosquitto">
+	<refmeta>
+		<refentrytitle>mosquitto-ssl</refentrytitle>
+		<manvolnum>7</manvolnum>
+	</refmeta>
+
+	<refnamediv>
+		<refname>mosquitto-ssl</refname>
+		<refpurpose>Configure SSL support for Mosquitto</refpurpose>
+	</refnamediv>
+
+	<refsect1>
+		<title>Description</title>
+		<para><command>mosquitto</command> provides SSL support for encrypted
+			network connections and authentication. This manual describes how
+			to create the files needed.</para>
+	</refsect1>
+
+	<refsect1>
+		<title>Certificate Authority</title>
+		<para>Generate a certificate authority certificate and key.</para>
+		<itemizedlist mark="circle">
+			<listitem><para>openssl req -new -x509 -days &lt;duration&gt; -extensions v3_ca -keyout ca.key -out ca.crt</para></listitem>
+		</itemizedlist>
+	</refsect1>
+
+	<refsect1>
+		<title>Server</title>
+		<para>Generate a server key.</para>
+		<itemizedlist mark="circle">
+			<listitem><para>openssl genrsa -des3 -out server.key 8192</para></listitem>
+		</itemizedlist>
+
+		<para>Generate a certificate signing request to send to the CA.</para>
+		<itemizedlist mark="circle">
+			<listitem><para>openssl req -out server.csr -key server.key -new</para></listitem>
+		</itemizedlist>
+
+		<para>Send the CSR to the CA, or sign it with your CA key:</para>
+		<itemizedlist mark="circle">
+			<listitem><para>openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days &lt;duration&gt;</para></listitem>
+		</itemizedlist>
+	</refsect1>
+
+	<refsect1>
+		<title>Client</title>
+		<para>Generate a client key.</para>
+		<itemizedlist mark="circle">
+			<listitem><para>openssl genrsa -des3 -out client.key 8192</para></listitem>
+		</itemizedlist>
+
+		<para>Generate a certificate signing request to send to the CA.</para>
+		<itemizedlist mark="circle">
+			<listitem><para>openssl req -out client.csr -key client.key -new</para></listitem>
+		</itemizedlist>
+
+		<para>Send the CSR to the CA, or sign it with your CA key:</para>
+		<itemizedlist mark="circle">
+			<listitem><para>openssl x509 -req -in client.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out client.crt -days &lt;duration&gt;</para></listitem>
+		</itemizedlist>
+	</refsect1>
+
+	<refsect1>
+		<title>See Also</title>
+		<para>
+			<citerefentry>
+				<refentrytitle>mosquitto</refentrytitle>
+				<manvolnum>8</manvolnum>
+			</citerefentry>
+			<citerefentry>
+				<refentrytitle>mosquitto.conf</refentrytitle>
+				<manvolnum>8</manvolnum>
+			</citerefentry>
+		</para>
+	</refsect1>
+
+	<refsect1>
+		<title>Author</title>
+		<para>Roger Light <email>roger@atchoo.org</email></para>
+	</refsect1>
+</refentry>
