@@ -147,7 +147,18 @@ int _mosquitto_socket_close(struct mosquitto *mosq)
 	int rc = 0;
 
 	assert(mosq);
-	/* FIXME - need to shutdown SSL here. */
+#ifdef WITH_SSL
+	if(mosq->ssl){
+		SSL_shutdown(mosq->ssl);
+		SSL_free(mosq->ssl);
+		mosq->ssl = NULL;
+	}
+	if(mosq->ssl_ctx){
+		SSL_CTX_free(mosq->ssl_ctx);
+		mosq->ssl_ctx = NULL;
+	}
+#endif
+
 	if(mosq->sock != INVALID_SOCKET){
 		rc = COMPAT_CLOSE(mosq->sock);
 		mosq->sock = INVALID_SOCKET;
@@ -172,6 +183,7 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 #endif
 #ifdef WITH_SSL
 	int ret;
+	BIO *bio;
 #endif
 
 	if(!mosq || !host || !port) return MOSQ_ERR_INVAL;
@@ -210,20 +222,20 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 	freeaddrinfo(ainfo);
 
 #ifdef WITH_SSL
-	if(mosq->ssl){
-		mosq->ssl->bio = BIO_new_socket(sock, BIO_NOCLOSE);
-		if(!mosq->ssl->bio){
+	/* FIXME if(mosq->ssl){ */
+		bio = BIO_new_socket(sock, BIO_NOCLOSE);
+		if(!bio){
 			COMPAT_CLOSE(sock);
 			return MOSQ_ERR_SSL;
 		}
-		SSL_set_bio(mosq->ssl->ssl, mosq->ssl->bio, mosq->ssl->bio);
+		SSL_set_bio(mosq->ssl, bio, bio);
 
-		ret = SSL_connect(mosq->ssl->ssl);
+		ret = SSL_connect(mosq->ssl);
 		if(ret != 1){
 			COMPAT_CLOSE(sock);
 			return MOSQ_ERR_SSL;
 		}
-	}
+	/* FIXME } */
 #endif
 
 	/* Set non-blocking */
@@ -232,8 +244,13 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 	if(opt == -1 || fcntl(sock, F_SETFL, opt | O_NONBLOCK) == -1){
 #ifdef WITH_SSL
 		if(mosq->ssl){
-			_mosquitto_free(mosq->ssl);
+			SSL_shutdown(mosq->ssl);
+			SSL_free(mosq->ssl);
 			mosq->ssl = NULL;
+		}
+		if(mosq->ssl_ctx){
+			SSL_CTX_free(mosq->ssl_ctx);
+			mosq->ssl_ctx = NULL;
 		}
 #endif
 		COMPAT_CLOSE(sock);
@@ -244,8 +261,13 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 		errno = WSAGetLastError();
 #ifdef WITH_SSL
 		if(mosq->ssl){
-			_mosquitto_free(mosq->ssl);
+			SSL_shutdown(mosq->ssl);
+			SSL_free(mosq->ssl);
 			mosq->ssl = NULL;
+		}
+		if(mosq->ssl_ctx){
+			SSL_CTX_free(mosq->ssl_ctx);
+			mosq->ssl_ctx = NULL;
 		}
 #endif
 		COMPAT_CLOSE(sock);
@@ -359,16 +381,16 @@ ssize_t _mosquitto_net_read(struct mosquitto *mosq, void *buf, size_t count)
 	assert(mosq);
 #ifdef WITH_SSL
 	if(mosq->ssl){
-		ret = SSL_read(mosq->ssl->ssl, buf, count);
-		if(ret < 0){
-			err = SSL_get_error(mosq->ssl->ssl, ret);
+		ret = SSL_read(mosq->ssl, buf, count);
+		if(ret <= 0){
+			err = SSL_get_error(mosq->ssl, ret);
 			if(err == SSL_ERROR_WANT_READ){
 				ret = -1;
-				mosq->ssl->want_read = true;
+				mosq->want_read = true;
 				errno = EAGAIN;
 			}else if(err == SSL_ERROR_WANT_WRITE){
 				ret = -1;
-				mosq->ssl->want_write = true;
+				mosq->want_write = true;
 				errno = EAGAIN;
 			}
 		}
@@ -399,15 +421,15 @@ ssize_t _mosquitto_net_write(struct mosquitto *mosq, void *buf, size_t count)
 
 #ifdef WITH_SSL
 	if(mosq->ssl){
-		ret = SSL_write(mosq->ssl->ssl, buf, count);
+		ret = SSL_write(mosq->ssl, buf, count);
 		if(ret < 0){
-			err = SSL_get_error(mosq->ssl->ssl, ret);
+			err = SSL_get_error(mosq->ssl, ret);
 			if(err == SSL_ERROR_WANT_READ){
 				ret = -1;
-				mosq->ssl->want_read = true;
+				mosq->want_read = true;
 			}else if(err == SSL_ERROR_WANT_WRITE){
 				ret = -1;
-				mosq->ssl->want_write = true;
+				mosq->want_write = true;
 			}
 		}
 		return (ssize_t )ret;

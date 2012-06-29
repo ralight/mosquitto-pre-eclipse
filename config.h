@@ -66,6 +66,8 @@
 #define WITH_THREADING
 #endif
 
+#define WITH_SSL
+
 #endif
 
 /* ============================================================

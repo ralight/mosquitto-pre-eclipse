@@ -32,6 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <config.h>
 
+#include <openssl/ssl.h>
 #include <time.h>
 
 #include <mosquitto_internal.h>
@@ -84,7 +85,8 @@ struct _mqtt3_listener {
 	char *capath;
 	char *certfile;
 	char *keyfile;
-	/* FIXME verification type */
+	bool require_certificate;
+	SSL_CTX *ssl_ctx;
 };
 
 typedef struct {
