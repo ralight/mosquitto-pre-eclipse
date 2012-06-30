@@ -124,7 +124,6 @@ int mosquitto_main_loop(mosquitto_db *db, int *listensock, int listensock_count,
 							pollfds[pollfd_index].events = POLLIN | POLLRDHUP;
 							pollfds[pollfd_index].revents = 0;
 							if(db->contexts[i]->out_packet || db->contexts[i]->want_write){
-								printf("ww\n");
 								pollfds[pollfd_index].events |= POLLOUT;
 								db->contexts[i]->want_write = false;
 							}
