@@ -29,6 +29,7 @@
 This is an MQTT v3.1 client module. MQTT is a lightweight pub/sub messaging
 protocol that is easy to implement and suitable for low powered devices.
 """
+import random
 import select
 import socket
 import ssl
@@ -470,7 +471,11 @@ class Mosquitto:
             wlist = []
 
         rlist = [self.socket()]
-        socklist = select.select(rlist, wlist, [], timeout)
+        try:
+            socklist = select.select(rlist, wlist, [], timeout)
+        except TypeError:
+            # Socket isn't correct type, in likelihood connection is lost
+            return MOSQ_ERR_CONN_LOST
 
         if self.socket() in socklist[0]:
             rc = self.loop_read(max_packets)
