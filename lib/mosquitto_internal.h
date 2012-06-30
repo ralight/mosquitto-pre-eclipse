@@ -136,9 +136,9 @@ struct mosquitto {
 #ifdef WITH_SSL
 	SSL *ssl;
 	SSL_CTX *ssl_ctx;
+#endif
 	bool want_read;
 	bool want_write;
-#endif
 #ifdef WITH_THREADING
 	pthread_mutex_t callback_mutex;
 	pthread_mutex_t log_callback_mutex;
