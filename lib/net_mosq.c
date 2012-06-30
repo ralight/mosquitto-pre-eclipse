@@ -77,6 +77,7 @@ void _mosquitto_net_init(void)
 #endif
 
 #ifdef WITH_SSL
+	SSL_load_error_strings();
 	SSL_library_init();
 	OpenSSL_add_all_algorithms();
 #endif
