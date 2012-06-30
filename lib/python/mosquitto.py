@@ -259,14 +259,14 @@ class Mosquitto:
         if clean_session == False and (client_id == "" or client_id == None):
             raise ValueError('A client id must be provided if clean session is False.')
 
-        self._obj = None
+        self._obj = obj
         self._sock = None
         self._keepalive = 60
         self._message_retry = 20
         self._last_retry_check = 0
         self._clean_session = clean_session
         if client_id == "":
-            self._id = "mosq/" + "".join(random.choice("0123456789ADCDEF") for x in range(23-5))
+            self._client_id = "mosq/" + "".join(random.choice("0123456789ADCDEF") for x in range(23-5))
         else:
             self._client_id = client_id
 
