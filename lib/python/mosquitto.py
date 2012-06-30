@@ -887,14 +887,13 @@ class Mosquitto:
         if self._in_packet.command == 0:
             try:
                 if self._ssl:
-                    try:
-                        command = self._ssl.read(1)
-                    except AttributeError:
-                        return MOSQ_ERR_SUCCESS
+                    command = self._ssl.read(1)
                 else:
                     command = self._sock.recv(1)
             except socket.error as err:
                 (msg) = err
+                if self._ssl and (msg.errno == ssl.SSL_ERROR_WANT_READ or msg.errno == ssl.SSL_ERROR_WANT_WRITE):
+                    return MOSQ_ERR_AGAIN
                 if msg.errno == 11:
                     return MOSQ_ERR_AGAIN
                 print(msg)
@@ -917,6 +916,8 @@ class Mosquitto:
                         byte = self._sock.recv(1)
                 except socket.error as err:
                     (msg) = err
+                    if self._ssl and (msg.errno == ssl.SSL_ERROR_WANT_READ or msg.errno == ssl.SSL_ERROR_WANT_WRITE):
+                        return MOSQ_ERR_AGAIN
                     if msg.errno == 11:
                         return MOSQ_ERR_AGAIN
                     print(msg)
@@ -947,6 +948,8 @@ class Mosquitto:
                     data = self._sock.recv(self._in_packet.to_process)
             except socket.error as err:
                 (msg) = err
+                if self._ssl and (msg.errno == ssl.SSL_ERROR_WANT_READ or msg.errno == ssl.SSL_ERROR_WANT_WRITE):
+                    return MOSQ_ERR_AGAIN
                 if msg.errno == 11:
                     return MOSQ_ERR_AGAIN
                 print(msg)
