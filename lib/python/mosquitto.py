@@ -1529,16 +1529,21 @@ class Mosquitto:
         self._easy_log(MOSQ_LOG_DEBUG, "Received "+cmd+" (Mid: "+str(mid)+")")
         
         for i in range(len(self._messages)):
-            if self._messages[i].direction == mosq_md_out and self._messages[i].mid == mid:
-                # Only inform the client the message has been sent once.
-                self._callback_mutex.acquire()
-                if self.on_publish:
-                    self._in_callback = True
-                    self.on_publish(self, self._obj, mid)
-                    self._in_callback = False
+            try:
+                if self._messages[i].direction == mosq_md_out and self._messages[i].mid == mid:
+                    # Only inform the client the message has been sent once.
+                    self._callback_mutex.acquire()
+                    if self.on_publish:
+                        self._in_callback = True
+                        self.on_publish(self, self._obj, mid)
+                        self._in_callback = False
 
-                self._callback_mutex.release()
-                self._messages.pop(i)
+                    self._callback_mutex.release()
+                    self._messages.pop(i)
+            except IndexError:
+                # Have removed item so i>count.
+                # Not really an error.
+                pass
 
         return MOSQ_ERR_SUCCESS
 
