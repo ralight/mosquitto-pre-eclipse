@@ -236,7 +236,7 @@ int mqtt3_config_parse_args(mqtt3_config *config, int argc, char *argv[])
 			config->listeners[config->listener_count-1].port = 1883;
 		}
 		config->listeners[config->listener_count-1].host = config->default_listener.host;
-		config->listeners[config->listener_count-1].mount_point = config->default_listener.host;
+		config->listeners[config->listener_count-1].mount_point = config->default_listener.mount_point;
 		config->listeners[config->listener_count-1].max_connections = config->default_listener.max_connections;
 		config->listeners[config->listener_count-1].client_count = 0;
 		config->listeners[config->listener_count-1].socks = NULL;
@@ -247,6 +247,7 @@ int mqtt3_config_parse_args(mqtt3_config *config, int argc, char *argv[])
 		config->listeners[config->listener_count-1].certfile = config->default_listener.certfile;
 		config->listeners[config->listener_count-1].keyfile = config->default_listener.keyfile;
 		config->listeners[config->listener_count-1].require_certificate = config->default_listener.require_certificate;
+		config->listeners[config->listener_count-1].ssl_ctx = NULL;
 	}
 
 	/* Default to drop to mosquitto user if we are privileged and no user specified. */
@@ -511,6 +512,7 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 						config->listeners[config->listener_count-1].certfile = NULL;
 						config->listeners[config->listener_count-1].keyfile = NULL;
 						config->listeners[config->listener_count-1].require_certificate = false;
+						config->listeners[config->listener_count-1].ssl_ctx = NULL;
 						token = strtok_r(NULL, " ", &saveptr);
 						if(token){
 							config->listeners[config->listener_count-1].host = _mosquitto_strdup(token);
