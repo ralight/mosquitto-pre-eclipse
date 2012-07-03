@@ -102,6 +102,7 @@ void mqtt3_config_init(mqtt3_config *config)
 	config->default_listener.certfile = NULL;
 	config->default_listener.keyfile = NULL;
 	config->default_listener.require_certificate = false;
+	config->default_listener.crlfile = NULL;
 	config->listeners = NULL;
 	config->listener_count = 0;
 	config->pid_file = NULL;
@@ -248,6 +249,7 @@ int mqtt3_config_parse_args(mqtt3_config *config, int argc, char *argv[])
 		config->listeners[config->listener_count-1].keyfile = config->default_listener.keyfile;
 		config->listeners[config->listener_count-1].require_certificate = config->default_listener.require_certificate;
 		config->listeners[config->listener_count-1].ssl_ctx = NULL;
+		config->listeners[config->listener_count-1].crlfile = config->default_listener.crlfile;
 	}
 
 	/* Default to drop to mosquitto user if we are privileged and no user specified. */
@@ -450,6 +452,13 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 #endif
 				}else if(!strcmp(token, "connection_messages")){
 					if(_conf_parse_bool(&token, token, &config->connection_messages, saveptr)) return MOSQ_ERR_INVAL;
+				}else if(!strcmp(token, "crlfile")){
+					if(reload) continue; // Listeners not valid for reloading.
+					if(config->listener_count == 0){
+						if(_conf_parse_string(&token, "crlfile", &config->default_listener.crlfile, saveptr)) return MOSQ_ERR_INVAL;
+					}else{
+						if(_conf_parse_string(&token, "crlfile", &config->listeners[config->listener_count-1].crlfile, saveptr)) return MOSQ_ERR_INVAL;
+					}
 				}else if(!strcmp(token, "idle_timeout")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
@@ -513,6 +522,7 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 						config->listeners[config->listener_count-1].keyfile = NULL;
 						config->listeners[config->listener_count-1].require_certificate = false;
 						config->listeners[config->listener_count-1].ssl_ctx = NULL;
+						config->listeners[config->listener_count-1].crlfile = NULL;
 						token = strtok_r(NULL, " ", &saveptr);
 						if(token){
 							config->listeners[config->listener_count-1].host = _mosquitto_strdup(token);
