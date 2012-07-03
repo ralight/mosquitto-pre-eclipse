@@ -32,6 +32,11 @@ test :
 	./05-clean-session-qos1.py 
 	./06-bridge-reconnect-local-out.py
 	./07-will-qos0.py
+	./08-ssl-connect-no-auth.py
+	./08-ssl-connect-no-auth-wrong-ca.py
+	./08-ssl-connect-cert-auth.py
+	./08-ssl-connect-cert-auth-without.py
+	#./08-ssl-connect-cert-auth-expired.py
 
 # Tests for with WITH_STRICT_PROTOCOL defined
 strict-test : 
