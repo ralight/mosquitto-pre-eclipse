@@ -245,7 +245,10 @@ int mqtt3_db_message_insert(mosquitto_db *db, struct mosquitto *context, uint16_
 	assert(stored);
 	if(!context) return MOSQ_ERR_INVAL;
 
-	if(stored->dest_ids){
+	/* Check whether we've already sent this message to this client
+	 * for outgoing messages only.
+	 */
+	if(dir == mosq_md_out && stored->dest_ids){
 		for(i=0; i<stored->dest_id_count; i++){
 			if(!strcmp(stored->dest_ids[i], context->id)){
 				/* We have already sent this message to this client. */
@@ -338,17 +341,21 @@ int mqtt3_db_message_insert(mosquitto_db *db, struct mosquitto *context, uint16_
 		context->msgs = msg;
 	}
 
-	/* Record which client ids this message has been sent to so we can avoid duplicates. */
-	dest_ids = _mosquitto_realloc(stored->dest_ids, sizeof(char *)*(stored->dest_id_count+1));
-	if(dest_ids){
-		stored->dest_ids = dest_ids;
-		stored->dest_id_count++;
-		stored->dest_ids[stored->dest_id_count-1] = _mosquitto_strdup(context->id);
-		if(!stored->dest_ids[stored->dest_id_count-1]){
+	if(dir == mosq_md_out){
+		/* Record which client ids this message has been sent to so we can avoid duplicates.
+		 * Outgoing messages only.
+		 */
+		dest_ids = _mosquitto_realloc(stored->dest_ids, sizeof(char *)*(stored->dest_id_count+1));
+		if(dest_ids){
+			stored->dest_ids = dest_ids;
+			stored->dest_id_count++;
+			stored->dest_ids[stored->dest_id_count-1] = _mosquitto_strdup(context->id);
+			if(!stored->dest_ids[stored->dest_id_count-1]){
+				return MOSQ_ERR_NOMEM;
+			}
+		}else{
 			return MOSQ_ERR_NOMEM;
 		}
-	}else{
-		return MOSQ_ERR_NOMEM;
 	}
 #ifdef WITH_BRIDGE
 	msg_count++; /* We've just added a message to the list */
