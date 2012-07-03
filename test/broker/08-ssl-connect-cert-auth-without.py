@@ -25,7 +25,10 @@ try:
     ssock.connect(("localhost", 1888))
 except ssl.SSLError as err:
     if err.errno == 1:
-        exit(0)
+        rc = 0
 
-exit(1)
+broker.terminate()
+broker.wait()
+
+exit(rc)
 
