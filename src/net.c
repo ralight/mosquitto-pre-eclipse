@@ -206,6 +206,8 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 #endif
 #ifdef WITH_SSL
 	int rc;
+	X509_STORE *store;
+	X509_LOOKUP *lookup;
 #endif
 	char err[256];
 
@@ -323,6 +325,23 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Server certificate/key are inconsistent.");
 				COMPAT_CLOSE(sock);
 				return 1;
+			}
+			/* Load CRLs if they exist. */
+			if(listener->crlfile){
+				store = SSL_CTX_get_cert_store(listener->ssl_ctx);
+				if(!store){
+					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to obtain SSL store.");
+					COMPAT_CLOSE(sock);
+					return 1;
+				}
+				lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
+				rc = X509_load_crl_file(lookup, listener->crlfile, X509_FILETYPE_PEM);
+				if(rc != 1){
+					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load certificate revocation file. Check crlfile.");
+					COMPAT_CLOSE(sock);
+					return 1;
+				}
+				X509_STORE_set_flags(store, X509_V_FLAG_CRL_CHECK);
 			}
 		}
 #endif

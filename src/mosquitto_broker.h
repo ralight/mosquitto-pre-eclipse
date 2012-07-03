@@ -87,6 +87,7 @@ struct _mqtt3_listener {
 	char *keyfile;
 	bool require_certificate;
 	SSL_CTX *ssl_ctx;
+	char *crlfile;
 };
 
 typedef struct {
