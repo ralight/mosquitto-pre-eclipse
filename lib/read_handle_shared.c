@@ -163,7 +163,10 @@ int _mosquitto_handle_pubrel(struct _mosquitto_db *db, struct mosquitto *mosq)
 #ifdef WITH_BROKER
 	_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Received PUBREL from %s (Mid: %d)", mosq->id, mid);
 
-	mqtt3_db_message_release(db, mosq, mid, mosq_md_in);
+	if(mqtt3_db_message_release(db, mosq, mid, mosq_md_in)){
+		/* Message not found. */
+		return MOSQ_ERR_SUCCESS;
+	}
 #else
 	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Received PUBREL (Mid: %d)", mid);
 
