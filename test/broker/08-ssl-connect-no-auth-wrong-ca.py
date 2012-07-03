@@ -24,12 +24,9 @@ try:
     ssock.connect(("localhost", 1888))
 except ssl.SSLError as err:
     if err.errno == 1:
-        broker.terminate()
-        exit(0)
-    else:
-        broker.terminate()
-        raise ValueError(err.errno)
+        rc = 0
 
 broker.terminate()
-exit(1)
+broker.wait
+exit(rc)
 
