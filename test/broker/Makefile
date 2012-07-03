@@ -15,6 +15,9 @@ test :
 	./02-subscribe-qos0.py
 	./02-subscribe-qos1.py
 	./02-subscribe-qos2.py
+	./02-subpub-qos0.py
+	./02-subpub-qos1.py
+	./02-subpub-qos2.py
 	./02-unsubscribe-qos0.py
 	./02-unsubscribe-qos1.py
 	./02-unsubscribe-qos2.py
