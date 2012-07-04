@@ -103,6 +103,7 @@ void mqtt3_config_init(mqtt3_config *config)
 	config->default_listener.keyfile = NULL;
 	config->default_listener.require_certificate = false;
 	config->default_listener.crlfile = NULL;
+	config->default_listener.use_cn_as_username = false;
 	config->listeners = NULL;
 	config->listener_count = 0;
 	config->pid_file = NULL;
@@ -250,6 +251,7 @@ int mqtt3_config_parse_args(mqtt3_config *config, int argc, char *argv[])
 		config->listeners[config->listener_count-1].require_certificate = config->default_listener.require_certificate;
 		config->listeners[config->listener_count-1].ssl_ctx = NULL;
 		config->listeners[config->listener_count-1].crlfile = config->default_listener.crlfile;
+		config->listeners[config->listener_count-1].use_cn_as_username = config->default_listener.use_cn_as_username;
 	}
 
 	/* Default to drop to mosquitto user if we are privileged and no user specified. */
@@ -854,6 +856,13 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
+				}else if(!strcmp(token, "use_cn_as_username")){
+					if(reload) continue; // Listeners not valid for reloading.
+					if(config->listener_count == 0){
+						if(_conf_parse_bool(&token, "use_cn_as_username", &config->default_listener.use_cn_as_username, saveptr)) return MOSQ_ERR_INVAL;
+					}else{
+						if(_conf_parse_bool(&token, "use_cn_as_username", &config->listeners[config->listener_count-1].use_cn_as_username, saveptr)) return MOSQ_ERR_INVAL;
+					}
 				}else if(!strcmp(token, "user")){
 					if(reload) continue; // Drop privileges user not valid for reloading.
 					if(_conf_parse_string(&token, "user", &config->user, saveptr)) return MOSQ_ERR_INVAL;

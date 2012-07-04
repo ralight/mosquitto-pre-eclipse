@@ -179,11 +179,7 @@ int mqtt3_socket_accept(struct _mosquitto_db *db, int listensock)
 #ifdef WITH_SSL
 static int client_certificate_verify(int preverify_ok, X509_STORE_CTX *ctx)
 {
-	/* FIXME
-	 * check validity of all certificates - dates
-	 * get CN as username if desired.
-	 * check not revoked
-	 */
+	/* Preverify should check expiry, revocation. */
 	return preverify_ok;
 }
 #endif
