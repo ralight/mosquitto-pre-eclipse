@@ -36,7 +36,7 @@ test :
 	./08-ssl-connect-no-auth-wrong-ca.py
 	./08-ssl-connect-cert-auth.py
 	./08-ssl-connect-cert-auth-without.py
-	#./08-ssl-connect-cert-auth-expired.py
+	./08-ssl-connect-cert-auth-expired.py
 	./08-ssl-connect-cert-auth-revoked.py
 
 # Tests for with WITH_STRICT_PROTOCOL defined
