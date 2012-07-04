@@ -29,5 +29,6 @@ test/msgsps_sub.dat
 
 lib/cpp/libmosquittopp.so*
 lib/libmosquitto.so*
+lib/libmosquitto.a
 
 build/
