@@ -249,7 +249,8 @@ int mqtt3_db_message_insert(mosquitto_db *db, struct mosquitto *context, uint16_
 	 * for outgoing messages only.
 	 * If retain==true then this is a stale retained message and so should be
 	 * sent regardless. FIXME - this does mean retained messages will received
-	 * multiple times for overlapping subscriptions.
+	 * multiple times for overlapping subscriptions, although this is only the
+	 * case for SUBSCRIPTION with multiple subs in so is a minor concern.
 	 */
 	if(dir == mosq_md_out && retain == false && stored->dest_ids){
 		for(i=0; i<stored->dest_id_count; i++){
@@ -349,7 +350,8 @@ int mqtt3_db_message_insert(mosquitto_db *db, struct mosquitto *context, uint16_
 		 * Outgoing messages only.
 		 * If retain==true then this is a stale retained message and so should be
 		 * sent regardless. FIXME - this does mean retained messages will received
-		 * multiple times for overlapping subscriptions.
+		 * multiple times for overlapping subscriptions, although this is only the
+		 * case for SUBSCRIPTION with multiple subs in so is a minor concern.
 		 */
 		dest_ids = _mosquitto_realloc(stored->dest_ids, sizeof(char *)*(stored->dest_id_count+1));
 		if(dest_ids){
