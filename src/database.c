@@ -247,8 +247,11 @@ int mqtt3_db_message_insert(mosquitto_db *db, struct mosquitto *context, uint16_
 
 	/* Check whether we've already sent this message to this client
 	 * for outgoing messages only.
+	 * If retain==true then this is a stale retained message and so should be
+	 * sent regardless. FIXME - this does mean retained messages will received
+	 * multiple times for overlapping subscriptions.
 	 */
-	if(dir == mosq_md_out && stored->dest_ids){
+	if(dir == mosq_md_out && retain == false && stored->dest_ids){
 		for(i=0; i<stored->dest_id_count; i++){
 			if(!strcmp(stored->dest_ids[i], context->id)){
 				/* We have already sent this message to this client. */
@@ -341,9 +344,12 @@ int mqtt3_db_message_insert(mosquitto_db *db, struct mosquitto *context, uint16_
 		context->msgs = msg;
 	}
 
-	if(dir == mosq_md_out){
+	if(dir == mosq_md_out && retain == false){
 		/* Record which client ids this message has been sent to so we can avoid duplicates.
 		 * Outgoing messages only.
+		 * If retain==true then this is a stale retained message and so should be
+		 * sent regardless. FIXME - this does mean retained messages will received
+		 * multiple times for overlapping subscriptions.
 		 */
 		dest_ids = _mosquitto_realloc(stored->dest_ids, sizeof(char *)*(stored->dest_id_count+1));
 		if(dest_ids){
