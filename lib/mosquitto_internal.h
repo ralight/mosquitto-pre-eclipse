@@ -51,6 +51,19 @@ POSSIBILITY OF SUCH DAMAGE.
 #  include <dummypthread.h>
 #endif
 
+#ifdef WIN32
+#	if _MSC_VER < 1600
+		typedef unsigned char uint8_t;
+		typedef unsigned short uint16_t;
+		typedef unsigned int uint32_t;
+		typedef unsigned long long uint64_t;
+#	else
+#		include <stdint.h>
+#	endif
+#else
+#	include <stdint.h>
+#endif
+
 #include <mosquitto.h>
 #ifdef WITH_BROKER
 struct _mosquitto_client_msg;
@@ -99,16 +112,6 @@ struct mosquitto_message_all{
 	struct mosquitto_message msg;
 };
 
-#ifdef WITH_SSL
-struct _mosquitto_ssl{
-	SSL_CTX *ssl_ctx;
-	SSL *ssl;
-	BIO *bio;
-	bool want_read;
-	bool want_write;
-};
-#endif
-
 struct mosquitto {
 #ifndef WIN32
 	int sock;
@@ -131,10 +134,14 @@ struct mosquitto {
 	struct _mosquitto_packet *out_packet;
 	struct mosquitto_message *will;
 #ifdef WITH_SSL
-	struct _mosquitto_ssl *ssl;
+	SSL *ssl;
+	SSL_CTX *ssl_ctx;
 #endif
+	bool want_read;
+	bool want_write;
 #ifdef WITH_THREADING
 	pthread_mutex_t callback_mutex;
+	pthread_mutex_t log_callback_mutex;
 	pthread_mutex_t msgtime_mutex;
 	pthread_mutex_t out_packet_mutex;
 	pthread_mutex_t current_out_packet_mutex;
@@ -142,6 +149,7 @@ struct mosquitto {
 	pthread_t thread_id;
 #endif
 #ifdef WITH_BROKER
+	bool is_bridge;
 	struct _mqtt3_bridge *bridge;
 	struct _mosquitto_client_msg *msgs;
 	struct _mosquitto_acl_user *acl_list;
@@ -154,14 +162,13 @@ struct mosquitto {
 	unsigned int message_retry;
 	time_t last_retry_check;
 	struct mosquitto_message_all *messages;
-	int log_priorities;
-	int log_destinations;
 	void (*on_connect)(struct mosquitto *, void *obj, int rc);
 	void (*on_disconnect)(struct mosquitto *, void *obj, int rc);
-	void (*on_publish)(struct mosquitto *, void *obj, uint16_t mid);
+	void (*on_publish)(struct mosquitto *, void *obj, int mid);
 	void (*on_message)(struct mosquitto *, void *obj, const struct mosquitto_message *message);
-	void (*on_subscribe)(struct mosquitto *, void *obj, uint16_t mid, int qos_count, const uint8_t *granted_qos);
-	void (*on_unsubscribe)(struct mosquitto *, void *obj, uint16_t mid);
+	void (*on_subscribe)(struct mosquitto *, void *obj, int mid, int qos_count, const int *granted_qos);
+	void (*on_unsubscribe)(struct mosquitto *, void *obj, int mid);
+	void (*on_log)(struct mosquitto *, void *obj, int level, const char *str);
 	//void (*on_error)();
 	char *host;
 	int port;

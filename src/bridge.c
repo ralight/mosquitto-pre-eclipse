@@ -48,57 +48,78 @@ int mqtt3_bridge_new(mosquitto_db *db, struct _mqtt3_bridge *bridge)
 {
 	int i;
 	struct mosquitto *new_context = NULL;
+	int null_index = -1;
 	struct mosquitto **tmp_contexts;
 	char hostname[256];
 	int len;
+	char *id;
 
 	assert(db);
 	assert(bridge);
 
-	new_context = mqtt3_context_init(-1);
-	if(!new_context){
-		return MOSQ_ERR_NOMEM;
-	}
-	new_context->bridge = bridge;
-	for(i=0; i<db->context_count; i++){
-		if(db->contexts[i] == NULL){
-			db->contexts[i] = new_context;
-			break;
-		}
-	}
-	if(i==db->context_count){
-		db->context_count++;
-		tmp_contexts = _mosquitto_realloc(db->contexts, sizeof(struct mosquitto*)*db->context_count);
-		if(tmp_contexts){
-			db->contexts = tmp_contexts;
-			db->contexts[db->context_count-1] = new_context;
-		}else{
-			_mosquitto_free(new_context);
-			return MOSQ_ERR_NOMEM;
-		}
-	}
-
-	/* FIXME - need to check that this name isn't already in use. */
 	if(bridge->clientid){
-		new_context->id = _mosquitto_strdup(bridge->clientid);
+		id = _mosquitto_strdup(bridge->clientid);
 	}else{
 		if(!gethostname(hostname, 256)){
 			len = strlen(hostname) + strlen(bridge->name) + 2;
-			new_context->id = _mosquitto_malloc(len);
-			if(!new_context->id){
+			id = _mosquitto_malloc(len);
+			if(!id){
 				return MOSQ_ERR_NOMEM;
 			}
-			snprintf(new_context->id, len, "%s.%s", hostname, bridge->name);
+			snprintf(id, len, "%s.%s", hostname, bridge->name);
 		}else{
 			return 1;
 		}
 	}
-	if(!new_context->id){
-		_mosquitto_free(new_context);
+	if(!id){
 		return MOSQ_ERR_NOMEM;
 	}
+
+	/* Search for existing id (possible from persistent db) and also look for a
+	 * gap in the db->contexts[] array in case the id isn't found. */
+	for(i=0; i<db->context_count; i++){
+		if(db->contexts[i]){
+			if(!strcmp(db->contexts[i]->id, id)){
+				new_context = db->contexts[i];
+				break;
+			}
+		}else if(db->contexts[i] == NULL && null_index == -1){
+			i = null_index;
+			break;
+		}
+	}
+	if(!new_context){
+		/* id wasn't found, so generate a new context */
+		new_context = mqtt3_context_init(-1);
+		if(!new_context){
+			return MOSQ_ERR_NOMEM;
+		}
+		if(null_index == -1){
+			/* There were no gaps in the db->contexts[] array, so need to append. */
+			db->context_count++;
+			tmp_contexts = _mosquitto_realloc(db->contexts, sizeof(struct mosquitto*)*db->context_count);
+			if(tmp_contexts){
+				db->contexts = tmp_contexts;
+				db->contexts[db->context_count-1] = new_context;
+			}else{
+				_mosquitto_free(new_context);
+				return MOSQ_ERR_NOMEM;
+			}
+		}else{
+			db->contexts[null_index] = new_context;
+		}
+		new_context->id = id;
+	}else{
+		/* id was found, so context->id already in memory. */
+		_mosquitto_free(id);
+	}
+	new_context->bridge = bridge;
+	new_context->is_bridge = true;
+
 	new_context->username = new_context->bridge->username;
 	new_context->password = new_context->bridge->password;
+
+	bridge->try_private_accepted = true;
 
 	return mqtt3_bridge_connect(db, new_context);
 }
@@ -120,11 +141,17 @@ int mqtt3_bridge_connect(mosquitto_db *db, struct mosquitto *context)
 	context->keepalive = context->bridge->keepalive;
 	context->clean_session = context->bridge->clean_session;
 	context->in_packet.payload = NULL;
+	context->ping_t = 0;
 	mqtt3_bridge_packet_cleanup(context);
 
 	for(i=0; i<context->bridge->topic_count; i++){
 		if(context->bridge->topics[i].direction == bd_out || context->bridge->topics[i].direction == bd_both){
 			if(mqtt3_sub_add(context, context->bridge->topics[i].topic, context->bridge->topics[i].qos, &db->subs)) return 1;
+		}else{
+			/* direction = inwards only. This means we should not be subscribed
+			 * to the topic. It is possible that we used to be subscribed to
+			 * this topic so unsubscribe. */
+			mqtt3_sub_remove(context, context->bridge->topics[i].topic, &db->subs);
 		}
 	}
 
@@ -136,20 +163,28 @@ int mqtt3_bridge_connect(mosquitto_db *db, struct mosquitto *context)
 	}
 
 	if(context->bridge->notifications){
-		notification_topic_len = strlen(context->id)+strlen("$SYS/broker/connection//state");
-		notification_topic = _mosquitto_malloc(sizeof(char)*(notification_topic_len+1));
-		if(!notification_topic) return MOSQ_ERR_NOMEM;
-
-		snprintf(notification_topic, notification_topic_len+1, "$SYS/broker/connection/%s/state", context->id);
 		notification_payload[0] = '0';
 		notification_payload[1] = '\0';
-		mqtt3_db_messages_easy_queue(db, context, notification_topic, 1, 2, (uint8_t *)&notification_payload, 1);
-		rc = _mosquitto_will_set(context, true, notification_topic, 2, (uint8_t *)&notification_payload, 1, true);
-		if(rc != MOSQ_ERR_SUCCESS){
+		if(context->bridge->notification_topic){
+			mqtt3_db_messages_easy_queue(db, context, context->bridge->notification_topic, 1, 2, &notification_payload, 1);
+			rc = _mosquitto_will_set(context, context->bridge->notification_topic, 2, &notification_payload, 1, true);
+			if(rc != MOSQ_ERR_SUCCESS){
+				return rc;
+			}
+		}else{
+			notification_topic_len = strlen(context->id)+strlen("$SYS/broker/connection//state");
+			notification_topic = _mosquitto_malloc(sizeof(char)*(notification_topic_len+1));
+			if(!notification_topic) return MOSQ_ERR_NOMEM;
+
+			snprintf(notification_topic, notification_topic_len+1, "$SYS/broker/connection/%s/state", context->id);
+			mqtt3_db_messages_easy_queue(db, context, notification_topic, 1, 2, &notification_payload, 1);
+			rc = _mosquitto_will_set(context, notification_topic, 2, &notification_payload, 1, true);
+			if(rc != MOSQ_ERR_SUCCESS){
+				_mosquitto_free(notification_topic);
+				return rc;
+			}
 			_mosquitto_free(notification_topic);
-			return rc;
 		}
-		_mosquitto_free(notification_topic);
 	}
 
 	return _mosquitto_send_connect(context, context->keepalive, context->clean_session);

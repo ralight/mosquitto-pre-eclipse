@@ -37,6 +37,10 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <send_mosq.h>
 #include <util_mosq.h>
 
+#ifdef WITH_BROKER
+#include <mosquitto_broker.h>
+#endif
+
 int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session)
 {
 	struct _mosquitto_packet *packet = NULL;
@@ -44,6 +48,7 @@ int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 	uint8_t will = 0;
 	uint8_t byte;
 	int rc;
+	uint8_t version = PROTOCOL_VERSION;
 
 	assert(mosq);
 	assert(mosq->id);
@@ -75,7 +80,13 @@ int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 
 	/* Variable header */
 	_mosquitto_write_string(packet, PROTOCOL_NAME, strlen(PROTOCOL_NAME));
-	_mosquitto_write_byte(packet, PROTOCOL_VERSION);
+#if defined(WITH_BROKER) && defined(WITH_BRIDGE)
+	if(mosq->bridge && mosq->bridge->try_private && mosq->bridge->try_private_accepted){
+		version |= 0x80;
+	}else{
+	}
+#endif
+	_mosquitto_write_byte(packet, version);
 	byte = (clean_session&0x1)<<1;
 	if(will){
 		byte = byte | ((mosq->will->retain&0x1)<<5) | ((mosq->will->qos&0x3)<<3) | ((will&0x1)<<2);
@@ -112,7 +123,7 @@ int _mosquitto_send_disconnect(struct mosquitto *mosq)
 	return _mosquitto_send_simple_command(mosq, DISCONNECT);
 }
 
-int _mosquitto_send_subscribe(struct mosquitto *mosq, uint16_t *mid, bool dup, const char *topic, uint8_t topic_qos)
+int _mosquitto_send_subscribe(struct mosquitto *mosq, int *mid, bool dup, const char *topic, uint8_t topic_qos)
 {
 	/* FIXME - only deals with a single topic */
 	struct _mosquitto_packet *packet = NULL;
@@ -138,7 +149,7 @@ int _mosquitto_send_subscribe(struct mosquitto *mosq, uint16_t *mid, bool dup, c
 
 	/* Variable header */
 	local_mid = _mosquitto_mid_generate(mosq);
-	if(mid) *mid = local_mid;
+	if(mid) *mid = (int)local_mid;
 	_mosquitto_write_uint16(packet, local_mid);
 
 	/* Payload */
@@ -149,7 +160,7 @@ int _mosquitto_send_subscribe(struct mosquitto *mosq, uint16_t *mid, bool dup, c
 }
 
 
-int _mosquitto_send_unsubscribe(struct mosquitto *mosq, uint16_t *mid, bool dup, const char *topic)
+int _mosquitto_send_unsubscribe(struct mosquitto *mosq, int *mid, bool dup, const char *topic)
 {
 	/* FIXME - only deals with a single topic */
 	struct _mosquitto_packet *packet = NULL;
@@ -175,7 +186,7 @@ int _mosquitto_send_unsubscribe(struct mosquitto *mosq, uint16_t *mid, bool dup,
 
 	/* Variable header */
 	local_mid = _mosquitto_mid_generate(mosq);
-	if(mid) *mid = local_mid;
+	if(mid) *mid = (int)local_mid;
 	_mosquitto_write_uint16(packet, local_mid);
 
 	/* Payload */

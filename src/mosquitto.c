@@ -220,11 +220,11 @@ int main(int argc, char *argv[])
 
 	/* Set static $SYS messages */
 	snprintf(buf, 1024, "mosquitto version %s", VERSION);
-	mqtt3_db_messages_easy_queue(&int_db, NULL, "$SYS/broker/version", 2, strlen(buf), (uint8_t *)buf, 1);
+	mqtt3_db_messages_easy_queue(&int_db, NULL, "$SYS/broker/version", 2, strlen(buf), buf, 1);
 	snprintf(buf, 1024, "%s", TIMESTAMP);
-	mqtt3_db_messages_easy_queue(&int_db, NULL, "$SYS/broker/timestamp", 2, strlen(buf), (uint8_t *)buf, 1);
+	mqtt3_db_messages_easy_queue(&int_db, NULL, "$SYS/broker/timestamp", 2, strlen(buf), buf, 1);
 	snprintf(buf, 1024, "%s", "$Revision$"); // Requires hg keyword extension.
-	mqtt3_db_messages_easy_queue(&int_db, NULL, "$SYS/broker/changeset", 2, strlen(buf), (uint8_t *)buf, 1);
+	mqtt3_db_messages_easy_queue(&int_db, NULL, "$SYS/broker/changeset", 2, strlen(buf), buf, 1);
 
 	listener_max = -1;
 	listensock_index = 0;
@@ -291,7 +291,7 @@ int main(int argc, char *argv[])
 	mqtt3_log_close();
 
 #ifdef WITH_PERSISTENCE
-	if(config.persistence && config.autosave_interval){
+	if(config.persistence){
 		mqtt3_db_backup(&int_db, true, true);
 	}
 #endif

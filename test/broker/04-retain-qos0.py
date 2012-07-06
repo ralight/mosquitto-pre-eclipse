@@ -20,7 +20,7 @@ suback_packet = pack('!BBHB', 144, 2+1, mid, 0)
 broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'], stderr=subprocess.PIPE)
 
 try:
-	time.sleep(0.1)
+	time.sleep(0.5)
 
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	sock.connect(("localhost", 1888))
@@ -42,7 +42,7 @@ try:
 			publish_recvd = sock.recv(256)
 
 			if publish_recvd != publish_packet:
-				print("FAIL: Recieved incorrect publish.")
+				print("FAIL: Received incorrect publish.")
 				print("Received: "+publish_recvd+" length="+str(len(publish_recvd)))
 				print("Expected: "+publish_packet+" length="+str(len(publish_packet)))
 			else:
@@ -50,6 +50,7 @@ try:
 	sock.close()
 finally:
 	broker.terminate()
+	broker.wait()
 
 exit(rc)
 

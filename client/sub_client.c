@@ -64,14 +64,14 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 
 	if(ud->verbose){
 		if(message->payloadlen){
-			printf("%s %s\n", message->topic, message->payload);
+			printf("%s %s\n", message->topic, (const char *)message->payload);
 		}else{
 			printf("%s (null)\n", message->topic);
 		}
 		fflush(stdout);
 	}else{
 		if(message->payloadlen){
-			printf("%s\n", message->payload);
+			printf("%s\n", (const char *)message->payload);
 			fflush(stdout);
 		}
 	}
@@ -90,30 +90,13 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 			mosquitto_subscribe(mosq, NULL, ud->topics[i], ud->topic_qos);
 		}
 	}else{
-		switch(result){
-			case 1:
-				if(!ud->quiet) fprintf(stderr, "Connection Refused: unacceptable protocol version\n");
-				break;
-			case 2:
-				if(!ud->quiet) fprintf(stderr, "Connection Refused: identifier rejected\n");
-				break;
-			case 3:
-				if(!ud->quiet) fprintf(stderr, "Connection Refused: broker unavailable\n");
-				break;
-			case 4:
-				if(!ud->quiet) fprintf(stderr, "Connection Refused: bad user name or password\n");
-				break;
-			case 5:
-				if(!ud->quiet) fprintf(stderr, "Connection Refused: not authorised\n");
-				break;
-			default:
-				if(!ud->quiet) fprintf(stderr, "Connection Refused: unknown reason (%d)\n", result);
-				break;
+		if(result && !ud->quiet){
+			fprintf(stderr, "%s\n", mosquitto_connack_string(result));
 		}
 	}
 }
 
-void my_subscribe_callback(struct mosquitto *mosq, void *obj, uint16_t mid, int qos_count, const uint8_t *granted_qos)
+void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos)
 {
 	int i;
 	struct userdata *ud;
@@ -126,6 +109,11 @@ void my_subscribe_callback(struct mosquitto *mosq, void *obj, uint16_t mid, int 
 		if(!ud->quiet) printf(", %d", granted_qos[i]);
 	}
 	if(!ud->quiet) printf("\n");
+}
+
+void my_log_callback(struct mosquitto *mosq, void *obj, int level, const char *str)
+{
+	printf("%s\n", str);
 }
 
 void print_usage(void)
@@ -171,11 +159,11 @@ int main(int argc, char *argv[])
 	bool debug = false;
 	struct mosquitto *mosq = NULL;
 	int rc;
-	char hostname[21];
+	char hostname[MOSQ_MQTT_ID_MAX_LENGTH - 9];
 	char err[1024];
 	struct userdata ud;
 	
-	uint8_t *will_payload = NULL;
+	char *will_payload = NULL;
 	long will_payloadlen = 0;
 	int will_qos = 0;
 	bool will_retain = false;
@@ -306,8 +294,8 @@ int main(int argc, char *argv[])
 				print_usage();
 				return 1;
 			}else{
-				will_payload = (uint8_t *)argv[i+1];
-				will_payloadlen = strlen((char *)will_payload);
+				will_payload = argv[i+1];
+				will_payloadlen = strlen(will_payload);
 			}
 			i++;
 		}else if(!strcmp(argv[i], "--will-qos")){
@@ -374,15 +362,17 @@ int main(int argc, char *argv[])
 		}
 		snprintf(id, strlen(id_prefix)+10, "%s%d", id_prefix, getpid());
 	}else if(!id){
-		id = malloc(30);
+		id = malloc(MOSQ_MQTT_ID_MAX_LENGTH + 1);
 		if(!id){
 			if(!ud.quiet) fprintf(stderr, "Error: Out of memory.\n");
 			mosquitto_lib_cleanup();
 			return 1;
 		}
-		memset(hostname, 0, 21);
-		gethostname(hostname, 20);
-		snprintf(id, 23, "mosq_sub_%d_%s", getpid(), hostname);
+		hostname[0] = '\0';
+		gethostname(hostname, MOSQ_MQTT_ID_MAX_LENGTH - 10);
+		hostname[MOSQ_MQTT_ID_MAX_LENGTH - 10] = '\0';
+		snprintf(id, MOSQ_MQTT_ID_MAX_LENGTH, "mosqsub/%d-%s", getpid(), hostname);
+		id[MOSQ_MQTT_ID_MAX_LENGTH] = '\0';
 	}
 
 	mosq = mosquitto_new(id, clean_session, &ud);
@@ -399,10 +389,9 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	if(debug){
-		mosquitto_log_init(mosq, MOSQ_LOG_DEBUG | MOSQ_LOG_ERR | MOSQ_LOG_WARNING
-				| MOSQ_LOG_NOTICE | MOSQ_LOG_INFO, MOSQ_LOG_STDERR);
+		mosquitto_log_callback_set(mosq, my_log_callback);
 	}
-	if(will_topic && mosquitto_will_set(mosq, true, will_topic, will_payloadlen, will_payload, will_qos, will_retain)){
+	if(will_topic && mosquitto_will_set(mosq, will_topic, will_payloadlen, will_payload, will_qos, will_retain)){
 		if(!ud.quiet) fprintf(stderr, "Error: Problem setting will.\n");
 		mosquitto_lib_cleanup();
 		return 1;
@@ -437,7 +426,7 @@ int main(int argc, char *argv[])
 	}
 
 	do{
-		rc = mosquitto_loop(mosq, -1);
+		rc = mosquitto_loop(mosq, -1, 100);
 	}while(rc == MOSQ_ERR_SUCCESS);
 
 	mosquitto_destroy(mosq);

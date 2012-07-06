@@ -164,6 +164,11 @@ static int mqtt3_db_message_store_write(mosquitto_db *db, FILE *db_fptr)
 
 	stored = db->msg_store;
 	while(stored){
+		if(!strncmp(stored->msg.topic, "$SYS", 4)){
+			/* Don't save $SYS messages. */
+			stored = stored->next;
+			continue;
+		}
 		length = htonl(sizeof(dbid_t) + 2+strlen(stored->source_id) +
 				sizeof(uint16_t) + sizeof(uint16_t) +
 				2+strlen(stored->msg.topic) + sizeof(uint32_t) +
@@ -295,14 +300,17 @@ static int _db_subs_retain_write(mosquitto_db *db, FILE *db_fptr, struct _mosqui
 		sub = sub->next;
 	}
 	if(node->retained){
-		length = htonl(sizeof(dbid_t));
+		if(strncmp(node->retained->msg.topic, "$SYS", 4)){
+			/* Don't save $SYS messages. */
+			length = htonl(sizeof(dbid_t));
 
-		i16temp = htons(DB_CHUNK_RETAIN);
-		write_e(db_fptr, &i16temp, sizeof(uint16_t));
-		write_e(db_fptr, &length, sizeof(uint32_t));
+			i16temp = htons(DB_CHUNK_RETAIN);
+			write_e(db_fptr, &i16temp, sizeof(uint16_t));
+			write_e(db_fptr, &length, sizeof(uint32_t));
 
-		i64temp = node->retained->db_id;
-		write_e(db_fptr, &i64temp, sizeof(dbid_t));
+			i64temp = node->retained->db_id;
+			write_e(db_fptr, &i64temp, sizeof(dbid_t));
+		}
 	}
 
 	subhier = node->children;
@@ -542,7 +550,7 @@ static int _db_msg_store_chunk_restore(mosquitto_db *db, FILE *db_fptr)
 {
 	dbid_t i64temp, store_id;
 	uint32_t i32temp, payloadlen;
-	uint16_t i16temp, slen, source_mid, mid;
+	uint16_t i16temp, slen, source_mid;
 	uint8_t qos, retain, *payload = NULL;
 	char *source_id = NULL;
 	char *topic = NULL;
@@ -573,8 +581,8 @@ static int _db_msg_store_chunk_restore(mosquitto_db *db, FILE *db_fptr)
 	read_e(db_fptr, &i16temp, sizeof(uint16_t));
 	source_mid = ntohs(i16temp);
 
+	/* This is the mid - don't need it */
 	read_e(db_fptr, &i16temp, sizeof(uint16_t));
-	mid = ntohs(i16temp);
 
 	read_e(db_fptr, &i16temp, sizeof(uint16_t));
 	slen = ntohs(i16temp);
@@ -755,8 +763,8 @@ int mqtt3_db_restore(mosquitto_db *db)
 					read_e(fptr, &i8temp, sizeof(uint8_t)); // shutdown
 					read_e(fptr, &i8temp, sizeof(uint8_t)); // sizeof(dbid_t)
 					if(i8temp != sizeof(dbid_t)){
-						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Incompatible database configuration (dbid size is %d bytes, expected %ld)",
-								i8temp, sizeof(dbid_t));
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Incompatible database configuration (dbid size is %d bytes, expected %lu)",
+								i8temp, (unsigned long)sizeof(dbid_t));
 						fclose(fptr);
 						return 1;
 					}
