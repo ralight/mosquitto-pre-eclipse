@@ -82,6 +82,11 @@ struct _mqtt3_listener {
 	int client_count;
 };
 
+struct mosquitto_auth_opt {
+	char *key;
+	char *value;
+};
+
 typedef struct {
 	char *config_file;
 	char *acl_file;
@@ -118,6 +123,8 @@ typedef struct {
 	char *db_name;
 	char *db_username;
 	char *db_password;
+	struct mosquitto_auth_opt **auth_options;
+	int auth_option_count;
 } mqtt3_config;
 
 struct _mosquitto_subleaf {
