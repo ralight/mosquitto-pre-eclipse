@@ -72,15 +72,6 @@ static void _config_init_reload(mqtt3_config *config)
 	config->retry_interval = 20;
 	config->store_clean_interval = 10;
 	config->sys_interval = 10;
-	if(config->db_host) _mosquitto_free(config->db_host);
-	config->db_host = NULL;
-	config->db_port = 0;
-	if(config->db_name) _mosquitto_free(config->db_name);
-	config->db_name = NULL;
-	if(config->db_username) _mosquitto_free(config->db_username);
-	config->db_username = NULL;
-	if(config->db_password) _mosquitto_free(config->db_password);
-	config->db_password = NULL;
 	if(config->auth_options){
 		for(i=0; i<config->auth_option_count; i++){
 			_mosquitto_free(config->auth_options[i]->key);
@@ -162,10 +153,6 @@ void mqtt3_config_cleanup(mqtt3_config *config)
 		_mosquitto_free(config->bridges);
 	}
 #endif
-	if(config->db_host) _mosquitto_free(config->db_host);
-	if(config->db_name) _mosquitto_free(config->db_name);
-	if(config->db_username) _mosquitto_free(config->db_username);
-	if(config->db_password) _mosquitto_free(config->db_password);
 	if(config->auth_plugin) _mosquitto_free(config->auth_plugin);
 	if(config->auth_options){
 		for(i=0; i<config->auth_option_count; i++){
@@ -944,40 +931,6 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
-				}else if(!strcmp(token, "db_host")){
-					if(reload){
-						if(config->db_host){
-							_mosquitto_free(config->db_host);
-							config->db_host = NULL;
-						}
-					}
-					if(_conf_parse_string(&token, "db_host", &config->db_host, saveptr)) return MOSQ_ERR_INVAL;
-				}else if(!strcmp(token, "db_name")){
-					if(reload){
-						if(config->db_name){
-							_mosquitto_free(config->db_name);
-							config->db_name = NULL;
-						}
-					}
-					if(_conf_parse_string(&token, "db_name", &config->db_name, saveptr)) return MOSQ_ERR_INVAL;
-				}else if(!strcmp(token, "db_username")){
-					if(reload){
-						if(config->db_username){
-							_mosquitto_free(config->db_username);
-							config->db_username = NULL;
-						}
-					}
-					if(_conf_parse_string(&token, "db_username", &config->db_username, saveptr)) return MOSQ_ERR_INVAL;
-				}else if(!strcmp(token, "db_password")){
-					if(reload){
-						if(config->db_password){
-							_mosquitto_free(config->db_password);
-							config->db_password = NULL;
-						}
-					}
-					if(_conf_parse_string(&token, "db_password", &config->db_password, saveptr)) return MOSQ_ERR_INVAL;
-				}else if(!strcmp(token, "db_port")){
-					if(_conf_parse_int(&token, "db_port", &config->db_port, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "trace_level")
 						|| !strcmp(token, "addresses")
 						|| !strcmp(token, "round_robin")
