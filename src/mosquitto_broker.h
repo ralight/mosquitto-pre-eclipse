@@ -128,11 +128,6 @@ typedef struct {
 	int bridge_count;
 #endif
 	char *auth_plugin;
-	char *db_host;
-	int db_port;
-	char *db_name;
-	char *db_username;
-	char *db_password;
 	struct mosquitto_auth_opt **auth_options;
 	int auth_option_count;
 } mqtt3_config;
