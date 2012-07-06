@@ -121,8 +121,8 @@ int mosquitto_security_module_cleanup(mosquitto_db *db)
 
 int mosquitto_security_init(mosquitto_db *db, bool reload)
 {
-	if(db->auth_plugin.lib){
-		return mosquitto_security_cleanup_default(db, reload);
+	if(!db->auth_plugin.lib){
+		return mosquitto_security_init_default(db, reload);
 	}else{
 		return db->auth_plugin.security_init(db->config->auth_options, db->config->auth_option_count, reload);
 	}
@@ -136,7 +136,7 @@ int mosquitto_security_init(mosquitto_db *db, bool reload)
  */
 int mosquitto_security_apply(struct _mosquitto_db *db)
 {
-	if(db->auth_plugin.lib){
+	if(!db->auth_plugin.lib){
 		return mosquitto_security_apply_default(db);
 	}else{
 		return db->auth_plugin.security_apply(db->config->auth_options, db->config->auth_option_count);
@@ -145,7 +145,7 @@ int mosquitto_security_apply(struct _mosquitto_db *db)
 
 int mosquitto_security_cleanup(mosquitto_db *db, bool reload)
 {
-	if(db->auth_plugin.lib){
+	if(!db->auth_plugin.lib){
 		return mosquitto_security_cleanup_default(db, reload);
 	}else{
 		return db->auth_plugin.security_cleanup(db->config->auth_options, db->config->auth_option_count, reload);
@@ -154,7 +154,7 @@ int mosquitto_security_cleanup(mosquitto_db *db, bool reload)
 
 int mosquitto_acl_check(struct _mosquitto_db *db, struct mosquitto *context, const char *topic, int access)
 {
-	if(db->auth_plugin.lib){
+	if(!db->auth_plugin.lib){
 		return mosquitto_acl_check_default(db, context, topic, access);
 	}else{
 		return db->auth_plugin.acl_check(context->username, topic, access);
@@ -163,7 +163,7 @@ int mosquitto_acl_check(struct _mosquitto_db *db, struct mosquitto *context, con
 
 int mosquitto_unpwd_check(struct _mosquitto_db *db, const char *username, const char *password)
 {
-	if(db->auth_plugin.lib){
+	if(!db->auth_plugin.lib){
 		return mosquitto_unpwd_check_default(db, username, password);
 	}else{
 		return db->auth_plugin.unpwd_check(username, password);
