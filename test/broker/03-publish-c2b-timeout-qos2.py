@@ -23,18 +23,18 @@ pubcomp_packet = pack('!BBH', 112, 2, mid)
 broker = subprocess.Popen(['../../src/mosquitto', '-c', '03-publish-c2b-timeout-qos2.conf'], stderr=subprocess.PIPE)
 
 try:
-	time.sleep(0.1)
+	time.sleep(0.5)
 
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	sock.settimeout(8) # 8 seconds timeout is longer than 5 seconds message retry.
+	sock.settimeout(60) # 60 seconds timeout is much longer than 5 seconds message retry.
 	sock.connect(("localhost", 1888))
 	sock.send(connect_packet)
 	connack_recvd = sock.recv(256)
 
 	if connack_recvd != connack_packet:
 		print("FAIL: Connect failed.")
-		(cmd, rl, resv, rc) = unpack('!BBBB', connack_recvd)
-		print("FAIL: Expected 32,2,0,0 got " + str(cmd) + "," + str(rl) + "," + str(resv) + "," + str(rc))
+		(cmd, rl, resv, ret) = unpack('!BBBB', connack_recvd)
+		print("FAIL: Expected 32,2,0,0 got " + str(cmd) + "," + str(rl) + "," + str(resv) + "," + str(ret))
 	else:
 		sock.send(publish_packet)
 		pubrec_recvd = sock.recv(256)
@@ -62,6 +62,7 @@ try:
 	sock.close()
 finally:
 	broker.terminate()
+	broker.wait()
 
 exit(rc)
 

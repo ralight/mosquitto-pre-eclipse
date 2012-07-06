@@ -32,6 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <config.h>
 
+#include <openssl/ssl.h>
 #include <time.h>
 
 #include <mosquitto_internal.h>
@@ -80,6 +81,14 @@ struct _mqtt3_listener {
 	int *socks;
 	int sock_count;
 	int client_count;
+	char *cafile;
+	char *capath;
+	char *certfile;
+	char *keyfile;
+	bool require_certificate;
+	SSL_CTX *ssl_ctx;
+	char *crlfile;
+	bool use_cn_as_username;
 };
 
 struct mosquitto_auth_opt {
@@ -92,6 +101,7 @@ typedef struct {
 	char *acl_file;
 	bool allow_anonymous;
 	int autosave_interval;
+	bool autosave_on_changes;
 	char *clientid_prefixes;
 	bool connection_messages;
 	bool daemon;
@@ -147,6 +157,8 @@ struct mosquitto_msg_store{
 	dbid_t db_id;
 	int ref_count;
 	char *source_id;
+	char **dest_ids;
+	int dest_id_count;
 	uint16_t source_mid;
 	struct mosquitto_message msg;
 };
@@ -206,6 +218,7 @@ typedef struct _mosquitto_db{
 	struct mosquitto_msg_store *msg_store;
 	int msg_store_count;
 	mqtt3_config *config;
+	int persistence_changes;
 	struct _mosquitto_auth_plugin auth_plugin;
 } mosquitto_db;
 
@@ -241,9 +254,12 @@ struct _mqtt3_bridge{
 	char *username;
 	char *password;
 	bool notifications;
+	char *notification_topic;
 	enum mosquitto_bridge_start_type start_type;
 	int idle_timeout;
 	int threshold;
+	bool try_private;
+	bool try_private_accepted;
 };
 
 #include <net_mosq.h>
@@ -271,8 +287,8 @@ void mqtt3_config_cleanup(mqtt3_config *config);
 /* ============================================================
  * Server send functions
  * ============================================================ */
-int _mosquitto_send_connack(struct mosquitto *context, uint8_t result);
-int _mosquitto_send_suback(struct mosquitto *context, uint16_t mid, uint32_t payloadlen, const uint8_t *payload);
+int _mosquitto_send_connack(struct mosquitto *context, int result);
+int _mosquitto_send_suback(struct mosquitto *context, uint16_t mid, uint32_t payloadlen, const void *payload);
 
 /* ============================================================
  * Network functions
@@ -283,10 +299,10 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener);
 /* ============================================================
  * Read handling functions
  * ============================================================ */
-int mqtt3_packet_handle(mosquitto_db *db, int context_index);
+int mqtt3_packet_handle(mosquitto_db *db, struct mosquitto *context);
 int mqtt3_handle_connack(mosquitto_db *db, struct mosquitto *context);
-int mqtt3_handle_connect(mosquitto_db *db, int context_index);
-int mqtt3_handle_disconnect(mosquitto_db *db, int context_index);
+int mqtt3_handle_connect(mosquitto_db *db, struct mosquitto *context);
+int mqtt3_handle_disconnect(mosquitto_db *db, struct mosquitto *context);
 int mqtt3_handle_publish(mosquitto_db *db, struct mosquitto *context);
 int mqtt3_handle_subscribe(mosquitto_db *db, struct mosquitto *context);
 int mqtt3_handle_unsubscribe(mosquitto_db *db, struct mosquitto *context);
@@ -310,9 +326,9 @@ int mqtt3_db_message_release(mosquitto_db *db, struct mosquitto *context, uint16
 int mqtt3_db_message_update(struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, enum mqtt3_msg_state state);
 int mqtt3_db_message_write(struct mosquitto *context);
 int mqtt3_db_messages_delete(struct mosquitto *context);
-int mqtt3_db_messages_easy_queue(mosquitto_db *db, struct mosquitto *context, const char *topic, int qos, uint32_t payloadlen, const uint8_t *payload, int retain);
+int mqtt3_db_messages_easy_queue(mosquitto_db *db, struct mosquitto *context, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain);
 int mqtt3_db_messages_queue(mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored);
-int mqtt3_db_message_store(mosquitto_db *db, const char *source, uint16_t source_mid, const char *topic, int qos, uint32_t payloadlen, const uint8_t *payload, int retain, struct mosquitto_msg_store **stored, dbid_t store_id);
+int mqtt3_db_message_store(mosquitto_db *db, const char *source, uint16_t source_mid, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain, struct mosquitto_msg_store **stored, dbid_t store_id);
 int mqtt3_db_message_store_find(struct mosquitto *context, uint16_t mid, struct mosquitto_msg_store **stored);
 /* Check all messages waiting on a client reply and resend if timeout has been exceeded. */
 int mqtt3_db_message_timeout_check(mosquitto_db *db, unsigned int timeout);
@@ -335,7 +351,7 @@ int mqtt3_subs_clean_session(struct mosquitto *context, struct _mosquitto_subhie
  * ============================================================ */
 struct mosquitto *mqtt3_context_init(int sock);
 void mqtt3_context_cleanup(mosquitto_db *db, struct mosquitto *context, bool do_free);
-void mqtt3_context_disconnect(mosquitto_db *db, int context_index);
+void mqtt3_context_disconnect(mosquitto_db *db, struct mosquitto *context);
 
 /* ============================================================
  * Logging functions

@@ -163,7 +163,10 @@ int _mosquitto_handle_pubrel(struct _mosquitto_db *db, struct mosquitto *mosq)
 #ifdef WITH_BROKER
 	_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Received PUBREL from %s (Mid: %d)", mosq->id, mid);
 
-	mqtt3_db_message_release(db, mosq, mid, mosq_md_in);
+	if(mqtt3_db_message_release(db, mosq, mid, mosq_md_in)){
+		/* Message not found. */
+		return MOSQ_ERR_SUCCESS;
+	}
 #else
 	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Received PUBREL (Mid: %d)", mid);
 
@@ -190,7 +193,8 @@ int _mosquitto_handle_pubrel(struct _mosquitto_db *db, struct mosquitto *mosq)
 int _mosquitto_handle_suback(struct mosquitto *mosq)
 {
 	uint16_t mid;
-	uint8_t *granted_qos;
+	uint8_t qos;
+	int *granted_qos;
 	int qos_count;
 	int i = 0;
 	int rc;
@@ -205,14 +209,15 @@ int _mosquitto_handle_suback(struct mosquitto *mosq)
 	if(rc) return rc;
 
 	qos_count = mosq->in_packet.remaining_length - mosq->in_packet.pos;
-	granted_qos = _mosquitto_malloc(qos_count*sizeof(uint8_t));
+	granted_qos = _mosquitto_malloc(qos_count*sizeof(int));
 	if(!granted_qos) return MOSQ_ERR_NOMEM;
 	while(mosq->in_packet.pos < mosq->in_packet.remaining_length){
-		rc = _mosquitto_read_byte(&mosq->in_packet, &(granted_qos[i]));
+		rc = _mosquitto_read_byte(&mosq->in_packet, &qos);
 		if(rc){
 			_mosquitto_free(granted_qos);
 			return rc;
 		}
+		granted_qos[i] = (int)qos;
 		i++;
 	}
 #ifndef WITH_BROKER

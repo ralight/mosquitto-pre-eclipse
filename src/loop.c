@@ -49,7 +49,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <util_mosq.h>
 
 #ifndef POLLRDHUP
-#define POLLRDHUP POLLHUP
+/* Ignore POLLRDHUP flag on systems where it doesn't exist. */
+#define POLLRDHUP 0
 #endif
 
 extern bool flag_reload;
@@ -118,24 +119,25 @@ int mosquitto_main_loop(mosquitto_db *db, int *listensock, int listensock_count,
 
 					/* Local bridges never time out in this fashion. */
 					if(!(db->contexts[i]->keepalive) || db->contexts[i]->bridge || now - db->contexts[i]->last_msg_in < (time_t)(db->contexts[i]->keepalive)*3/2){
-						if(mqtt3_db_message_write(db->contexts[i]) == MOSQ_ERR_SUCCESS){
+						if(mqtt3_db_message_write(db->contexts[i]) == MOSQ_ERR_SUCCESS || db->contexts[i]->want_read){
 							pollfds[pollfd_index].fd = db->contexts[i]->sock;
 							pollfds[pollfd_index].events = POLLIN | POLLRDHUP;
 							pollfds[pollfd_index].revents = 0;
-							if(db->contexts[i]->out_packet){
+							if(db->contexts[i]->out_packet || db->contexts[i]->want_write){
 								pollfds[pollfd_index].events |= POLLOUT;
+								db->contexts[i]->want_write = false;
 							}
 							db->contexts[i]->pollfd_index = pollfd_index;
 							pollfd_index++;
 						}else{
-							mqtt3_context_disconnect(db, i);
+							mqtt3_context_disconnect(db, db->contexts[i]);
 						}
 					}else{
 						if(db->config->connection_messages == true){
 							_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", db->contexts[i]->id);
 						}
 						/* Client has exceeded keepalive*1.5 */
-						mqtt3_context_disconnect(db, i);
+						mqtt3_context_disconnect(db, db->contexts[i]);
 					}
 				}else{
 #ifdef WITH_BRIDGE
@@ -205,9 +207,16 @@ int mosquitto_main_loop(mosquitto_db *db, int *listensock, int listensock_count,
 		}
 #ifdef WITH_PERSISTENCE
 		if(db->config->persistence && db->config->autosave_interval){
-			if(last_backup + db->config->autosave_interval < now){
-				mqtt3_db_backup(db, false, false);
-				last_backup = time(NULL);
+			if(db->config->autosave_on_changes){
+				if(db->persistence_changes > db->config->autosave_interval){
+					mqtt3_db_backup(db, false, false);
+					db->persistence_changes = 0;
+				}
+			}else{
+				if(last_backup + db->config->autosave_interval < now){
+					mqtt3_db_backup(db, false, false);
+					last_backup = time(NULL);
+				}
 			}
 		}
 #endif
@@ -249,7 +258,7 @@ static void do_disconnect(mosquitto_db *db, int context_index)
 			_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected.", db->contexts[context_index]->id);
 		}
 	}
-	mqtt3_context_disconnect(db, context_index);
+	mqtt3_context_disconnect(db, db->contexts[context_index]);
 }
 
 /* Error ocurred, probably an fd has been closed. 
@@ -290,14 +299,14 @@ static void loop_handle_reads_writes(mosquitto_db *db, struct pollfd *pollfds)
 						}
 					}
 					/* Write error or other that means we should disconnect */
-					mqtt3_context_disconnect(db, i);
+					mqtt3_context_disconnect(db, db->contexts[i]);
 				}
 			}
 		}
 		if(db->contexts[i] && db->contexts[i]->sock != INVALID_SOCKET){
 			assert(pollfds[db->contexts[i]->pollfd_index].fd == db->contexts[i]->sock);
 			if(pollfds[db->contexts[i]->pollfd_index].revents & POLLIN){
-				if(_mosquitto_packet_read(db, i)){
+				if(_mosquitto_packet_read(db, db->contexts[i])){
 					if(db->config->connection_messages == true){
 						if(db->contexts[i]->state != mosq_cs_disconnecting){
 							_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Socket read error on client %s, disconnecting.", db->contexts[i]->id);
@@ -306,7 +315,7 @@ static void loop_handle_reads_writes(mosquitto_db *db, struct pollfd *pollfds)
 						}
 					}
 					/* Read error or other that means we should disconnect */
-					mqtt3_context_disconnect(db, i);
+					mqtt3_context_disconnect(db, db->contexts[i]);
 				}
 			}
 		}

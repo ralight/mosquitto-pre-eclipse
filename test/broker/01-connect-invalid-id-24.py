@@ -15,7 +15,7 @@ connack_packet = pack('!BBBB', 32, 2, 0, 2);
 broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'], stderr=subprocess.PIPE)
 
 try:
-	time.sleep(0.1)
+	time.sleep(0.5)
 
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	sock.connect(("localhost", 1888))
@@ -24,12 +24,13 @@ try:
 	sock.close()
 
 	if connack_recvd != connack_packet:
-		(cmd, rl, resv, rc) = unpack('!BBBB', connack_recvd)
-		print("FAIL: Expected 32,2,0,3 got " + str(cmd) + "," + str(rl) + "," + str(resv) + "," + str(rc))
+		(cmd, rl, resv, ret) = unpack('!BBBB', connack_recvd)
+		print("FAIL: Expected 32,2,0,3 got " + str(cmd) + "," + str(rl) + "," + str(resv) + "," + str(ret))
 	else:
 		rc = 0
 finally:
 	broker.terminate()
+	broker.wait()
 
 exit(rc)
 

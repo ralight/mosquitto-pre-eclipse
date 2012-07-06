@@ -239,10 +239,27 @@ int mqtt3_db_message_insert(mosquitto_db *db, struct mosquitto *context, uint16_
 	enum mqtt3_msg_state state = ms_invalid;
 	int msg_count = 0;
 	int rc = 0;
+	int i;
+	char **dest_ids;
 
 	assert(stored);
 	if(!context) return MOSQ_ERR_INVAL;
 
+	/* Check whether we've already sent this message to this client
+	 * for outgoing messages only.
+	 * If retain==true then this is a stale retained message and so should be
+	 * sent regardless. FIXME - this does mean retained messages will received
+	 * multiple times for overlapping subscriptions, although this is only the
+	 * case for SUBSCRIPTION with multiple subs in so is a minor concern.
+	 */
+	if(dir == mosq_md_out && retain == false && stored->dest_ids){
+		for(i=0; i<stored->dest_id_count; i++){
+			if(!strcmp(stored->dest_ids[i], context->id)){
+				/* We have already sent this message to this client. */
+				return MOSQ_ERR_SUCCESS;
+			}
+		}
+	}
 	if(context->sock == INVALID_SOCKET){
 		/* Client is not connected only queue messages with QoS>0. */
 		if(qos == 0){
@@ -304,6 +321,12 @@ int mqtt3_db_message_insert(mosquitto_db *db, struct mosquitto *context, uint16_
 	}
 	assert(state != ms_invalid);
 
+#ifdef WITH_PERSISTENCE
+	if(state == ms_queued){
+		db->persistence_changes++;
+	}
+#endif
+
 	msg = _mosquitto_malloc(sizeof(mosquitto_client_msg));
 	if(!msg) return MOSQ_ERR_NOMEM;
 	msg->next = NULL;
@@ -322,6 +345,26 @@ int mqtt3_db_message_insert(mosquitto_db *db, struct mosquitto *context, uint16_
 		context->msgs = msg;
 	}
 
+	if(dir == mosq_md_out && retain == false){
+		/* Record which client ids this message has been sent to so we can avoid duplicates.
+		 * Outgoing messages only.
+		 * If retain==true then this is a stale retained message and so should be
+		 * sent regardless. FIXME - this does mean retained messages will received
+		 * multiple times for overlapping subscriptions, although this is only the
+		 * case for SUBSCRIPTION with multiple subs in so is a minor concern.
+		 */
+		dest_ids = _mosquitto_realloc(stored->dest_ids, sizeof(char *)*(stored->dest_id_count+1));
+		if(dest_ids){
+			stored->dest_ids = dest_ids;
+			stored->dest_id_count++;
+			stored->dest_ids[stored->dest_id_count-1] = _mosquitto_strdup(context->id);
+			if(!stored->dest_ids[stored->dest_id_count-1]){
+				return MOSQ_ERR_NOMEM;
+			}
+		}else{
+			return MOSQ_ERR_NOMEM;
+		}
+	}
 #ifdef WITH_BRIDGE
 	msg_count++; /* We've just added a message to the list */
 	if(context->bridge && context->bridge->start_type == bst_lazy
@@ -371,7 +414,7 @@ int mqtt3_db_messages_delete(struct mosquitto *context)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mqtt3_db_messages_easy_queue(mosquitto_db *db, struct mosquitto *context, const char *topic, int qos, uint32_t payloadlen, const uint8_t *payload, int retain)
+int mqtt3_db_messages_easy_queue(mosquitto_db *db, struct mosquitto *context, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain)
 {
 	struct mosquitto_msg_store *stored;
 	char *source_id;
@@ -390,7 +433,7 @@ int mqtt3_db_messages_easy_queue(mosquitto_db *db, struct mosquitto *context, co
 	return mqtt3_db_messages_queue(db, source_id, topic, qos, retain, stored);
 }
 
-int mqtt3_db_message_store(mosquitto_db *db, const char *source, uint16_t source_mid, const char *topic, int qos, uint32_t payloadlen, const uint8_t *payload, int retain, struct mosquitto_msg_store **stored, dbid_t store_id)
+int mqtt3_db_message_store(mosquitto_db *db, const char *source, uint16_t source_mid, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain, struct mosquitto_msg_store **stored, dbid_t store_id)
 {
 	struct mosquitto_msg_store *temp;
 
@@ -427,7 +470,7 @@ int mqtt3_db_message_store(mosquitto_db *db, const char *source, uint16_t source
 	}
 	temp->msg.payloadlen = payloadlen;
 	if(payloadlen){
-		temp->msg.payload = _mosquitto_malloc(sizeof(uint8_t)*payloadlen);
+		temp->msg.payload = _mosquitto_malloc(sizeof(char)*payloadlen);
 		if(!temp->msg.payload){
 			if(temp->source_id) _mosquitto_free(temp->source_id);
 			if(temp->msg.topic) _mosquitto_free(temp->msg.topic);
@@ -435,7 +478,7 @@ int mqtt3_db_message_store(mosquitto_db *db, const char *source, uint16_t source
 			_mosquitto_free(temp);
 			return MOSQ_ERR_NOMEM;
 		}
-		memcpy(temp->msg.payload, payload, sizeof(uint8_t)*payloadlen);
+		memcpy(temp->msg.payload, payload, sizeof(char)*payloadlen);
 	}else{
 		temp->msg.payload = NULL;
 	}
@@ -447,6 +490,8 @@ int mqtt3_db_message_store(mosquitto_db *db, const char *source, uint16_t source
 		_mosquitto_free(temp);
 		return 1;
 	}
+	temp->dest_ids = NULL;
+	temp->dest_id_count = 0;
 	db->msg_store_count++;
 	db->msg_store = temp;
 	(*stored) = temp;
@@ -571,7 +616,7 @@ int mqtt3_db_message_write(struct mosquitto *context)
 	const char *topic;
 	int qos;
 	uint32_t payloadlen;
-	const uint8_t *payload;
+	const void *payload;
 
 	if(!context || context->sock == -1
 			|| (context->state == mosq_cs_connected && !context->id)){
@@ -682,12 +727,19 @@ void mqtt3_db_store_clean(mosquitto_db *db)
 {
 	/* FIXME - this may not be necessary if checks are made when messages are removed. */
 	struct mosquitto_msg_store *tail, *last = NULL;
+	int i;
 	assert(db);
 
 	tail = db->msg_store;
 	while(tail){
 		if(tail->ref_count == 0){
 			if(tail->source_id) _mosquitto_free(tail->source_id);
+			if(tail->dest_ids){
+				for(i=0; i<tail->dest_id_count; i++){
+					if(tail->dest_ids[i]) _mosquitto_free(tail->dest_ids[i]);
+				}
+				_mosquitto_free(tail->dest_ids);
+			}
 			if(tail->msg.topic) _mosquitto_free(tail->msg.topic);
 			if(tail->msg.payload) _mosquitto_free(tail->msg.payload);
 			if(last){
@@ -755,35 +807,35 @@ void mqtt3_db_sys_update(mosquitto_db *db, int interval, time_t start_time)
 	if(interval && now - interval > last_update){
 		uptime = now - start_time;
 		snprintf(buf, 100, "%d seconds", (int)uptime);
-		mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/uptime", 2, strlen(buf), (uint8_t *)buf, 1);
+		mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/uptime", 2, strlen(buf), buf, 1);
 
 		if(db->msg_store_count != msg_store_count){
 			msg_store_count = db->msg_store_count;
 			snprintf(buf, 100, "%d", msg_store_count);
-			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/messages/stored", 2, strlen(buf), (uint8_t *)buf, 1);
+			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/messages/stored", 2, strlen(buf), buf, 1);
 		}
 
 		if(!mqtt3_db_client_count(db, &value, &inactive)){
 			if(client_count != value){
 				client_count = value;
 				snprintf(buf, 100, "%d", client_count);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/total", 2, strlen(buf), (uint8_t *)buf, 1);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/total", 2, strlen(buf), buf, 1);
 			}
 			if(inactive_count != inactive){
 				inactive_count = inactive;
 				snprintf(buf, 100, "%d", inactive_count);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/inactive", 2, strlen(buf), (uint8_t *)buf, 1);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/inactive", 2, strlen(buf), buf, 1);
 			}
 			active = client_count - inactive;
 			if(active_count != active){
 				active_count = active;
 				snprintf(buf, 100, "%d", active_count);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/active", 2, strlen(buf), (uint8_t *)buf, 1);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/active", 2, strlen(buf), buf, 1);
 			}
 			if(value > client_max){
 				client_max = value;
 				snprintf(buf, 100, "%d", client_max);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/maximum", 2, strlen(buf), (uint8_t *)buf, 1);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/maximum", 2, strlen(buf), buf, 1);
 			}
 		}
 
@@ -792,50 +844,50 @@ void mqtt3_db_sys_update(mosquitto_db *db, int interval, time_t start_time)
 		if(current_heap != value_ul){
 			current_heap = value_ul;
 			snprintf(buf, 100, "%lu bytes", current_heap);
-			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/heap/current size", 2, strlen(buf), (uint8_t *)buf, 1);
+			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/heap/current size", 2, strlen(buf), buf, 1);
 		}
 		value_ul =_mosquitto_max_memory_used();
 		if(max_heap != value_ul){
 			max_heap = value_ul;
 			snprintf(buf, 100, "%lu bytes", max_heap);
-			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/heap/maximum size", 2, strlen(buf), (uint8_t *)buf, 1);
+			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/heap/maximum size", 2, strlen(buf), buf, 1);
 		}
 #endif
 
 		if(msgs_received != g_msgs_received){
 			msgs_received = g_msgs_received;
 			snprintf(buf, 100, "%lu", msgs_received);
-			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/messages/received", 2, strlen(buf), (uint8_t *)buf, 1);
+			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/messages/received", 2, strlen(buf), buf, 1);
 		}
 		
 		if(msgs_sent != g_msgs_sent){
 			msgs_sent = g_msgs_sent;
 			snprintf(buf, 100, "%lu", msgs_sent);
-			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/messages/sent", 2, strlen(buf), (uint8_t *)buf, 1);
+			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/messages/sent", 2, strlen(buf), buf, 1);
 		}
 
 		if(pub_msgs_received != g_pub_msgs_received){
 			pub_msgs_received = g_pub_msgs_received;
 			snprintf(buf, 100, "%lu", pub_msgs_received);
-			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/publish/messages/received", 2, strlen(buf), (uint8_t *)buf, 1);
+			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/publish/messages/received", 2, strlen(buf), buf, 1);
 		}
 		
 		if(pub_msgs_sent != g_pub_msgs_sent){
 			pub_msgs_sent = g_pub_msgs_sent;
 			snprintf(buf, 100, "%lu", pub_msgs_sent);
-			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/publish/messages/sent", 2, strlen(buf), (uint8_t *)buf, 1);
+			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/publish/messages/sent", 2, strlen(buf), buf, 1);
 		}
 
 		if(bytes_received != g_bytes_received){
 			bytes_received = g_bytes_received;
 			snprintf(buf, 100, "%llu", bytes_received);
-			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/bytes/received", 2, strlen(buf), (uint8_t *)buf, 1);
+			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/bytes/received", 2, strlen(buf), buf, 1);
 		}
 		
 		if(bytes_sent != g_bytes_sent){
 			bytes_sent = g_bytes_sent;
 			snprintf(buf, 100, "%llu", bytes_sent);
-			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/bytes/sent", 2, strlen(buf), (uint8_t *)buf, 1);
+			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/bytes/sent", 2, strlen(buf), buf, 1);
 		}
 		
 		if(uptime){
@@ -843,28 +895,28 @@ void mqtt3_db_sys_update(mosquitto_db *db, int interval, time_t start_time)
 			if(msgsps_received != value){
 				msgsps_received = value;
 				snprintf(buf, 100, "%u", msgsps_received);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/messages/per second/received", 2, strlen(buf), (uint8_t *)buf, 1);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/messages/per second/received", 2, strlen(buf), buf, 1);
 			}
 
 			value = msgs_sent/uptime;
 			if(msgsps_sent != value){
 				msgsps_sent = value;
 				snprintf(buf, 100, "%u", msgsps_sent);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/messages/per second/sent", 2, strlen(buf), (uint8_t *)buf, 1);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/messages/per second/sent", 2, strlen(buf), buf, 1);
 			}
 
 			value = bytes_received/uptime;
 			if(bytesps_received != value){
 				bytesps_received = value;
 				snprintf(buf, 100, "%u", bytesps_received);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/bytes/per second/received", 2, strlen(buf), (uint8_t *)buf, 1);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/bytes/per second/received", 2, strlen(buf), buf, 1);
 			}
 
 			value = bytes_sent/uptime;
 			if(bytesps_sent != value){
 				bytesps_sent = value;
 				snprintf(buf, 100, "%u", bytesps_sent);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/bytes/per second/sent", 2, strlen(buf), (uint8_t *)buf, 1);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/bytes/per second/sent", 2, strlen(buf), buf, 1);
 			}
 		}
 
@@ -899,31 +951,31 @@ void mqtt3_db_sys_update(mosquitto_db *db, int interval, time_t start_time)
 			if(system_uptime != value_ul){
 				system_uptime = value_ul;
 				snprintf(buf, 100, "%lu seconds", system_uptime);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/system/uptime", 2, strlen(buf), (uint8_t *)buf, 1);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/system/uptime", 2, strlen(buf), buf, 1);
 			}
 			value_ul = info.loads[0];			// 1 minute load average
 			if(system_load != value_ul){
 				system_load = value_ul;
 				snprintf(buf, 100, "%lu", system_load);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/system/load", 2, strlen(buf), (uint8_t *)buf, 1);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/system/load", 2, strlen(buf), buf, 1);
 			}
 			value_ul = info.totalram *(unsigned long long)info.mem_unit / 1024;		// report in KB
 			if(totalram != value_ul){
 				totalram = value_ul;
 				snprintf(buf, 100, "%lu kB", totalram);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/system/ram/total", 2, strlen(buf), (uint8_t *)buf, 1);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/system/ram/total", 2, strlen(buf), buf, 1);
 			}
 			value_ul = info.freeram *(unsigned long long)info.mem_unit / 1024;		// report in KB
 			if(freeram != value_ul){
 				freeram = value_ul;
 				snprintf(buf, 100, "%lu kB", freeram);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/system/ram/free", 2, strlen(buf), (uint8_t *)buf, 1);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/system/ram/free", 2, strlen(buf), buf, 1);
 			}
 			value = info.procs;
 			if(procs != value){
 				procs = value;
 				snprintf(buf, 100, "%d processes", procs);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/system/procs", 2, strlen(buf), (uint8_t *)buf, 1);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/system/procs", 2, strlen(buf), buf, 1);
 			}
 		}
 #endif

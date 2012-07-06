@@ -3,12 +3,15 @@ syntax: glob
 *.o
 *.exe
 *.db
+*.test
+*.pyc
 
 client/mosquitto_pub
 client/mosquitto_sub
 examples/mysql_log/mosquitto_mysql_log
 examples/temperature_conversion/mqtt_temperature_conversion
 man/mosquitto.8
+man/mosquitto-ssl.7
 man/mosquitto.conf.5
 man/libmosquitto.3
 man/mosquitto_pub.1
@@ -26,5 +29,6 @@ test/msgsps_sub.dat
 
 lib/cpp/libmosquittopp.so*
 lib/libmosquitto.so*
+lib/libmosquitto.a
 
 build/

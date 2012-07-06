@@ -62,7 +62,7 @@ static int qos = 0;
 static int retain = 0;
 static int mode = MSGMODE_NONE;
 static int status = STATUS_CONNECTING;
-static uint16_t mid_sent = 0;
+static int mid_sent = 0;
 static bool connected = true;
 static char *username = NULL;
 static char *password = NULL;
@@ -78,7 +78,7 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 			case MSGMODE_CMD:
 			case MSGMODE_FILE:
 			case MSGMODE_STDIN_FILE:
-				rc = mosquitto_publish(mosq, &mid_sent, topic, msglen, (uint8_t *)message, qos, retain);
+				rc = mosquitto_publish(mosq, &mid_sent, topic, msglen, message, qos, retain);
 				break;
 			case MSGMODE_NULL:
 				rc = mosquitto_publish(mosq, &mid_sent, topic, 0, NULL, qos, retain);
@@ -110,25 +110,8 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 			mosquitto_disconnect(mosq);
 		}
 	}else{
-		switch(result){
-			case 1:
-				if(!quiet) fprintf(stderr, "Connection Refused: unacceptable protocol version\n");
-				break;
-			case 2:
-				if(!quiet) fprintf(stderr, "Connection Refused: identifier rejected\n");
-				break;
-			case 3:
-				if(!quiet) fprintf(stderr, "Connection Refused: broker unavailable\n");
-				break;
-			case 4:
-				if(!quiet) fprintf(stderr, "Connection Refused: bad user name or password\n");
-				break;
-			case 5:
-				if(!quiet) fprintf(stderr, "Connection Refused: not authorised\n");
-				break;
-			default:
-				if(!quiet) fprintf(stderr, "Connection Refused: unknown reason (%d)\n", result);
-				break;
+		if(result && !quiet){
+			fprintf(stderr, "%s\n", mosquitto_connack_string(result));
 		}
 	}
 }
@@ -138,12 +121,17 @@ void my_disconnect_callback(struct mosquitto *mosq, void *obj, int rc)
 	connected = false;
 }
 
-void my_publish_callback(struct mosquitto *mosq, void *obj, uint16_t mid)
+void my_publish_callback(struct mosquitto *mosq, void *obj, int mid)
 {
 	if(mode != MSGMODE_STDIN_LINE && disconnect_sent == false){
 		mosquitto_disconnect(mosq);
 		disconnect_sent = true;
 	}
+}
+
+void my_log_callback(struct mosquitto *mosq, void *obj, int level, const char *str)
+{
+	printf("%s\n", str);
 }
 
 int load_stdin(void)
@@ -260,10 +248,10 @@ int main(int argc, char *argv[])
 	struct mosquitto *mosq = NULL;
 	int rc;
 	int rc2;
-	char hostname[21];
+	char hostname[MOSQ_MQTT_ID_MAX_LENGTH - 9];
 	char err[1024];
 
-	uint8_t *will_payload = NULL;
+	char *will_payload = NULL;
 	long will_payloadlen = 0;
 	int will_qos = 0;
 	bool will_retain = false;
@@ -433,8 +421,8 @@ int main(int argc, char *argv[])
 				print_usage();
 				return 1;
 			}else{
-				will_payload = (uint8_t *)argv[i+1];
-				will_payloadlen = strlen((char *)will_payload);
+				will_payload = argv[i+1];
+				will_payloadlen = strlen(will_payload);
 			}
 			i++;
 		}else if(!strcmp(argv[i], "--will-qos")){
@@ -498,15 +486,17 @@ int main(int argc, char *argv[])
 		}
 		snprintf(id, strlen(id_prefix)+10, "%s%d", id_prefix, getpid());
 	}else if(!id){
-		id = malloc(30);
+		id = malloc(MOSQ_MQTT_ID_MAX_LENGTH + 1);
 		if(!id){
 			if(!quiet) fprintf(stderr, "Error: Out of memory.\n");
 			mosquitto_lib_cleanup();
 			return 1;
 		}
-		memset(hostname, 0, 21);
-		gethostname(hostname, 20);
-		snprintf(id, 23, "mosq_pub_%d_%s", getpid(), hostname);
+		hostname[0] = '\0';
+		gethostname(hostname, MOSQ_MQTT_ID_MAX_LENGTH - 10);
+		hostname[MOSQ_MQTT_ID_MAX_LENGTH - 10] = '\0';
+		snprintf(id, MOSQ_MQTT_ID_MAX_LENGTH, "mosqpub/%d-%s", getpid(), hostname);
+		id[MOSQ_MQTT_ID_MAX_LENGTH] = '\0';
 	}
 
 	mosq = mosquitto_new(id, true, NULL);
@@ -523,10 +513,9 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	if(debug){
-		mosquitto_log_init(mosq, MOSQ_LOG_DEBUG | MOSQ_LOG_ERR | MOSQ_LOG_WARNING
-				| MOSQ_LOG_NOTICE | MOSQ_LOG_INFO, MOSQ_LOG_STDERR);
+		mosquitto_log_callback_set(mosq, my_log_callback);
 	}
-	if(will_topic && mosquitto_will_set(mosq, true, will_topic, will_payloadlen, will_payload, will_qos, will_retain)){
+	if(will_topic && mosquitto_will_set(mosq, will_topic, will_payloadlen, will_payload, will_qos, will_retain)){
 		if(!quiet) fprintf(stderr, "Error: Problem setting will.\n");
 		mosquitto_lib_cleanup();
 		return 1;
@@ -563,7 +552,7 @@ int main(int argc, char *argv[])
 		if(mode == MSGMODE_STDIN_LINE && status == STATUS_CONNACK_RECVD){
 			if(fgets(buf, 1024, stdin)){
 				buf[strlen(buf)-1] = '\0';
-				rc2 = mosquitto_publish(mosq, &mid_sent, topic, strlen(buf), (uint8_t *)buf, qos, retain);
+				rc2 = mosquitto_publish(mosq, &mid_sent, topic, strlen(buf), buf, qos, retain);
 				if(rc2){
 					if(!quiet) fprintf(stderr, "Error: Publish returned %d, disconnecting.\n", rc2);
 					mosquitto_disconnect(mosq);
@@ -573,7 +562,7 @@ int main(int argc, char *argv[])
 				disconnect_sent = true;
 			}
 		}
-		rc = mosquitto_loop(mosq, -1);
+		rc = mosquitto_loop(mosq, -1, 1);
 	}while(rc == MOSQ_ERR_SUCCESS && connected);
 
 	if(message && mode == MSGMODE_FILE){

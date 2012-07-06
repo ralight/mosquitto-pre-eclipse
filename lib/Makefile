@@ -2,9 +2,23 @@ include ../config.mk
 
 SOVERSION=1
 
-.PHONY : clean install
+.PHONY : really clean install
 
-all : libmosquitto.so.${SOVERSION}
+MOSQ_OBJS=mosquitto.o \
+		  logging_mosq.o \
+		  memory_mosq.o \
+		  messages_mosq.o \
+		  net_mosq.o \
+		  read_handle.o \
+		  read_handle_client.o \
+		  read_handle_shared.o \
+		  send_mosq.o \
+		  send_client_mosq.o \
+		  thread_mosq.o \
+		  util_mosq.o \
+		  will_mosq.o
+
+all : libmosquitto.so.${SOVERSION} libmosquitto.a
 	make -C cpp
 	make -C python
 
@@ -22,14 +36,18 @@ uninstall :
 	-rm -f ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.so
 	-rm -f ${DESTDIR}${prefix}/include/mosquitto.h
 
+reallyclean : clean
+
 clean :
 	-rm -f *.o libmosquitto.so.${SOVERSION} libmosquitto.so
 	make -C cpp clean
 	make -C python clean
 
-libmosquitto.so.${SOVERSION} : mosquitto.o logging_mosq.o memory_mosq.o messages_mosq.o net_mosq.o read_handle.o read_handle_client.o read_handle_shared.o send_mosq.o send_client_mosq.o thread_mosq.o util_mosq.o will_mosq.o
-	$(CC) -shared -Wl,--version-script=linker.version -Wl,-soname,libmosquitto.so.${SOVERSION} $^ -o $@ ${LIBS} -lpthread
+libmosquitto.so.${SOVERSION} : ${MOSQ_OBJS}
+	$(CC) -shared -Wl,--version-script=linker.version -Wl,-soname,libmosquitto.so.${SOVERSION} $^ -o $@ ${LIBS} -lpthread -lssl
 
+libmosquitto.a : ${MOSQ_OBJS}
+	$(AR) cr $@ $^
 mosquitto.o : mosquitto.c mosquitto.h
 	$(CC) $(CFLAGS) -fPIC -c $< -o $@
 

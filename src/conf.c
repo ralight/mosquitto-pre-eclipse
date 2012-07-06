@@ -48,6 +48,7 @@ static void _config_init_reload(mqtt3_config *config)
 	config->acl_file = NULL;
 	config->allow_anonymous = true;
 	config->autosave_interval = 1800;
+	config->autosave_on_changes = false;
 	if(config->clientid_prefixes) _mosquitto_free(config->clientid_prefixes);
 	config->connection_messages = true;
 	config->clientid_prefixes = NULL;
@@ -105,6 +106,13 @@ void mqtt3_config_init(mqtt3_config *config)
 	config->default_listener.socks = NULL;
 	config->default_listener.sock_count = 0;
 	config->default_listener.client_count = 0;
+	config->default_listener.cafile = NULL;
+	config->default_listener.capath = NULL;
+	config->default_listener.certfile = NULL;
+	config->default_listener.keyfile = NULL;
+	config->default_listener.require_certificate = false;
+	config->default_listener.crlfile = NULL;
+	config->default_listener.use_cn_as_username = false;
 	config->listeners = NULL;
 	config->listener_count = 0;
 	config->pid_file = NULL;
@@ -149,6 +157,7 @@ void mqtt3_config_cleanup(mqtt3_config *config)
 				}
 				_mosquitto_free(config->bridges[i].topics);
 			}
+			if(config->bridges[i].notification_topic) _mosquitto_free(config->bridges[i].notification_topic);
 		}
 		_mosquitto_free(config->bridges);
 	}
@@ -260,8 +269,20 @@ int mqtt3_config_parse_args(mqtt3_config *config, int argc, char *argv[])
 		config->listeners[config->listener_count-1].socks = NULL;
 		config->listeners[config->listener_count-1].sock_count = 0;
 		config->listeners[config->listener_count-1].client_count = 0;
+		config->listeners[config->listener_count-1].cafile = config->default_listener.cafile;
+		config->listeners[config->listener_count-1].capath = config->default_listener.capath;
+		config->listeners[config->listener_count-1].certfile = config->default_listener.certfile;
+		config->listeners[config->listener_count-1].keyfile = config->default_listener.keyfile;
+		config->listeners[config->listener_count-1].require_certificate = config->default_listener.require_certificate;
+		config->listeners[config->listener_count-1].ssl_ctx = NULL;
+		config->listeners[config->listener_count-1].crlfile = config->default_listener.crlfile;
+		config->listeners[config->listener_count-1].use_cn_as_username = config->default_listener.use_cn_as_username;
 	}
 
+	/* Default to drop to mosquitto user if we are privileged and no user specified. */
+	if(!config->user){
+		config->user = "mosquitto";
+	}
 	return MOSQ_ERR_SUCCESS;
 }
 
@@ -378,9 +399,32 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 				}else if(!strcmp(token, "autosave_interval")){
 					if(_conf_parse_int(&token, "autosave_interval", &config->autosave_interval, saveptr)) return MOSQ_ERR_INVAL;
 					if(config->autosave_interval < 0) config->autosave_interval = 0;
+				}else if(!strcmp(token, "autosave_on_changes")){
+					if(_conf_parse_bool(&token, "autosave_on_changes", &config->autosave_on_changes, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "bind_address")){
 					if(reload) continue; // Listener not valid for reloading.
 					if(_conf_parse_string(&token, "default listener bind_address", &config->default_listener.host, saveptr)) return MOSQ_ERR_INVAL;
+				}else if(!strcmp(token, "cafile")){
+					if(reload) continue; // Listeners not valid for reloading.
+					if(config->listener_count == 0){
+						if(_conf_parse_string(&token, "cafile", &config->default_listener.cafile, saveptr)) return MOSQ_ERR_INVAL;
+					}else{
+						if(_conf_parse_string(&token, "cafile", &config->listeners[config->listener_count-1].cafile, saveptr)) return MOSQ_ERR_INVAL;
+					}
+				}else if(!strcmp(token, "capath")){
+					if(reload) continue; // Listeners not valid for reloading.
+					if(config->listener_count == 0){
+						if(_conf_parse_string(&token, "capath", &config->default_listener.capath, saveptr)) return MOSQ_ERR_INVAL;
+					}else{
+						if(_conf_parse_string(&token, "capath", &config->listeners[config->listener_count-1].capath, saveptr)) return MOSQ_ERR_INVAL;
+					}
+				}else if(!strcmp(token, "certfile")){
+					if(reload) continue; // Listeners not valid for reloading.
+					if(config->listener_count == 0){
+						if(_conf_parse_string(&token, "certfile", &config->default_listener.certfile, saveptr)) return MOSQ_ERR_INVAL;
+					}else{
+						if(_conf_parse_string(&token, "certfile", &config->listeners[config->listener_count-1].certfile, saveptr)) return MOSQ_ERR_INVAL;
+					}
 				}else if(!strcmp(token, "clientid")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
@@ -449,9 +493,11 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 						cur_bridge->username = NULL;
 						cur_bridge->password = NULL;
 						cur_bridge->notifications = true;
+						cur_bridge->notification_topic = NULL;
 						cur_bridge->start_type = bst_automatic;
 						cur_bridge->idle_timeout = 60;
 						cur_bridge->threshold = 10;
+						cur_bridge->try_private = true;
 					}else{
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty connection value in configuration.");
 						return MOSQ_ERR_INVAL;
@@ -461,6 +507,13 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 #endif
 				}else if(!strcmp(token, "connection_messages")){
 					if(_conf_parse_bool(&token, token, &config->connection_messages, saveptr)) return MOSQ_ERR_INVAL;
+				}else if(!strcmp(token, "crlfile")){
+					if(reload) continue; // Listeners not valid for reloading.
+					if(config->listener_count == 0){
+						if(_conf_parse_string(&token, "crlfile", &config->default_listener.crlfile, saveptr)) return MOSQ_ERR_INVAL;
+					}else{
+						if(_conf_parse_string(&token, "crlfile", &config->listeners[config->listener_count-1].crlfile, saveptr)) return MOSQ_ERR_INVAL;
+					}
 				}else if(!strcmp(token, "idle_timeout")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
@@ -491,6 +544,13 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
+				}else if(!strcmp(token, "keyfile")){
+					if(reload) continue; // Listeners not valid for reloading.
+					if(config->listener_count == 0){
+						if(_conf_parse_string(&token, "keyfile", &config->default_listener.keyfile, saveptr)) return MOSQ_ERR_INVAL;
+					}else{
+						if(_conf_parse_string(&token, "keyfile", &config->listeners[config->listener_count-1].keyfile, saveptr)) return MOSQ_ERR_INVAL;
+					}
 				}else if(!strcmp(token, "listener")){
 					if(reload) continue; // Listeners not valid for reloading.
 					token = strtok_r(NULL, " ", &saveptr);
@@ -511,6 +571,13 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 						config->listeners[config->listener_count-1].socks = NULL;
 						config->listeners[config->listener_count-1].sock_count = 0;
 						config->listeners[config->listener_count-1].client_count = 0;
+						config->listeners[config->listener_count-1].cafile = NULL;
+						config->listeners[config->listener_count-1].capath = NULL;
+						config->listeners[config->listener_count-1].certfile = NULL;
+						config->listeners[config->listener_count-1].keyfile = NULL;
+						config->listeners[config->listener_count-1].require_certificate = false;
+						config->listeners[config->listener_count-1].ssl_ctx = NULL;
+						config->listeners[config->listener_count-1].crlfile = NULL;
 						token = strtok_r(NULL, " ", &saveptr);
 						if(token){
 							config->listeners[config->listener_count-1].host = _mosquitto_strdup(token);
@@ -616,6 +683,17 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
+				}else if(!strcmp(token, "notification_topic")){
+#ifdef WITH_BRIDGE
+					if(reload) continue; // FIXME
+					if(!cur_bridge){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
+						return MOSQ_ERR_INVAL;
+					}
+					if(_conf_parse_string(&token, "notification_topic", &cur_bridge->notification_topic, saveptr)) return MOSQ_ERR_INVAL;
+#else
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+#endif
 				}else if(!strcmp(token, "password")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
@@ -661,10 +739,13 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 						switch(token[strlen(token)-1]){
 							case 'd':
 								expiration_mult = 86400;
+								break;
 							case 'w':
 								expiration_mult = 86400*7;
+								break;
 							case 'm':
 								expiration_mult = 86400*30;
+								break;
 							case 'y':
 								expiration_mult = 86400*365;
 								break;
@@ -697,6 +778,13 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 					config->default_listener.port = port_tmp;
 				}else if(!strcmp(token, "queue_qos0_messages")){
 					if(_conf_parse_bool(&token, token, &config->queue_qos0_messages, saveptr)) return MOSQ_ERR_INVAL;
+				}else if(!strcmp(token, "require_certificate")){
+					if(reload) continue; // Listeners not valid for reloading.
+					if(config->listener_count == 0){
+						if(_conf_parse_bool(&token, "require_certificate", &config->default_listener.require_certificate, saveptr)) return MOSQ_ERR_INVAL;
+					}else{
+						if(_conf_parse_bool(&token, "require_certificate", &config->listeners[config->listener_count-1].require_certificate, saveptr)) return MOSQ_ERR_INVAL;
+					}
 				}else if(!strcmp(token, "retry_interval")){
 					if(_conf_parse_int(&token, "retry_interval", &config->retry_interval, saveptr)) return MOSQ_ERR_INVAL;
 					if(config->retry_interval < 1 || config->retry_interval > 3600){
@@ -810,6 +898,24 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
+				}else if(!strcmp(token, "try_private")){
+#ifdef WITH_BRIDGE
+					if(reload) continue; // FIXME
+					if(!cur_bridge){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
+						return MOSQ_ERR_INVAL;
+					}
+					if(_conf_parse_bool(&token, "try_private", &cur_bridge->try_private, saveptr)) return MOSQ_ERR_INVAL;
+#else
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+#endif
+				}else if(!strcmp(token, "use_cn_as_username")){
+					if(reload) continue; // Listeners not valid for reloading.
+					if(config->listener_count == 0){
+						if(_conf_parse_bool(&token, "use_cn_as_username", &config->default_listener.use_cn_as_username, saveptr)) return MOSQ_ERR_INVAL;
+					}else{
+						if(_conf_parse_bool(&token, "use_cn_as_username", &config->listeners[config->listener_count-1].use_cn_as_username, saveptr)) return MOSQ_ERR_INVAL;
+					}
 				}else if(!strcmp(token, "user")){
 					if(reload) continue; // Drop privileges user not valid for reloading.
 					if(_conf_parse_string(&token, "user", &config->user, saveptr)) return MOSQ_ERR_INVAL;
@@ -872,15 +978,9 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 					if(_conf_parse_string(&token, "db_password", &config->db_password, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "db_port")){
 					if(_conf_parse_int(&token, "db_port", &config->db_port, saveptr)) return MOSQ_ERR_INVAL;
-				}else if(!strcmp(token, "autosave_on_changes")
-						|| !strcmp(token, "connection_messages")
-						|| !strcmp(token, "trace_level")
+				}else if(!strcmp(token, "trace_level")
 						|| !strcmp(token, "addresses")
-						|| !strcmp(token, "idle_timeout")
-						|| !strcmp(token, "notification_topic")
 						|| !strcmp(token, "round_robin")
-						|| !strcmp(token, "threshold")
-						|| !strcmp(token, "try_private")
 						|| !strcmp(token, "ffdc_output")
 						|| !strcmp(token, "max_log_entries")
 						|| !strcmp(token, "trace_output")){
@@ -913,6 +1013,9 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 		}
 	}
 #endif
+	/* Default to drop to mosquitto user if no other user specified. This must
+	 * remain here even though it is covered in mqtt3_parse_args() because this
+	 * function may be called on its own. */
 	if(!config->user){
 		config->user = "mosquitto";
 	}

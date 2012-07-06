@@ -45,21 +45,12 @@ extern "C" {
 #endif
 
 #ifdef WIN32
-#	if _MSC_VER < 1600
-		typedef unsigned char uint8_t;
-		typedef unsigned short uint16_t;
-		typedef unsigned int uint32_t;
-		typedef unsigned long long uint64_t;
-#	else
-#		include <stdint.h>
-#	endif
 #	ifndef __cplusplus
 #		define bool char
 #		define true 1
 #		define false 0
 #	endif
 #else
-#	include <stdint.h>
 #	include <stdbool.h>
 #endif
 
@@ -68,12 +59,8 @@ extern "C" {
 #define LIBMOSQUITTO_REVISION 90
 #define LIBMOSQUITTO_VERSION_NUMBER (LIBMOSQUITTO_MAJOR*1000000+LIBMOSQUITTO_MINOR*1000+LIBMOSQUITTO_REVISION)
 
-/* Log destinations */
-#define MOSQ_LOG_NONE 0x00
-#define MOSQ_LOG_STDOUT 0x04
-#define MOSQ_LOG_STDERR 0x08
-
 /* Log types */
+#define MOSQ_LOG_NONE 0x00
 #define MOSQ_LOG_INFO 0x01
 #define MOSQ_LOG_NOTICE 0x02
 #define MOSQ_LOG_WARNING 0x04
@@ -82,27 +69,32 @@ extern "C" {
 #define MOSQ_LOG_ALL 0xFF
 
 /* Error values */
-#define MOSQ_ERR_SUCCESS 0
-#define MOSQ_ERR_NOMEM 1
-#define MOSQ_ERR_PROTOCOL 2
-#define MOSQ_ERR_INVAL 3
-#define MOSQ_ERR_NO_CONN 4
-#define MOSQ_ERR_CONN_REFUSED 5
-#define MOSQ_ERR_NOT_FOUND 6
-#define MOSQ_ERR_CONN_LOST 7
-#define MOSQ_ERR_SSL 8
-#define MOSQ_ERR_PAYLOAD_SIZE 9
-#define MOSQ_ERR_NOT_SUPPORTED 10
-#define MOSQ_ERR_AUTH 11
-#define MOSQ_ERR_ACL_DENIED 12
-#define MOSQ_ERR_UNKNOWN 13
-#define MOSQ_ERR_ERRNO 14
+enum mosq_err_t {
+	MOSQ_ERR_SUCCESS = 0,
+	MOSQ_ERR_NOMEM = 1,
+	MOSQ_ERR_PROTOCOL = 2,
+	MOSQ_ERR_INVAL = 3,
+	MOSQ_ERR_NO_CONN = 4,
+	MOSQ_ERR_CONN_REFUSED = 5,
+	MOSQ_ERR_NOT_FOUND = 6,
+	MOSQ_ERR_CONN_LOST = 7,
+	MOSQ_ERR_SSL = 8,
+	MOSQ_ERR_PAYLOAD_SIZE = 9,
+	MOSQ_ERR_NOT_SUPPORTED = 10,
+	MOSQ_ERR_AUTH = 11,
+	MOSQ_ERR_ACL_DENIED = 12,
+	MOSQ_ERR_UNKNOWN = 13,
+	MOSQ_ERR_ERRNO = 14
+};
+
+/* MQTT specification restricts client ids to a maximum of 23 characters */
+#define MOSQ_MQTT_ID_MAX_LENGTH 23
 
 struct mosquitto_message{
-	uint16_t mid;
+	int mid;
 	char *topic;
-	uint8_t *payload;
-	uint32_t payloadlen;
+	void *payload;
+	int payloadlen;
 	int qos;
 	bool retain;
 };
@@ -219,38 +211,6 @@ libmosq_EXPORT struct mosquitto *mosquitto_new(const char *id, bool clean_sessio
  */
 libmosq_EXPORT void mosquitto_destroy(struct mosquitto *mosq);
 
-/*
- * Function: mosquitto_log_init
- *
- * Configure logging options for a client instance. May be called at any point.
- *
- * Log priorities controls which types of messages are output. OR together
- * values from:
- *
- *	* MOSQ_LOG_INFO
- *	* MOSQ_LOG_NOTICE
- *	* MOSQ_LOG_WARNING
- *	* MOSQ_LOG_ERR
- *	* MOSQ_LOG_DEBUG
- *	* MOSQ_LOG_ALL
- *
- * Log destinations controls where the log messages are sent. OR together
- * values from:
- *
- *	* MOSQ_LOG_NONE
- *	* MOSQ_LOG_STDOUT
- *	* MOSQ_LOG_STDERR
- *
- * Parameters:
- *	mosq -         a valid mosquitto instance.
- *	priorities -   an integer bit mask of the log types to output.
- *	destinations - an integer bit mask of log destinations.
- *
- * Returns:
- * 	MOSQ_ERR_SUCCESS - always
- */
-libmosq_EXPORT int mosquitto_log_init(struct mosquitto *mosq, int priorities, int destinations);
-
 /* 
  * Function: mosquitto_will_set
  *
@@ -259,8 +219,6 @@ libmosq_EXPORT int mosquitto_log_init(struct mosquitto *mosq, int priorities, in
  *
  * Parameters:
  * 	mosq -       a valid mosquitto instance.
- * 	will -       set to true to enable a will, false to disable. If set to true,
- *               at least "topic" but also be valid.
  * 	topic -      the topic on which to publish the will.
  * 	payloadlen - the size of the payload (bytes). Valid values are between 0 and
  *               268,435,455.
@@ -276,7 +234,22 @@ libmosq_EXPORT int mosquitto_log_init(struct mosquitto *mosq, int priorities, in
  * 	MOSQ_ERR_NOMEM -        if an out of memory condition occurred.
  * 	MOSQ_ERR_PAYLOAD_SIZE - if payloadlen is too large.
  */
-libmosq_EXPORT int mosquitto_will_set(struct mosquitto *mosq, bool will, const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain);
+libmosq_EXPORT int mosquitto_will_set(struct mosquitto *mosq, const char *topic, int payloadlen, const void *payload, int qos, bool retain);
+
+/* 
+ * Function: mosquitto_will_clear
+ *
+ * Remove a previously configured will. This must be called before calling
+ * <mosquitto_connect>.
+ *
+ * Parameters:
+ * 	mosq - a valid mosquitto instance.
+ *
+ * Returns:
+ * 	MOSQ_ERR_SUCCESS - on success.
+ * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ */
+libmosq_EXPORT int mosquitto_will_clear(struct mosquitto *mosq);
 
 /*
  * Function: mosquitto_username_pw_set
@@ -413,7 +386,7 @@ libmosq_EXPORT int mosquitto_disconnect(struct mosquitto *mosq);
  * 
  * Parameters:
  * 	mosq -       a valid mosquitto instance.
- * 	mid -        pointer to a uint16_t. If not NULL, the function will set this
+ * 	mid -        pointer to an int. If not NULL, the function will set this
  *               to the message id of this particular message. This can be then
  *               used with the publish callback to determine when the message
  *               has been sent.
@@ -437,7 +410,7 @@ libmosq_EXPORT int mosquitto_disconnect(struct mosquitto *mosq);
  *                          broker.
  * 	MOSQ_ERR_PAYLOAD_SIZE - if payloadlen is too large.
  */
-libmosq_EXPORT int mosquitto_publish(struct mosquitto *mosq, uint16_t *mid, const char *topic, uint32_t payloadlen, const uint8_t *payload, int qos, bool retain);
+libmosq_EXPORT int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int payloadlen, const void *payload, int qos, bool retain);
 
 /*
  * Function: mosquitto_subscribe
@@ -446,7 +419,7 @@ libmosq_EXPORT int mosquitto_publish(struct mosquitto *mosq, uint16_t *mid, cons
  *
  * Parameters:
  *	mosq - a valid mosquitto instance.
- *	mid -  a pointer to a uint16_t. If not NULL, the function will set this to
+ *	mid -  a pointer to an int. If not NULL, the function will set this to
  *	       the message id of this particular message. This can be then used
  *	       with the subscribe callback to determine when the message has been
  *	       sent.
@@ -459,7 +432,7 @@ libmosq_EXPORT int mosquitto_publish(struct mosquitto *mosq, uint16_t *mid, cons
  * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
  * 	MOSQ_ERR_NO_CONN - if the client isn't connected to a broker.
  */
-libmosq_EXPORT int mosquitto_subscribe(struct mosquitto *mosq, uint16_t *mid, const char *sub, int qos);
+libmosq_EXPORT int mosquitto_subscribe(struct mosquitto *mosq, int *mid, const char *sub, int qos);
 
 /*
  * Function: mosquitto_unsubscribe
@@ -468,7 +441,7 @@ libmosq_EXPORT int mosquitto_subscribe(struct mosquitto *mosq, uint16_t *mid, co
  *
  * Parameters:
  *	mosq - a valid mosquitto instance.
- *	mid -  a pointer to a uint16_t. If not NULL, the function will set this to
+ *	mid -  a pointer to an int. If not NULL, the function will set this to
  *	       the message id of this particular message. This can be then used
  *	       with the unsubscribe callback to determine when the message has been
  *	       sent.
@@ -480,7 +453,7 @@ libmosq_EXPORT int mosquitto_subscribe(struct mosquitto *mosq, uint16_t *mid, co
  * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
  * 	MOSQ_ERR_NO_CONN - if the client isn't connected to a broker.
  */
-libmosq_EXPORT int mosquitto_unsubscribe(struct mosquitto *mosq, uint16_t *mid, const char *sub);
+libmosq_EXPORT int mosquitto_unsubscribe(struct mosquitto *mosq, int *mid, const char *sub);
 
 /*
  * Function: mosquitto_message_copy
@@ -531,10 +504,14 @@ libmosq_EXPORT void mosquitto_message_free(struct mosquitto_message **message);
  * Threads:
  *	
  * Parameters:
- *	mosq -    a valid mosquitto instance.
- *	timeout - Maximum number of milliseconds to wait for network activity in
- *            the select() call before timing out. Set to 0 for instant return.
- *            Set negative to use the default of 1000ms.
+ *	mosq -        a valid mosquitto instance.
+ *	timeout -     Maximum number of milliseconds to wait for network activity
+ *	              in the select() call before timing out. Set to 0 for instant
+ *	              return.  Set negative to use the default of 1000ms.
+ *	max_packets - the maximum number of packets to process in this call. Must
+ *	              be >0. If set to 1, only a single packet will be processed
+ *	              per call. Avoid setting too high if you have a high incoming
+ *	              message rate.
  * 
  * Returns:
  *	MOSQ_ERR_SUCCESS -   on success.
@@ -551,7 +528,7 @@ libmosq_EXPORT void mosquitto_message_free(struct mosquitto_message **message);
  * See Also:
  *	<mosquitto_loop_start>, <mosquitto_loop_stop>
  */
-libmosq_EXPORT int mosquitto_loop(struct mosquitto *mosq, int timeout);
+libmosq_EXPORT int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets);
 
 /*
  * Function: mosquitto_loop_start
@@ -619,7 +596,11 @@ libmosq_EXPORT int mosquitto_socket(struct mosquitto *mosq);
  * monitoring the client network socket for activity yourself.
  *
  * Parameters:
- *	mosq - a valid mosquitto instance.
+ *	mosq -        a valid mosquitto instance.
+ *	max_packets - the maximum number of packets to process in this call. Must
+ *	              be >0. If set to 1, only a single packet will be processed
+ *	              per call. Avoid setting too high if you have a high incoming
+ *	              message rate.
  *
  * Returns:
  *	MOSQ_ERR_SUCCESS -   on success.
@@ -637,7 +618,7 @@ libmosq_EXPORT int mosquitto_socket(struct mosquitto *mosq);
  * See Also:
  *	<mosquitto_socket>, <mosquitto_loop_write>, <mosquitto_loop_misc>
  */
-libmosq_EXPORT int mosquitto_loop_read(struct mosquitto *mosq);
+libmosq_EXPORT int mosquitto_loop_read(struct mosquitto *mosq, int max_packets);
 
 /*
  * Function: mosquitto_loop_write
@@ -647,7 +628,10 @@ libmosq_EXPORT int mosquitto_loop_read(struct mosquitto *mosq);
  * monitoring the client network socket for activity yourself.
  *
  * Parameters:
- *	mosq - a valid mosquitto instance.
+ *	mosq -        a valid mosquitto instance.
+ *	max_packets - the maximum number of packets to process in this call. Must
+ *	              be >0. If set to 1, only a single packet will be processed
+ *	              per call.
  *
  * Returns:
  *	MOSQ_ERR_SUCCESS -   on success.
@@ -665,7 +649,7 @@ libmosq_EXPORT int mosquitto_loop_read(struct mosquitto *mosq);
  * See Also:
  *	<mosquitto_socket>, <mosquitto_loop_read>, <mosquitto_loop_misc>, <mosquitto_want_write>
  */
-libmosq_EXPORT int mosquitto_loop_write(struct mosquitto *mosq);
+libmosq_EXPORT int mosquitto_loop_write(struct mosquitto *mosq, int max_packets);
 
 /*
  * Function: mosquitto_loop_misc
@@ -756,14 +740,14 @@ libmosq_EXPORT void mosquitto_disconnect_callback_set(struct mosquitto *mosq, vo
  * Parameters:
  *  mosq -       a valid mosquitto instance.
  *  on_publish - a callback function in the following form:
- *               void callback(struct mosquitto *mosq, void *obj, uint16_t mid)
+ *               void callback(struct mosquitto *mosq, void *obj, int mid)
  *
  * Callback Parameters:
  *  mosq - the mosquitto instance making the callback.
  *  obj -  the user data provided in <mosquitto_new>
  *  mid -  the message id of the sent message.
  */
-libmosq_EXPORT void mosquitto_publish_callback_set(struct mosquitto *mosq, void (*on_publish)(struct mosquitto *, void *, uint16_t));
+libmosq_EXPORT void mosquitto_publish_callback_set(struct mosquitto *mosq, void (*on_publish)(struct mosquitto *, void *, int));
 
 /*
  * Function: mosquitto_message_callback_set
@@ -797,7 +781,7 @@ libmosq_EXPORT void mosquitto_message_callback_set(struct mosquitto *mosq, void 
  * Parameters:
  *  mosq -         a valid mosquitto instance.
  *  on_subscribe - a callback function in the following form:
- *                 void callback(struct mosquitto *mosq, void *obj, uint16_t mid, int qos_count, const uint8_t *granted_qos)
+ *                 void callback(struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos)
  *
  * Callback Parameters:
  *  mosq -        the mosquitto instance making the callback.
@@ -807,7 +791,7 @@ libmosq_EXPORT void mosquitto_message_callback_set(struct mosquitto *mosq, void 
  *  granted_qos - an array of integers indicating the granted QoS for each of
  *                the subscriptions.
  */
-libmosq_EXPORT void mosquitto_subscribe_callback_set(struct mosquitto *mosq, void (*on_subscribe)(struct mosquitto *, void *, uint16_t, int, const uint8_t *));
+libmosq_EXPORT void mosquitto_subscribe_callback_set(struct mosquitto *mosq, void (*on_subscribe)(struct mosquitto *, void *, int, int, const int *));
 
 /*
  * Function: mosquitto_unsubscribe_callback_set
@@ -818,14 +802,40 @@ libmosq_EXPORT void mosquitto_subscribe_callback_set(struct mosquitto *mosq, voi
  * Parameters:
  *  mosq -           a valid mosquitto instance.
  *  on_unsubscribe - a callback function in the following form:
- *                   void callback(struct mosquitto *mosq, void *obj, uint16_t mid)
+ *                   void callback(struct mosquitto *mosq, void *obj, int mid)
  *
  * Callback Parameters:
  *  mosq - the mosquitto instance making the callback.
  *  obj -  the user data provided in <mosquitto_new>
  *  mid -  the message id of the unsubscribe message.
  */
-libmosq_EXPORT void mosquitto_unsubscribe_callback_set(struct mosquitto *mosq, void (*on_unsubscribe)(struct mosquitto *, void *, uint16_t));
+libmosq_EXPORT void mosquitto_unsubscribe_callback_set(struct mosquitto *mosq, void (*on_unsubscribe)(struct mosquitto *, void *, int));
+
+/*
+ * Function: mosquitto_log_callback_set
+ *
+ * Set the logging callback. This should be used if you want event logging
+ * information from the client library.
+ *
+ *  mosq -   a valid mosquitto instance.
+ *  on_log - a callback function in the following form:
+ *           void callback(struct mosquitto *mosq, void *obj, int level, const char *str)
+ * values from:
+ *
+ *	* MOSQ_LOG_ALL
+ *
+ * Callback Parameters:
+ *  mosq -  the mosquitto instance making the callback.
+ *  obj -   the user data provided in <mosquitto_new>
+ *  level - the log message level from the values:
+ *	        MOSQ_LOG_INFO
+ *	        MOSQ_LOG_NOTICE
+ *	        MOSQ_LOG_WARNING
+ *	        MOSQ_LOG_ERR
+ *	        MOSQ_LOG_DEBUG
+ *	str -   the message string.
+ */
+libmosq_EXPORT void mosquitto_log_callback_set(struct mosquitto *mosq, void (*on_log)(struct mosquitto *, void *, int, const char *));
 
 /*
  * Function: mosquitto_message_retry_set
@@ -855,6 +865,32 @@ libmosq_EXPORT void mosquitto_message_retry_set(struct mosquitto *mosq, unsigned
  * 	       that are specified.
  */
 libmosq_EXPORT void mosquitto_user_data_set(struct mosquitto *mosq, void *obj);
+
+/*
+ * Function mosquitto_strerror
+ *
+ * Call to obtain a const string description of a mosquitto error number.
+ *
+ * Parameters:
+ *	mosq_errno - a mosquitto error number.
+ *
+ * Returns:
+ *	A constant string describing the error.
+ */
+libmosq_EXPORT const char *mosquitto_strerror(int mosq_errno);
+
+/*
+ * Function mosquitto_connack_string
+ *
+ * Call to obtain a const string description of an MQTT connection result.
+ *
+ * Parameters:
+ *	connack_code - an MQTT connection result.
+ *
+ * Returns:
+ *	A constant string describing the result.
+ */
+libmosq_EXPORT const char *mosquitto_connack_string(int connack_code);
 
 #ifdef __cplusplus
 }

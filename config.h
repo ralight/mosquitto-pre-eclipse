@@ -51,7 +51,11 @@
 //#define WITH_STRICT_PROTOCOL
 
 /* Compile with client threading support */
+#ifndef WITH_BROKER
 #define WITH_THREADING
+#endif
+
+#define WITH_SSL
 
 #endif
 

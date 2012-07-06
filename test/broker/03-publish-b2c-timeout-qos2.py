@@ -28,10 +28,10 @@ pubcomp_packet = pack('!BBH', 112, 2, mid)
 broker = subprocess.Popen(['../../src/mosquitto', '-c', '03-publish-b2c-timeout-qos2.conf'], stderr=subprocess.PIPE)
 
 try:
-	time.sleep(0.1)
+	time.sleep(0.5)
 
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	sock.settimeout(8) # 8 seconds timeout is longer than 5 seconds message retry.
+	sock.settimeout(60) # 60 seconds timeout is much longer than 5 seconds message retry.
 	sock.connect(("localhost", 1888))
 	sock.send(connect_packet)
 	connack_recvd = sock.recv(256)
@@ -61,7 +61,7 @@ try:
 				publish_recvd = sock.recv(256)
 
 				if publish_recvd != publish_dup_packet:
-					print("FAIL: Recieved publish with dup not correct.")
+					print("FAIL: Received publish with dup not correct.")
 					print("Received: "+publish_recvd+" length="+str(len(publish_recvd)))
 					print("Expected: "+publish_packet+" length="+str(len(publish_packet)))
 				else:
@@ -86,6 +86,7 @@ try:
 	sock.close()
 finally:
 	broker.terminate()
+	broker.wait()
 
 exit(rc)
 

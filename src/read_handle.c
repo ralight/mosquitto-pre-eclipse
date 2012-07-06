@@ -39,12 +39,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <send_mosq.h>
 #include <util_mosq.h>
 
-int mqtt3_packet_handle(mosquitto_db *db, int context_index)
+int mqtt3_packet_handle(mosquitto_db *db, struct mosquitto *context)
 {
-	struct mosquitto *context;
-
-	if(context_index < 0 || context_index >= db->context_count) return MOSQ_ERR_INVAL;
-	context = db->contexts[context_index];
 	if(!context) return MOSQ_ERR_INVAL;
 
 	switch((context->in_packet.command)&0xF0){
@@ -63,9 +59,9 @@ int mqtt3_packet_handle(mosquitto_db *db, int context_index)
 		case PUBREL:
 			return _mosquitto_handle_pubrel(db, context);
 		case CONNECT:
-			return mqtt3_handle_connect(db, context_index);
+			return mqtt3_handle_connect(db, context);
 		case DISCONNECT:
-			return mqtt3_handle_disconnect(db, context_index);
+			return mqtt3_handle_disconnect(db, context);
 		case SUBSCRIBE:
 			return mqtt3_handle_subscribe(db, context);
 		case UNSUBSCRIBE:
@@ -87,7 +83,7 @@ int mqtt3_packet_handle(mosquitto_db *db, int context_index)
 int mqtt3_handle_publish(mosquitto_db *db, struct mosquitto *context)
 {
 	char *topic;
-	uint8_t *payload = NULL;
+	void *payload = NULL;
 	uint32_t payloadlen;
 	uint8_t dup, qos, retain;
 	uint16_t mid = 0;
@@ -103,8 +99,17 @@ int mqtt3_handle_publish(mosquitto_db *db, struct mosquitto *context)
 	retain = (header & 0x01);
 
 	if(_mosquitto_read_string(&context->in_packet, &topic)) return 1;
-	if(_mosquitto_fix_sub_topic(&topic)) return 1;
+	if(strlen(topic) == 0){
+		/* Invalid publish topic, just swallow it. */
+		_mosquitto_free(topic);
+		return 0;
+	}
+	if(_mosquitto_fix_sub_topic(&topic)){
+		_mosquitto_free(topic);
+		return 1;
+	}
 	if(!strlen(topic)){
+		_mosquitto_free(topic);
 		return 1;
 	}
 	if(_mosquitto_topic_wildcard_len_check(topic) != MOSQ_ERR_SUCCESS){
