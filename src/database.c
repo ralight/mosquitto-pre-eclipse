@@ -962,20 +962,20 @@ void mqtt3_db_sys_update(mosquitto_db *db, int interval, time_t start_time)
 			value_ul = info.totalram *(unsigned long long)info.mem_unit / 1024;		// report in KB
 			if(totalram != value_ul){
 				totalram = value_ul;
-				snprintf(buf, 100, "%lu kB", totalram);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/system/ram/total", 2, strlen(buf), buf, 1);
+				snprintf(buf, 100, "%lu KB", totalram);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/system/totalram", 2, strlen(buf), (uint8_t *)buf, 1);
 			}
 			value_ul = info.freeram *(unsigned long long)info.mem_unit / 1024;		// report in KB
 			if(freeram != value_ul){
 				freeram = value_ul;
-				snprintf(buf, 100, "%lu kB", freeram);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/system/ram/free", 2, strlen(buf), buf, 1);
+				snprintf(buf, 100, "%lu KB", freeram);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/system/freeram", 2, strlen(buf), (uint8_t *)buf, 1);
 			}
 			value = info.procs;
 			if(procs != value){
 				procs = value;
 				snprintf(buf, 100, "%d processes", procs);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/system/procs", 2, strlen(buf), buf, 1);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/system/procs", 2, strlen(buf), (uint8_t *)buf, 1);
 			}
 		}
 #endif
