@@ -62,6 +62,16 @@
 	</refsect1>
 
 	<refsect1>
+		<title>Configuration</title>
+		<para>The broker can be configured using a configuration file as
+			described in
+			<citerefentry><refentrytitle>mosquitto.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>.
+			The files required for SSL support are described in 
+			<citerefentry><refentrytitle>mosquitto-ssl</refentrytitle><manvolnum>7</manvolnum></citerefentry>.
+		</para>
+	</refsect1>
+
+	<refsect1>
 		<title>Broker Status</title>
 		<para>Clients can find information about the broker by subscribing to
 		topics in the $SYS hierarchy as follows. Topics marked as static are
@@ -411,8 +421,12 @@
 
 	<refsect1>
 		<title>Thanks</title>
-		<para>Thanks to Andy Stanford-Clark for being one of the people who came up with MQTT in the first place and providing clarifications of the protocol.</para>
-		<para>Thanks also to everybody at the Ubuntu UK Podcast and Linux Outlaws for organising OggCamp, where Andy gave a talk that inspired mosquitto.</para>
+		<para>Thanks to Andy Stanford-Clark for being one of the people who
+			came up with MQTT in the first place. Thanks to Andy and Nicholas
+			O'Leary for providing clarifications of the protocol.</para>
+		<para>Thanks also to everybody at the Ubuntu UK Podcast and Linux
+			Outlaws for organising OggCamp, where Andy gave a talk that
+			inspired mosquitto.</para>
 	</refsect1>
 
 	<refsect1>
