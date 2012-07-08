@@ -41,6 +41,13 @@ else (WIN32)
 	set (SHAREDIR ${DATAROOTDIR}/mosquitto)
 endif (WIN32)
 
+option(WITH_SSL
+	"Include SSL support?" ON)
+if (${WITH_SSL} STREQUAL ON)
+	find_package(OpenSSL REQUIRED)
+	add_definitions("-DWITH_SSL")
+endif (${WITH_SSL} STREQUAL ON)
+
 # ========================================
 # Include projects
 # ========================================
