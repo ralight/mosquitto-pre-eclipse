@@ -186,6 +186,7 @@ int mqtt3_handle_connect(mosquitto_db *db, struct mosquitto *context)
 	}
 
 	if(context->listener->use_cn_as_username){
+#ifdef WITH_SSL
 		if(!context->ssl){
 			_mosquitto_send_connack(context, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
 			mqtt3_context_disconnect(db, context);
@@ -208,6 +209,7 @@ int mqtt3_handle_connect(mosquitto_db *db, struct mosquitto *context)
 			_mosquitto_free(client_id);
 			return MOSQ_ERR_NOMEM;
 		}
+#endif
 	}else{
 		if(username_flag){
 			rc = mosquitto_unpwd_check(db, username, password);
@@ -255,12 +257,16 @@ int mqtt3_handle_connect(mosquitto_db *db, struct mosquitto *context)
 			db->contexts[i]->last_msg_out = time(NULL);
 			db->contexts[i]->keepalive = context->keepalive;
 			db->contexts[i]->pollfd_index = context->pollfd_index;
+#ifdef WITH_SSL
 			db->contexts[i]->ssl = context->ssl;
+#endif
 			if(context->username){
 				db->contexts[i]->username = _mosquitto_strdup(context->username);
 			}
 			context->sock = -1;
+#ifdef WITH_SSL
 			context->ssl = NULL;
+#endif
 			context->state = mosq_cs_disconnecting;
 			context = db->contexts[i];
 			if(context->msgs){
