@@ -67,7 +67,7 @@ add_definitions (-DWITH_BROKER)
 add_executable(mosquitto ${MOSQ_SRCS})
 
 if (NOT WIN32)
-	target_link_libraries(mosquitto ${MOSQ_LIBS})
+	target_link_libraries(mosquitto dl ${MOSQ_LIBS})
 else (NOT WIN32)
 	target_link_libraries(mosquitto ws2_32 ${MOSQ_LIBS})
 endif (NOT WIN32)
