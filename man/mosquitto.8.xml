@@ -62,17 +62,6 @@
 	</refsect1>
 
 	<refsect1>
-		<title>Limitations</title>
-		<para><command>mosquitto</command> implements all of the mqtt protocol version 3.1, but there are some limitations compared to rsmb.</para>
-		<itemizedlist mark="circle">
-			<listitem><para>There are fewer configuration options.</para></listitem>
-			<listitem><para>There is less logging information.</para></listitem>
-			<listitem><para>It isn't as well tested or documented...</para></listitem>
-		</itemizedlist>
-		<para>It should be noted that all of the above limitations should have &quot;currently&quot; included in them. They will all be fixed at some point.</para>
-	</refsect1>
-
-	<refsect1>
 		<title>Broker Status</title>
 		<para>Clients can find information about the broker by subscribing to
 		topics in the $SYS hierarchy as follows. Topics marked as static are
