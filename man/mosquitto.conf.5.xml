@@ -393,68 +393,145 @@
 		<para>The network ports that mosquitto listens on can be controlled
 			using listeners. The default listener options can be overriden and
 			further listeners can be created.</para>
-		<variablelist>
-			<varlistentry>
-				<term><option>bind_address</option> <replaceable>address</replaceable></term>
-				<listitem>
-					<para>Listen for incoming network connections on the
-					specified IP address/hostname only. This is useful to
-					restrict access to certain network interfaces. To restrict
-					access to mosquitto to the local host only, use "bind_address
-					localhost". This only applies to the default listener. Use
-					the listener variable to control other listeners.</para>
-					<para>Not reloaded on reload signal.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>listener</option> <replaceable>port</replaceable></term>
-				<listitem>
-					<para>Listen for incoming network connection on the
-					specified port. A second optional argument allows the
-					listener to be bound to a specific ip address/hostname. If
-					this variable is used and neither bind_address nor port are
-					used then the default listener will not be started. This
-					option may be specified multiple times. See also the
-					mount_point option.</para>
-					<para>Not reloaded on reload signal.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>max_connections</option> <replaceable>count</replaceable></term>
-				<listitem>
-					<para>Limit the total number of clients connected for the
-					current listener. Set to <literal>-1</literal> to have
-					"unlimited" connections. Note that other limits may be
-					imposed that are outside the control of mosquitto.  See
-					e.g.
-					<citerefentry><refentrytitle>limits.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
-					<para>Not reloaded on reload signal.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>mount_point</option> <replaceable>topic prefix</replaceable></term>
-				<listitem>
-					<para>This option is used with the listener option to
-					isolate groups of clients. When a client connects to a
-					listener which uses this option, the string argument is
-					attached to the start of all topics for this client. This
-					prefix is removed when any messages are sent to the client.
-					This means a client connected to a listener with mount
-					point <option>example</option> can only see messages that
-					are published in the topic hierarchy
-					<option>example</option> and above.</para>
-					<para>Not reloaded on reload signal.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>port</option> <replaceable>port number</replaceable></term>
-				<listitem>
-					<para>Set the network port for the default listener to
-					listen on. Defaults to 1883.</para>
-					<para>Not reloaded on reload signal.</para>
-				</listitem>
-			</varlistentry>
-		</variablelist>
+		<refsect2>
+			<title>General Options</title>
+			<variablelist>
+				<varlistentry>
+					<term><option>bind_address</option> <replaceable>address</replaceable></term>
+					<listitem>
+						<para>Listen for incoming network connections on the
+						specified IP address/hostname only. This is useful to
+						restrict access to certain network interfaces. To restrict
+						access to mosquitto to the local host only, use "bind_address
+						localhost". This only applies to the default listener. Use
+						the listener variable to control other listeners.</para>
+						<para>Not reloaded on reload signal.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>listener</option> <replaceable>port</replaceable></term>
+					<listitem>
+						<para>Listen for incoming network connection on the
+						specified port. A second optional argument allows the
+						listener to be bound to a specific ip address/hostname. If
+						this variable is used and neither bind_address nor port are
+						used then the default listener will not be started. This
+						option may be specified multiple times. See also the
+						mount_point option.</para>
+						<para>Not reloaded on reload signal.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>max_connections</option> <replaceable>count</replaceable></term>
+					<listitem>
+						<para>Limit the total number of clients connected for the
+						current listener. Set to <literal>-1</literal> to have
+						"unlimited" connections. Note that other limits may be
+						imposed that are outside the control of mosquitto.  See
+						e.g.
+						<citerefentry><refentrytitle>limits.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+						<para>Not reloaded on reload signal.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>mount_point</option> <replaceable>topic prefix</replaceable></term>
+					<listitem>
+						<para>This option is used with the listener option to
+						isolate groups of clients. When a client connects to a
+						listener which uses this option, the string argument is
+						attached to the start of all topics for this client. This
+						prefix is removed when any messages are sent to the client.
+						This means a client connected to a listener with mount
+						point <option>example</option> can only see messages that
+						are published in the topic hierarchy
+						<option>example</option> and above.</para>
+						<para>Not reloaded on reload signal.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>port</option> <replaceable>port number</replaceable></term>
+					<listitem>
+						<para>Set the network port for the default listener to
+						listen on. Defaults to 1883.</para>
+						<para>Not reloaded on reload signal.</para>
+					</listitem>
+				</varlistentry>
+			</variablelist>
+		</refsect2>
+		<refsect2>
+			<title>SSL Support</title>
+			<para>The following options are available for all listeners to configure SSL support.</para>
+			<variablelist>
+				<varlistentry>
+					<term><option>cafile</option> <replaceable>file path</replaceable></term>
+					<listitem>
+						<para>At least one of <option>cafile</option> or
+							<option>capath</option> must be provided to allow SSL
+							support.</para>
+						<para>cafile is used to define the path to a file
+							containing the PEM encoded CA certificates that are
+							trusted.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>capath</option> <replaceable>directory path</replaceable></term>
+					<listitem>
+						<para>At least one of <option>cafile</option> or
+							<option>capath</option> must be provided to allow SSL
+							support.</para>
+						<para>capath is used to define a directory that contains
+							PEM encoded CA certificates that are trusted.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>certfile</option> <replaceable>file path</replaceable></term>
+					<listitem>
+						<para>Path to the PEM encoded server certificate.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>keyfile</option> <replaceable>file path</replaceable></term>
+					<listitem>
+						<para>Path to the PEM encoded keyfile.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>require_certificate</option> [ true | false ]</term>
+					<listitem>
+						<para>By default an SSL enabled listener will operate in a
+							similar fashion to a https enabled web server, in that
+							the server has a certificate signed by a CA and the
+							client will verify that it is a trusted certificate.
+							The overall aim is encryption of the network traffic.
+							By setting require_certificate to true, the client must
+							provide a valid certificate in order for the network
+							connection to proceed. This allows access to the broker
+							to be controlled outside of the mechanisms provided by
+							MQTT.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>use_cn_as_username</option> [ true | false ]</term>
+					<listitem>
+						<para>If require_certificate is true, you may set
+							use_cn_as_username to true to use the CN value from the
+							client certificate as a username. If this is true, the
+							password_file option will not be used for this
+							listener.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>crlfile</option> <replaceable>file path</replaceable></term>
+					<listitem>
+						<para>If you have require_certificate set to true, you can
+							create a certificate revocation list file to revoke
+							access to particular client certificates. If you have
+							done this, use crlfile to point to the PEM encoded
+							revocation file.</para>
+					</listitem>
+				</varlistentry>
+			</variablelist>
+		</refsect2>
 	</refsect1>
 
 	<refsect1>
@@ -630,50 +707,6 @@
 					authentication purposes when connecting to a broker that
 					support MQTT v3.1 and requires a username and/or password
 					to connect. See also the password option.</para>
-				</listitem>
-			</varlistentry>
-		</variablelist>
-	</refsect1>
-
-	<refsect1>
-		<title>External Security Checks</title>
-		<para>The following options are available when external security checks
-		have been compiled in. Unless you have done this yourself it is
-		unlikely to exist.</para>
-		<variablelist>
-			<varlistentry>
-				<term><option>db_host</option> <replaceable>hostname</replaceable></term>
-				<listitem>
-					<para>Database host name.</para>
-					<para>Reloaded on reload signal.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>db_port</option> <replaceable>port</replaceable></term>
-				<listitem>
-					<para>Database port.</para>
-					<para>Reloaded on reload signal.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>db_name</option> <replaceable>name</replaceable></term>
-				<listitem>
-					<para>Database name.</para>
-					<para>Reloaded on reload signal.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>db_username</option> <replaceable>username</replaceable></term>
-				<listitem>
-					<para>Database username.</para>
-					<para>Reloaded on reload signal.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>db_password</option> <replaceable>password</replaceable></term>
-				<listitem>
-					<para>Database password.</para>
-					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
 		</variablelist>
