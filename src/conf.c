@@ -392,26 +392,38 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 					if(reload) continue; // Listener not valid for reloading.
 					if(_conf_parse_string(&token, "default listener bind_address", &config->default_listener.host, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "cafile")){
+#ifdef WITH_SSL
 					if(reload) continue; // Listeners not valid for reloading.
 					if(config->listener_count == 0){
 						if(_conf_parse_string(&token, "cafile", &config->default_listener.cafile, saveptr)) return MOSQ_ERR_INVAL;
 					}else{
 						if(_conf_parse_string(&token, "cafile", &config->listeners[config->listener_count-1].cafile, saveptr)) return MOSQ_ERR_INVAL;
 					}
+#else
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");
+#endif
 				}else if(!strcmp(token, "capath")){
+#ifdef WITH_SSL
 					if(reload) continue; // Listeners not valid for reloading.
 					if(config->listener_count == 0){
 						if(_conf_parse_string(&token, "capath", &config->default_listener.capath, saveptr)) return MOSQ_ERR_INVAL;
 					}else{
 						if(_conf_parse_string(&token, "capath", &config->listeners[config->listener_count-1].capath, saveptr)) return MOSQ_ERR_INVAL;
 					}
+#else
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");
+#endif
 				}else if(!strcmp(token, "certfile")){
+#ifdef WITH_SSL
 					if(reload) continue; // Listeners not valid for reloading.
 					if(config->listener_count == 0){
 						if(_conf_parse_string(&token, "certfile", &config->default_listener.certfile, saveptr)) return MOSQ_ERR_INVAL;
 					}else{
 						if(_conf_parse_string(&token, "certfile", &config->listeners[config->listener_count-1].certfile, saveptr)) return MOSQ_ERR_INVAL;
 					}
+#else
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");
+#endif
 				}else if(!strcmp(token, "clientid")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
@@ -495,12 +507,16 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 				}else if(!strcmp(token, "connection_messages")){
 					if(_conf_parse_bool(&token, token, &config->connection_messages, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "crlfile")){
+#ifdef WITH_SSL
 					if(reload) continue; // Listeners not valid for reloading.
 					if(config->listener_count == 0){
 						if(_conf_parse_string(&token, "crlfile", &config->default_listener.crlfile, saveptr)) return MOSQ_ERR_INVAL;
 					}else{
 						if(_conf_parse_string(&token, "crlfile", &config->listeners[config->listener_count-1].crlfile, saveptr)) return MOSQ_ERR_INVAL;
 					}
+#else
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");
+#endif
 				}else if(!strcmp(token, "idle_timeout")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
@@ -532,12 +548,16 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "keyfile")){
+#ifdef WITH_SSL
 					if(reload) continue; // Listeners not valid for reloading.
 					if(config->listener_count == 0){
 						if(_conf_parse_string(&token, "keyfile", &config->default_listener.keyfile, saveptr)) return MOSQ_ERR_INVAL;
 					}else{
 						if(_conf_parse_string(&token, "keyfile", &config->listeners[config->listener_count-1].keyfile, saveptr)) return MOSQ_ERR_INVAL;
 					}
+#else
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");
+#endif
 				}else if(!strcmp(token, "listener")){
 					if(reload) continue; // Listeners not valid for reloading.
 					token = strtok_r(NULL, " ", &saveptr);
@@ -766,12 +786,16 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 				}else if(!strcmp(token, "queue_qos0_messages")){
 					if(_conf_parse_bool(&token, token, &config->queue_qos0_messages, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "require_certificate")){
+#ifdef WITH_SSL
 					if(reload) continue; // Listeners not valid for reloading.
 					if(config->listener_count == 0){
 						if(_conf_parse_bool(&token, "require_certificate", &config->default_listener.require_certificate, saveptr)) return MOSQ_ERR_INVAL;
 					}else{
 						if(_conf_parse_bool(&token, "require_certificate", &config->listeners[config->listener_count-1].require_certificate, saveptr)) return MOSQ_ERR_INVAL;
 					}
+#else
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");
+#endif
 				}else if(!strcmp(token, "retry_interval")){
 					if(_conf_parse_int(&token, "retry_interval", &config->retry_interval, saveptr)) return MOSQ_ERR_INVAL;
 					if(config->retry_interval < 1 || config->retry_interval > 3600){
@@ -897,12 +921,16 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "use_cn_as_username")){
+#ifdef WITH_SSL
 					if(reload) continue; // Listeners not valid for reloading.
 					if(config->listener_count == 0){
 						if(_conf_parse_bool(&token, "use_cn_as_username", &config->default_listener.use_cn_as_username, saveptr)) return MOSQ_ERR_INVAL;
 					}else{
 						if(_conf_parse_bool(&token, "use_cn_as_username", &config->listeners[config->listener_count-1].use_cn_as_username, saveptr)) return MOSQ_ERR_INVAL;
 					}
+#else
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");
+#endif
 				}else if(!strcmp(token, "user")){
 					if(reload) continue; // Drop privileges user not valid for reloading.
 					if(_conf_parse_string(&token, "user", &config->user, saveptr)) return MOSQ_ERR_INVAL;
