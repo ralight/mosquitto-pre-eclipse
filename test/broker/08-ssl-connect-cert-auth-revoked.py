@@ -20,7 +20,7 @@ try:
     time.sleep(0.5)
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    ssock = ssl.wrap_socket(sock, ca_certs="ssl/test-ca.crt", certfile="ssl/client.crt", keyfile="ssl/client.key", cert_reqs=ssl.CERT_REQUIRED)
+    ssock = ssl.wrap_socket(sock, ca_certs="../ssl/test-ca.crt", certfile="../ssl/client.crt", keyfile="../ssl/client.key", cert_reqs=ssl.CERT_REQUIRED)
     ssock.settimeout(5)
     try:
         ssock.connect(("localhost", 1888))
