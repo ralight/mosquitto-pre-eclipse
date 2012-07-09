@@ -225,42 +225,6 @@
 					<para>The version of the broker. Static.</para>
 				</listitem>
 			</varlistentry>
-			<varlistentry>
-				<term><option>$SYS/system/load</option></term>
-				<listitem>
-					<para>The system load for the past 1 minute. Only available
-					if WITH_SYSTEM_METRICS support is included.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>$SYS/system/procs</option></term>
-				<listitem>
-					<para>The number of processes running on the system. Only
-					available if WITH_SYSTEM_METRICS support is
-					included.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>$SYS/system/ram/free</option></term>
-				<listitem>
-					<para>The amount of free ram on the system. Only available
-					if WITH_SYSTEM_METRICS support is included.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>$SYS/system/ram/total</option></term>
-				<listitem>
-					<para>The total amount of ram on the system. Only available
-					if WITH_SYSTEM_METRICS support is included.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>$SYS/system/uptime</option></term>
-				<listitem>
-					<para>The system uptime. Only available if
-					WITH_SYSTEM_METRICS support is included.</para>
-				</listitem>
-			</varlistentry>
 		</variablelist>
 	</refsect1>
 
