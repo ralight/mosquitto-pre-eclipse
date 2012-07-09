@@ -11,11 +11,11 @@ mosq.loop_start()
 
 running = True
 try:
-	while running:
-		line = usb.readline()
+    while running:
+        line = usb.readline()
         mosq.publish("cc128/raw", line)
 except usb.SerialException, e:
-	running = False
+    running = False
 
 mosq.disconnect()
 mosq.loop_stop()
