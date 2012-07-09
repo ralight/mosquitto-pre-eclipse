@@ -8,16 +8,16 @@ SOVERSION=1
 
 .PHONY: all test clean reallyclean
 
+all : fake_user msgsps_pub msgsps_sub 
+#packet-gen qos
+
 test :
 	$(MAKE) -C broker test
 	$(MAKE) -C lib test
 
-all : fake_user msgsps_pub msgsps_sub 
-#packet-gen qos
-
 fake_user : fake_user.o
-	#${CC} $^ -o $@ ../lib/libmosquitto.so.${SOVERSION}
-	${CC} $^ -o $@ -lmosquitto
+	${CC} $^ -o $@ ../lib/libmosquitto.so.${SOVERSION}
+	#${CC} $^ -o $@ -lmosquitto
 
 fake_user.o : fake_user.c
 	${CC} $(CFLAGS) -c $< -o $@

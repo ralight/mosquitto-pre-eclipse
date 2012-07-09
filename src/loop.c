@@ -188,10 +188,10 @@ int mosquitto_main_loop(mosquitto_db *db, int *listensock, int listensock_count,
 
 #ifndef WIN32
 		sigprocmask(SIG_SETMASK, &sigblock, &origsig);
-		fdcount = poll(pollfds, pollfd_index, 1000);
+		fdcount = poll(pollfds, pollfd_index, 100);
 		sigprocmask(SIG_SETMASK, &origsig, NULL);
 #else
-		fdcount = WSAPoll(pollfds, pollfd_index, 1000);
+		fdcount = WSAPoll(pollfds, pollfd_index, 100);
 #endif
 		if(fdcount == -1){
 			loop_handle_errors(db, pollfds);
