@@ -627,6 +627,7 @@ class Mosquitto:
             raise ValueError('Invalid QoS level.')
         if topic == None or len(topic) == 0:
             raise ValueError('Invalid topic.')
+        topic = self._fix_sub_topic(topic)
 
         if self._sock == None and self._ssl == None:
             return MOSQ_ERR_NO_CONN
@@ -648,6 +649,7 @@ class Mosquitto:
         """
         if topic == None or len(topic) == 0:
             raise ValueError('Invalid topic.')
+        topic = self._fix_sub_topic(topic)
         if self._sock == None and self._ssl == None:
             return MOSQ_ERR_NO_CONN
 
@@ -1033,35 +1035,11 @@ class Mosquitto:
 
     def _fix_sub_topic(self, subtopic):
         # Convert ////some////over/slashed///topic/etc/etc//
-         # into some/over/slashed/topic/etc/etc
-        pass
-        # FIXME
-        #char *fixed = NULL
-        #char *token
-        #char *saveptr = NULL
-
-        #assert(subtopic)
-        #assert(*subtopic)
-
-        #/* size of fixed here is +1 for the terminating 0 and +1 for the spurious /
-         #* that gets appended. */
-        #fixed = _mosquitto_calloc(strlen(*subtopic)+2, 1)
-        #if(!fixed) return MOSQ_ERR_NOMEM
-
-        #if((*subtopic)[0] == '/'){
-            #fixed[0] = '/'
-        #}
-        #token = strtok_r(*subtopic, "/", &saveptr)
-        #while(token){
-            #strcat(fixed, token)
-            #strcat(fixed, "/")
-            #token = strtok_r(NULL, "/", &saveptr)
-        #}
-
-        #fixed[strlen(fixed)-1] = '\0'
-        #_mosquitto_free(*subtopic)
-        #*subtopic = fixed
-        #return MOSQ_ERR_SUCCESS
+        # into some/over/slashed/topic/etc/etc
+        if subtopic[0] == '/':
+            return '/'+'/'.join(filter(None, subtopic.split('/')))
+        else:
+            return '/'.join(filter(None, subtopic.split('/')))
 
     def _mid_generate(self):
         self._last_mid = self._last_mid + 1
@@ -1411,12 +1389,12 @@ class Mosquitto:
         pack_format = '!' + str(slen) + 's' + str(len(packet)-slen) + 's'
         (message.topic, packet) = struct.unpack(pack_format, packet)
 
-        rc = self._fix_sub_topic(message.topic)
         if len(message.topic) == 0:
             return MOSQ_ERR_PROTOCOL
 
         if sys.version_info[0] >= 3:
             message.topic = message.topic.decode('utf-8')
+        message.topic = self._fix_sub_topic(message.topic)
 
         if message.qos > 0:
             pack_format = "!H" + str(len(packet)-2) + 's'
