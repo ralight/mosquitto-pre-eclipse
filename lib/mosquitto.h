@@ -693,7 +693,7 @@ libmosq_EXPORT bool mosquitto_want_write(struct mosquitto *mosq);
  * Configure the client for SSL support. Must be called before <mosquitto_connect>.
  *
  * Define the Certificate Authority certificates to be trusted (ie. the server
- * certificate must be signed with one of these certificates) using ca_certs.
+ * certificate must be signed with one of these certificates) using cafile.
  *
  * If the server you are connecting to requires clients to provide a
  * certificate, define certfile and keyfile with your client certificate and
@@ -702,7 +702,7 @@ libmosq_EXPORT bool mosquitto_want_write(struct mosquitto *mosq);
  *
  * Parameters:
  *  mosq -        a valid mosquitto instance.
- *  ca_certs -    path to a file containing the PEM encoded trusted CA
+ *  cafile -      path to a file containing the PEM encoded trusted CA
  *                certificate files. Must not be NULL.
  *  certfile -    path to a file containing the PEM encoded certificate file
  *                for this client. If NULL, keyfile must also be NULL and no
