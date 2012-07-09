@@ -40,6 +40,8 @@ VERS_1.0 {
 		mosquitto_user_data_set;
 		mosquitto_strerror;
 		mosquitto_connack_string;
+		mosquitto_ssl_set;
+		mosquitto_ssl_opts_set;
 	local: *;
 };
 

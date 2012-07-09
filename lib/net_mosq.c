@@ -223,8 +223,7 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 	freeaddrinfo(ainfo);
 
 #ifdef WITH_SSL
-#if 0
-	/* FIXME if(mosq->ssl){ */
+	if(mosq->ssl){
 		bio = BIO_new_socket(sock, BIO_NOCLOSE);
 		if(!bio){
 			COMPAT_CLOSE(sock);
@@ -237,8 +236,7 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 			COMPAT_CLOSE(sock);
 			return MOSQ_ERR_SSL;
 		}
-	/* FIXME } */
-#endif
+	}
 #endif
 
 	/* Set non-blocking */

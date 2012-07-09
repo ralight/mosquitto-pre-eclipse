@@ -298,7 +298,7 @@ libmosq_EXPORT int mosquitto_username_pw_set(struct mosquitto *mosq, const char 
  *                     Windows.
  *
  * See Also:
- * 	<mosquitto_connect_async>, <mosquitto_reconnect>, <mosquitto_disconnect>
+ * 	<mosquitto_connect_async>, <mosquitto_reconnect>, <mosquitto_disconnect>, <mosquitto_ssl_set>
  */
 libmosq_EXPORT int mosquitto_connect(struct mosquitto *mosq, const char *host, int port, int keepalive);
 
@@ -329,7 +329,7 @@ libmosq_EXPORT int mosquitto_connect(struct mosquitto *mosq, const char *host, i
  *                     Windows.
  *
  * See Also:
- * 	<mosquitto_connect>, <mosquitto_reconnect>, <mosquitto_disconnect>
+ * 	<mosquitto_connect>, <mosquitto_reconnect>, <mosquitto_disconnect>, <mosquitto_ssl_set>
  */
 libmosq_EXPORT int mosquitto_connect_async(struct mosquitto *mosq, const char *host, int port, int keepalive);
 
@@ -686,6 +686,79 @@ libmosq_EXPORT int mosquitto_loop_misc(struct mosquitto *mosq);
  *	<mosquitto_socket>, <mosquitto_loop_read>, <mosquitto_loop_write>
  */
 libmosq_EXPORT bool mosquitto_want_write(struct mosquitto *mosq);
+
+/*
+ * Function: mosquitto_ssl_set
+ *
+ * Configure the client for SSL support. Must be called before <mosquitto_connect>.
+ *
+ * Define the Certificate Authority certificates to be trusted (ie. the server
+ * certificate must be signed with one of these certificates) using ca_certs.
+ *
+ * If the server you are connecting to requires clients to provide a
+ * certificate, define certfile and keyfile with your client certificate and
+ * private key. If your private key is encrypted, provide a password callback
+ * function or you will have to enter the password at the command line.
+ *
+ * Parameters:
+ *  mosq -        a valid mosquitto instance.
+ *  ca_certs -    path to a file containing the PEM encoded trusted CA
+ *                certificate files. Must not be NULL.
+ *  certfile -    path to a file containing the PEM encoded certificate file
+ *                for this client. If NULL, keyfile must also be NULL and no
+ *                client certificate will be used.
+ *  keyfile -     path to a file containing the PEM encoded private key for
+ *                this client. If NULL, certfile must also be NULL and no
+ *                client certificate will be used.
+ *  pw_callback - if keyfile is encrypted, set pw_callback to allow your client
+ *                to pass the correct password for decryption. If set to NULL,
+ *                the password must be entered on the command line.
+ *                Your callback must write the password into "buf", which is
+ *                "size" bytes long. The return value must be the length of the
+ *                password. "userdata" will be set to the calling mosquitto
+ *                instance.
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - on success.
+ * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ *
+ * See Also:
+ *	<mosquitto_ssl_opts_set>
+ */
+libmosq_EXPORT int mosquitto_ssl_set(struct mosquitto *mosq, const char *ca_certs,
+		const char *certfile, const char *keyfile,
+		int (*pw_callback)(char *buf, int size, int rwflag, void *userdata));
+
+/*
+ * Function: mosquitto_ssl_opts_set
+ *
+ * Set advanced SSL options. Must be called before <mosquitto_connect>.
+ *
+ * Parameters:
+ *  mosq -        a valid mosquitto instance.
+ *	cert_reqs -   an integer defining the verification requirements the client
+ *	              will impose on the server. This can be one of:
+ *	              * SSL_VERIFY_NONE (0): the server will not be verified in any way.
+ *	              * SSL_VERIFY_PEER (1): the server certificate will be verified
+ *	                and the connection aborted if the verification fails.
+ *	              The default and recommended value is SSL_VERIFY_PEER.
+ *	ssl_version - the version of the SSL protocol to use as a string. If NULL,
+ *	              the default value is used. Currently the only available
+ *	              version is "tlsv1". 
+ *	ciphers -     a string describing the ciphers available for use. See the
+ *	              "openssl ciphers" tool for more information. If NULL, the
+ *	              default ciphers will be used.
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - on success.
+ * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ *
+ * See Also:
+ *	<mosquitto_ssl_set>
+ */
+libmosq_EXPORT int mosquitto_ssl_opts_set(struct mosquitto *mosq, int cert_reqs, const char *ssl_version, const char *ciphers);
 
 /* 
  * Function: mosquitto_connect_callback_set

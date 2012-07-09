@@ -136,6 +136,13 @@ struct mosquitto {
 #ifdef WITH_SSL
 	SSL *ssl;
 	SSL_CTX *ssl_ctx;
+	char *ssl_ca_certs;
+	char *ssl_certfile;
+	char *ssl_keyfile;
+	int (*ssl_pw_callback)(char *buf, int size, int rwflag, void *userdata);
+	int ssl_cert_reqs;
+	char *ssl_version;
+	char *ssl_ciphers;
 #endif
 	bool want_read;
 	bool want_write;
