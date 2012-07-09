@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 	bool clean_session = false;
 	struct mosquitto *mosq = NULL;
 	
-	uint8_t *will_payload = NULL;
+	void *will_payload = NULL;
 	long will_payloadlen = 0;
 	int will_qos = 0;
 	bool will_retain = false;
@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
 
 	if(rand()%5 == 0){
 		snprintf(will_topic, 100, "fake/wills/%d", rand()%100);
-		if(mosquitto_will_set(mosq, true, will_topic, will_payloadlen, will_payload, will_qos, will_retain)){
+		if(mosquitto_will_set(mosq, will_topic, will_payloadlen, will_payload, will_qos, will_retain)){
 			fprintf(stderr, "Error: Problem setting will.\n");
 			return 1;
 		}
@@ -95,10 +95,10 @@ int main(int argc, char *argv[])
 		}
 		mosquitto_subscribe(mosq, NULL, "#", 0);
 
-		while(!mosquitto_loop(mosq, -1)){
+		while(!mosquitto_loop(mosq, -1, 5)){
 			if(rand()%100==0){
 				snprintf(topic, 100, "fake/%d", rand()%100);
-				mosquitto_publish(mosq, NULL, topic, 10, (uint8_t*)"0123456789", rand()%3, rand()%2);
+				mosquitto_publish(mosq, NULL, topic, 10, "0123456789", rand()%3, rand()%2);
 			}
 			if(rand()%50==0){
 				mosquitto_disconnect(mosq);
