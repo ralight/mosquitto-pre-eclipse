@@ -36,6 +36,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <time.h>
 
 #include <mosquitto_internal.h>
+#include <mosquitto_plugin.h>
 #include <mosquitto.h>
 
 #ifndef __GNUC__
@@ -50,10 +51,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #define MQTT3_LOG_STDERR 0x08
 #define MQTT3_LOG_TOPIC 0x10
 #define MQTT3_LOG_ALL 0xFF
-
-#define MOSQ_ACL_NONE 0x00
-#define MOSQ_ACL_READ 0x01
-#define MOSQ_ACL_WRITE 0x02
 
 typedef uint64_t dbid_t;
 
@@ -89,11 +86,6 @@ struct _mqtt3_listener {
 	SSL_CTX *ssl_ctx;
 	char *crlfile;
 	bool use_cn_as_username;
-};
-
-struct mosquitto_auth_opt {
-	char *key;
-	char *value;
 };
 
 typedef struct {

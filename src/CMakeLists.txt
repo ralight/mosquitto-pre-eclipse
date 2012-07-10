@@ -73,6 +73,7 @@ else (NOT WIN32)
 endif (NOT WIN32)
 
 install(TARGETS mosquitto RUNTIME DESTINATION ${SBINDIR} LIBRARY DESTINATION ${LIBDIR})
+install(FILES mosquitto_plugin.h DESTINATION ${INCLUDEDIR})
 
 if (UNIX)
 	install(CODE "EXEC_PROGRAM(/sbin/ldconfig)")
