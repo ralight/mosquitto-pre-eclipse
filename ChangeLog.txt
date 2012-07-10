@@ -89,6 +89,7 @@ Other:
 - Add example of logging all messages to mysql.
 - Fix potential buffer overflow in pub/sub clients.
 - Add "make binary" target that doesn't make documents.
+- Add "--help" arguments to pub/sub clients.
 
 0.15 - 20120205
 ===============

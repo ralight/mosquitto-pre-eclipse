@@ -123,7 +123,8 @@ void print_usage(void)
 	printf("                     [-i id] [-I id_prefix]\n");
 	printf("                     [-d] [--quiet]\n");
 	printf("                     [-u username [-P password]]\n");
-	printf("                     [--will-topic [--will-payload payload] [--will-qos qos] [--will-retain]]\n\n");
+	printf("                     [--will-topic [--will-payload payload] [--will-qos qos] [--will-retain]]\n");
+	printf("       mosquitto_sub --help\n\n");
 	printf(" -c : disable 'clean session' (store subscription and pending messages when client disconnects).\n");
 	printf(" -d : enable debug messages.\n");
 	printf(" -h : mqtt host to connect to. Defaults to localhost.\n");
@@ -137,6 +138,7 @@ void print_usage(void)
 	printf(" -u : provide a username (requires MQTT 3.1 broker)\n");
 	printf(" -v : print published messages verbosely.\n");
 	printf(" -P : provide a password (requires MQTT 3.1 broker)\n");
+	printf(" --help : display this message.\n");
 	printf(" --quiet : don't print error messages.\n");
 	printf(" --will-payload : payload for the client Will, which is sent by the broker in case of\n");
 	printf("                  unexpected disconnection. If not given and will-topic is set, a zero\n");
@@ -190,6 +192,9 @@ int main(int argc, char *argv[])
 			clean_session = false;
 		}else if(!strcmp(argv[i], "-d") || !strcmp(argv[i], "--debug")){
 			debug = true;
+		}else if(!strcmp(argv[i], "--help")){
+			print_usage();
+			return 0;
 		}else if(!strcmp(argv[i], "-h") || !strcmp(argv[i], "--host")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: -h argument given but no host specified.\n\n");

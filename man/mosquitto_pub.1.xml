@@ -81,6 +81,12 @@
 				<arg><option>-t</option> <replaceable>message-topic</replaceable></arg>
 			</group>
 		</cmdsynopsis>
+		<cmdsynopsis>
+			<command>mosquitto_pub</command>
+			<group choice='plain'>
+				<arg><option>--help</option></arg>
+			</group>
+		</cmdsynopsis>
 	</refsynopsisdiv>
 
 	<refsect1>
@@ -103,6 +109,12 @@
 				<term><option>--file</option></term>
 				<listitem>
 					<para>Send the contents of a file as the message.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>--help</option></term>
+				<listitem>
+					<para>Display usage information.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
