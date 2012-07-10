@@ -76,6 +76,12 @@
 				<arg><option>-t</option> <replaceable>message topic</replaceable></arg>
 			</group>
 		</cmdsynopsis>
+		<cmdsynopsis>
+			<command>mosquitto_sub</command>
+			<group choice='plain'>
+				<arg><option>--help</option></arg>
+			</group>
+		</cmdsynopsis>
 	</refsynopsisdiv>
 
 	<refsect1>
@@ -106,6 +112,12 @@
 				<term><option>--debug</option></term>
 				<listitem>
 					<para>Enable debug messages.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>--help</option></term>
+				<listitem>
+					<para>Display usage information.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
