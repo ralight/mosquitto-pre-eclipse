@@ -4,7 +4,10 @@ all :
 
 clean : 
 
-test :
+test-compile : 
+	$(MAKE) -C c
+
+test : test-compile
 	./01-connect-success.py
 	./01-connect-invalid-protonum.py
 	./01-connect-invalid-id-0.py
@@ -40,6 +43,7 @@ test :
 	./08-ssl-connect-cert-auth-without.py
 	./08-ssl-connect-cert-auth-expired.py
 	./08-ssl-connect-cert-auth-revoked.py
+	./09-plugin-auth-unpwd-success.py
 
 # Tests for with WITH_STRICT_PROTOCOL defined
 strict-test : 

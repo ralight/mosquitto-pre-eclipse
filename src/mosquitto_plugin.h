@@ -32,4 +32,13 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define MOSQ_AUTH_PLUGIN_VERSION 1
 
+#define MOSQ_ACL_NONE 0x00
+#define MOSQ_ACL_READ 0x01
+#define MOSQ_ACL_WRITE 0x02
+
+struct mosquitto_auth_opt {
+	char *key;
+	char *value;
+};
+
 #endif
