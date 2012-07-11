@@ -185,13 +185,14 @@ struct _mosquitto_db;
 
 struct _mosquitto_auth_plugin{
 	void *lib;
+	void *user_data;
 	int (*plugin_version)(void);
-	int (*plugin_init)(struct mosquitto_auth_opt **auth_opts, int auth_opt_count);
-	int (*plugin_cleanup)(struct mosquitto_auth_opt **auth_opts, int auth_opt_count);
-	int (*security_init)(struct mosquitto_auth_opt **auth_opts, int auth_opt_count, bool reload);
-	int (*security_cleanup)(struct mosquitto_auth_opt **auth_opts, int auth_opt_count, bool reload);
-	int (*acl_check)(const char *username, const char *topic, int access);
-	int (*unpwd_check)(const char *username, const char *password);
+	int (*plugin_init)(void **user_data, struct mosquitto_auth_opt **auth_opts, int auth_opt_count);
+	int (*plugin_cleanup)(void *user_data, struct mosquitto_auth_opt **auth_opts, int auth_opt_count);
+	int (*security_init)(void *user_data, struct mosquitto_auth_opt **auth_opts, int auth_opt_count, bool reload);
+	int (*security_cleanup)(void *user_data, struct mosquitto_auth_opt **auth_opts, int auth_opt_count, bool reload);
+	int (*acl_check)(void *user_data, const char *username, const char *topic, int access);
+	int (*unpwd_check)(void *user_data, const char *username, const char *password);
 };
 
 typedef struct _mosquitto_db{

@@ -108,8 +108,9 @@ int mosquitto_security_module_init(mosquitto_db *db)
 		}
 
 		db->auth_plugin.lib = lib;
+		db->auth_plugin.user_data = NULL;
 		if(db->auth_plugin.plugin_init){
-			db->auth_plugin.plugin_init(db->config->auth_options, db->config->auth_option_count);
+			db->auth_plugin.plugin_init(&db->auth_plugin.user_data, db->config->auth_options, db->config->auth_option_count);
 		}
 	}else{
 		db->auth_plugin.lib = NULL;
@@ -126,8 +127,12 @@ int mosquitto_security_module_init(mosquitto_db *db)
 
 int mosquitto_security_module_cleanup(mosquitto_db *db)
 {
+	if(db->auth_plugin.security_cleanup){
+		db->auth_plugin.security_cleanup(db->auth_plugin.user_data, db->config->auth_options, db->config->auth_option_count, false);
+	}
+
 	if(db->auth_plugin.plugin_cleanup){
-		db->auth_plugin.plugin_cleanup(db->config->auth_options, db->config->auth_option_count);
+		db->auth_plugin.plugin_cleanup(db->auth_plugin.user_data, db->config->auth_options, db->config->auth_option_count);
 	}
 
 	if(db->config->auth_plugin){
@@ -151,7 +156,7 @@ int mosquitto_security_init(mosquitto_db *db, bool reload)
 	if(!db->auth_plugin.lib){
 		return mosquitto_security_init_default(db, reload);
 	}else{
-		return db->auth_plugin.security_init(db->config->auth_options, db->config->auth_option_count, reload);
+		return db->auth_plugin.security_init(db->auth_plugin.user_data, db->config->auth_options, db->config->auth_option_count, reload);
 	}
 }
 
@@ -174,7 +179,7 @@ int mosquitto_security_cleanup(mosquitto_db *db, bool reload)
 	if(!db->auth_plugin.lib){
 		return mosquitto_security_cleanup_default(db, reload);
 	}else{
-		return db->auth_plugin.security_cleanup(db->config->auth_options, db->config->auth_option_count, reload);
+		return db->auth_plugin.security_cleanup(db->auth_plugin.user_data, db->config->auth_options, db->config->auth_option_count, reload);
 	}
 }
 
@@ -183,7 +188,7 @@ int mosquitto_acl_check(struct _mosquitto_db *db, struct mosquitto *context, con
 	if(!db->auth_plugin.lib){
 		return mosquitto_acl_check_default(db, context, topic, access);
 	}else{
-		return db->auth_plugin.acl_check(context->username, topic, access);
+		return db->auth_plugin.acl_check(db->auth_plugin.user_data, context->username, topic, access);
 	}
 }
 
@@ -192,7 +197,7 @@ int mosquitto_unpwd_check(struct _mosquitto_db *db, const char *username, const 
 	if(!db->auth_plugin.lib){
 		return mosquitto_unpwd_check_default(db, username, password);
 	}else{
-		return db->auth_plugin.unpwd_check(username, password);
+		return db->auth_plugin.unpwd_check(db->auth_plugin.user_data, username, password);
 	}
 }
 
