@@ -318,7 +318,7 @@ int main(int argc, char *argv[])
 		_mosquitto_free(listensock);
 	}
 
-	mosquitto_security_cleanup(&int_db, false);
+	mosquitto_security_module_cleanup(&int_db);
 
 	if(config.pid_file){
 		remove(config.pid_file);

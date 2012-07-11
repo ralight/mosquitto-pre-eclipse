@@ -8,27 +8,27 @@ int mosquitto_auth_plugin_version(void)
 	return MOSQ_AUTH_PLUGIN_VERSION;
 }
 
-int mosquitto_auth_plugin_init(struct mosquitto_auth_opt **auth_opts, int auth_opt_count)
+int mosquitto_auth_plugin_init(void **user_data, struct mosquitto_auth_opt **auth_opts, int auth_opt_count)
 {
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto_auth_plugin_cleanup(struct mosquitto_auth_opt **auth_opts, int auth_opt_count)
+int mosquitto_auth_plugin_cleanup(void *user_data, struct mosquitto_auth_opt **auth_opts, int auth_opt_count)
 {
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto_auth_security_init(struct mosquitto_auth_opt **auth_opts, int auth_opt_count, bool reload)
+int mosquitto_auth_security_init(void *user_data, struct mosquitto_auth_opt **auth_opts, int auth_opt_count, bool reload)
 {
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto_auth_security_cleanup(struct mosquitto_auth_opt **auth_opts, int auth_opt_count, bool reload)
+int mosquitto_auth_security_cleanup(void *user_data, struct mosquitto_auth_opt **auth_opts, int auth_opt_count, bool reload)
 {
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto_auth_acl_check(const char *username, const char *topic, int access)
+int mosquitto_auth_acl_check(void *user_data, const char *username, const char *topic, int access)
 {
 	if(!strcmp(username, "readonly") && access == MOSQ_ACL_READ){
 		return MOSQ_ERR_SUCCESS;
@@ -37,7 +37,7 @@ int mosquitto_auth_acl_check(const char *username, const char *topic, int access
 	}
 }
 
-int mosquitto_auth_unpwd_check(const char *username, const char *password)
+int mosquitto_auth_unpwd_check(void *user_data, const char *username, const char *password)
 {
 	if(!strcmp(username, "test-username") && password && !strcmp(password, "cnwTICONIURW")){
 		return MOSQ_ERR_SUCCESS;
