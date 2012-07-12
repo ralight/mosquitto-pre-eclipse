@@ -74,9 +74,8 @@ static void _config_init_reload(mqtt3_config *config)
 	config->sys_interval = 10;
 	if(config->auth_options){
 		for(i=0; i<config->auth_option_count; i++){
-			_mosquitto_free(config->auth_options[i]->key);
-			_mosquitto_free(config->auth_options[i]->value);
-			_mosquitto_free(config->auth_options[i]);
+			_mosquitto_free(config->auth_options[i].key);
+			_mosquitto_free(config->auth_options[i].value);
 		}
 		_mosquitto_free(config->auth_options);
 		config->auth_options = NULL;
@@ -156,7 +155,8 @@ void mqtt3_config_cleanup(mqtt3_config *config)
 	if(config->auth_plugin) _mosquitto_free(config->auth_plugin);
 	if(config->auth_options){
 		for(i=0; i<config->auth_option_count; i++){
-			_mosquitto_free(config->auth_options[i]);
+			_mosquitto_free(config->auth_options[i].key);
+			_mosquitto_free(config->auth_options[i].value);
 		}
 		_mosquitto_free(config->auth_options);
 		config->auth_options = NULL;
@@ -357,22 +357,30 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 				}else if(!strcmp(token, "allow_anonymous")){
 					if(_conf_parse_bool(&token, "allow_anonymous", &config->allow_anonymous, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strncmp(token, "auth_opt_", 9)){
-					key = _mosquitto_strdup(&token[8]);
+					if(strlen(token) < 12){
+						/* auth_opt_ == 9, + one digit key == 10, + one space == 11, + one value == 12 */
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid auth_opt_ config option.");
+						return MOSQ_ERR_INVAL;
+					}
+					key = _mosquitto_strdup(&token[9]);
 					if(!key){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
 						return MOSQ_ERR_NOMEM;
+					}else if(strlen(key) == 0){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid auth_opt_ config option.");
+						return MOSQ_ERR_INVAL;
 					}
-					token = strtok_r(NULL, " ", &saveptr);
-					if(token){
+					token += 9+strlen(key)+1;
+					if(token[0]){
 						config->auth_option_count++;
-						config->auth_options = _mosquitto_realloc(config->auth_options, config->auth_option_count*sizeof(struct _mqtt3_bridge));
+						config->auth_options = _mosquitto_realloc(config->auth_options, config->auth_option_count*sizeof(struct mosquitto_auth_opt));
 						if(!config->auth_options){
 							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 							return MOSQ_ERR_NOMEM;
 						}
-						config->auth_options[config->auth_option_count-1]->key = key;
-						config->auth_options[config->auth_option_count-1]->value = _mosquitto_strdup(token);
-						if(!config->auth_options[config->auth_option_count-1]->value){
+						config->auth_options[config->auth_option_count-1].key = key;
+						config->auth_options[config->auth_option_count-1].value = _mosquitto_strdup(token);
+						if(!config->auth_options[config->auth_option_count-1].value){
 							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 							return MOSQ_ERR_NOMEM;
 						}

@@ -60,7 +60,7 @@ struct mosquitto_auth_opt {
  *
  * Function: mosquitto_auth_plugin_init
  *
- * int mosquitto_auth_plugin_init(void **user_data, struct mosquitto_auth_opt **auth_opts, int auth_opt_count);
+ * int mosquitto_auth_plugin_init(void **user_data, struct mosquitto_auth_opt *auth_opts, int auth_opt_count);
  *
  * Called after the plugin has been loaded and <mosquitto_auth_plugin_version>
  * has been called. This will only ever be called once and can be used to
@@ -81,7 +81,7 @@ struct mosquitto_auth_opt {
  *
  * Function: mosquitto_auth_plugin_cleanup
  *
- * int mosquitto_auth_plugin_cleanup(void *user_data, struct mosquitto_auth_opt **auth_opts, int auth_opt_count);
+ * int mosquitto_auth_plugin_cleanup(void *user_data, struct mosquitto_auth_opt *auth_opts, int auth_opt_count);
  *
  * Called when the broker is shutting down. This will only ever be called once.
  * Note that <mosquitto_auth_security_cleanup> will be called directly before
@@ -101,7 +101,7 @@ struct mosquitto_auth_opt {
  *
  * Function: mosquitto_auth_security_init
  *
- * int mosquitto_auth_security_init(void *user_data, struct mosquitto_auth_opt **auth_opts, int auth_opt_count, bool reload);
+ * int mosquitto_auth_security_init(void *user_data, struct mosquitto_auth_opt *auth_opts, int auth_opt_count, bool reload);
  *
  * Called when the broker initialises the security functions when it starts up.
  * If the broker is requested to reload its configuration whilst running,
@@ -125,7 +125,7 @@ struct mosquitto_auth_opt {
  * 
  * Function: mosquitto_auth_security_cleanup
  *
- * int mosquitto_auth_security_cleanup(void *user_data, struct mosquitto_auth_opt **auth_opts, int auth_opt_count, bool reload);
+ * int mosquitto_auth_security_cleanup(void *user_data, struct mosquitto_auth_opt *auth_opts, int auth_opt_count, bool reload);
  *
  * Called when the broker cleans up the security functions when it shuts down.
  * If the broker is requested to reload its configuration whilst running,
