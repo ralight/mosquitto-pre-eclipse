@@ -185,8 +185,8 @@ int mqtt3_handle_connect(mosquitto_db *db, struct mosquitto *context)
 		}
 	}
 
-	if(context->listener->use_cn_as_username){
 #ifdef WITH_SSL
+	if(context->listener->use_cn_as_username){
 		if(!context->ssl){
 			_mosquitto_send_connack(context, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
 			mqtt3_context_disconnect(db, context);
@@ -209,8 +209,8 @@ int mqtt3_handle_connect(mosquitto_db *db, struct mosquitto *context)
 			_mosquitto_free(client_id);
 			return MOSQ_ERR_NOMEM;
 		}
-#endif
 	}else{
+#endif
 		if(username_flag){
 			rc = mosquitto_unpwd_check(db, username, password);
 			context->username = username;
@@ -232,7 +232,9 @@ int mqtt3_handle_connect(mosquitto_db *db, struct mosquitto *context)
 			_mosquitto_free(client_id);
 			return MOSQ_ERR_SUCCESS;
 		}
+#ifdef WITH_SSL
 	}
+#endif
 
 	/* Find if this client already has an entry. This must be done *after* any security checks. */
 	for(i=0; i<db->context_count; i++){
