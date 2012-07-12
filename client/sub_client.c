@@ -124,6 +124,7 @@ void print_usage(void)
 	printf("                     [-d] [--quiet]\n");
 	printf("                     [-u username [-P password]]\n");
 	printf("                     [--will-topic [--will-payload payload] [--will-qos qos] [--will-retain]]\n");
+	printf("                     [--cafile file [--cert file] [--key file]]\n");
 	printf("       mosquitto_sub --help\n\n");
 	printf(" -c : disable 'clean session' (store subscription and pending messages when client disconnects).\n");
 	printf(" -d : enable debug messages.\n");
@@ -146,6 +147,10 @@ void print_usage(void)
 	printf(" --will-qos : QoS level for the client Will.\n");
 	printf(" --will-retain : if given, make the client Will retained.\n");
 	printf(" --will-topic : the topic on which to publish the client Will.\n");
+	printf(" --cafile : path to a file containing trusted CA certificates to enable encrypted\n");
+	printf("            communication.\n");
+	printf(" --cert : client certificate for authentication, if required by server.\n");
+	printf(" --key : client private key for authentication, if required by server.\n");
 	printf("\nSee http://mosquitto.org/ for more information.\n\n");
 }
 
@@ -171,6 +176,10 @@ int main(int argc, char *argv[])
 	bool will_retain = false;
 	char *will_topic = NULL;
 
+	char *cafile = NULL;
+	char *certfile = NULL;
+	char *keyfile = NULL;
+
 	memset(&ud, 0, sizeof(struct userdata));
 
 	for(i=1; i<argc; i++){
@@ -190,6 +199,24 @@ int main(int argc, char *argv[])
 			i++;
 		}else if(!strcmp(argv[i], "-c") || !strcmp(argv[i], "--disable-clean-session")){
 			clean_session = false;
+		}else if(!strcmp(argv[i], "--cafile")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --cafile argument given but no file specified.\n\n");
+				print_usage();
+				return 1;
+			}else{
+				cafile = argv[i+1];
+			}
+			i++;
+		}else if(!strcmp(argv[i], "--cert")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --cert argument given but no file specified.\n\n");
+				print_usage();
+				return 1;
+			}else{
+				cafile = argv[i+1];
+			}
+			i++;
 		}else if(!strcmp(argv[i], "-d") || !strcmp(argv[i], "--debug")){
 			debug = true;
 		}else if(!strcmp(argv[i], "--help")){
@@ -244,6 +271,15 @@ int main(int argc, char *argv[])
 					print_usage();
 					return 1;
 				}
+			}
+			i++;
+		}else if(!strcmp(argv[i], "--key")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --key argument given but no file specified.\n\n");
+				print_usage();
+				return 1;
+			}else{
+				keyfile = argv[i+1];
 			}
 			i++;
 		}else if(!strcmp(argv[i], "-q") || !strcmp(argv[i], "--qos")){
@@ -356,6 +392,11 @@ int main(int argc, char *argv[])
 	if(ud.password && !ud.username){
 		if(!ud.quiet) fprintf(stderr, "Warning: Not using password since username not set.\n");
 	}
+	if((certfile && !keyfile) || (keyfile && !certfile)){
+		fprintf(stderr, "Error: Both certfile and keyfile must be provided if one of them is.\n");
+		print_usage();
+		return 1;
+	}
 	mosquitto_lib_init();
 
 	if(id_prefix){
@@ -403,6 +444,11 @@ int main(int argc, char *argv[])
 	}
 	if(ud.username && mosquitto_username_pw_set(mosq, ud.username, ud.password)){
 		if(!ud.quiet) fprintf(stderr, "Error: Problem setting username and password.\n");
+		mosquitto_lib_cleanup();
+		return 1;
+	}
+	if(cafile && mosquitto_ssl_set(mosq, cafile, certfile, keyfile, NULL)){
+		if(!ud.quiet) fprintf(stderr, "Error: Problem setting SSL options.\n");
 		mosquitto_lib_cleanup();
 		return 1;
 	}
