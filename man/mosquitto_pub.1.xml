@@ -77,6 +77,19 @@
 					</group>
 				</arg>
 			</group>
+			<group choice='opt'>
+				<arg>
+					<group choice='plain'>
+						<arg><option>--cafile</option> <replaceable>file</replaceable></arg>
+					</group>
+					<group choice='opt'>
+						<arg><option>--cert</option> <replaceable>file</replaceable></arg>
+					</group>
+					<group choice='opt'>
+						<arg><option>--key</option> <replaceable>file</replaceable></arg>
+					</group>
+				</arg>
+			</group>
 			<group choice='plain'>
 				<arg><option>-t</option> <replaceable>message-topic</replaceable></arg>
 			</group>
@@ -97,6 +110,31 @@
 	<refsect1>
 		<title>Options</title>
 		<variablelist>
+			<varlistentry>
+				<term><option>--cafile</option></term>
+				<listitem>
+					<para>Define the path to a file containing PEM encoded CA
+						certificates that are trusted. Used to enable SSL
+						communication.</para>
+					<para>See also --cert and --key.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>--cert</option></term>
+				<listitem>
+					<para>Define the path to a file containing a PEM encoded
+						certificate for this client, if required by the
+						server.</para>
+					<para>See also --cafile and --key.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-d</option></term>
+				<term><option>--debug</option></term>
+				<listitem>
+					<para>Enable debug messages.</para>
+				</listitem>
+			</varlistentry>
 			<varlistentry>
 				<term><option>-d</option></term>
 				<term><option>--debug</option></term>
@@ -143,6 +181,15 @@
 					useful where the broker is using the clientid_prefixes
 					option. Cannot be used at the same time as the
 					<option>--id</option> argument.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>--key</option></term>
+				<listitem>
+					<para>Define the path to a file containing a PEM encoded
+						private key for this client, if required by the
+						server.</para>
+					<para>See also --cafile and --cert.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -327,6 +374,10 @@
 			<citerefentry>
 				<refentrytitle>libmosquitto</refentrytitle>
 				<manvolnum>3</manvolnum>
+			</citerefentry>
+			<citerefentry>
+				<refentrytitle>mosquitto-ssl</refentrytitle>
+				<manvolnum>7</manvolnum>
 			</citerefentry>
 		</para>
 	</refsect1>
