@@ -3,6 +3,7 @@
 all :
 
 clean : 
+	$(MAKE) -C c clean
 
 test-compile : 
 	$(MAKE) -C c
