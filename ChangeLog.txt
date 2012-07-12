@@ -14,6 +14,7 @@ Broker:
 - Fix reloading of log configuration.
 - Add support for try_private config option for bridge connections.
 - Add support for autosave_on_changes config option.
+- Add support for include_dir config option.
 - Usernames were being lost when a non clean-session client reconnected,
   potentially causing problems with ACLs. This has been fixed.
 - Significant improvement to memory handling on Windows.
