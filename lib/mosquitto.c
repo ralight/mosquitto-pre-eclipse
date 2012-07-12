@@ -228,13 +228,10 @@ void mosquitto_destroy(struct mosquitto *mosq)
 	}
 #ifdef WITH_SSL
 	if(mosq->ssl){
-		if(mosq->ssl->ssl){
-			SSL_free(mosq->ssl->ssl);
-		}
-		if(mosq->ssl->ssl_ctx){
-			SSL_CTX_free(mosq->ssl->ssl_ctx);
-		}
-		_mosquitto_free(mosq->ssl);
+		SSL_free(mosq->ssl);
+	}
+	if(mosq->ssl_ctx){
+		SSL_CTX_free(mosq->ssl_ctx);
 	}
 #endif
 	pthread_mutex_destroy(&mosq->callback_mutex);
@@ -383,26 +380,78 @@ int mosquitto_unsubscribe(struct mosquitto *mosq, int *mid, const char *sub)
 	return _mosquitto_send_unsubscribe(mosq, mid, false, sub);
 }
 
-#if 0
-int mosquitto_ssl_set(struct mosquitto *mosq, const char *pemfile, const char *password)
+int mosquitto_ssl_set(struct mosquitto *mosq, const char *cafile, const char *certfile, const char *keyfile, int (*pw_callback)(char *buf, int size, int rwflag, void *userdata))
 {
 #ifdef WITH_SSL
-	if(!mosq || mosq->ssl) return MOSQ_ERR_INVAL; //FIXME
+	if(!mosq || !cafile || (certfile && !keyfile) || (!certfile && keyfile)) return MOSQ_ERR_INVAL;
 
-	mosq->ssl = _mosquitto_malloc(sizeof(struct _mosquitto_ssl));
-	if(!mosq->ssl) return MOSQ_ERR_NOMEM;
+	mosq->ssl_cafile = _mosquitto_strdup(cafile);
+	if(!mosq->ssl_cafile){
+		return MOSQ_ERR_NOMEM;
+	}
 
-	mosq->ssl->ssl_ctx = SSL_CTX_new(TLSv1_method());
-	if(!mosq->ssl->ssl_ctx) return MOSQ_ERR_SSL;
+	if(certfile){
+		mosq->ssl_certfile = _mosquitto_strdup(certfile);
+		if(!mosq->ssl_certfile){
+			return MOSQ_ERR_NOMEM;
+		}
+	}else{
+		if(mosq->ssl_certfile) _mosquitto_free(mosq->ssl_certfile);
+		mosq->ssl_certfile = NULL;
+	}
 
-	mosq->ssl->ssl = SSL_new(mosq->ssl->ssl_ctx);
+	if(keyfile){
+		mosq->ssl_keyfile = _mosquitto_strdup(keyfile);
+		if(!mosq->ssl_keyfile){
+			return MOSQ_ERR_NOMEM;
+		}
+	}else{
+		if(mosq->ssl_keyfile) _mosquitto_free(mosq->ssl_keyfile);
+		mosq->ssl_keyfile = NULL;
+	}
+
+	mosq->ssl_pw_callback = pw_callback;
+
 
 	return MOSQ_ERR_SUCCESS;
 #else
 	return MOSQ_ERR_NOT_SUPPORTED;
+
 #endif
 }
+
+int mosquitto_ssl_opts_set(struct mosquitto *mosq, int cert_reqs, const char *ssl_version, const char *ciphers)
+{
+#ifdef WITH_SSL
+	if(!mosq) return MOSQ_ERR_INVAL;
+
+	mosq->ssl_cert_reqs = cert_reqs;
+	if(ssl_version){
+		if(!strcasecmp(ssl_version, "tlsv1")){
+			mosq->ssl_version = _mosquitto_strdup(ssl_version);
+			if(!mosq->ssl_version) return MOSQ_ERR_NOMEM;
+		}else{
+			return MOSQ_ERR_INVAL;
+		}
+	}else{
+		mosq->ssl_version = _mosquitto_strdup("tlsv1");
+		if(!mosq->ssl_version) return MOSQ_ERR_NOMEM;
+	}
+	if(ciphers){
+		mosq->ssl_ciphers = _mosquitto_strdup(ciphers);
+		if(!mosq->ssl_ciphers) return MOSQ_ERR_NOMEM;
+	}else{
+		mosq->ssl_ciphers = NULL;
+	}
+
+
+	return MOSQ_ERR_SUCCESS;
+#else
+	return MOSQ_ERR_NOT_SUPPORTED;
+
 #endif
+}
+
 
 int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 {
@@ -425,7 +474,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 	if(mosq->out_packet || mosq->current_out_packet){
 		FD_SET(mosq->sock, &writefds);
 #ifdef WITH_SSL
-	}else if(mosq->ssl && mosq->ssl->want_write){
+	}else if(mosq->ssl && mosq->want_write){
 		FD_SET(mosq->sock, &writefds);
 #endif
 	}

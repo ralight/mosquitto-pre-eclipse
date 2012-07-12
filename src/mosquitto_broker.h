@@ -32,9 +32,11 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <config.h>
 
+#include <openssl/ssl.h>
 #include <time.h>
 
 #include <mosquitto_internal.h>
+#include <mosquitto_plugin.h>
 #include <mosquitto.h>
 
 #ifndef __GNUC__
@@ -49,10 +51,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #define MQTT3_LOG_STDERR 0x08
 #define MQTT3_LOG_TOPIC 0x10
 #define MQTT3_LOG_ALL 0xFF
-
-#define MOSQ_ACL_NONE 0x00
-#define MOSQ_ACL_READ 0x01
-#define MOSQ_ACL_WRITE 0x02
 
 typedef uint64_t dbid_t;
 
@@ -80,6 +78,14 @@ struct _mqtt3_listener {
 	int *socks;
 	int sock_count;
 	int client_count;
+	char *cafile;
+	char *capath;
+	char *certfile;
+	char *keyfile;
+	bool require_certificate;
+	SSL_CTX *ssl_ctx;
+	char *crlfile;
+	bool use_cn_as_username;
 };
 
 typedef struct {
@@ -113,13 +119,9 @@ typedef struct {
 	struct _mqtt3_bridge *bridges;
 	int bridge_count;
 #endif
-#ifdef WITH_EXTERNAL_SECURITY_CHECKS
-	char *db_host;
-	int db_port;
-	char *db_name;
-	char *db_username;
-	char *db_password;
-#endif
+	char *auth_plugin;
+	struct mosquitto_auth_opt *auth_options;
+	int auth_option_count;
 } mqtt3_config;
 
 struct _mosquitto_subleaf {
@@ -179,6 +181,20 @@ struct _mosquitto_acl_user{
 	struct _mosquitto_acl *acl;
 };
 
+struct _mosquitto_db;
+
+struct _mosquitto_auth_plugin{
+	void *lib;
+	void *user_data;
+	int (*plugin_version)(void);
+	int (*plugin_init)(void **user_data, struct mosquitto_auth_opt *auth_opts, int auth_opt_count);
+	int (*plugin_cleanup)(void *user_data, struct mosquitto_auth_opt *auth_opts, int auth_opt_count);
+	int (*security_init)(void *user_data, struct mosquitto_auth_opt *auth_opts, int auth_opt_count, bool reload);
+	int (*security_cleanup)(void *user_data, struct mosquitto_auth_opt *auth_opts, int auth_opt_count, bool reload);
+	int (*acl_check)(void *user_data, const char *username, const char *topic, int access);
+	int (*unpwd_check)(void *user_data, const char *username, const char *password);
+};
+
 typedef struct _mosquitto_db{
 	dbid_t last_db_id;
 	struct _mosquitto_subhier subs;
@@ -191,6 +207,7 @@ typedef struct _mosquitto_db{
 	int msg_store_count;
 	mqtt3_config *config;
 	int persistence_changes;
+	struct _mosquitto_auth_plugin auth_plugin;
 } mosquitto_db;
 
 enum mqtt3_bridge_direction{
@@ -343,21 +360,20 @@ void mqtt3_bridge_packet_cleanup(struct mosquitto *context);
 /* ============================================================
  * Security related functions
  * ============================================================ */
+int mosquitto_security_module_init(mosquitto_db *db);
+int mosquitto_security_module_cleanup(struct _mosquitto_db *db);
+
 int mosquitto_security_init(mosquitto_db *db, bool reload);
 int mosquitto_security_apply(struct _mosquitto_db *db);
-void mosquitto_security_cleanup(mosquitto_db *db, bool reload);
-#ifdef WITH_EXTERNAL_SECURITY_CHECKS
-int mosquitto_unpwd_init(struct _mosquitto_db *db, bool reload);
-int mosquitto_acl_init(struct _mosquitto_db *db, bool reload);
-#else
-int mqtt3_aclfile_parse(struct _mosquitto_db *db);
-int mqtt3_pwfile_parse(struct _mosquitto_db *db);
-#endif
-
+int mosquitto_security_cleanup(mosquitto_db *db, bool reload);
 int mosquitto_acl_check(struct _mosquitto_db *db, struct mosquitto *context, const char *topic, int access);
-void mosquitto_acl_cleanup(struct _mosquitto_db *db, bool reload);
 int mosquitto_unpwd_check(struct _mosquitto_db *db, const char *username, const char *password);
-int mosquitto_unpwd_cleanup(struct _mosquitto_db *db, bool reload);
+
+int mosquitto_security_init_default(mosquitto_db *db, bool reload);
+int mosquitto_security_apply_default(struct _mosquitto_db *db);
+int mosquitto_security_cleanup_default(mosquitto_db *db, bool reload);
+int mosquitto_acl_check_default(struct _mosquitto_db *db, struct mosquitto *context, const char *topic, int access);
+int mosquitto_unpwd_check_default(struct _mosquitto_db *db, const char *username, const char *password);
 
 /* ============================================================
  * Window service related functions

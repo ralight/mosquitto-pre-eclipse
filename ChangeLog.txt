@@ -11,8 +11,6 @@ Broker:
   disconnected.
 - Enforce client id limits in the broker (only when WITH_STRICT_PROTOCOL is
   defined).
-- Add $SYS/system/ hierarchy to provide information on the system. Only
-  supported on Linux and when compiled with WITH_SYSTEM_METRICS.
 - Fix reloading of log configuration.
 - Add support for try_private config option for bridge connections.
 - Add support for autosave_on_changes config option.
@@ -38,6 +36,7 @@ Broker:
   outgoing bridged topics should always work.
 - Local bridges are now no longer restricted by local ACLs.
 - Discard publish messages with zero length topics.
+- Drop to "mosquitto" user even if no config file specified.
 
 Client library:
 
@@ -76,11 +75,13 @@ Client library:
 - Return MOSQ_ERR_INVAL on zero length topic.
 - Fix automatic client id generation on Windows.
 - mosquitto_loop_misq() can now return MOSQ_ERR_NO_CONN;
+- Compile static library as well as dynamic library with default makefiles.
 - Rename C++ namespace from mosquittopp to mosqpp to remove ambiguity.
 - C++ lib_init(), lib_version() and lib_cleanup() are now in the mosqpp
   namespace directly, not mosquittopp class members.
-- The Python library has modified to match the libmosquitto changes and
-  simplified at the same time.
+- The Python library is now written in pure Python and so no longer depends on
+  libmosquitto. 
+- The Python library includes SSL support.
 - The Python library should now be compatible with Python 3.
 
 Other:
@@ -89,6 +90,7 @@ Other:
 - Add example of logging all messages to mysql.
 - Fix potential buffer overflow in pub/sub clients.
 - Add "make binary" target that doesn't make documents.
+- Add "--help" arguments to pub/sub clients.
 
 0.15 - 20120205
 ===============

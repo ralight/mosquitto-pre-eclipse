@@ -112,16 +112,6 @@ struct mosquitto_message_all{
 	struct mosquitto_message msg;
 };
 
-#ifdef WITH_SSL
-struct _mosquitto_ssl{
-	SSL_CTX *ssl_ctx;
-	SSL *ssl;
-	BIO *bio;
-	bool want_read;
-	bool want_write;
-};
-#endif
-
 struct mosquitto {
 #ifndef WIN32
 	int sock;
@@ -144,8 +134,18 @@ struct mosquitto {
 	struct _mosquitto_packet *out_packet;
 	struct mosquitto_message *will;
 #ifdef WITH_SSL
-	struct _mosquitto_ssl *ssl;
+	SSL *ssl;
+	SSL_CTX *ssl_ctx;
+	char *ssl_cafile;
+	char *ssl_certfile;
+	char *ssl_keyfile;
+	int (*ssl_pw_callback)(char *buf, int size, int rwflag, void *userdata);
+	int ssl_cert_reqs;
+	char *ssl_version;
+	char *ssl_ciphers;
 #endif
+	bool want_read;
+	bool want_write;
 #ifdef WITH_THREADING
 	pthread_mutex_t callback_mutex;
 	pthread_mutex_t log_callback_mutex;

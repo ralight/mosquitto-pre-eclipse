@@ -10,51 +10,47 @@ import pygtk
 import sys
 
 class CurrentCostMQTT(gnomeapplet.Applet):
-	def loop(self):
-		self.mosq.loop(1)
-		return True
+    def on_message(self, mosq, obj, msg):
+        # Message format is "power"
+        self.label.set_text(msg.payload+"W")
 
-	def on_message(self, msg):
-		# Message format is "power"
-		self.label.set_text(msg.payload+"W")
+    def set_label(self, val):
+        self.label.set_text(val)
 
-	def set_label(self, val):
-		self.label.set_text(val)
+    def on_change_background(self, applet, type, color, pixmap):
+        applet.set_style(None)
+        applet.modify_style(gtk.RcStyle())
 
-	def on_change_background(self, applet, type, color, pixmap):
-		applet.set_style(None)
-		applet.modify_style(gtk.RcStyle())
+        if type == gnomeapplet.COLOR_BACKGROUND:
+            applet.modify_bg(gtk.STATE_NORMAL, color)
+        elif type == gnomeapplet.PIXMAP_BACKGROUND:
+            style = applet.get_style().copy()
+            style.bg_pixmap[gtk.STATE_NORMAL] = pixmap
+            applet.set_style(style)
 
-		if type == gnomeapplet.COLOR_BACKGROUND:
-			applet.modify_bg(gtk.STATE_NORMAL, color)
-		elif type == gnomeapplet.PIXMAP_BACKGROUND:
-			style = applet.get_style().copy()
-			style.bg_pixmap[gtk.STATE_NORMAL] = pixmap
-			applet.set_style(style)
-
-	def show_menu(self, widget, event):
-		print "menu"
-		
-	def __init__(self, applet, iid):
-		self.applet = applet
-		self.label = gtk.Label("0W")
-		self.event_box = gtk.EventBox()
-		self.event_box.add(self.label)
-		self.event_box.set_events(gtk.gdk.BUTTON_PRESS_MASK)
-		self.event_box.connect("button_press_event", self.show_menu)
-		self.applet.add(self.event_box)
-		self.applet.set_background_widget(applet)
-		self.applet.show_all()
-		self.mosq = mosquitto.Mosquitto("ccpanel-"+platform.node()+"-"+str(os.getpid()))
-		self.mosq.on_message = self.on_message
-		self.mosq.connect("10.90.100.4", 1883, 60, True)
-		self.mosq.subscribe("sensors/cc128/ch1", 0)
-		self.applet.connect('change-background', self.on_change_background)
-		gobject.timeout_add(100, self.loop)
+    def show_menu(self, widget, event):
+        print "menu"
+        
+    def __init__(self, applet, iid):
+        self.applet = applet
+        self.label = gtk.Label("0W")
+        self.event_box = gtk.EventBox()
+        self.event_box.add(self.label)
+        self.event_box.set_events(gtk.gdk.BUTTON_PRESS_MASK)
+        self.event_box.connect("button_press_event", self.show_menu)
+        self.applet.add(self.event_box)
+        self.applet.set_background_widget(applet)
+        self.applet.show_all()
+        self.mosq = mosquitto.Mosquitto()
+        self.mosq.on_message = self.on_message
+        self.mosq.connect("localhost")
+        self.mosq.loop_start()
+        self.mosq.subscribe("sensors/cc128/ch1", 0)
+        self.applet.connect('change-background', self.on_change_background)
 
 def CurrentCostMQTT_factory(applet, iid):
-	CurrentCostMQTT(applet, iid)
-	return gtk.TRUE
+    CurrentCostMQTT(applet, iid)
+    return gtk.TRUE
 
 if len(sys.argv) == 2:
     if sys.argv[1] == "-d": #Debug mode
@@ -69,5 +65,5 @@ if len(sys.argv) == 2:
         sys.exit()
  
 if __name__ == '__main__':
-	gnomeapplet.bonobo_factory("OAFIID:CurrentCostMQTT_Factory", gnomeapplet.Applet.__gtype__, "MQTT", "0", CurrentCostMQTT_factory)
+    gnomeapplet.bonobo_factory("OAFIID:CurrentCostMQTT_Factory", gnomeapplet.Applet.__gtype__, "MQTT", "0", CurrentCostMQTT_factory)
 

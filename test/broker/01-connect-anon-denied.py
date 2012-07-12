@@ -15,22 +15,22 @@ connack_packet = pack('!BBBB', 32, 2, 0, 5);
 broker = subprocess.Popen(['../../src/mosquitto', '-c', '01-connect-anon-denied.conf'], stderr=subprocess.PIPE)
 
 try:
-	time.sleep(0.5)
+    time.sleep(0.5)
 
-	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	sock.connect(("localhost", 1888))
-	sock.send(connect_packet)
-	connack_recvd = sock.recv(256)
-	sock.close()
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect(("localhost", 1888))
+    sock.send(connect_packet)
+    connack_recvd = sock.recv(256)
+    sock.close()
 
-	if connack_recvd != connack_packet:
-		(cmd, rl, resv, rc) = unpack('!BBBB', connack_recvd)
-		print("FAIL: Expected 32,2,0,5 got " + str(cmd) + "," + str(rl) + "," + str(resv) + "," + str(rc))
-	else:
-		rc = 0
+    if connack_recvd != connack_packet:
+        (cmd, rl, resv, ret) = unpack('!BBBB', connack_recvd)
+        print("FAIL: Expected 32,2,0,5 got " + str(cmd) + "," + str(rl) + "," + str(resv) + "," + str(ret))
+    else:
+        rc = 0
 finally:
-	broker.terminate()
-	broker.wait()
+    broker.terminate()
+    broker.wait()
 
 exit(rc)
 

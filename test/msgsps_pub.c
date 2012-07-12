@@ -24,7 +24,7 @@ void my_disconnect_callback(struct mosquitto *mosq, void *obj, int result)
 	run = false;
 }
 
-void my_publish_callback(struct mosquitto *mosq, void *obj, uint16_t mid)
+void my_publish_callback(struct mosquitto *mosq, void *obj, int mid)
 {
 	message_count++;
 	//printf("%d ", message_count);
@@ -113,10 +113,10 @@ int main(int argc, char *argv[])
 	mosquitto_disconnect_callback_set(mosq, my_disconnect_callback);
 	mosquitto_publish_callback_set(mosq, my_publish_callback);
 
-	mosquitto_connect(mosq, "127.0.0.1", 1883, 600);
+	mosquitto_connect(mosq, "127.0.0.1", 1884, 600);
 
 	i=0;
-	while(!mosquitto_loop(mosq, -1) && run){
+	while(!mosquitto_loop(mosq, 1, 10) && run){
 		if(i<MESSAGE_COUNT){
 			mosquitto_publish(mosq, NULL, "perf/test", MESSAGE_SIZE, &buf[i*MESSAGE_SIZE], 0, false);
 			i++;

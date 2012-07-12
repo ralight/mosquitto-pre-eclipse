@@ -207,7 +207,9 @@ void print_usage(void)
 	printf("                     [-i id] [-I id_prefix]\n");
 	printf("                     [-d] [--quiet]\n");
 	printf("                     [-u username [-P password]]\n");
-	printf("                     [--will-topic [--will-payload payload] [--will-qos qos] [--will-retain]]\n\n");
+	printf("                     [--will-topic [--will-payload payload] [--will-qos qos] [--will-retain]]\n");
+	printf("                     [--cafile file [--cert file] [--key file]]\n");
+	printf("       mosquitto_pub --help\n\n");
 	printf(" -d : enable debug messages.\n");
 	printf(" -f : send the contents of a file as the message.\n");
 	printf(" -h : mqtt host to connect to. Defaults to localhost.\n");
@@ -224,6 +226,7 @@ void print_usage(void)
 	printf(" -t : mqtt topic to publish to.\n");
 	printf(" -u : provide a username (requires MQTT 3.1 broker)\n");
 	printf(" -P : provide a password (requires MQTT 3.1 broker)\n");
+	printf(" --help : display this message.\n");
 	printf(" --quiet : don't print error messages.\n");
 	printf(" --will-payload : payload for the client Will, which is sent by the broker in case of\n");
 	printf("                  unexpected disconnection. If not given and will-topic is set, a zero\n");
@@ -231,6 +234,10 @@ void print_usage(void)
 	printf(" --will-qos : QoS level for the client Will.\n");
 	printf(" --will-retain : if given, make the client Will retained.\n");
 	printf(" --will-topic : the topic on which to publish the client Will.\n");
+	printf(" --cafile : path to a file containing trusted CA certificates to enable encrypted\n");
+	printf("            communication.\n");
+	printf(" --cert : client certificate for authentication, if required by server.\n");
+	printf(" --key : client private key for authentication, if required by server.\n");
 	printf("\nSee http://mosquitto.org/ for more information.\n\n");
 }
 
@@ -257,6 +264,10 @@ int main(int argc, char *argv[])
 	bool will_retain = false;
 	char *will_topic = NULL;
 
+	char *cafile = NULL;
+	char *certfile = NULL;
+	char *keyfile = NULL;
+
 	for(i=1; i<argc; i++){
 		if(!strcmp(argv[i], "-p") || !strcmp(argv[i], "--port")){
 			if(i==argc-1){
@@ -270,6 +281,24 @@ int main(int argc, char *argv[])
 					print_usage();
 					return 1;
 				}
+			}
+			i++;
+		}else if(!strcmp(argv[i], "--cafile")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --cafile argument given but no file specified.\n\n");
+				print_usage();
+				return 1;
+			}else{
+				cafile = argv[i+1];
+			}
+			i++;
+		}else if(!strcmp(argv[i], "--cert")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --cert argument given but no file specified.\n\n");
+				print_usage();
+				return 1;
+			}else{
+				cafile = argv[i+1];
 			}
 			i++;
 		}else if(!strcmp(argv[i], "-d") || !strcmp(argv[i], "--debug")){
@@ -287,6 +316,9 @@ int main(int argc, char *argv[])
 				if(load_file(argv[i+1])) return 1;
 			}
 			i++;
+		}else if(!strcmp(argv[i], "--help")){
+			print_usage();
+			return 0;
 		}else if(!strcmp(argv[i], "-h") || !strcmp(argv[i], "--host")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: -h argument given but no host specified.\n\n");
@@ -322,6 +354,15 @@ int main(int argc, char *argv[])
 				return 1;
 			}else{
 				id_prefix = argv[i+1];
+			}
+			i++;
+		}else if(!strcmp(argv[i], "--key")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --key argument given but no file specified.\n\n");
+				print_usage();
+				return 1;
+			}else{
+				keyfile = argv[i+1];
 			}
 			i++;
 		}else if(!strcmp(argv[i], "-l") || !strcmp(argv[i], "--stdin-line")){
@@ -475,6 +516,11 @@ int main(int argc, char *argv[])
 	if(password && !username){
 		if(!quiet) fprintf(stderr, "Warning: Not using password since username not set.\n");
 	}
+	if((certfile && !keyfile) || (keyfile && !certfile)){
+		fprintf(stderr, "Error: Both certfile and keyfile must be provided if one of them is.\n");
+		print_usage();
+		return 1;
+	}
 	mosquitto_lib_init();
 
 	if(id_prefix){
@@ -525,7 +571,11 @@ int main(int argc, char *argv[])
 		mosquitto_lib_cleanup();
 		return 1;
 	}
-
+	if(cafile && mosquitto_ssl_set(mosq, cafile, certfile, keyfile, NULL)){
+		if(!quiet) fprintf(stderr, "Error: Problem setting SSL options.\n");
+		mosquitto_lib_cleanup();
+		return 1;
+	}
 	mosquitto_connect_callback_set(mosq, my_connect_callback);
 	mosquitto_disconnect_callback_set(mosq, my_disconnect_callback);
 	mosquitto_publish_callback_set(mosq, my_publish_callback);

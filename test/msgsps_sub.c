@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
 {
 	struct mosquitto *mosq;
 	double dstart, dstop, diff;
-	uint16_t mid = 0;
+	int mid = 0;
 	char id[50];
 	int rc;
 
@@ -64,11 +64,11 @@ int main(int argc, char *argv[])
 	mosquitto_disconnect_callback_set(mosq, my_disconnect_callback);
 	mosquitto_message_callback_set(mosq, my_message_callback);
 
-	mosquitto_connect(mosq, "127.0.0.1", 1883, 600);
+	mosquitto_connect(mosq, "127.0.0.1", 1884, 600);
 	mosquitto_subscribe(mosq, &mid, "perf/test", 0);
 
 	do{
-		rc = mosquitto_loop(mosq, 1);
+		rc = mosquitto_loop(mosq, 1, 10);
 	}while(rc == MOSQ_ERR_SUCCESS && run);
 	printf("rc: %d\n", rc);
 
