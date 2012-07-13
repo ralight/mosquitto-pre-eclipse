@@ -42,6 +42,8 @@ VERS_1.0 {
 		mosquitto_connack_string;
 		mosquitto_ssl_set;
 		mosquitto_ssl_opts_set;
+		mosquitto_sub_topic_tokenise;
+		mosquitto_sub_topic_tokens_free;
 	local: *;
 };
 
