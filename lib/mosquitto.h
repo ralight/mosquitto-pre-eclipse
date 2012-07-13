@@ -1026,7 +1026,7 @@ libmosq_EXPORT const char *mosquitto_connack_string(int connack_code);
  * See Also:
  *	<mosquitto_sub_topic_tokens_free>
  */
-int mosquitto_sub_topic_tokenise(const char *subtopic, char ***topics, int *count);
+libmosq_EXPORT int mosquitto_sub_topic_tokenise(const char *subtopic, char ***topics, int *count);
 
 /*
  * Function mosquitto_sub_topic_tokens_free
@@ -1044,7 +1044,7 @@ int mosquitto_sub_topic_tokenise(const char *subtopic, char ***topics, int *coun
  * See Also:
  *	<mosquitto_sub_topic_tokenise>
  */
-int mosquitto_sub_topic_tokens_free(char ***topics, int count);
+libmosq_EXPORT int mosquitto_sub_topic_tokens_free(char ***topics, int count);
 
 #ifdef __cplusplus
 }
