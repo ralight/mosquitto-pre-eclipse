@@ -939,6 +939,14 @@ libmosq_EXPORT void mosquitto_message_retry_set(struct mosquitto *mosq, unsigned
  */
 libmosq_EXPORT void mosquitto_user_data_set(struct mosquitto *mosq, void *obj);
 
+
+/* =============================================================================
+ *
+ * Utility functions
+ *
+ * =============================================================================
+ */
+
 /*
  * Function mosquitto_strerror
  *
@@ -964,6 +972,79 @@ libmosq_EXPORT const char *mosquitto_strerror(int mosq_errno);
  *	A constant string describing the result.
  */
 libmosq_EXPORT const char *mosquitto_connack_string(int connack_code);
+
+/*
+ * Function mosquitto_sub_topic_tokenise
+ *
+ * Tokenise a topic or subscription string into an array of strings
+ * representing the topic hierarchy.
+ *
+ * For example:
+ *
+ * subtopic: "a/deep/topic/hierarchy"
+ *
+ * Would result in:
+ *
+ * topics[0] = "a"
+ * topics[1] = "deep"
+ * topics[2] = "topic"
+ * topics[3] = "hierarchy"
+ *
+ * and:
+ *
+ * subtopic: "/a/deep/topic/hierarchy/"
+ *
+ * Would result in:
+ *
+ * topics[0] = NULL
+ * topics[1] = "a"
+ * topics[2] = "deep"
+ * topics[3] = "topic"
+ * topics[4] = "hierarchy"
+ *
+ * Parameters:
+ *	subtopic - the subscription/topic to tokenise
+ *	topics -   a pointer to store the array of strings
+ *	count -    an int pointer to store the number of items in the topics array.
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - on success
+ * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ *
+ * Example:
+ *
+ * > char **topics;
+ * > int topic_count;
+ * > int i;
+ * > 
+ * > mosquitto_sub_topic_tokenise("$SYS/broker/uptime", &topics, &topic_count);
+ * >
+ * > for(i=0; i<token_count; i++){
+ * >     printf("%d: %s\n", i, topics[i]);
+ * > }
+ *
+ * See Also:
+ *	<mosquitto_sub_topic_tokens_free>
+ */
+int mosquitto_sub_topic_tokenise(const char *subtopic, char ***topics, int *count);
+
+/*
+ * Function mosquitto_sub_topic_tokens_free
+ *
+ * Free memory that was allocated in <mosquitto_sub_topic_tokenise>.
+ *
+ * Parameters:
+ *	topics - pointer to string array.
+ *	count - count of items in string array.
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - on success
+ * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *
+ * See Also:
+ *	<mosquitto_sub_topic_tokenise>
+ */
+int mosquitto_sub_topic_tokens_free(char ***topics, int count);
 
 #ifdef __cplusplus
 }

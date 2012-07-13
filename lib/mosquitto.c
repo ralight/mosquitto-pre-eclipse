@@ -723,3 +723,84 @@ const char *mosquitto_connack_string(int connack_code)
 	}
 }
 
+int mosquitto_sub_topic_tokenise(const char *subtopic, char ***topics, int *count)
+{
+	int len;
+	int hier_count = 1;
+	int start, stop;
+	int hier;
+	int tlen;
+	int i, j;
+
+	if(!subtopic || !topics || !count) return MOSQ_ERR_INVAL;
+
+	len = strlen(subtopic);
+
+	for(i=0; i<len; i++){
+		if(subtopic[i] == '/'){
+			while(i<len && subtopic[i] == '/'){
+				/* Ignore duplicate separators. */
+				i++;
+			}
+			if(i >= len-1){
+				/* Separator at end of line */
+			}else{
+				hier_count++;
+			}
+		}
+	}
+
+	(*topics) = _mosquitto_calloc(hier_count, sizeof(char *));
+	if(!(*topics)) return MOSQ_ERR_NOMEM;
+
+	start = 0;
+	stop = 0;
+	hier = 0;
+
+	for(i=0; i<len+1; i++){
+		if(subtopic[i] == '/' || subtopic[i] == '\0'){
+			if(i>0 && subtopic[i] == '/' && subtopic[i-1] == '/'){
+				start = i+1;
+				continue;
+			}
+			stop = i;
+			if(start != stop){
+				tlen = stop-start + 1;
+				(*topics)[hier] = _mosquitto_calloc(tlen, sizeof(char));
+				if(!(*topics)[hier]){
+					for(i=0; i<hier_count; i++){
+						if((*topics)[hier]){
+							_mosquitto_free((*topics)[hier]);
+						}
+					}
+					_mosquitto_free((*topics));
+					return MOSQ_ERR_NOMEM;
+				}
+				for(j=start; j<stop; j++){
+					(*topics)[hier][j-start] = subtopic[j];
+				}
+			}
+			start = i+1;
+			hier++;
+		}
+	}
+
+	*count = hier_count;
+
+	return MOSQ_ERR_SUCCESS;
+}
+
+int mosquitto_sub_topic_tokens_free(char ***topics, int count)
+{
+	int i;
+
+	if(!topics || !(*topics) || count<1) return MOSQ_ERR_INVAL;
+
+	for(i=0; i<count; i++){
+		if((*topics)[i]) _mosquitto_free((*topics)[i]);
+	}
+	_mosquitto_free(*topics);
+
+	return MOSQ_ERR_SUCCESS;
+}
+

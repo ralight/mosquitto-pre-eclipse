@@ -103,6 +103,16 @@ const char* connack_string(int connack_code)
 	return mosquitto_connack_string(connack_code);
 }
 
+int sub_topic_tokenise(const char *subtopic, char ***topics, int *count)
+{
+	return mosquitto_sub_topic_tokenise(subtopic, topics, count);
+}
+
+int sub_topic_tokens_free(char ***topics, int count)
+{
+	return mosquitto_sub_topic_tokens_free(topics, count);
+}
+
 mosquittopp::mosquittopp(const char *id, bool clean_session)
 {
 	m_mosq = mosquitto_new(id, clean_session, this);
