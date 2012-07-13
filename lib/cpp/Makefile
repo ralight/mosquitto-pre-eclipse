@@ -1,0 +1,29 @@
+include ../../config.mk
+
+SOVERSION=1
+
+.PHONY : clean install
+
+all : libmosquittopp.so.${SOVERSION}
+
+install : all
+	$(INSTALL) -d ${DESTDIR}$(prefix)/lib${LIB_SUFFIX}/
+	$(INSTALL) -s libmosquittopp.so.${SOVERSION} ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquittopp.so.${SOVERSION}
+	ln -sf libmosquittopp.so.${SOVERSION} ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquittopp.so
+	$(INSTALL) -d ${DESTDIR}${prefix}/include/
+	$(INSTALL) mosquittopp.h ${DESTDIR}${prefix}/include/mosquittopp.h
+	
+uninstall :
+	-rm -f ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquittopp.so.${SOVERSION}
+	-rm -f ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquittopp.so
+	-rm -f ${DESTDIR}${prefix}/include/mosquittopp.h
+
+clean :
+	-rm -f *.o libmosquittopp.so.${SOVERSION}
+
+libmosquittopp.so.${SOVERSION} : mosquittopp.o
+	$(CXX) -shared -Wl,--as-needed -Wl,-soname,libmosquittopp.so.${SOVERSION} $< -o $@ ../libmosquitto.so.${SOVERSION}
+
+mosquittopp.o : mosquittopp.cpp mosquittopp.h
+	$(CXX) $(CFLAGS) -fPIC -c $< -o $@
+
