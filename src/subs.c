@@ -95,10 +95,12 @@ static int _subs_process(struct _mosquitto_db *db, struct _mosquitto_subhier *hi
 		if(hier->retained){
 			hier->retained->ref_count--;
 			/* FIXME - it would be nice to be able to remove the message from the store at this point if ref_count == 0 */
+			db->retained_count--;
 		}
 		if(stored->msg.payloadlen){
 			hier->retained = stored;
 			hier->retained->ref_count++;
+			db->retained_count++;
 		}else{
 			hier->retained = NULL;
 		}

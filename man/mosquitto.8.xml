@@ -208,6 +208,12 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>$SYS/broker/retained messages/count</option></term>
+				<listitem>
+					<para>The total number of retained messages active on the broker.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>$SYS/broker/subscriptions/count</option></term>
 				<listitem>
 					<para>The total number of subscriptions active on the broker.</para>

@@ -792,6 +792,7 @@ void mqtt3_db_sys_update(mosquitto_db *db, int interval, time_t start_time)
 	static unsigned int bytesps_received = -1;
 	static unsigned int bytesps_sent = -1;
 	static int subscription_count = -1;
+	static int retained_count = -1;
 
 	if(interval && now - interval > last_update){
 		uptime = now - start_time;
@@ -808,6 +809,12 @@ void mqtt3_db_sys_update(mosquitto_db *db, int interval, time_t start_time)
 			subscription_count = db->subscription_count;
 			snprintf(buf, 100, "%d", subscription_count);
 			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/subscriptions/count", 2, strlen(buf), buf, 1);
+		}
+
+		if(db->retained_count != retained_count){
+			retained_count = db->retained_count;
+			snprintf(buf, 100, "%d", retained_count);
+			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/retained messages/count", 2, strlen(buf), buf, 1);
 		}
 
 		if(!mqtt3_db_client_count(db, &value, &inactive)){
