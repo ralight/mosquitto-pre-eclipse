@@ -23,6 +23,7 @@ Broker:
 - Incoming bridge connections are now detected by checking if bit 8 of the
   protocol version number is set. This requires support from the remote broker.
 - Add support for notification_topic option.
+- Add $SYS/broker/subscriptions/count and $SYS/broker/retained messages/count.
 - Overlapping subscriptions are now handled properly. Fixes bug #928538.
 - Fix reloading of persistence_file and persistence_location.
 - Fix broker crash on incorrect protocol number.
