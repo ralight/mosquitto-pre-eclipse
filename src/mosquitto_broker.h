@@ -208,6 +208,7 @@ typedef struct _mosquitto_db{
 	mqtt3_config *config;
 	int persistence_changes;
 	struct _mosquitto_auth_plugin auth_plugin;
+	int subscription_count;
 } mosquitto_db;
 
 enum mqtt3_bridge_direction{
@@ -328,11 +329,11 @@ void mqtt3_db_vacuum(void);
 /* ============================================================
  * Subscription functions
  * ============================================================ */
-int mqtt3_sub_add(struct mosquitto *context, const char *sub, int qos, struct _mosquitto_subhier *root);
-int mqtt3_sub_remove(struct mosquitto *context, const char *sub, struct _mosquitto_subhier *root);
+int mqtt3_sub_add(mosquitto_db *db, struct mosquitto *context, const char *sub, int qos, struct _mosquitto_subhier *root);
+int mqtt3_sub_remove(mosquitto_db *db, struct mosquitto *context, const char *sub, struct _mosquitto_subhier *root);
 int mqtt3_sub_search(struct _mosquitto_db *db, struct _mosquitto_subhier *root, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored);
 void mqtt3_sub_tree_print(struct _mosquitto_subhier *root, int level);
-int mqtt3_subs_clean_session(struct mosquitto *context, struct _mosquitto_subhier *root);
+int mqtt3_subs_clean_session(mosquitto_db *db, struct mosquitto *context, struct _mosquitto_subhier *root);
 
 /* ============================================================
  * Context functions

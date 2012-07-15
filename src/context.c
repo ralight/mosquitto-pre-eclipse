@@ -130,7 +130,7 @@ void mqtt3_context_cleanup(mosquitto_db *db, struct mosquitto *context, bool do_
 		context->listener = NULL;
 	}
 	if(context->clean_session && db){
-		mqtt3_subs_clean_session(context, &db->subs);
+		mqtt3_subs_clean_session(db, context, &db->subs);
 		mqtt3_db_messages_delete(context);
 	}
 	if(context->address){
