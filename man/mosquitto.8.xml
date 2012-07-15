@@ -208,6 +208,12 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>$SYS/broker/subscriptions/count</option></term>
+				<listitem>
+					<para>The total number of subscriptions active on the broker.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>$SYS/broker/timestamp</option></term>
 				<listitem>
 					<para>The timestamp at which this particular build of the broker was made. Static.</para>

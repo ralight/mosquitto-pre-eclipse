@@ -824,7 +824,7 @@ static int _db_restore_sub(mosquitto_db *db, const char *client_id, const char *
 
 	context = _db_find_or_add_context(db, client_id, 0);
 	if(!context) return 1;
-	return mqtt3_sub_add(context, sub, qos, &db->subs);
+	return mqtt3_sub_add(db, context, sub, qos, &db->subs);
 }
 
 #endif
