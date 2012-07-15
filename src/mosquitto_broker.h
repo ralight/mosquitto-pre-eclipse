@@ -209,6 +209,7 @@ typedef struct _mosquitto_db{
 	int persistence_changes;
 	struct _mosquitto_auth_plugin auth_plugin;
 	int subscription_count;
+	int retained_count;
 } mosquitto_db;
 
 enum mqtt3_bridge_direction{
