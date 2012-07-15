@@ -40,6 +40,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <mosquitto_broker.h>
 #include <memory_mosq.h>
+#include "util_mosq.h"
 
 struct config_recurse {
 	int log_dest;
@@ -819,6 +820,9 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 						return MOSQ_ERR_INVAL;
 					}
 					if(_conf_parse_string(&token, "notification_topic", &cur_bridge->notification_topic, saveptr)) return MOSQ_ERR_INVAL;
+					if(_mosquitto_fix_sub_topic(&cur_bridge->notification_topic)){
+						return 1;
+					}
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
@@ -999,6 +1003,9 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 						if(!cur_bridge->topics[cur_bridge->topic_count-1].topic){
 							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
 							return MOSQ_ERR_NOMEM;
+						}
+						if(_mosquitto_fix_sub_topic(&cur_bridge->topics[cur_bridge->topic_count-1].topic)){
+							return 1;
 						}
 						cur_bridge->topics[cur_bridge->topic_count-1].direction = bd_out;
 						cur_bridge->topics[cur_bridge->topic_count-1].qos = 2;
