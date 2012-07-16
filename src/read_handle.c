@@ -39,6 +39,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <send_mosq.h>
 #include <util_mosq.h>
 
+extern uint64_t g_pub_bytes_received;
+
 int mqtt3_packet_handle(mosquitto_db *db, struct mosquitto *context)
 {
 	if(!context) return MOSQ_ERR_INVAL;
@@ -126,6 +128,7 @@ int mqtt3_handle_publish(mosquitto_db *db, struct mosquitto *context)
 	}
 
 	payloadlen = context->in_packet.remaining_length - context->in_packet.pos;
+	g_pub_bytes_received += payloadlen;
 	if(context->listener && context->listener->mount_point){
 		len = strlen(context->listener->mount_point) + strlen(topic) + 1;
 		topic_mount = _mosquitto_calloc(len, sizeof(char));

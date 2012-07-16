@@ -5,6 +5,8 @@ Broker:
 
 - Add $SYS/broker/publish/messages/{sent|received} to show the number of
   PUBLISH messages sent/received.
+- Add $SYS/broker/publish/bytes/{sent|received} to show the number of
+  PUBLISH bytes sent/received.
 - Add reload parameter for security init/cleanup functions.
 - Add option for expiring disconnected persistent clients.
 - Add option for queueing of QoS 0 messages when persistent clients are

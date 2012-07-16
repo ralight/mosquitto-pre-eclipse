@@ -41,6 +41,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef WITH_BROKER
 #include <mosquitto_broker.h>
+extern uint64_t g_pub_bytes_sent;
 #endif
 
 int _mosquitto_send_pingreq(struct mosquitto *mosq)
@@ -109,6 +110,7 @@ int _mosquitto_send_publish(struct mosquitto *mosq, uint16_t mid, const char *to
 		}
 	}
 	_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBLISH to %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", mosq->id, dup, qos, retain, mid, topic, (long)payloadlen);
+	g_pub_bytes_sent += payloadlen;
 #else
 	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Sending PUBLISH (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", dup, qos, retain, mid, topic, (long)payloadlen);
 #endif
