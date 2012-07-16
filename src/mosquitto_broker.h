@@ -248,6 +248,11 @@ struct _mqtt3_bridge{
 	int threshold;
 	bool try_private;
 	bool try_private_accepted;
+#ifdef WITH_SSL
+	char *ssl_cafile;
+	char *ssl_certfile;
+	char *ssl_keyfile;
+#endif
 };
 
 #include <net_mosq.h>

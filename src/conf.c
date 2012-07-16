@@ -477,6 +477,81 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 				}else if(!strcmp(token, "bind_address")){
 					if(reload) continue; // Listener not valid for reloading.
 					if(_conf_parse_string(&token, "default listener bind_address", &config->default_listener.host, saveptr)) return MOSQ_ERR_INVAL;
+				}else if(!strcmp(token, "bridge_cafile")){
+#ifdef WITH_BRIDGE
+					if(reload) continue; // FIXME
+					if(!cur_bridge){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
+						return MOSQ_ERR_INVAL;
+					}
+					token = strtok_r(NULL, " ", &saveptr);
+					if(token){
+						if(cur_bridge->ssl_cafile){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate bridge_cafile value in bridge configuration.");
+							return MOSQ_ERR_INVAL;
+						}
+						cur_bridge->ssl_cafile = _mosquitto_strdup(token);
+						if(!cur_bridge->ssl_cafile){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+							return MOSQ_ERR_NOMEM;
+						}
+					}else{
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty bridge_cafile value in configuration.");
+						return MOSQ_ERR_INVAL;
+					}
+#else
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+#endif
+				}else if(!strcmp(token, "bridge_certfile")){
+#ifdef WITH_BRIDGE
+					if(reload) continue; // FIXME
+					if(!cur_bridge){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
+						return MOSQ_ERR_INVAL;
+					}
+					token = strtok_r(NULL, " ", &saveptr);
+					if(token){
+						if(cur_bridge->ssl_certfile){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate bridge_certfile value in bridge configuration.");
+							return MOSQ_ERR_INVAL;
+						}
+						cur_bridge->ssl_certfile = _mosquitto_strdup(token);
+						if(!cur_bridge->ssl_certfile){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+							return MOSQ_ERR_NOMEM;
+						}
+					}else{
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty bridge_certfile value in configuration.");
+						return MOSQ_ERR_INVAL;
+					}
+#else
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+#endif
+				}else if(!strcmp(token, "bridge_keyfile")){
+#ifdef WITH_BRIDGE
+					if(reload) continue; // FIXME
+					if(!cur_bridge){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
+						return MOSQ_ERR_INVAL;
+					}
+					token = strtok_r(NULL, " ", &saveptr);
+					if(token){
+						if(cur_bridge->ssl_keyfile){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate bridge_keyfile value in bridge configuration.");
+							return MOSQ_ERR_INVAL;
+						}
+						cur_bridge->ssl_keyfile = _mosquitto_strdup(token);
+						if(!cur_bridge->ssl_keyfile){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+							return MOSQ_ERR_NOMEM;
+						}
+					}else{
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty bridge_keyfile value in configuration.");
+						return MOSQ_ERR_INVAL;
+					}
+#else
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+#endif
 				}else if(!strcmp(token, "cafile")){
 #ifdef WITH_SSL
 					if(reload) continue; // Listeners not valid for reloading.
@@ -583,6 +658,9 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 						cur_bridge->idle_timeout = 60;
 						cur_bridge->threshold = 10;
 						cur_bridge->try_private = true;
+						cur_bridge->ssl_cafile = NULL;
+						cur_bridge->ssl_certfile = NULL;
+						cur_bridge->ssl_keyfile = NULL;
 					}else{
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty connection value in configuration.");
 						return MOSQ_ERR_INVAL;
