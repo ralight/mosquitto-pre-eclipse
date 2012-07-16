@@ -723,6 +723,38 @@
 				</listitem>
 			</varlistentry>
 		</variablelist>
+		<refsect2>
+			<title>SSL Support</title>
+			<para>The following options are available for all listeners to configure SSL support.</para>
+			<variablelist>
+				<varlistentry>
+					<term><option>bridge_cafile</option> <replaceable>file path</replaceable></term>
+					<listitem>
+						<para><option>cafile</option> must be provided to allow SSL
+							support.</para>
+						<para>cafile is used to define the path to a file
+							containing the PEM encoded CA certificates that
+							have signed the certificate for the remote broker.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>bridge_certfile</option> <replaceable>file path</replaceable></term>
+					<listitem>
+						<para>Path to the PEM encoded client certificate for
+							this bridge, if required by the remote
+							broker.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>keyfile</option> <replaceable>file path</replaceable></term>
+					<listitem>
+						<para>Path to the PEM encoded private key for this
+							bridge, if required by the remote broker.</para>
+					</listitem>
+				</varlistentry>
+			</variablelist>
+		</refsect2>
 	</refsect1>
 
 	<refsect1>
