@@ -458,6 +458,8 @@ ssize_t _mosquitto_net_read(struct mosquitto *mosq, void *buf, size_t count)
 				ret = -1;
 				mosq->want_write = true;
 				errno = EAGAIN;
+			}else{
+				return -1;
 			}
 		}
 		return (ssize_t )ret;
