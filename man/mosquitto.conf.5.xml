@@ -747,7 +747,7 @@
 					</listitem>
 				</varlistentry>
 				<varlistentry>
-					<term><option>keyfile</option> <replaceable>file path</replaceable></term>
+					<term><option>bridge_keyfile</option> <replaceable>file path</replaceable></term>
 					<listitem>
 						<para>Path to the PEM encoded private key for this
 							bridge, if required by the remote broker.</para>
