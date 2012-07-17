@@ -1,7 +1,7 @@
 SOVERSION=1
 CC=cc
-CFLAGS=-I../lib -Wall -ggdb
-LDFLAGS=-L../lib ../lib/libmosquitto.so.${SOVERSION}
+CLIENT_CFLAGS=${CFLAGS} -I../lib -Wall -ggdb
+CLIENT_LDFLAGS=${LDFLAGS} -L../lib ../lib/libmosquitto.so.${SOVERSION}
 INSTALL=install
 prefix=/usr/local
 
@@ -10,10 +10,16 @@ prefix=/usr/local
 all : mosquitto_pub mosquitto_sub
 
 mosquitto_pub : pub_client.o ../lib/libmosquitto.so.${SOVERSION}
-	${CC} $< -o $@ ${LDFLAGS}
+	${CC} $< -o $@ ${CLIENT_LDFLAGS}
 
 mosquitto_sub : sub_client.o ../lib/libmosquitto.so.${SOVERSION}
-	${CC} $< -o $@ ${LDFLAGS}
+	${CC} $< -o $@ ${CLIENT_LDFLAGS}
+
+pub_client.o : pub_client.c ../lib/libmosquitto.so.${SOVERSION}
+	${CC} -c $< -o $@ ${CLIENT_CFLAGS}
+
+sub_client.o : sub_client.c ../lib/libmosquitto.so.${SOVERSION}
+	${CC} -c $< -o $@ ${CLIENT_CFLAGS}
 
 ../lib/libmosquitto.so.${SOVERSION} :
 	$(MAKE) -C ../lib
