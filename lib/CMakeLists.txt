@@ -23,12 +23,12 @@ add_library(libmosquitto SHARED
 
 option(WITH_THREADING
 	"Include client library threading support?" ON)
-if (${WITH_THREADING} STREQUAL ON)
+if (${WITH_THREADING} STREQUAL ON AND NOT WIN32)
 	add_definitions("-DWITH_THREADING")
 	set (PTHREAD_LIBRARIES pthread)
-else (${WITH_THREADING} STREQUAL ON)
+else (${WITH_THREADING} STREQUAL ON AND NOT WIN32)
 	set (PTHREAD_LIBRARIES "")
-endif (${WITH_THREADING} STREQUAL ON)
+endif (${WITH_THREADING} STREQUAL ON AND NOT WIN32)
 
 if (WIN32)
 	target_link_libraries(libmosquitto ws2_32 ${OPENSSL_LIBRARIES})
