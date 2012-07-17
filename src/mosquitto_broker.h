@@ -32,7 +32,9 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <config.h>
 
-#include <openssl/ssl.h>
+#ifdef WITH_SSL
+#  include <openssl/ssl.h>
+#endif
 #include <time.h>
 
 #include <mosquitto_internal.h>
@@ -78,6 +80,7 @@ struct _mqtt3_listener {
 	int *socks;
 	int sock_count;
 	int client_count;
+#ifdef WITH_SSL
 	char *cafile;
 	char *capath;
 	char *certfile;
@@ -86,6 +89,7 @@ struct _mqtt3_listener {
 	SSL_CTX *ssl_ctx;
 	char *crlfile;
 	bool use_cn_as_username;
+#endif
 };
 
 typedef struct {
