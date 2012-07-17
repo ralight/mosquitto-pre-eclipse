@@ -44,7 +44,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef WITH_THREADING
 #  ifdef WIN32
-#    include <winpthreads.h>
+#    include <dummypthread.h>
+#    warn "Threading not supported in Windows native builds."
 #  else
 #    include <pthread.h>
 #  endif
