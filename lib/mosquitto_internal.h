@@ -32,14 +32,15 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <config.h>
 
+#ifdef WIN32
+#  include <winsock2.h>
+#endif
+
 #ifdef WITH_SSL
 #include <openssl/ssl.h>
 #endif
 #include <stdlib.h>
 #include <time.h>
-#ifdef WIN32
-#  include <winsock2.h>
-#endif
 
 #ifdef WITH_THREADING
 #  ifdef WIN32

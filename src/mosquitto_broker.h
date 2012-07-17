@@ -32,14 +32,14 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <config.h>
 
+#include <mosquitto_internal.h>
+#include <mosquitto_plugin.h>
+#include <mosquitto.h>
+
 #ifdef WITH_SSL
 #  include <openssl/ssl.h>
 #endif
 #include <time.h>
-
-#include <mosquitto_internal.h>
-#include <mosquitto_plugin.h>
-#include <mosquitto.h>
 
 #ifndef __GNUC__
 #define __attribute__(attrib)
