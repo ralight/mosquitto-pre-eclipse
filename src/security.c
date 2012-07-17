@@ -40,8 +40,8 @@ POSSIBILITY OF SUCH DAMAGE.
 typedef int (*FUNC_auth_plugin_version)(void);
 typedef int (*FUNC_auth_plugin_init)(void **, struct mosquitto_auth_opt *, int);
 typedef int (*FUNC_auth_plugin_cleanup)(void *, struct mosquitto_auth_opt *, int);
-typedef int (*FUNC_auth_plugin_security_init)(void *, struct mosquitto_auth_opt *, int, char);
-typedef int (*FUNC_auth_plugin_security_cleanup)(void *, struct mosquitto_auth_opt *, int, char);
+typedef int (*FUNC_auth_plugin_security_init)(void *, struct mosquitto_auth_opt *, int, bool);
+typedef int (*FUNC_auth_plugin_security_cleanup)(void *, struct mosquitto_auth_opt *, int, bool);
 typedef int (*FUNC_auth_plugin_acl_check)(void *, const char *, const char *, int);
 typedef int (*FUNC_auth_plugin_unpwd_check)(void *, const char *, const char *);
 
