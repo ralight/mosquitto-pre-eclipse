@@ -1,3 +1,61 @@
+# =============================================================================
+# User configuration section.
+#
+# Largely, these are options that are designed to make mosquitto run more
+# easily in restrictive environments by removing features.
+#
+# Modify the variable below to enable/disable features.
+#
+# Can also be overriden at the command line, e.g.:
+#
+# make WITH_SSL=no
+# =============================================================================
+
+# Uncomment to compile the broker with tcpd/libwrap support.
+#WITH_WRAP:=yes
+
+# Comment out to disable SSL support in the broker and client.
+WITH_SSL:=yes
+
+# Comment out to disable client client threading support.
+WITH_THREADING:=yes
+
+# Uncomment to compile the broker with strict protocol support. This means that
+# both the client library and the broker will be very strict about protocol
+# compliance on incoming data. Neither of them will return an error on
+# incorrect "remaining length" values if this is commented out. The old
+# behaviour (prior to 0.12) is equivalent to compiling with
+# WITH_STRICT_PROTOCOL defined and means that clients will be immediately
+# disconnected from the broker on non-compliance.
+#WITH_STRICT_PROTOCOL:=yes
+
+# Comment out to remove bridge support from the broker. This allow the broker
+# to connect to other brokers and subscribe/publish to topics. You probably
+# want to leave this included unless you want to save a very small amount of
+# memory size and CPU time.
+WITH_BRIDGE:=yes
+
+# Comment out to remove persistent database support from the broker. This
+# allows the broker to store retained messages and durable subscriptions to a
+# file periodically and on shutdown. This is usually desirable (and is
+# suggested by the MQTT spec), but it can be disabled if required.
+WITH_PERSISTENCE:=yes
+
+# Comment out to remove memory tracking support from the broker. If disabled,
+# mosquitto won't track heap memory usage nor export '$SYS/broker/heap/current
+# size', but will use slightly less memory and CPU time.
+WITH_MEMORY_TRACKING:=yes
+
+# Compile with database upgrading support? If disabled, mosquitto won't
+# automatically upgrade old database versions.
+# Not currently supported.
+#WITH_DB_UPGRADE:=yes
+
+# =============================================================================
+# End of user configuration
+# =============================================================================
+
+
 # Also bump lib/mosquitto.h, lib/python/setup.py, CMakeLists.txt,
 # installer/mosquitto.nsi, installer/mosquitto-cygwin.nsi
 VERSION=0.15.90
@@ -5,17 +63,62 @@ TIMESTAMP:=$(shell date "+%F %T%z")
 
 #MANCOUNTRIES=en_GB
 
-CFLAGS=-I. -I.. -ggdb -Wall -O2 -I../lib
+CFLAGS=-Wall -ggdb -O2
+LIB_CFLAGS:=${CFLAGS} -I. -I.. -I../lib
+BROKER_CFLAGS:=${LIB_CFLAGS} -DVERSION="\"${VERSION}\"" -DTIMESTAMP="\"${TIMESTAMP}\"" -DWITH_BROKER
+
+BROKER_LIBS:=-ldl
+LIB_LIBS:=
 
 UNAME:=$(shell uname -s)
 ifeq ($(UNAME),QNX)
-	LIBS=-lsocket -ldl
-else
-	LIBS=-ldl
+	BROKER_LIBS:=$(BROKER_LIBS) -lsocket
+	LIB_LIBS:=$(LIB_LIBS) -lsocket
 endif
 
-LDFLAGS=
-# Add -lwrap to LDFLAGS if compiling with tcp wrappers support.
+ifeq ($(WITH_WRAP),yes)
+	BROKER_LIBS:=$(BROKER_LIBS) -lwrap
+	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_WRAP
+endif
+
+ifeq ($(WITH_SSL),yes)
+	BROKER_LIBS:=$(BROKER_LIBS) -lssl
+	LIB_LIBS:=$(LIB_LIBS) -lssl
+	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_SSL
+	LIB_CFLAGS:=$(LIB_CFLAGS) -DWITH_SSL
+
+	ifeq ($(UNAME),cygwin)
+		BROKER_LIBS:=$(BROKER_LIBS) -lcrypto
+		LIB_LIBS:=$(LIB_LIBS) -lcrypto
+	endif
+endif
+
+ifeq ($(WITH_THREADING),yes)
+	LIB_LIBS:=$(LIB_LIBS) -lpthread
+	LIB_CFLAGS:=$(LIB_CFLAGS) -DWITH_THREADING
+endif
+
+ifeq ($(WITH_STRICT_PROTOCOL),yes)
+	LIB_CFLAGS:=$(LIB_CFLAGS) -DWITH_STRICT_PROTOCOL
+	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_STRICT_PROTOCOL
+endif
+
+ifeq ($(WITH_BRIDGE),yes)
+	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_BRIDGE
+endif
+
+ifeq ($(WITH_PERSISTENCE),yes)
+	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_PERSISTENCE
+endif
+
+ifeq ($(WITH_MEMORY_TRACKING),yes)
+	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_MEMORY_TRACKING
+endif
+
+#ifeq ($(WITH_DB_UPGRADE),yes)
+#	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_DB_UPGRADE
+#endif
+
 
 CC=gcc
 INSTALL=install
