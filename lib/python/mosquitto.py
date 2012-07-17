@@ -38,6 +38,9 @@ import sys
 import threading
 import time
 
+if sys.version < '2.7':
+    raise ValueError('Python 2.7 is the minimum supported version.')
+
 if sys.version_info[0] < 3:
     PROTOCOL_NAME = "MQIsdp"
 else:

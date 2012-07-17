@@ -1,3 +1,7 @@
+from sys import version
+if version < '2.7':
+    raise ValueError('Python 2.7 is the minimum supported version.')
+
 from distutils.core import setup
 setup(name='mosquitto',
 	version='0.15.90',
