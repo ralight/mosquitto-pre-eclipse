@@ -92,7 +92,11 @@ void *_mosquitto_thread_main(void *obj)
 			pthread_mutex_unlock(&mosq->state_mutex);
 		}else{
 			pthread_mutex_unlock(&mosq->state_mutex);
+#ifdef WIN32
+			Sleep(1000);
+#else
 			sleep(1);
+#endif
 			mosquitto_reconnect(mosq);
 		}
 	}

@@ -37,6 +37,14 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <memory_mosq.h>
 #include "lib_load.h"
 
+typedef int (*FUNC_auth_plugin_version)(void);
+typedef int (*FUNC_auth_plugin_init)(void **, struct mosquitto_auth_opt *, int);
+typedef int (*FUNC_auth_plugin_cleanup)(void *, struct mosquitto_auth_opt *, int);
+typedef int (*FUNC_auth_plugin_security_init)(void *, struct mosquitto_auth_opt *, int, char);
+typedef int (*FUNC_auth_plugin_security_cleanup)(void *, struct mosquitto_auth_opt *, int, char);
+typedef int (*FUNC_auth_plugin_acl_check)(void *, const char *, const char *, int);
+typedef int (*FUNC_auth_plugin_unpwd_check)(void *, const char *, const char *);
+
 int mosquitto_security_module_init(mosquitto_db *db)
 {
 	void *lib;
@@ -51,7 +59,7 @@ int mosquitto_security_module_init(mosquitto_db *db)
 		}
 
 		db->auth_plugin.lib = NULL;
-		if(!(plugin_version = LIB_SYM(lib, "mosquitto_auth_plugin_version"))){
+		if(!(plugin_version = (FUNC_auth_plugin_version)LIB_SYM(lib, "mosquitto_auth_plugin_version"))){
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR,
 					"Error: Unable to load auth plugin function mosquitto_auth_plugin_version().");
 			LIB_CLOSE(lib);
@@ -66,41 +74,41 @@ int mosquitto_security_module_init(mosquitto_db *db)
 			LIB_CLOSE(lib);
 			return 1;
 		}
-		if(!(db->auth_plugin.plugin_init = LIB_SYM(lib, "mosquitto_auth_plugin_init"))){
+		if(!(db->auth_plugin.plugin_init = (FUNC_auth_plugin_init)LIB_SYM(lib, "mosquitto_auth_plugin_init"))){
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR,
 					"Error: Unable to load auth plugin function mosquitto_auth_plugin_init().");
 			LIB_CLOSE(lib);
 			return 1;
 		}
-		if(!(db->auth_plugin.plugin_cleanup = LIB_SYM(lib, "mosquitto_auth_plugin_cleanup"))){
+		if(!(db->auth_plugin.plugin_cleanup = (FUNC_auth_plugin_cleanup)LIB_SYM(lib, "mosquitto_auth_plugin_cleanup"))){
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR,
 					"Error: Unable to load auth plugin function mosquitto_auth_plugin_cleanup().");
 			LIB_CLOSE(lib);
 			return 1;
 		}
 
-		if(!(db->auth_plugin.security_init = LIB_SYM(lib, "mosquitto_auth_security_init"))){
+		if(!(db->auth_plugin.security_init = (FUNC_auth_plugin_security_init)LIB_SYM(lib, "mosquitto_auth_security_init"))){
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR,
 					"Error: Unable to load auth plugin function mosquitto_auth_security_init().");
 			LIB_CLOSE(lib);
 			return 1;
 		}
 
-		if(!(db->auth_plugin.security_cleanup = LIB_SYM(lib, "mosquitto_auth_security_cleanup"))){
+		if(!(db->auth_plugin.security_cleanup = (FUNC_auth_plugin_security_cleanup)LIB_SYM(lib, "mosquitto_auth_security_cleanup"))){
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR,
 					"Error: Unable to load auth plugin function mosquitto_auth_security_cleanup().");
 			LIB_CLOSE(lib);
 			return 1;
 		}
 
-		if(!(db->auth_plugin.acl_check = LIB_SYM(lib, "mosquitto_auth_acl_check"))){
+		if(!(db->auth_plugin.acl_check = (FUNC_auth_plugin_acl_check)LIB_SYM(lib, "mosquitto_auth_acl_check"))){
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR,
 					"Error: Unable to load auth plugin function mosquitto_auth_acl_check().");
 			LIB_CLOSE(lib);
 			return 1;
 		}
 
-		if(!(db->auth_plugin.unpwd_check = LIB_SYM(lib, "mosquitto_auth_unpwd_check"))){
+		if(!(db->auth_plugin.unpwd_check = (FUNC_auth_plugin_unpwd_check)LIB_SYM(lib, "mosquitto_auth_unpwd_check"))){
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR,
 					"Error: Unable to load auth plugin function mosquitto_auth_unpwd_check().");
 			LIB_CLOSE(lib);
