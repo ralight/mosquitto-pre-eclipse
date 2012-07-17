@@ -112,6 +112,7 @@ void mqtt3_config_init(mqtt3_config *config)
 	config->default_listener.socks = NULL;
 	config->default_listener.sock_count = 0;
 	config->default_listener.client_count = 0;
+#ifdef WITH_SSL
 	config->default_listener.cafile = NULL;
 	config->default_listener.capath = NULL;
 	config->default_listener.certfile = NULL;
@@ -119,6 +120,7 @@ void mqtt3_config_init(mqtt3_config *config)
 	config->default_listener.require_certificate = false;
 	config->default_listener.crlfile = NULL;
 	config->default_listener.use_cn_as_username = false;
+#endif
 	config->listeners = NULL;
 	config->listener_count = 0;
 	config->pid_file = NULL;
@@ -272,6 +274,7 @@ int mqtt3_config_parse_args(mqtt3_config *config, int argc, char *argv[])
 		config->listeners[config->listener_count-1].socks = NULL;
 		config->listeners[config->listener_count-1].sock_count = 0;
 		config->listeners[config->listener_count-1].client_count = 0;
+#ifdef WITH_SSL
 		config->listeners[config->listener_count-1].cafile = config->default_listener.cafile;
 		config->listeners[config->listener_count-1].capath = config->default_listener.capath;
 		config->listeners[config->listener_count-1].certfile = config->default_listener.certfile;
@@ -280,6 +283,7 @@ int mqtt3_config_parse_args(mqtt3_config *config, int argc, char *argv[])
 		config->listeners[config->listener_count-1].ssl_ctx = NULL;
 		config->listeners[config->listener_count-1].crlfile = config->default_listener.crlfile;
 		config->listeners[config->listener_count-1].use_cn_as_username = config->default_listener.use_cn_as_username;
+#endif
 	}
 
 	/* Default to drop to mosquitto user if we are privileged and no user specified. */
@@ -479,7 +483,7 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 					if(reload) continue; // Listener not valid for reloading.
 					if(_conf_parse_string(&token, "default listener bind_address", &config->default_listener.host, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "bridge_cafile")){
-#ifdef WITH_BRIDGE
+#if defined(WITH_BRIDGE) && defined(WITH_SSL)
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
@@ -501,10 +505,10 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 						return MOSQ_ERR_INVAL;
 					}
 #else
-					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or SSL support not available.");
 #endif
 				}else if(!strcmp(token, "bridge_certfile")){
-#ifdef WITH_BRIDGE
+#if defined(WITH_BRIDGE) && defined(WITH_SSL)
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
@@ -526,10 +530,10 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 						return MOSQ_ERR_INVAL;
 					}
 #else
-					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or SSL support not available.");
 #endif
 				}else if(!strcmp(token, "bridge_keyfile")){
-#ifdef WITH_BRIDGE
+#if defined(WITH_BRIDGE) && defined(WITH_SSL)
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
@@ -551,7 +555,7 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 						return MOSQ_ERR_INVAL;
 					}
 #else
-					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or SSL support not available.");
 #endif
 				}else if(!strcmp(token, "cafile")){
 #ifdef WITH_SSL
@@ -659,9 +663,11 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 						cur_bridge->idle_timeout = 60;
 						cur_bridge->threshold = 10;
 						cur_bridge->try_private = true;
+#ifdef WITH_SSL
 						cur_bridge->ssl_cafile = NULL;
 						cur_bridge->ssl_certfile = NULL;
 						cur_bridge->ssl_keyfile = NULL;
+#endif
 					}else{
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty connection value in configuration.");
 						return MOSQ_ERR_INVAL;
@@ -778,6 +784,7 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 						config->listeners[config->listener_count-1].socks = NULL;
 						config->listeners[config->listener_count-1].sock_count = 0;
 						config->listeners[config->listener_count-1].client_count = 0;
+#ifdef WITH_SSL
 						config->listeners[config->listener_count-1].cafile = NULL;
 						config->listeners[config->listener_count-1].capath = NULL;
 						config->listeners[config->listener_count-1].certfile = NULL;
@@ -785,6 +792,7 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 						config->listeners[config->listener_count-1].require_certificate = false;
 						config->listeners[config->listener_count-1].ssl_ctx = NULL;
 						config->listeners[config->listener_count-1].crlfile = NULL;
+#endif
 						token = strtok_r(NULL, " ", &saveptr);
 						if(token){
 							config->listeners[config->listener_count-1].host = _mosquitto_strdup(token);
