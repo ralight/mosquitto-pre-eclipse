@@ -893,9 +893,6 @@ libmosq_EXPORT void mosquitto_unsubscribe_callback_set(struct mosquitto *mosq, v
  *  mosq -   a valid mosquitto instance.
  *  on_log - a callback function in the following form:
  *           void callback(struct mosquitto *mosq, void *obj, int level, const char *str)
- * values from:
- *
- *	* MOSQ_LOG_ALL
  *
  * Callback Parameters:
  *  mosq -  the mosquitto instance making the callback.
