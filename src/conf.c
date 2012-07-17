@@ -378,11 +378,14 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 	char *key;
 	char *conf_file;
 #ifdef WIN32
+	HANDLE fh;
+	char dirpath[MAX_PATH];
+	WIN32_FIND_DATA find_data;
 #else
 	DIR *dh;
 	struct dirent *de;
-	int len;
 #endif
+	int len;
 	
 	fptr = fopen(file, "rt");
 	if(!fptr) return 1;
@@ -708,7 +711,31 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 						/* Only process include_dir from the main config file. */
 						token = strtok_r(NULL, " ", &saveptr);
 #ifdef WIN32
+						snprintf(dirpath, MAX_PATH, "%s\\*.conf", token);
+						fh = FindFirstFile(dirpath, &find_data);
+						if(fh == INVALID_HANDLE_VALUE){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open include_dir '%s'.", token);
+							return 1;
+						}
 
+						do{
+							len = strlen(token)+1+strlen(find_data.cFileName)+1;
+							conf_file = _mosquitto_calloc(len+1, sizeof(char));
+							if(!conf_file){
+								FindClose(fh);
+								return MOSQ_ERR_NOMEM;
+							}
+							snprintf(conf_file, len, "%s\\%s", token, find_data.cFileName);
+								
+							rc = _config_read_file(config, reload, conf_file, cr, level+1);
+							_mosquitto_free(conf_file);
+							if(rc){
+								FindClose(fh);
+								return rc;
+							}
+						}while(FindNextFile(fh, &find_data));
+
+						FindClose(fh);
 #else
 						dh = opendir(token);
 						if(!dh){
