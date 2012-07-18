@@ -484,7 +484,11 @@ int main(int argc, char *argv[])
 	mosquitto_lib_cleanup();
 
 	if(rc){
-		fprintf(stderr, "Error: %s\n", mosquitto_strerror(rc));
+		if(rc == MOSQ_ERR_ERRNO){
+			fprintf(stderr, "Error: %s\n", strerror(errno));
+		}else{
+			fprintf(stderr, "Error: %s\n", mosquitto_strerror(rc));
+		}
 	}
 	return rc;
 }
