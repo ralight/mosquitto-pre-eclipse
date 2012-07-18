@@ -120,13 +120,6 @@ endif
 #endif
 
 
-CC=gcc
-INSTALL=install
-XGETTEXT=xgettext
-MSGMERGE=msgmerge
-MSGFMT=msgfmt
-DOCBOOK2MAN=docbook2man.pl
-
 prefix=/usr/local
 mandir=${prefix}/share/man
 localedir=${prefix}/share/locale
