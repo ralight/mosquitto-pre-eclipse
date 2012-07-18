@@ -41,6 +41,8 @@ Broker:
 - Local bridges are now no longer restricted by local ACLs.
 - Discard publish messages with zero length topics.
 - Drop to "mosquitto" user even if no config file specified.
+- Don't incorrectly allow topic access if ACL patterns but no normal ACL rules
+  are defined.
 
 Client library:
 
