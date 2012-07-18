@@ -115,6 +115,114 @@ MOSQ_ERR_ACL_DENIED = 12
 MOSQ_ERR_UNKNOWN = 13
 MOSQ_ERR_ERRNO = 14
 
+def _fix_sub_topic(subtopic):
+    # Convert ////some////over/slashed///topic/etc/etc//
+    # into some/over/slashed/topic/etc/etc
+    if subtopic[0] == '/':
+        return '/'+'/'.join(filter(None, subtopic.split('/')))
+    else:
+        return '/'.join(filter(None, subtopic.split('/')))
+
+def error_string(mosq_errno):
+    """Return the error string associated with a mosquitto error number."""
+    if mosq_errno == MOSQ_ERR_SUCESS:
+        return "No error."
+    elif mosq_errno == MOSQ_ERR_NOMEM:
+        return "Out of memory."
+    elif mosq_errno == MOSQ_ERR_PROTOCOL:
+        return "A network protocol error occurred when communicating with the broker."
+    elif mosq_errno == MOSQ_ERR_INVAL:
+        return "Invalid function arguments provided."
+    elif mosq_errno == MOSQ_ERR_NO_CONN:
+        return "The client is not currently connected."
+    elif mosq_errno == MOSQ_ERR_CONN_REFUSED:
+        return "The connection was refused."
+    elif mosq_errno == MOSQ_ERR_NOT_FOUND:
+        return "Message not found (internal error)."
+    elif mosq_errno == MOSQ_ERR_CONN_LOST:
+        return "The connection was lost."
+    elif mosq_errno == MOSQ_ERR_SSL:
+        return "An SSL error occurred."
+    elif mosq_errno == MOSQ_ERR_PAYLOAD_SIZE:
+        return "Payload too large."
+    elif mosq_errno == MOSQ_ERR_NOT_SUPPORTED:
+        return "This feature is not supported."
+    elif mosq_errno == MOSQ_ERR_AUTH:
+        return "Authorisation failed."
+    elif mosq_errno == MOSQ_ERR_ACL_DENIED:
+        return "Access denied by ACL."
+    elif mosq_errno == MOSQ_ERR_UNKNOWN:
+        return "Unknown error."
+    elif mosq_errno == MOSQ_ERR_ERRNO:
+        return "Error defined by errno."
+    else:
+        return "Unknown error."
+
+def connack_string(connack_code):
+    """Return the string associated with a CONNACK result."""
+    if connack_code == 0:
+        return "Connection Accepted."
+    elif connack_code == 1:
+        return "Connection Refused: unacceptable protocol version."
+    elif connack_code == 2:
+        return "Connection Refused: identifier rejected."
+    elif connack_code == 3:
+        return "Connection Refused: broker unavailable."
+    elif connack_code == 4:
+        return "Connection Refused: bad user name or password."
+    elif connack_code == 5:
+        return "Connection Refused: not authorised."
+    else:
+        return "Connection Refused: unknown reason."
+
+def topic_matches_sub(sub, topic):
+    """Check whether a topic matches a subscription."""
+    result = True
+    local_sub = _fix_sub_topic(sub)
+    local_topic = _fix_sub_topic(topic)
+    multilevel_wildcard = False
+
+    slen = len(local_sub)
+    tlen = len(local_topic)
+
+    spos = 0;
+    tpos = 0;
+
+    while spos < slen and tpos < tlen:
+        if local_sub[spos] == local_topic[tpos]:
+            spos += 1
+            tpos += 1
+        else:
+            if local_sub[spos] == '+':
+                spos += 1
+                while tpos < tlen and local_topic[tpos] != '/':
+                    tpos += 1
+
+            elif local_sub[spos] == '#':
+                multilevel_wildcard = True
+                if spos+1 != slen:
+                    result = False
+                    break
+                else:
+                    result = True
+                    break
+
+            else:
+                result = False
+                break
+
+        if tpos == tlen-1:
+            # Check for e.g. foo matching foo/#
+            if spos == slen-3 and local_sub[spos+1] == '/' and local_sub[spos+2] == '#':
+                result = True
+                multilevel_wildcard = True
+                break
+
+    if multilevel_wildcard == False and (tpos < tlen or spos < slen):
+        result = False
+
+    return result
+
 
 class MosquittoMessage:
     """ This is a class that describes an incoming message. It is passed to the
@@ -630,7 +738,7 @@ class Mosquitto:
             raise ValueError('Invalid QoS level.')
         if topic == None or len(topic) == 0:
             raise ValueError('Invalid topic.')
-        topic = self._fix_sub_topic(topic)
+        topic = _fix_sub_topic(topic)
 
         if self._sock == None and self._ssl == None:
             return MOSQ_ERR_NO_CONN
@@ -652,7 +760,7 @@ class Mosquitto:
         """
         if topic == None or len(topic) == 0:
             raise ValueError('Invalid topic.')
-        topic = self._fix_sub_topic(topic)
+        topic = _fix_sub_topic(topic)
         if self._sock == None and self._ssl == None:
             return MOSQ_ERR_NO_CONN
 
@@ -791,58 +899,6 @@ class Mosquitto:
         self._will_qos = 0
         self._will_retain = False
 
-    def error_string(self, mosq_errno):
-        """Return the error string associated with a mosquitto error number."""
-        if mosq_errno == MOSQ_ERR_SUCESS:
-            return "No error."
-        elif mosq_errno == MOSQ_ERR_NOMEM:
-            return "Out of memory."
-        elif mosq_errno == MOSQ_ERR_PROTOCOL:
-            return "A network protocol error occurred when communicating with the broker."
-        elif mosq_errno == MOSQ_ERR_INVAL:
-            return "Invalid function arguments provided."
-        elif mosq_errno == MOSQ_ERR_NO_CONN:
-            return "The client is not currently connected."
-        elif mosq_errno == MOSQ_ERR_CONN_REFUSED:
-            return "The connection was refused."
-        elif mosq_errno == MOSQ_ERR_NOT_FOUND:
-            return "Message not found (internal error)."
-        elif mosq_errno == MOSQ_ERR_CONN_LOST:
-            return "The connection was lost."
-        elif mosq_errno == MOSQ_ERR_SSL:
-            return "An SSL error occurred."
-        elif mosq_errno == MOSQ_ERR_PAYLOAD_SIZE:
-            return "Payload too large."
-        elif mosq_errno == MOSQ_ERR_NOT_SUPPORTED:
-            return "This feature is not supported."
-        elif mosq_errno == MOSQ_ERR_AUTH:
-            return "Authorisation failed."
-        elif mosq_errno == MOSQ_ERR_ACL_DENIED:
-            return "Access denied by ACL."
-        elif mosq_errno == MOSQ_ERR_UNKNOWN:
-            return "Unknown error."
-        elif mosq_errno == MOSQ_ERR_ERRNO:
-            return "Error defined by errno."
-        else:
-            return "Unknown error."
-
-    def connack_string(self, connack_code):
-        """Return the string associated with a CONNACK result."""
-        if connack_code == 0:
-            return "Connection Accepted."
-        elif connack_code == 1:
-            return "Connection Refused: unacceptable protocol version."
-        elif connack_code == 2:
-            return "Connection Refused: identifier rejected."
-        elif connack_code == 3:
-            return "Connection Refused: broker unavailable."
-        elif connack_code == 4:
-            return "Connection Refused: bad user name or password."
-        elif connack_code == 5:
-            return "Connection Refused: not authorised."
-        else:
-            return "Connection Refused: unknown reason."
-
     def socket(self):
         """Return the socket or ssl object for this client."""
         if self._ssl:
@@ -875,53 +931,6 @@ class Mosquitto:
         self._thread_terminate = True
         self._thread.join()
         self._thread = None
-
-    def topic_matches_sub(self, sub, topic):
-        result = True
-        local_sub = self._fix_sub_topic(sub)
-        local_topic = self._fix_sub_topic(topic)
-        multilevel_wildcard = False
-
-        slen = len(local_sub)
-        tlen = len(local_topic)
-
-        spos = 0;
-        tpos = 0;
-
-        while spos < slen and tpos < tlen:
-            if local_sub[spos] == local_topic[tpos]:
-                spos += 1
-                tpos += 1
-            else:
-                if local_sub[spos] == '+':
-                    spos += 1
-                    while tpos < tlen and local_topic[tpos] != '/':
-                        tpos += 1
-
-                elif local_sub[spos] == '#':
-                    multilevel_wildcard = True
-                    if spos+1 != slen:
-                        result = False
-                        break
-                    else:
-                        result = True
-                        break
-
-                else:
-                    result = False
-                    break
-
-            if tpos == tlen-1:
-			    # Check for e.g. foo matching foo/#
-			    if spos == slen-3 and local_sub[spos+1] == '/' and local_sub[spos+2] == '#':
-				    result = True
-				    multilevel_wildcard = True
-				    break
-
-        if multilevel_wildcard == False and (tpos < tlen or spos < slen):
-            result = False
-
-        return result
 
     # ============================================================
     # Private functions
@@ -1082,14 +1091,6 @@ class Mosquitto:
                 else:
                     self._sock.close()
                 self._sock = None
-
-    def _fix_sub_topic(self, subtopic):
-        # Convert ////some////over/slashed///topic/etc/etc//
-        # into some/over/slashed/topic/etc/etc
-        if subtopic[0] == '/':
-            return '/'+'/'.join(filter(None, subtopic.split('/')))
-        else:
-            return '/'.join(filter(None, subtopic.split('/')))
 
     def _mid_generate(self):
         self._last_mid = self._last_mid + 1
@@ -1444,7 +1445,7 @@ class Mosquitto:
 
         if sys.version_info[0] >= 3:
             message.topic = message.topic.decode('utf-8')
-        message.topic = self._fix_sub_topic(message.topic)
+        message.topic = _fix_sub_topic(message.topic)
 
         if message.qos > 0:
             pack_format = "!H" + str(len(packet)-2) + 's'
