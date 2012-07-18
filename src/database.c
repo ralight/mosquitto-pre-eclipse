@@ -461,8 +461,8 @@ int mqtt3_db_message_store(mosquitto_db *db, const char *source, uint16_t source
 	temp->msg.retain = retain;
 	temp->msg.topic = _mosquitto_strdup(topic);
 	if(!temp->msg.topic){
-		_mosquitto_free(temp);
 		_mosquitto_free(temp->source_id);
+		_mosquitto_free(temp);
 		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}
