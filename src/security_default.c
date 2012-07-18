@@ -278,7 +278,7 @@ int mosquitto_acl_check_default(struct _mosquitto_db *db, struct mosquitto *cont
 	char *saveptr = NULL;
 
 	if(!db || !context || !topic) return MOSQ_ERR_INVAL;
-	if(!db->acl_list) return MOSQ_ERR_SUCCESS;
+	if(!db->acl_list && !db->acl_patterns) return MOSQ_ERR_SUCCESS;
 	if(!context->acl_list && !db->acl_patterns) return MOSQ_ERR_ACL_DENIED;
 
 	if(context->acl_list){
