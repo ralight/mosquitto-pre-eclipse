@@ -214,7 +214,7 @@ int main(int argc, char *argv[])
 				print_usage();
 				return 1;
 			}else{
-				cafile = argv[i+1];
+				certfile = argv[i+1];
 			}
 			i++;
 		}else if(!strcmp(argv[i], "-d") || !strcmp(argv[i], "--debug")){
