@@ -1043,6 +1043,24 @@ libmosq_EXPORT int mosquitto_sub_topic_tokenise(const char *subtopic, char ***to
  */
 libmosq_EXPORT int mosquitto_sub_topic_tokens_free(char ***topics, int count);
 
+/*
+ * Function mosquitto_topic_matches_sub
+ *
+ * Free memory that was allocated in <mosquitto_sub_topic_tokenise>.
+ *
+ * Parameters:
+ *	sub - subscription string to check topic against.
+ *	topic - topic to check.
+ *	result - bool pointer to hold result. Will be set to true if the topic
+ *	         matches the subscription.
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - on success
+ * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ */
+libmosq_EXPORT int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result);
+
 #ifdef __cplusplus
 }
 #endif

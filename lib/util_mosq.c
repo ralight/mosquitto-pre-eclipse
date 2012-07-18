@@ -181,3 +181,85 @@ int _mosquitto_topic_wildcard_len_check(const char *str)
 
 	return MOSQ_ERR_SUCCESS;
 }
+
+/* Does a topic match a subscription? */
+int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result)
+{
+	char *local_sub, *local_topic;
+	int slen, tlen;
+	int spos, tpos;
+	int rc;
+	bool multilevel_wildcard = false;
+
+	if(!sub || !topic || !result) return MOSQ_ERR_INVAL;
+
+	local_sub = _mosquitto_strdup(sub);
+	if(!local_sub) return MOSQ_ERR_NOMEM;
+	rc = _mosquitto_fix_sub_topic(&local_sub);
+	if(rc){
+		_mosquitto_free(local_sub);
+		return rc;
+	}
+
+	local_topic = _mosquitto_strdup(topic);
+	if(!local_topic){
+		_mosquitto_free(local_sub);
+		return MOSQ_ERR_NOMEM;
+	}
+	rc = _mosquitto_fix_sub_topic(&local_topic);
+	if(rc){
+		_mosquitto_free(local_sub);
+		_mosquitto_free(local_topic);
+		return rc;
+	}
+
+	slen = strlen(local_sub);
+	tlen = strlen(local_topic);
+
+	spos = 0;
+	tpos = 0;
+
+	while(spos < slen && tpos < tlen){
+		if(local_sub[spos] == local_topic[tpos]){
+			spos++;
+			tpos++;
+		}else{
+			if(local_sub[spos] == '+'){
+				spos++;
+				while(tpos < tlen && local_topic[tpos] != '/'){
+					tpos++;
+				}
+			}else if(local_sub[spos] == '#'){
+				multilevel_wildcard = true;
+				if(spos+1 != slen){
+					*result = false;
+					break;
+				}else{
+					*result = true;
+					break;
+				}
+			}else{
+				*result = false;
+				break;
+			}
+		}
+		if(tpos == tlen-1){
+			/* Check for e.g. foo matching foo/# */
+			if(spos == slen-3 
+					&& local_sub[spos+1] == '/'
+					&& local_sub[spos+2] == '#'){
+				*result = true;
+				multilevel_wildcard = true;
+				break;
+			}
+		}
+	}
+	if(multilevel_wildcard == false && (tpos < tlen || spos < slen)){
+		*result = false;
+	}
+
+	_mosquitto_free(local_sub);
+	_mosquitto_free(local_topic);
+	return MOSQ_ERR_SUCCESS;
+}
+

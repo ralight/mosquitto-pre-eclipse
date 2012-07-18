@@ -53,6 +53,7 @@ int sub_topic_tokens_free(char ***topics, int count);
 void lib_version(int *major, int *minor, int *revision);
 int lib_init();
 int lib_cleanup();
+int topic_matches_sub(const char *sub, const char *topic, bool *result);
 
 /*
  * Class: mosquittopp

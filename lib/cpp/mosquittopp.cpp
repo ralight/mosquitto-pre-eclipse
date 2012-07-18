@@ -113,6 +113,11 @@ int sub_topic_tokens_free(char ***topics, int count)
 	return mosquitto_sub_topic_tokens_free(topics, count);
 }
 
+int topic_matches_sub(const char *sub, const char *topic, bool *result)
+{
+	return mosquitto_topic_matches_sub(sub, topic, result);
+}
+
 mosquittopp::mosquittopp(const char *id, bool clean_session)
 {
 	m_mosq = mosquitto_new(id, clean_session, this);

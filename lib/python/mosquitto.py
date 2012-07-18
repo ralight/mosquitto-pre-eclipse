@@ -876,6 +876,53 @@ class Mosquitto:
         self._thread.join()
         self._thread = None
 
+    def topic_matches_sub(self, sub, topic):
+        result = True
+        local_sub = self._fix_sub_topic(sub)
+        local_topic = self._fix_sub_topic(topic)
+        multilevel_wildcard = False
+
+        slen = len(local_sub)
+        tlen = len(local_topic)
+
+        spos = 0;
+        tpos = 0;
+
+        while spos < slen and tpos < tlen:
+            if local_sub[spos] == local_topic[tpos]:
+                spos += 1
+                tpos += 1
+            else:
+                if local_sub[spos] == '+':
+                    spos += 1
+                    while tpos < tlen and local_topic[tpos] != '/':
+                        tpos += 1
+
+                elif local_sub[spos] == '#':
+                    multilevel_wildcard = True
+                    if spos+1 != slen:
+                        result = False
+                        break
+                    else:
+                        result = True
+                        break
+
+                else:
+                    result = False
+                    break
+
+            if tpos == tlen-1:
+			    # Check for e.g. foo matching foo/#
+			    if spos == slen-3 and local_sub[spos+1] == '/' and local_sub[spos+2] == '#':
+				    result = True
+				    multilevel_wildcard = True
+				    break
+
+        if multilevel_wildcard == False and (tpos < tlen or spos < slen):
+            result = False
+
+        return result
+
     # ============================================================
     # Private functions
     # ============================================================
