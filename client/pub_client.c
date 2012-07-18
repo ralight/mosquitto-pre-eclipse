@@ -620,5 +620,9 @@ int main(int argc, char *argv[])
 	}
 	mosquitto_destroy(mosq);
 	mosquitto_lib_cleanup();
+
+	if(rc){
+		fprintf(stderr, "Error: %s\n", mosquitto_strerror(rc));
+	}
 	return rc;
 }
