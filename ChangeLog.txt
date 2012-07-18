@@ -65,6 +65,8 @@ Client library:
 - Add mosquitto_sub_topic_tokenise() and mosquitto_sub_topic_tokens_free()
   utility functions to tokenise a subscription/topic string into a string
   array.
+- Add mosquitto_topic_matches_sub() to check whether a topic matches a
+  subscription.
 - Replaced mosquitto_log_init() with mosquitto_log_callback_set() to allow
   clients to decide what to do with log messages.
 - Client will now disconnect itself from the broker if it doesn't receive a
