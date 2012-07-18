@@ -459,7 +459,9 @@ ssize_t _mosquitto_net_read(struct mosquitto *mosq, void *buf, size_t count)
 				mosq->want_write = true;
 				errno = EAGAIN;
 			}else{
-				return -1;
+				/* FIXME - probably a protocol error, but better checking here
+				 * would be good. */
+				errno = EPROTO;
 			}
 		}
 		return (ssize_t )ret;
@@ -500,6 +502,10 @@ ssize_t _mosquitto_net_write(struct mosquitto *mosq, void *buf, size_t count)
 				ret = -1;
 				mosq->want_write = true;
 				errno = EAGAIN;
+			}else{
+				/* FIXME - probably a protocol error, but better checking here
+				 * would be good. */
+				errno = EPROTO;
 			}
 		}
 		return (ssize_t )ret;
