@@ -81,6 +81,7 @@
 				<arg>
 					<group choice='plain'>
 						<arg><option>--cafile</option> <replaceable>file</replaceable></arg>
+						<arg><option>--capath</option> <replaceable>dir</replaceable></arg>
 					</group>
 					<group choice='opt'>
 						<arg><option>--cert</option> <replaceable>file</replaceable></arg>
@@ -116,7 +117,20 @@
 					<para>Define the path to a file containing PEM encoded CA
 						certificates that are trusted. Used to enable SSL
 						communication.</para>
-					<para>See also --cert and --key.</para>
+					<para>See also <option>--capath</option></para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>--capath</option></term>
+				<listitem>
+					<para>Define the path to a directory containing PEM encoded CA
+						certificates that are trusted. Used to enable SSL
+						communication.</para>
+					<para>For <option>--capath</option> to work correctly, the
+						certificate files must have ".crt" as the file ending
+						and you must run "c_rehash &lt;path to capath&gt;" each
+						time you add/remove a certificate.</para>
+					<para>See also <option>--cafile</option></para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -125,14 +139,7 @@
 					<para>Define the path to a file containing a PEM encoded
 						certificate for this client, if required by the
 						server.</para>
-					<para>See also --cafile and --key.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>-d</option></term>
-				<term><option>--debug</option></term>
-				<listitem>
-					<para>Enable debug messages.</para>
+					<para>See also <option>--key</option>.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -189,7 +196,7 @@
 					<para>Define the path to a file containing a PEM encoded
 						private key for this client, if required by the
 						server.</para>
-					<para>See also --cafile and --cert.</para>
+					<para>See also <option>--cert</option>.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

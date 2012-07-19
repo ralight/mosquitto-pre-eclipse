@@ -380,14 +380,29 @@ int mosquitto_unsubscribe(struct mosquitto *mosq, int *mid, const char *sub)
 	return _mosquitto_send_unsubscribe(mosq, mid, false, sub);
 }
 
-int mosquitto_ssl_set(struct mosquitto *mosq, const char *cafile, const char *certfile, const char *keyfile, int (*pw_callback)(char *buf, int size, int rwflag, void *userdata))
+int mosquitto_ssl_set(struct mosquitto *mosq, const char *cafile, const char *capath, const char *certfile, const char *keyfile, int (*pw_callback)(char *buf, int size, int rwflag, void *userdata))
 {
 #ifdef WITH_SSL
-	if(!mosq || !cafile || (certfile && !keyfile) || (!certfile && keyfile)) return MOSQ_ERR_INVAL;
+	if(!mosq || (!cafile && !capath) || (certfile && !keyfile) || (!certfile && keyfile)) return MOSQ_ERR_INVAL;
 
-	mosq->ssl_cafile = _mosquitto_strdup(cafile);
-	if(!mosq->ssl_cafile){
-		return MOSQ_ERR_NOMEM;
+	if(cafile){
+		mosq->ssl_cafile = _mosquitto_strdup(cafile);
+		if(!mosq->ssl_cafile){
+			return MOSQ_ERR_NOMEM;
+		}
+	}else if(mosq->ssl_cafile){
+		_mosquitto_free(mosq->ssl_cafile);
+		mosq->ssl_cafile = NULL;
+	}
+
+	if(capath){
+		mosq->ssl_capath = _mosquitto_strdup(capath);
+		if(!mosq->ssl_capath){
+			return MOSQ_ERR_NOMEM;
+		}
+	}else if(mosq->ssl_capath){
+		_mosquitto_free(mosq->ssl_capath);
+		mosq->ssl_capath = NULL;
 	}
 
 	if(certfile){

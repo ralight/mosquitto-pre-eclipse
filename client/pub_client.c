@@ -208,7 +208,7 @@ void print_usage(void)
 	printf("                     [-d] [--quiet]\n");
 	printf("                     [-u username [-P password]]\n");
 	printf("                     [--will-topic [--will-payload payload] [--will-qos qos] [--will-retain]]\n");
-	printf("                     [--cafile file [--cert file] [--key file]]\n");
+	printf("                     [{--cafile file | --capath dir} [--cert file] [--key file]]\n");
 	printf("       mosquitto_pub --help\n\n");
 	printf(" -d : enable debug messages.\n");
 	printf(" -f : send the contents of a file as the message.\n");
@@ -235,6 +235,8 @@ void print_usage(void)
 	printf(" --will-retain : if given, make the client Will retained.\n");
 	printf(" --will-topic : the topic on which to publish the client Will.\n");
 	printf(" --cafile : path to a file containing trusted CA certificates to enable encrypted\n");
+	printf("            communication.\n");
+	printf(" --capath : path to a directory containing trusted CA certificates to enable encrypted\n");
 	printf("            communication.\n");
 	printf(" --cert : client certificate for authentication, if required by server.\n");
 	printf(" --key : client private key for authentication, if required by server.\n");
@@ -265,6 +267,7 @@ int main(int argc, char *argv[])
 	char *will_topic = NULL;
 
 	char *cafile = NULL;
+	char *capath = NULL;
 	char *certfile = NULL;
 	char *keyfile = NULL;
 
@@ -290,6 +293,15 @@ int main(int argc, char *argv[])
 				return 1;
 			}else{
 				cafile = argv[i+1];
+			}
+			i++;
+		}else if(!strcmp(argv[i], "--capath")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --capath argument given but no file specified.\n\n");
+				print_usage();
+				return 1;
+			}else{
+				capath = argv[i+1];
 			}
 			i++;
 		}else if(!strcmp(argv[i], "--cert")){
@@ -571,7 +583,7 @@ int main(int argc, char *argv[])
 		mosquitto_lib_cleanup();
 		return 1;
 	}
-	if(cafile && mosquitto_ssl_set(mosq, cafile, certfile, keyfile, NULL)){
+	if((cafile || capath) && mosquitto_ssl_set(mosq, cafile, capath, certfile, keyfile, NULL)){
 		if(!quiet) fprintf(stderr, "Error: Problem setting SSL options.\n");
 		mosquitto_lib_cleanup();
 		return 1;

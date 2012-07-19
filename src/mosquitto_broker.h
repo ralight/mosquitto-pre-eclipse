@@ -256,6 +256,7 @@ struct _mqtt3_bridge{
 	bool try_private_accepted;
 #ifdef WITH_SSL
 	char *ssl_cafile;
+	char *ssl_capath;
 	char *ssl_certfile;
 	char *ssl_keyfile;
 #endif

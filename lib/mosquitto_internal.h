@@ -139,6 +139,7 @@ struct mosquitto {
 	SSL *ssl;
 	SSL_CTX *ssl_ctx;
 	char *ssl_cafile;
+	char *ssl_capath;
 	char *ssl_certfile;
 	char *ssl_keyfile;
 	int (*ssl_pw_callback)(char *buf, int size, int rwflag, void *userdata);

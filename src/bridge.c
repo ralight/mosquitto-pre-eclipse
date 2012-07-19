@@ -121,6 +121,7 @@ int mqtt3_bridge_new(mosquitto_db *db, struct _mqtt3_bridge *bridge)
 
 #ifdef WITH_SSL
 	new_context->ssl_cafile = new_context->bridge->ssl_cafile;
+	new_context->ssl_capath = new_context->bridge->ssl_capath;
 	new_context->ssl_certfile = new_context->bridge->ssl_certfile;
 	new_context->ssl_keyfile = new_context->bridge->ssl_keyfile;
 #endif

@@ -734,12 +734,29 @@
 				<varlistentry>
 					<term><option>bridge_cafile</option> <replaceable>file path</replaceable></term>
 					<listitem>
-						<para><option>cafile</option> must be provided to allow SSL
-							support.</para>
-						<para>cafile is used to define the path to a file
+						<para>One of <option>bridge_cafile</option> or
+							<option>bridge_capath</option> must be provided to
+							allow SSL support.</para>
+						<para>bridge_cafile is used to define the path to a file
 							containing the PEM encoded CA certificates that
 							have signed the certificate for the remote broker.
 						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>bridge_capath</option> <replaceable>file path</replaceable></term>
+					<listitem>
+						<para>One of <option>bridge_capath</option> or
+							<option>bridge_capath</option> must be provided to
+							allow SSL support.</para>
+						<para>bridge_capath is used to define the path to a
+							directory containing the PEM encoded CA
+							certificates that have signed the certificate for
+							the remote broker. For bridge_capath to work
+							correctly, the certificate files must have ".crt"
+							as the file ending and you must run "c_rehash
+							&lt;path to bridge_capath&gt;" each time you
+							add/remove a certificate.</para>
 					</listitem>
 				</varlistentry>
 				<varlistentry>

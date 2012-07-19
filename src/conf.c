@@ -510,6 +510,31 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or SSL support not available.");
 #endif
+				}else if(!strcmp(token, "bridge_capath")){
+#if defined(WITH_BRIDGE) && defined(WITH_SSL)
+					if(reload) continue; // FIXME
+					if(!cur_bridge){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
+						return MOSQ_ERR_INVAL;
+					}
+					token = strtok_r(NULL, " ", &saveptr);
+					if(token){
+						if(cur_bridge->ssl_capath){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate bridge_capath value in bridge configuration.");
+							return MOSQ_ERR_INVAL;
+						}
+						cur_bridge->ssl_capath = _mosquitto_strdup(token);
+						if(!cur_bridge->ssl_capath){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+							return MOSQ_ERR_NOMEM;
+						}
+					}else{
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty bridge_capath value in configuration.");
+						return MOSQ_ERR_INVAL;
+					}
+#else
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or SSL support not available.");
+#endif
 				}else if(!strcmp(token, "bridge_certfile")){
 #if defined(WITH_BRIDGE) && defined(WITH_SSL)
 					if(reload) continue; // FIXME
@@ -668,6 +693,7 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 						cur_bridge->try_private = true;
 #ifdef WITH_SSL
 						cur_bridge->ssl_cafile = NULL;
+						cur_bridge->ssl_capath = NULL;
 						cur_bridge->ssl_certfile = NULL;
 						cur_bridge->ssl_keyfile = NULL;
 #endif
