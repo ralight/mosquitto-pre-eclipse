@@ -76,11 +76,12 @@ static void on_log_wrapper(struct mosquitto *mosq, void *obj, int level, const c
 	m->on_log(level, str);
 }
 
-void lib_version(int *major, int *minor, int *revision)
+int lib_version(int *major, int *minor, int *revision)
 {
 	if(major) *major = LIBMOSQUITTO_MAJOR;
 	if(minor) *minor = LIBMOSQUITTO_MINOR;
 	if(revision) *revision = LIBMOSQUITTO_REVISION;
+	return LIBMOSQUITTO_VERSION_NUMBER;
 }
 
 int lib_init()

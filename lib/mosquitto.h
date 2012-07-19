@@ -141,10 +141,13 @@ struct mosquitto;
  *  revision - an integer pointer. If not NULL, the revision of the library will
  *             be returned in this variable.
  *
+ * Returns:
+ *	LIBMOSQUITTO_VERSION_NUMBER, which is a unique number based on the major,
+ *		minor and revision values.
  * See Also:
  * 	<mosquitto_lib_cleanup>, <mosquitto_lib_init>
  */
-libmosq_EXPORT void mosquitto_lib_version(int *major, int *minor, int *revision);
+libmosq_EXPORT int mosquitto_lib_version(int *major, int *minor, int *revision);
 
 /*
  * Function: mosquitto_lib_init

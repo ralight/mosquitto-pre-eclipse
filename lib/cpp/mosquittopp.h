@@ -50,7 +50,7 @@ const char *strerror(int mosq_errno);
 const char *connack_string(int connack_code);
 int sub_topic_tokenise(const char *subtopic, char ***topics, int *count);
 int sub_topic_tokens_free(char ***topics, int count);
-void lib_version(int *major, int *minor, int *revision);
+int lib_version(int *major, int *minor, int *revision);
 int lib_init();
 int lib_cleanup();
 int topic_matches_sub(const char *sub, const char *topic, bool *result);
