@@ -173,7 +173,13 @@ def connack_string(connack_code):
         return "Connection Refused: unknown reason."
 
 def topic_matches_sub(sub, topic):
-    """Check whether a topic matches a subscription."""
+    """Check whether a topic matches a subscription.
+    
+    For example:
+    
+    foo/bar would match the subscription foo/# or +/bar
+    non/matching would not match the subscription non/+/+
+    """
     result = True
     local_sub = _fix_sub_topic(sub)
     local_topic = _fix_sub_topic(topic)

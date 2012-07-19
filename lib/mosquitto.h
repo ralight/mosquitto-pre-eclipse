@@ -1051,7 +1051,12 @@ libmosq_EXPORT int mosquitto_sub_topic_tokens_free(char ***topics, int count);
 /*
  * Function mosquitto_topic_matches_sub
  *
- * Free memory that was allocated in <mosquitto_sub_topic_tokenise>.
+ * Check whether a topic matches a subscription.
+ *
+ * For example:
+ *
+ * foo/bar would match the subscription foo/# or +/bar
+ * non/matching would not match the subscription non/+/+
  *
  * Parameters:
  *	sub - subscription string to check topic against.
