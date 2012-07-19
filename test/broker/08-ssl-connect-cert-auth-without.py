@@ -9,6 +9,10 @@ import ssl
 import time
 from struct import *
 
+if sys.version < '2.7':
+    print("WARNING: SSL not supported on Python 2.6")
+    exit(0)
+
 rc = 1
 keepalive = 10
 connect_packet = pack('!BBH6sBBHH17s', 16, 12+2+17,6,"MQIsdp",3,2,keepalive,17,"connect-cert-test")
