@@ -213,7 +213,7 @@ int main(int argc, char *argv[])
 			i++;
 		}else if(!strcmp(argv[i], "--capath")){
 			if(i==argc-1){
-				fprintf(stderr, "Error: --capath argument given but no file specified.\n\n");
+				fprintf(stderr, "Error: --capath argument given but no directory specified.\n\n");
 				print_usage();
 				return 1;
 			}else{
