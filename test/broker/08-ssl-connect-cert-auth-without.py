@@ -6,6 +6,7 @@
 import subprocess
 import socket
 import ssl
+import sys
 import time
 from struct import *
 
