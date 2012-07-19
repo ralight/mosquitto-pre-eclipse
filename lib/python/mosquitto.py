@@ -38,9 +38,6 @@ import sys
 import threading
 import time
 
-if sys.version < '2.7':
-    raise ValueError('Python 2.7 is the minimum supported version.')
-
 if sys.version_info[0] < 3:
     PROTOCOL_NAME = "MQIsdp"
 else:
@@ -460,6 +457,9 @@ class Mosquitto:
         more information.
 
         Must be called before connect() or connect_async()."""
+        if sys.version < '2.7':
+            raise ValueError('Python 2.7 is the minimum supported version for SSL.')
+
         if ca_certs == None:
             raise ValueError('ca_certs must not be None.')
 
