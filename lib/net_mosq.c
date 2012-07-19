@@ -261,7 +261,7 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 #endif
 
 #ifdef WITH_SSL
-	if(mosq->ssl_cafile){
+	if(mosq->ssl_cafile || mosq->ssl_capath){
 		if(!mosq->ssl_version || !strcmp(mosq->ssl_version, "tlsv1")){
 			mosq->ssl_ctx = SSL_CTX_new(TLSv1_client_method());
 			if(!mosq->ssl_ctx){
@@ -274,7 +274,7 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 			return MOSQ_ERR_INVAL;
 		}
 
-		ret = SSL_CTX_load_verify_locations(mosq->ssl_ctx, mosq->ssl_cafile, NULL);
+		ret = SSL_CTX_load_verify_locations(mosq->ssl_ctx, mosq->ssl_cafile, mosq->ssl_capath);
 		if(ret == 0){
 			_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates.");
 			COMPAT_CLOSE(sock);

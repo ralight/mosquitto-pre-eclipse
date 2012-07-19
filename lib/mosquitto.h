@@ -703,7 +703,11 @@ libmosq_EXPORT bool mosquitto_want_write(struct mosquitto *mosq);
  * Parameters:
  *  mosq -        a valid mosquitto instance.
  *  cafile -      path to a file containing the PEM encoded trusted CA
- *                certificate files. Must not be NULL.
+ *                certificate files. Either cafile or capath must not be NULL.
+ *  capath -      path to a directory containing the PEM encoded trusted CA
+ *                certificate files. See mosquitto.conf for more details on
+ *                configuring this directory. Either cafile or capath must not
+ *                be NULL.
  *  certfile -    path to a file containing the PEM encoded certificate file
  *                for this client. If NULL, keyfile must also be NULL and no
  *                client certificate will be used.
@@ -726,7 +730,8 @@ libmosq_EXPORT bool mosquitto_want_write(struct mosquitto *mosq);
  * See Also:
  *	<mosquitto_ssl_opts_set>
  */
-libmosq_EXPORT int mosquitto_ssl_set(struct mosquitto *mosq, const char *ca_certs,
+libmosq_EXPORT int mosquitto_ssl_set(struct mosquitto *mosq,
+		const char *cafile, const char *capath,
 		const char *certfile, const char *keyfile,
 		int (*pw_callback)(char *buf, int size, int rwflag, void *userdata));
 

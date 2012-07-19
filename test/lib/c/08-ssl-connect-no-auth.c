@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
 	mosquitto_lib_init();
 
 	mosq = mosquitto_new("08-ssl-connect-no-auth", true, NULL);
-	mosquitto_ssl_set(mosq, "../ssl/test-ca.crt", NULL, NULL, NULL);
+	mosquitto_ssl_set(mosq, "../ssl/test-ca.crt", NULL, NULL, NULL, NULL);
 	mosquitto_connect_callback_set(mosq, on_connect);
 	mosquitto_disconnect_callback_set(mosq, on_disconnect);
 
