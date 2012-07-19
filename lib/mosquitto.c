@@ -57,11 +57,12 @@ typedef int ssize_t;
 #define HAVE_PSELECT
 #endif
 
-void mosquitto_lib_version(int *major, int *minor, int *revision)
+int mosquitto_lib_version(int *major, int *minor, int *revision)
 {
 	if(major) *major = LIBMOSQUITTO_MAJOR;
 	if(minor) *minor = LIBMOSQUITTO_MINOR;
 	if(revision) *revision = LIBMOSQUITTO_REVISION;
+	return LIBMOSQUITTO_VERSION_NUMBER;
 }
 
 int mosquitto_lib_init(void)
