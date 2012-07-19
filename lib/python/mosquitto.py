@@ -649,7 +649,10 @@ class Mosquitto:
 
         topic: The topic that the message should be published on.
         payload: The actual message to send. If not given, or set to None a
-        zero length message will be used.
+        zero length message will be used. Passing an int or float will result
+        in the payload being converted to a string representing that number. If
+        you wish to send a true int/float, use struct.pack() to create the
+        payload you require.
         qos: The quality of service level to use.
         retain: If set to true, the message will be set as the "last known
         good"/retained message for the topic.
@@ -667,7 +670,16 @@ class Mosquitto:
             raise ValueError('Invalid topic.')
         if qos<0 or qos>2:
             raise ValueError('Invalid QoS level.')
-        if payload != None and len(payload) > 268435455:
+        if isinstance(payload, str) == True or isinstance(payload, bytearray) == True:
+            local_payload = payload
+        elif isinstance(payload, int) == True or isinstance(payload, float) == True:
+            local_payload = str(payload)
+        elif payload == None:
+            local_payload = None
+        else:
+            raise TypeError('payload must be a string, bytearray, int, float or None.')
+
+        if local_payload != None and len(local_payload) > 268435455:
             raise ValueError('Payload too large.')
 
         if self._topic_wildcard_len_check(topic) != MOSQ_ERR_SUCCESS:
@@ -676,7 +688,7 @@ class Mosquitto:
         local_mid = self._mid_generate()
 
         if qos == 0:
-            rc = self._send_publish(local_mid, topic, payload, qos, retain, False)
+            rc = self._send_publish(local_mid, topic, local_payload, qos, retain, False)
             return (rc, local_mid)
         else:
             message = MosquittoMessage()
@@ -689,10 +701,10 @@ class Mosquitto:
 
             message.mid = local_mid
             message.topic = topic
-            if payload == None or len(payload) == 0:
+            if local_payload == None or len(local_payload) == 0:
                 message.payload = None
             else:
-                message.payload = payload
+                message.payload = local_payload
 
             message.qos = qos
             message.retain = retain
@@ -874,7 +886,10 @@ class Mosquitto:
 
         topic: The topic that the will message should be published on.
         payload: The message to send as a will. If not given, or set to None a
-        zero length message will be used as the will.
+        zero length message will be used as the will. Passing an int or float
+        will result in the payload being converted to a string representing
+        that number. If you wish to send a true int/float, use struct.pack() to
+        create the payload you require.
         qos: The quality of service level to use for the will.
         retain: If set to true, the will message will be set as the "last known
         good"/retained message for the topic.
@@ -886,12 +901,17 @@ class Mosquitto:
             raise ValueError('Invalid topic.')
         if qos<0 or qos>2:
             raise ValueError('Invalid QoS level.')
-        if isinstance(payload, str) == False and isinstance(payload, bytearray) == False:
-            raise TypeError('payload must be a string or a bytearray.')
+        if isinstance(payload, str) == True or isinstance(payload, bytearray) == True:
+            self._will_payload = payload
+        elif isinstance(payload, int) == True or isinstance(payload, float) == True:
+            self._will_payload = str(payload)
+        elif payload == None:
+            self._will_payload = None
+        else:
+            raise TypeError('payload must be a string, bytearray, int, float or None.')
 
         self._will = True
         self._will_topic = topic
-        self._will_payload = payload
         self._will_qos = qos
         self._will_retain = retain
 
