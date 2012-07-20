@@ -102,9 +102,15 @@ int mqtt3_handle_publish(mosquitto_db *db, struct mosquitto *context)
 
 	if(_mosquitto_read_string(&context->in_packet, &topic)) return 1;
 	if(strlen(topic) == 0){
+#ifdef WITH_STRICT_PROTOCOL
+		/* Invalid publish topic, disconnect client. */
+		_mosquitto_free(topic);
+		return 1;
+#else
 		/* Invalid publish topic, just swallow it. */
 		_mosquitto_free(topic);
 		return 0;
+#endif
 	}
 	if(_mosquitto_fix_sub_topic(&topic)){
 		_mosquitto_free(topic);
