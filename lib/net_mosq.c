@@ -276,7 +276,23 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 
 		ret = SSL_CTX_load_verify_locations(mosq->ssl_ctx, mosq->ssl_cafile, mosq->ssl_capath);
 		if(ret == 0){
-			_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates.");
+#ifdef WITH_BROKER
+			if(mosq->ssl_cafile && mosq->ssl_capath){
+				_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check bridge_cafile \"%s\" and bridge_capath \"%s\".", mosq->ssl_cafile, mosq->ssl_capath);
+			}else if(mosq->ssl_cafile){
+				_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check bridge_cafile \"%s\".", mosq->ssl_cafile);
+			}else{
+				_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check bridge_capath \"%s\".", mosq->ssl_capath);
+			}
+#else
+			if(mosq->ssl_cafile && mosq->ssl_capath){
+				_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check cafile \"%s\" and capath \"%s\".", mosq->ssl_cafile, mosq->ssl_capath);
+			}else if(mosq->ssl_cafile){
+				_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check cafile \"%s\".", mosq->ssl_cafile);
+			}else{
+				_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check capath \"%s\".", mosq->ssl_capath);
+			}
+#endif
 			COMPAT_CLOSE(sock);
 			return MOSQ_ERR_SSL;
 		}
@@ -294,7 +310,11 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 		if(mosq->ssl_certfile){
 			ret = SSL_CTX_use_certificate_file(mosq->ssl_ctx, mosq->ssl_certfile, SSL_FILETYPE_PEM);
 			if(ret != 1){
-				_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load client certificate.");
+#ifdef WITH_BROKER
+				_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load client certificate, check bridge_certfile \"%s\".", mosq->ssl_certfile);
+#else
+				_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load client certificate \"%s\".", mosq->ssl_certfile);
+#endif
 				COMPAT_CLOSE(sock);
 				return MOSQ_ERR_SSL;
 			}
@@ -302,7 +322,11 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 		if(mosq->ssl_keyfile){
 			ret = SSL_CTX_use_PrivateKey_file(mosq->ssl_ctx, mosq->ssl_keyfile, SSL_FILETYPE_PEM);
 			if(ret != 1){
-				_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load client key file.");
+#ifdef WITH_BROKER
+				_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load client key file, check bridge_keyfile \"%s\".", mosq->ssl_keyfile);
+#else
+				_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load client key file \"%s\".", mosq->ssl_keyfile);
+#endif
 				COMPAT_CLOSE(sock);
 				return MOSQ_ERR_SSL;
 			}
