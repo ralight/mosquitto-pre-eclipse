@@ -294,7 +294,13 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 			}
 			rc = SSL_CTX_load_verify_locations(listener->ssl_ctx, listener->cafile, listener->capath);
 			if(rc == 0){
-				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check cafile and/or capath.");
+				if(listener->cafile && listener->capath){
+					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check cafile \"%s\" and capath \"%s\".", listener->cafile, listener->capath);
+				}else if(listener->cafile){
+					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check cafile \"%s\".", listener->cafile);
+				}else{
+					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check capath \"%s\".", listener->capath);
+				}
 				COMPAT_CLOSE(sock);
 				return 1;
 			}
@@ -306,13 +312,13 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 			}
 			rc = SSL_CTX_use_certificate_file(listener->ssl_ctx, listener->certfile, SSL_FILETYPE_PEM);
 			if(rc != 1){
-				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load server certificate. Check certfile.");
+				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load server certificate \"%s\". Check certfile.", listener->certfile);
 				COMPAT_CLOSE(sock);
 				return 1;
 			}
 			rc = SSL_CTX_use_PrivateKey_file(listener->ssl_ctx, listener->keyfile, SSL_FILETYPE_PEM);
 			if(rc != 1){
-				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load server key file. Check keyfile.");
+				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load server key file \"%s\". Check keyfile.", listener->keyfile);
 				COMPAT_CLOSE(sock);
 				return 1;
 			}
@@ -333,7 +339,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 				lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
 				rc = X509_load_crl_file(lookup, listener->crlfile, X509_FILETYPE_PEM);
 				if(rc != 1){
-					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load certificate revocation file. Check crlfile.");
+					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load certificate revocation file \"%s\". Check crlfile.", listener->crlfile);
 					COMPAT_CLOSE(sock);
 					return 1;
 				}
