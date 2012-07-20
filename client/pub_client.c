@@ -257,7 +257,7 @@ int main(int argc, char *argv[])
 	struct mosquitto *mosq = NULL;
 	int rc;
 	int rc2;
-	char hostname[256]
+	char hostname[256];
 	char err[1024];
 
 	char *will_payload = NULL;
