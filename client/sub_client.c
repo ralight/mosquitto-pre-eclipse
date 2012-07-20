@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
 	bool debug = false;
 	struct mosquitto *mosq = NULL;
 	int rc;
-	char hostname[MOSQ_MQTT_ID_MAX_LENGTH - 9];
+	char hostname[256];
 	char err[1024];
 	struct userdata ud;
 	
@@ -427,8 +427,8 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 		hostname[0] = '\0';
-		gethostname(hostname, MOSQ_MQTT_ID_MAX_LENGTH - 10);
-		hostname[MOSQ_MQTT_ID_MAX_LENGTH - 10] = '\0';
+		gethostname(hostname, 255);
+		hostname[255] = '\0';
 		snprintf(id, MOSQ_MQTT_ID_MAX_LENGTH, "mosqsub/%d-%s", getpid(), hostname);
 		id[MOSQ_MQTT_ID_MAX_LENGTH] = '\0';
 	}
