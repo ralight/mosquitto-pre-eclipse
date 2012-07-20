@@ -257,7 +257,7 @@ int main(int argc, char *argv[])
 	struct mosquitto *mosq = NULL;
 	int rc;
 	int rc2;
-	char hostname[MOSQ_MQTT_ID_MAX_LENGTH - 9];
+	char hostname[256]
 	char err[1024];
 
 	char *will_payload = NULL;
@@ -551,8 +551,8 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 		hostname[0] = '\0';
-		gethostname(hostname, MOSQ_MQTT_ID_MAX_LENGTH - 10);
-		hostname[MOSQ_MQTT_ID_MAX_LENGTH - 10] = '\0';
+		gethostname(hostname, 256);
+		hostname[255] = '\0';
 		snprintf(id, MOSQ_MQTT_ID_MAX_LENGTH, "mosqpub/%d-%s", getpid(), hostname);
 		id[MOSQ_MQTT_ID_MAX_LENGTH] = '\0';
 	}
