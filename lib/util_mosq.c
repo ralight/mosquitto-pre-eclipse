@@ -132,6 +132,7 @@ int _mosquitto_fix_sub_topic(char **subtopic)
 	assert(subtopic);
 	assert(*subtopic);
 
+	if(strlen(*subtopic) == 0) return MOSQ_ERR_SUCCESS;
 	/* size of fixed here is +1 for the terminating 0 and +1 for the spurious /
 	 * that gets appended. */
 	fixed = _mosquitto_calloc(strlen(*subtopic)+2, 1);
