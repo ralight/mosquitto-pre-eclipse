@@ -53,7 +53,7 @@
 		hard drive temperature information on the following topic, with their
 		own computer and hard drive name being replaced as appropriate:</para>
 		<itemizedlist>
-			<listitem>sensors/COMPUTER_NAME/temperature/HARDDRIVE_NAME</listitem>
+			<listitem><para>sensors/COMPUTER_NAME/temperature/HARDDRIVE_NAME</para></listitem>
 		</itemizedlist>
 		<para>Clients can receive messages by creating subscriptions. A
 		subscription may be to an explicit topic, in which case only messages
@@ -63,7 +63,7 @@
 		of hierarchy. It could be used with the topic above to get information
 		on all computers and hard drives as follows:</para>
 		<itemizedlist>
-			<listitem>sensors/+/temperature/+</listitem>
+			<listitem><para>sensors/+/temperature/+</para></listitem>
 		</itemizedlist>
 		<para>As another example, for a topic of "a/b/c/d", the following
 		example subscriptions will match:</para>
@@ -110,9 +110,9 @@
 		<para>Higher levels of QoS are more reliable, but involve higher
 		latency and have higher bandwidth requirements.</para>
 		<itemizedlist>
-			<listitem>0: The broker/client will deliver the message once, with no confirmation.</listitem>
-			<listitem>1: The broker/client will deliver the message at least once, with confirmation required.</listitem>
-			<listitem>2: The broker/client will deliver the message exactly once by using a four step handshake.</listitem>
+			<listitem><para>0: The broker/client will deliver the message once, with no confirmation.</para></listitem>
+			<listitem><para>1: The broker/client will deliver the message at least once, with confirmation required.</para></listitem>
+			<listitem><para>2: The broker/client will deliver the message exactly once by using a four step handshake.</para></listitem>
 		</itemizedlist>
 	</refsect1>
 

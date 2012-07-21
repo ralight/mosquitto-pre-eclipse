@@ -32,12 +32,12 @@
 		<title>Server</title>
 		<para>Generate a server key.</para>
 		<itemizedlist mark="circle">
-			<listitem><para>openssl genrsa -des3 -out server.key 8192</para></listitem>
+			<listitem><para>openssl genrsa -des3 -out server.key 2048</para></listitem>
 		</itemizedlist>
 
 		<para>Generate a server key without encryption.</para>
 		<itemizedlist mark="circle">
-			<listitem><para>openssl genrsa -out server.key 8192</para></listitem>
+			<listitem><para>openssl genrsa -out server.key 2048</para></listitem>
 		</itemizedlist>
 
 		<para>Generate a certificate signing request to send to the CA.</para>
@@ -55,7 +55,7 @@
 		<title>Client</title>
 		<para>Generate a client key.</para>
 		<itemizedlist mark="circle">
-			<listitem><para>openssl genrsa -des3 -out client.key 8192</para></listitem>
+			<listitem><para>openssl genrsa -des3 -out client.key 2048</para></listitem>
 		</itemizedlist>
 
 		<para>Generate a certificate signing request to send to the CA.</para>
