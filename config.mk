@@ -61,6 +61,11 @@ WITH_MEMORY_TRACKING:=yes
 VERSION=0.15.90
 TIMESTAMP:=$(shell date "+%F %T%z")
 
+# Man page generation requires xsltproc and docbook-xsl
+XSLTPROC=xsltproc
+# For html generation
+DB_HTML_XSL=/usr/share/xml/docbook/stylesheet/docbook-xsl/html/docbook.xsl
+
 #MANCOUNTRIES=en_GB
 
 CFLAGS=-Wall -ggdb -O2

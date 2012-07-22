@@ -2,9 +2,6 @@ include ../config.mk
 
 .PHONY : all clean install uninstall dist 
 
-# Requires xsltproc and docbook-xsl
-XSLTPROC=xsltproc
-
 all :  mosquitto.8 mosquitto-ssl.7 mosquitto.conf.5 mosquitto_pub.1 mosquitto_sub.1 mqtt.7 libmosquitto.3
 
 clean :
