@@ -1,8 +1,7 @@
-<?xml version='1.0' encoding='ISO-8859-1'?>
-<?xml-stylesheet type="text/xsl" href="http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN" "/usr/share/sgml/docbook/xml-dtd-4.4/docbookx.dtd">
+<?xml version='1.0' encoding='UTF-8'?>
+<?xml-stylesheet type="text/xsl" href="manpage.xsl"?>
 
-<refentry xml:id="mosquitto">
+<refentry xml:id="mosquitto" xmlns:xlink="http://www.w3.org/1999/xlink">
 	<refmeta>
 		<refentrytitle>mosquitto</refentrytitle>
 		<manvolnum>8</manvolnum>
@@ -367,31 +366,31 @@
 		<title>See Also</title>
 		<para>
 			<citerefentry>
-				<refentrytitle>mqtt</refentrytitle>
+				<refentrytitle><link xlink:href="mqtt-7.html">mqtt</link></refentrytitle>
 				<manvolnum>7</manvolnum>
 			</citerefentry>
 			<citerefentry>
-				<refentrytitle>mosquitto-ssl</refentrytitle>
+				<refentrytitle><link xlink:href="mosquitto-ssl-7.html">mosquitto-ssl</link></refentrytitle>
 				<manvolnum>7</manvolnum>
 			</citerefentry>
 			<citerefentry>
-				<refentrytitle>mosquitto.conf</refentrytitle>
+				<refentrytitle><link xlink:href="mosquitto-conf-5.html">mosquitto.conf</link></refentrytitle>
 				<manvolnum>5</manvolnum>
 			</citerefentry>
 			<citerefentry>
-				<refentrytitle>hosts_access</refentrytitle>
+				<refentrytitle><link xlink:href="http://www.linuxmanpages.com/man5/hosts_access.5.php">hosts_access</link></refentrytitle>
 				<manvolnum>5</manvolnum>
 			</citerefentry>
 			<citerefentry>
-				<refentrytitle>mosquitto_pub</refentrytitle>
+				<refentrytitle><link xlink:href="mosquitto_pub-1.html">mosquitto_pub</link></refentrytitle>
 				<manvolnum>1</manvolnum>
 			</citerefentry>
 			<citerefentry>
-				<refentrytitle>mosquitto_sub</refentrytitle>
+				<refentrytitle><link xlink:href="mosquitto_sub-1.html">mosquitto_sub</link></refentrytitle>
 				<manvolnum>1</manvolnum>
 			</citerefentry>
 			<citerefentry>
-				<refentrytitle>libmosquitto</refentrytitle>
+				<refentrytitle><link xlink:href="libmosquitto-3.html">libmosquitto</link></refentrytitle>
 				<manvolnum>3</manvolnum>
 			</citerefentry>
 		</para>

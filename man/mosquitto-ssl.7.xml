@@ -1,8 +1,7 @@
-<?xml version='1.0' encoding='ISO-8859-1'?>
-<?xml-stylesheet type="text/xsl" href="http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN" "/usr/share/sgml/docbook/xml-dtd-4.4/docbookx.dtd">
+<?xml version='1.0' encoding='UTF-8'?>
+<?xml-stylesheet type="text/xsl" href="manpage.xsl"?>
 
-<refentry xml:id="mosquitto-ssl">
+<refentry xml:id="mosquitto-ssl" xmlns:xlink="http://www.w3.org/1999/xlink">
 	<refmeta>
 		<refentrytitle>mosquitto-ssl</refentrytitle>
 		<manvolnum>7</manvolnum>
@@ -75,12 +74,12 @@
 		<title>See Also</title>
 		<para>
 			<citerefentry>
-				<refentrytitle>mosquitto</refentrytitle>
+				<refentrytitle><link xlink:href="mosquitto-8.html">mosquitto</link></refentrytitle>
 				<manvolnum>8</manvolnum>
 			</citerefentry>
 			<citerefentry>
-				<refentrytitle>mosquitto.conf</refentrytitle>
-				<manvolnum>8</manvolnum>
+				<refentrytitle><link xlink:href="mosquitto-conf-5.html">mosquitto-conf</link></refentrytitle>
+				<manvolnum>5</manvolnum>
 			</citerefentry>
 		</para>
 	</refsect1>
