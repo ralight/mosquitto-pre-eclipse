@@ -6,6 +6,8 @@
 	<refmeta>
 		<refentrytitle>mosquitto</refentrytitle>
 		<manvolnum>8</manvolnum>
+		<refmiscinfo class="source">Mosquitto Project</refmiscinfo>
+		<refmiscinfo class="manual">System management commands</refmiscinfo>
 	</refmeta>
 
 	<refnamediv>

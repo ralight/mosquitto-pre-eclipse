@@ -2,10 +2,12 @@
 <?xml-stylesheet type="text/xsl" href="http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl"?>
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN" "/usr/share/sgml/docbook/xml-dtd-4.4/docbookx.dtd">
 
-<refentry xml:id="mosquitto">
+<refentry xml:id="mosquitto_sub">
 	<refmeta>
 		<refentrytitle>mosquitto_sub</refentrytitle>
 		<manvolnum>1</manvolnum>
+		<refmiscinfo class="source">Mosquitto Project</refmiscinfo>
+		<refmiscinfo class="manual">Commands</refmiscinfo>
 	</refmeta>
 
 	<refnamediv>
