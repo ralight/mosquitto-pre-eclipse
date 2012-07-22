@@ -6,6 +6,8 @@
 	<refmeta>
 		<refentrytitle>libmosquitto</refentrytitle>
 		<manvolnum>3</manvolnum>
+		<refmiscinfo class="source">Mosquitto Project</refmiscinfo>
+		<refmiscinfo class="manual">Library calls</refmiscinfo>
 	</refmeta>
 
 	<refnamediv>

@@ -6,6 +6,8 @@
 	<refmeta>
 		<refentrytitle>mosquitto.conf</refentrytitle>
 		<manvolnum>5</manvolnum>
+		<refmiscinfo class="source">Mosquitto Project</refmiscinfo>
+		<refmiscinfo class="manual">File formats and conventions</refmiscinfo>
 	</refmeta>
 
 	<refnamediv>
