@@ -64,7 +64,7 @@ TIMESTAMP:=$(shell date "+%F %T%z")
 # Man page generation requires xsltproc and docbook-xsl
 XSLTPROC=xsltproc
 # For html generation
-DB_HTML_XSL=/usr/share/xml/docbook/stylesheet/docbook-xsl/html/docbook.xsl
+DB_HTML_XSL=man/html.xsl
 
 #MANCOUNTRIES=en_GB
 
