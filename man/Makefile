@@ -2,17 +2,9 @@ include ../config.mk
 
 .PHONY : all clean install uninstall dist 
 
-DB2M:=$(shell which docbook2man.pl 2> /dev/null)
-ifeq ($(strip $(DB2M)),)
-  DB2XM:=$(shell which docbook2x-man 2> /dev/null)
-  ifeq ($(strip $(DB2XM)),)
-    DOCBOOK2MAN=docbook2man
-  else
-    DOCBOOK2MAN=docbook2x-man
-  endif
-else
-  DOCBOOK2MAN=docbook2man.pl
-endif
+# Requires xsltproc and docbook-xsl
+XSLTPROC=xsltproc
+DB_MAN_XSL=/usr/share/xml/docbook/stylesheet/docbook-xsl/manpages/docbook.xsl
 
 all :  mosquitto.8 mosquitto-ssl.7 mosquitto.conf.5 mosquitto_pub.1 mosquitto_sub.1 mqtt.7 libmosquitto.3
 
@@ -47,25 +39,25 @@ uninstall :
 	-rm -f ${DESTDIR}${mandir}/man3/libmosquitto.3
 
 mosquitto.8 : mosquitto.8.xml
-	$(DOCBOOK2MAN) $^
+	$(XSLTPROC) $(DB_MAN_XSL) $^
 
 mosquitto.conf.5 : mosquitto.conf.5.xml
-	$(DOCBOOK2MAN) $^
+	$(XSLTPROC) $(DB_MAN_XSL) $^
 
 mosquitto_pub.1 : mosquitto_pub.1.xml
-	$(DOCBOOK2MAN) $^
+	$(XSLTPROC) $(DB_MAN_XSL) $^
 
 mosquitto_sub.1 : mosquitto_sub.1.xml
-	$(DOCBOOK2MAN) $^
+	$(XSLTPROC) $(DB_MAN_XSL) $^
 
 mqtt.7 : mqtt.7.xml
-	$(DOCBOOK2MAN) $^
+	$(XSLTPROC) $(DB_MAN_XSL) $^
 
 mosquitto-ssl.7 : mosquitto-ssl.7.xml
-	$(DOCBOOK2MAN) $^
+	$(XSLTPROC) $(DB_MAN_XSL) $^
 
 libmosquitto.3 : libmosquitto.3.xml
-	$(DOCBOOK2MAN) $^
+	$(XSLTPROC) $(DB_MAN_XSL) $^
 
 potgen :
 	 xml2po -o po/mosquitto/mosquitto.8.pot mosquitto.8.xml
