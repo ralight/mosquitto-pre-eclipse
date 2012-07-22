@@ -4,7 +4,6 @@ include ../config.mk
 
 # Requires xsltproc and docbook-xsl
 XSLTPROC=xsltproc
-DB_MAN_XSL=/usr/share/xml/docbook/stylesheet/docbook-xsl/manpages/docbook.xsl
 
 all :  mosquitto.8 mosquitto-ssl.7 mosquitto.conf.5 mosquitto_pub.1 mosquitto_sub.1 mqtt.7 libmosquitto.3
 
@@ -39,25 +38,25 @@ uninstall :
 	-rm -f ${DESTDIR}${mandir}/man3/libmosquitto.3
 
 mosquitto.8 : mosquitto.8.xml
-	$(XSLTPROC) $(DB_MAN_XSL) $^
+	$(XSLTPROC) $^
 
 mosquitto.conf.5 : mosquitto.conf.5.xml
-	$(XSLTPROC) $(DB_MAN_XSL) $^
+	$(XSLTPROC) $^
 
 mosquitto_pub.1 : mosquitto_pub.1.xml
-	$(XSLTPROC) $(DB_MAN_XSL) $^
+	$(XSLTPROC) $^
 
 mosquitto_sub.1 : mosquitto_sub.1.xml
-	$(XSLTPROC) $(DB_MAN_XSL) $^
+	$(XSLTPROC) $^
 
 mqtt.7 : mqtt.7.xml
-	$(XSLTPROC) $(DB_MAN_XSL) $^
+	$(XSLTPROC) $^
 
 mosquitto-ssl.7 : mosquitto-ssl.7.xml
-	$(XSLTPROC) $(DB_MAN_XSL) $^
+	$(XSLTPROC) $^
 
 libmosquitto.3 : libmosquitto.3.xml
-	$(XSLTPROC) $(DB_MAN_XSL) $^
+	$(XSLTPROC) $^
 
 potgen :
 	 xml2po -o po/mosquitto/mosquitto.8.pot mosquitto.8.xml
