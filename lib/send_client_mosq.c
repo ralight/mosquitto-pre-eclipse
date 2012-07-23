@@ -157,7 +157,7 @@ int _mosquitto_send_subscribe(struct mosquitto *mosq, int *mid, bool dup, const 
 	_mosquitto_write_string(packet, topic, strlen(topic));
 	_mosquitto_write_byte(packet, topic_qos);
 
-	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Sending SUBSCRIBE (Mid: %d, Topic: %s, QoS: %d)", *mid, topic, topic_qos);
+	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Sending SUBSCRIBE (Mid: %d, Topic: %s, QoS: %d)", local_mid, topic, topic_qos);
 
 	return _mosquitto_packet_queue(mosq, packet);
 }
@@ -195,7 +195,7 @@ int _mosquitto_send_unsubscribe(struct mosquitto *mosq, int *mid, bool dup, cons
 	/* Payload */
 	_mosquitto_write_string(packet, topic, strlen(topic));
 
-	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Sending UNSUBSCRIBE (Mid: %d, Topic: %s)", *mid, topic);
+	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Sending UNSUBSCRIBE (Mid: %d, Topic: %s)", local_mid, topic);
 	return _mosquitto_packet_queue(mosq, packet);
 }
 
