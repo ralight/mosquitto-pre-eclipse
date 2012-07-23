@@ -124,7 +124,7 @@ endif
 #	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_DB_UPGRADE
 #endif
 
-INSTALL=?install
+INSTALL?=install
 prefix=/usr/local
 mandir=${prefix}/share/man
 localedir=${prefix}/share/locale
