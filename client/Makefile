@@ -1,4 +1,4 @@
-INSTALL=?install
+INSTALL?=install
 SOVERSION=1
 CLIENT_CFLAGS=${CFLAGS} -I../lib -Wall -ggdb
 CLIENT_LDFLAGS=${LDFLAGS} -L../lib ../lib/libmosquitto.so.${SOVERSION}
