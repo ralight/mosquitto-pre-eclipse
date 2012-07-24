@@ -40,6 +40,9 @@ install : mosquitto
 
 uninstall :
 	@for d in ${DIRS}; do $(MAKE) -C $${d} uninstall; done
+	rm -f ${DESTDIR}/etc/mosquitto/mosquitto.conf
+	rm -f ${DESTDIR}/etc/mosquitto/aclfile.example
+	rm -f ${DESTDIR}/etc/mosquitto/pwfile.example
 
 dist : reallyclean
 	@for d in ${DISTDIRS}; do $(MAKE) -C $${d} dist; done
