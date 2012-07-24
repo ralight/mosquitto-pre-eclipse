@@ -86,6 +86,7 @@ install : all
 
 uninstall :
 	-rm -f ${DESTDIR}${prefix}/sbin/mosquitto
+	-rm -f ${DESTDIR}${prefix}/include/mosquitto_plugin.h
 
 clean : 
 	-rm -f *.o mosquitto
