@@ -81,6 +81,11 @@ ifeq ($(UNAME),QNX)
 	LIB_LIBS:=$(LIB_LIBS) -lsocket
 endif
 
+ifeq ($(UNAME),SunOS)
+	BROKER_LIBS:=$(BROKER_LIBS) -lsocket -lnsl
+	LIB_LIBS:=$(LIB_LIBS) -lsocket -lnsl
+endif
+
 ifeq ($(WITH_WRAP),yes)
 	BROKER_LIBS:=$(BROKER_LIBS) -lwrap
 	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_WRAP
@@ -93,6 +98,11 @@ ifeq ($(WITH_SSL),yes)
 	LIB_CFLAGS:=$(LIB_CFLAGS) -DWITH_SSL
 
 	ifeq ($(UNAME),cygwin)
+		BROKER_LIBS:=$(BROKER_LIBS) -lcrypto
+		LIB_LIBS:=$(LIB_LIBS) -lcrypto
+	endif
+	
+	ifeq ($(UNAME),SunOS)
 		BROKER_LIBS:=$(BROKER_LIBS) -lcrypto
 		LIB_LIBS:=$(LIB_LIBS) -lcrypto
 	endif
