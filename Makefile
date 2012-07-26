@@ -19,12 +19,12 @@ mosquitto :
 clean :
 	for d in ${DIRS}; do $(MAKE) -C $${d} clean; done
 	for d in ${DOCDIRS}; do $(MAKE) -C $${d} clean; done
-	make -C test clean
+	$(MAKE) -C test clean
 
 reallyclean : 
 	for d in ${DIRS}; do $(MAKE) -C $${d} reallyclean; done
 	for d in ${DOCDIRS}; do $(MAKE) -C $${d} reallyclean; done
-	make -C test reallyclean
+	$(MAKE) -C test reallyclean
 	-rm -f *.orig
 
 test : all
