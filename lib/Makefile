@@ -42,7 +42,7 @@ uninstall :
 reallyclean : clean
 
 clean :
-	-rm -f *.o libmosquitto.so.${SOVERSION} libmosquitto.so
+	-rm -f *.o libmosquitto.so.${SOVERSION} libmosquitto.so libmosquitto.a
 	$(MAKE) -C cpp clean
 	$(MAKE) -C python clean
 
