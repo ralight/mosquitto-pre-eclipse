@@ -1,6 +1,9 @@
 include ../../config.mk
 
 SOVERSION=1
+ifneq ($(UNAME),SunOS)
+	LINKER_OPTS:=-Wl,-soname,libmosquittopp.so.${SOVERSION}
+endif
 
 .PHONY : clean install
 
@@ -22,7 +25,7 @@ clean :
 	-rm -f *.o libmosquittopp.so.${SOVERSION}
 
 libmosquittopp.so.${SOVERSION} : mosquittopp.o
-	$(CXX) -shared -Wl,--as-needed -Wl,-soname,libmosquittopp.so.${SOVERSION} $< -o $@ ../libmosquitto.so.${SOVERSION}
+	$(CXX) -shared $(LINKER_OPTS) $< -o $@ ../libmosquitto.so.${SOVERSION}
 
 mosquittopp.o : mosquittopp.cpp mosquittopp.h
 	$(CXX) $(LIB_CFLAGS) -fPIC -c $< -o $@
