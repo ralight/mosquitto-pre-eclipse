@@ -51,7 +51,9 @@ extern "C" {
 #		define false 0
 #	endif
 #else
-#	include <stdbool.h>
+#	ifndef __cplusplus
+#		include <stdbool.h>
+#	endif
 #endif
 
 #define LIBMOSQUITTO_MAJOR 0
