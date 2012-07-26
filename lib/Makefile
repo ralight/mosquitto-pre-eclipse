@@ -2,7 +2,7 @@ include ../config.mk
 
 SOVERSION=1
 ifneq ($(UNAME),SunOS)
-	LINKER_VERSION:=-Wl,--version-script=linker.version
+	LINKER_OPTS:=-Wl,--version-script=linker.version -Wl,-soname,libmosquitto.so.${SOVERSION}
 endif
 
 .PHONY : really clean install
@@ -47,7 +47,7 @@ clean :
 	$(MAKE) -C python clean
 
 libmosquitto.so.${SOVERSION} : ${MOSQ_OBJS}
-	$(CC) -shared $(LINKER_VERSION) -Wl,-soname,libmosquitto.so.${SOVERSION} $^ -o $@ ${LIB_LIBS}
+	$(CC) -shared $(LINKER_OPTS) $^ -o $@ ${LIB_LIBS}
 
 libmosquitto.a : ${MOSQ_OBJS}
 	$(AR) cr $@ $^
