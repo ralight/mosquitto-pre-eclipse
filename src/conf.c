@@ -1147,7 +1147,9 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 							return 1;
 						}
 						cur_bridge->topics[cur_bridge->topic_count-1].direction = bd_out;
-						cur_bridge->topics[cur_bridge->topic_count-1].qos = 2;
+						cur_bridge->topics[cur_bridge->topic_count-1].qos = 0;
+						cur_bridge->topics[cur_bridge->topic_count-1].local_prefix = NULL;
+						cur_bridge->topics[cur_bridge->topic_count-1].remote_prefix = NULL;
 					}else{
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty topic value in configuration.");
 						return MOSQ_ERR_INVAL;
@@ -1170,6 +1172,40 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 							if(cur_bridge->topics[cur_bridge->topic_count-1].qos < 0 || cur_bridge->topics[cur_bridge->topic_count-1].qos > 2){
 								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge QoS level '%s'.", token);
 								return MOSQ_ERR_INVAL;
+							}
+
+							token = strtok_r(NULL, " ", &saveptr);
+							if(token){
+								if(!strcmp(token, "\"\"")){
+									cur_bridge->topics[cur_bridge->topic_count-1].local_prefix = NULL;
+								}else{
+									if(_mosquitto_topic_wildcard_len_check(token) != MOSQ_ERR_SUCCESS){
+										_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge topic local prefix '%s'.", token);
+										return MOSQ_ERR_INVAL;
+									}
+									cur_bridge->topics[cur_bridge->topic_count-1].local_prefix = _mosquitto_strdup(token);
+									if(!cur_bridge->topics[cur_bridge->topic_count-1].local_prefix){
+										_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+										return MOSQ_ERR_NOMEM;
+									}
+								}
+
+								token = strtok_r(NULL, " ", &saveptr);
+								if(token){
+									if(!strcmp(token, "\"\"")){
+										cur_bridge->topics[cur_bridge->topic_count-1].remote_prefix = NULL;
+									}else{
+										if(_mosquitto_topic_wildcard_len_check(token) != MOSQ_ERR_SUCCESS){
+											_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge topic remote prefix '%s'.", token);
+											return MOSQ_ERR_INVAL;
+										}
+										cur_bridge->topics[cur_bridge->topic_count-1].remote_prefix = _mosquitto_strdup(token);
+										if(!cur_bridge->topics[cur_bridge->topic_count-1].remote_prefix){
+											_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+											return MOSQ_ERR_NOMEM;
+										}
+									}
+								}
 							}
 						}
 					}
