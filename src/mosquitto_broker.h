@@ -246,6 +246,7 @@ struct _mqtt3_bridge{
 	bool clean_session;
 	struct _mqtt3_bridge_topic *topics;
 	int topic_count;
+	bool topic_remapping;
 	time_t restart_t;
 	char *username;
 	char *password;
