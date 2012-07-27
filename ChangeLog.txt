@@ -103,6 +103,7 @@ Other:
 - Fix potential buffer overflow in pub/sub clients.
 - Add "make binary" target that doesn't make documents.
 - Add "--help" arguments to pub/sub clients.
+- Fix building on Solaris.
 
 0.15 - 20120205
 ===============

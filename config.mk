@@ -68,14 +68,19 @@ DB_HTML_XSL=man/html.xsl
 
 #MANCOUNTRIES=en_GB
 
-CFLAGS=-Wall -ggdb -O2
+UNAME:=$(shell uname -s)
+ifeq ($(UNAME),SunOS)
+	CFLAGS=-Wall -O
+else
+	CFLAGS=-Wall -ggdb -O2
+endif
+
 LIB_CFLAGS:=${CFLAGS} -I. -I.. -I../lib
 BROKER_CFLAGS:=${LIB_CFLAGS} -DVERSION="\"${VERSION}\"" -DTIMESTAMP="\"${TIMESTAMP}\"" -DWITH_BROKER
 
 BROKER_LIBS:=-ldl
 LIB_LIBS:=
 
-UNAME:=$(shell uname -s)
 ifeq ($(UNAME),QNX)
 	BROKER_LIBS:=$(BROKER_LIBS) -lsocket
 	LIB_LIBS:=$(LIB_LIBS) -lsocket
@@ -135,6 +140,16 @@ endif
 #ifeq ($(WITH_DB_UPGRADE),yes)
 #	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_DB_UPGRADE
 #endif
+
+LIB_CXXFLAGS:=$(LIB_CFLAGS)
+
+ifeq ($(UNAME),SunOS)
+	LIB_CFLAGS:=$(LIB_CFLAGS) -xc99 -KPIC
+	LIB_CXXFLAGS:=$(LIB_CXXFLAGS) -KPIC
+else
+	LIB_CFLAGS:=$(LIB_CFLAGS) -fPIC
+	LIB_CXXFLAGS:=$(LIB_CXXFLAGS) -fPIC
+endif
 
 INSTALL?=install
 prefix=/usr/local

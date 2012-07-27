@@ -28,5 +28,5 @@ libmosquittopp.so.${SOVERSION} : mosquittopp.o
 	$(CXX) -shared $(LINKER_OPTS) $< -o $@ ../libmosquitto.so.${SOVERSION}
 
 mosquittopp.o : mosquittopp.cpp mosquittopp.h
-	$(CXX) $(LIB_CFLAGS) -fPIC -c $< -o $@
+	$(CXX) $(LIB_CXXFLAGS) -c $< -o $@
 
