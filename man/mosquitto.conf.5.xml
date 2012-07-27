@@ -678,7 +678,7 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>topic</option> <replaceable>pattern</replaceable> [ out | in | both ]</term>
+				<term><option>topic</option> <replaceable>pattern</replaceable> [[[ out | in | both ] qos-level] local-prefix remote-prefix]</term>
 				<listitem>
 					<para>Define a topic pattern to be shared between the two
 					brokers. Any topics matching the pattern (which may include
@@ -687,7 +687,48 @@
 					possible to import messages from a remote broker using
 					"in", export messages to a remote broker using "out" or
 					share messages in both directions. If this parameter is not
-					defined, the default of "out" is used.</para>
+					defined, the default of "out" is used. The QoS level
+					defines the publish/subscribe QoS level used for this topic
+					and defaults to 0.</para>
+					<para>The local-prefix and remote-prefix options allow
+						topics to be remapped when publishing to and receiving
+						from remote brokers. This allows a topic tree from the
+						local broker to be inserted into the topic tree of the
+						remote broker at an appropriate place.</para>
+					<para>For incoming messages, the remote prefix will be
+						first removed before the local prefix is added to the
+						topic. For outgoing messages, the local prefix will be
+						removed from the topic then the remote prefix added to
+						the topic.</para>
+					<para>When using topic mapping, an empty prefix can be
+						defined using the place marker "". Using the empty
+						marker for the topic itself is also valid. The table
+						below defines what combination of empty or value is
+						valid.</para>
+					<informaltable>
+						<tgroup cols="5">
+							<thead>
+								<row>
+									<entry></entry>
+									<entry><emphasis>Topic</emphasis></entry>
+									<entry><emphasis>Local Prefix</emphasis></entry>
+									<entry><emphasis>Remote Prefix</emphasis></entry>
+									<entry><emphasis>Validity</emphasis></entry>
+							</row>
+							</thead>
+							<tbody>
+								<row><entry>1</entry><entry>value</entry><entry>value</entry><entry>value</entry><entry>valid</entry></row>
+								<row><entry>2</entry><entry>value</entry><entry>value</entry><entry>""</entry><entry>valid</entry></row>
+								<row><entry>3</entry><entry>value</entry><entry>""</entry><entry>value</entry><entry>valid</entry></row>
+								<row><entry>4</entry><entry>value</entry><entry>""</entry><entry>""</entry><entry>valid (no remapping)</entry></row>
+								<row><entry>5</entry><entry>""</entry><entry>value</entry><entry>value</entry><entry>valid (remap entire local topic to remote)</entry></row>
+								<row><entry>6</entry><entry>""</entry><entry>value</entry><entry>""</entry><entry>invalid</entry></row>
+								<row><entry>7</entry><entry>""</entry><entry>""</entry><entry>value</entry><entry>invalid</entry></row>
+								<row><entry>8</entry><entry>""</entry><entry>""</entry><entry>""</entry><entry>invalid</entry></row>
+							</tbody>
+						</tgroup>
+					</informaltable>
+
 					<para>This option can be specified multiple times per
 					bridge.</para>
 					<para>Care must be taken to ensure that loops are not
