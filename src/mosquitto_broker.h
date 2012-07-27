@@ -233,6 +233,8 @@ struct _mqtt3_bridge_topic{
 	char *topic;
 	int qos;
 	enum mqtt3_bridge_direction direction;
+	char *local_prefix;
+	char *remote_prefix;
 };
 
 struct _mqtt3_bridge{
