@@ -162,6 +162,8 @@ void mqtt3_config_cleanup(mqtt3_config *config)
 			if(config->bridges[i].topics){
 				for(j=0; j<config->bridges[i].topic_count; j++){
 					if(config->bridges[i].topics[j].topic) _mosquitto_free(config->bridges[i].topics[j].topic);
+					if(config->bridges[i].topics[j].local_prefix) _mosquitto_free(config->bridges[i].topics[j].local_prefix);
+					if(config->bridges[i].topics[j].remote_prefix) _mosquitto_free(config->bridges[i].topics[j].remote_prefix);
 				}
 				_mosquitto_free(config->bridges[i].topics);
 			}
@@ -682,6 +684,7 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 						cur_bridge->port = 0;
 						cur_bridge->topics = NULL;
 						cur_bridge->topic_count = 0;
+						cur_bridge->topic_remapping = false;
 						cur_bridge->restart_t = 0;
 						cur_bridge->username = NULL;
 						cur_bridge->password = NULL;
@@ -1176,6 +1179,7 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 
 							token = strtok_r(NULL, " ", &saveptr);
 							if(token){
+								cur_bridge->topic_remapping = true;
 								if(!strcmp(token, "\"\"")){
 									cur_bridge->topics[cur_bridge->topic_count-1].local_prefix = NULL;
 								}else{
