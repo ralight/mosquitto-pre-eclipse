@@ -126,9 +126,10 @@ int _mosquitto_handle_publish(struct mosquitto *mosq)
 		}
 	}
 	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG,
-			"Received PUBLISH (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))",
-			message->dup, message->msg.qos, message->msg.retain, message->msg.mid,
-			message->msg.topic, (long)message->msg.payloadlen);
+			"Client %s received PUBLISH (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))",
+			mosq->id, message->dup, message->msg.qos, message->msg.retain,
+			message->msg.mid, message->msg.topic,
+			(long)message->msg.payloadlen);
 
 	message->timestamp = time(NULL);
 	switch(message->msg.qos){

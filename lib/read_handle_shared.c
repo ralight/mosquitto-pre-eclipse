@@ -55,7 +55,7 @@ int _mosquitto_handle_pingreq(struct mosquitto *mosq)
 #ifdef WITH_BROKER
 	_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Received PINGREQ from %s", mosq->id);
 #else
-	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Received PINGREQ");
+	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s received PINGREQ", mosq->id);
 #endif
 	return _mosquitto_send_pingresp(mosq);
 }
@@ -72,7 +72,7 @@ int _mosquitto_handle_pingresp(struct mosquitto *mosq)
 #ifdef WITH_BROKER
 	_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Received PINGRESP from %s", mosq->id);
 #else
-	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Received PINGRESP");
+	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s received PINGRESP", mosq->id);
 #endif
 	return MOSQ_ERR_SUCCESS;
 }
@@ -98,7 +98,7 @@ int _mosquitto_handle_pubackcomp(struct mosquitto *mosq, const char *type)
 		if(rc) return rc;
 	}
 #else
-	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Received %s (Mid: %d)", type, mid);
+	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s received %s (Mid: %d)", mosq->id, type, mid);
 
 	if(!_mosquitto_message_delete(mosq, mid, mosq_md_out)){
 		/* Only inform the client the message has been sent once. */
@@ -133,7 +133,7 @@ int _mosquitto_handle_pubrec(struct mosquitto *mosq)
 
 	rc = mqtt3_db_message_update(mosq, mid, mosq_md_out, ms_wait_for_pubcomp);
 #else
-	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Received PUBREC (Mid: %d)", mid);
+	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s received PUBREC (Mid: %d)", mosq->id, mid);
 
 	rc = _mosquitto_message_update(mosq, mid, mosq_md_out, mosq_ms_wait_pubcomp);
 #endif
@@ -168,7 +168,7 @@ int _mosquitto_handle_pubrel(struct _mosquitto_db *db, struct mosquitto *mosq)
 		return MOSQ_ERR_SUCCESS;
 	}
 #else
-	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Received PUBREL (Mid: %d)", mid);
+	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s received PUBREL (Mid: %d)", mosq->id, mid);
 
 	if(!_mosquitto_message_remove(mosq, mid, mosq_md_in, &message)){
 		/* Only pass the message on if we have removed it from the queue - this
@@ -203,7 +203,7 @@ int _mosquitto_handle_suback(struct mosquitto *mosq)
 #ifdef WITH_BROKER
 	_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Received SUBACK from %s", mosq->id);
 #else
-	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Received SUBACK");
+	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s received SUBACK", mosq->id);
 #endif
 	rc = _mosquitto_read_uint16(&mosq->in_packet, &mid);
 	if(rc) return rc;
@@ -248,7 +248,7 @@ int _mosquitto_handle_unsuback(struct mosquitto *mosq)
 #ifdef WITH_BROKER
 	_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Received UNSUBACK from %s", mosq->id);
 #else
-	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Received UNSUBACK");
+	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s received UNSUBACK", mosq->id);
 #endif
 	rc = _mosquitto_read_uint16(&mosq->in_packet, &mid);
 	if(rc) return rc;

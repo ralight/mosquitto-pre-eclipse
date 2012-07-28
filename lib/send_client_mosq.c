@@ -115,12 +115,26 @@ int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 	}
 
 	mosq->keepalive = keepalive;
+#ifdef WITH_BROKER
+# ifdef WITH_BRIDGE
+	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Bridge %s sending CONNECT", mosq->id);
+# endif
+#else
+	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending CONNECT", mosq->id);
+#endif
 	return _mosquitto_packet_queue(mosq, packet);
 }
 
 int _mosquitto_send_disconnect(struct mosquitto *mosq)
 {
 	assert(mosq);
+#ifdef WITH_BROKER
+# ifdef WITH_BRIDGE
+	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Bridge %s sending DISCONNECT", mosq->id);
+# endif
+#else
+	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending DISCONNECT", mosq->id);
+#endif
 	return _mosquitto_send_simple_command(mosq, DISCONNECT);
 }
 
@@ -157,7 +171,13 @@ int _mosquitto_send_subscribe(struct mosquitto *mosq, int *mid, bool dup, const 
 	_mosquitto_write_string(packet, topic, strlen(topic));
 	_mosquitto_write_byte(packet, topic_qos);
 
-	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Sending SUBSCRIBE (Mid: %d, Topic: %s, QoS: %d)", local_mid, topic, topic_qos);
+#ifdef WITH_BROKER
+# ifdef WITH_BRIDGE
+	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Bridge %s sending SUBSCRIBE (Mid: %d, Topic: %s, QoS: %d)", mosq->id, local_mid, topic, topic_qos);
+# endif
+#else
+	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending SUBSCRIBE (Mid: %d, Topic: %s, QoS: %d)", mosq->id, local_mid, topic, topic_qos);
+#endif
 
 	return _mosquitto_packet_queue(mosq, packet);
 }
@@ -195,7 +215,13 @@ int _mosquitto_send_unsubscribe(struct mosquitto *mosq, int *mid, bool dup, cons
 	/* Payload */
 	_mosquitto_write_string(packet, topic, strlen(topic));
 
-	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Sending UNSUBSCRIBE (Mid: %d, Topic: %s)", local_mid, topic);
+#ifdef WITH_BROKER
+# ifdef WITH_BRIDGE
+	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Bridge %s sending UNSUBSCRIBE (Mid: %d, Topic: %s)", mosq->id, local_mid, topic);
+# endif
+#else
+	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending UNSUBSCRIBE (Mid: %d, Topic: %s)", mosq->id, local_mid, topic);
+#endif
 	return _mosquitto_packet_queue(mosq, packet);
 }
 
