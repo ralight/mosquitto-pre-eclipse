@@ -695,13 +695,17 @@
 						from remote brokers. This allows a topic tree from the
 						local broker to be inserted into the topic tree of the
 						remote broker at an appropriate place.</para>
-					<para>For incoming messages, the remote prefix will be
-						first removed before the local prefix is added to the
-						topic. For outgoing messages, the local prefix will be
-						removed from the topic then the remote prefix added to
-						the topic. It is important to match the topic
-						subscribed to with the prefixes otherwise odd behaviour
-						can be produced.</para>
+					<para>For incoming topics, the bridge will prepend the
+						topic with the remote prefix and subscribe to the
+						resulting topic on the remote broker. When a matching
+						incoming message is received, the remote prefix will be
+						removed from the topic and then the local prefix
+						added.</para>
+					<para>For outgoing topics, the bridge will prepend the
+						topic with the local prefix and subscribe to the
+						resulting topic on the local broker. When an outgoing
+						message is processed, the local prefix will be removed
+						from the topic then the remote prefix added.</para>
 					<para>When using topic mapping, an empty prefix can be
 						defined using the place marker "". Using the empty
 						marker for the topic itself is also valid. The table
