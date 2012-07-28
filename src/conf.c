@@ -164,6 +164,8 @@ void mqtt3_config_cleanup(mqtt3_config *config)
 					if(config->bridges[i].topics[j].topic) _mosquitto_free(config->bridges[i].topics[j].topic);
 					if(config->bridges[i].topics[j].local_prefix) _mosquitto_free(config->bridges[i].topics[j].local_prefix);
 					if(config->bridges[i].topics[j].remote_prefix) _mosquitto_free(config->bridges[i].topics[j].remote_prefix);
+					if(config->bridges[i].topics[j].local_topic) _mosquitto_free(config->bridges[i].topics[j].local_topic);
+					if(config->bridges[i].topics[j].remote_topic) _mosquitto_free(config->bridges[i].topics[j].remote_topic);
 				}
 				_mosquitto_free(config->bridges[i].topics);
 			}
