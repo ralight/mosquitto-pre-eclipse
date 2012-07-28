@@ -436,7 +436,7 @@ void _mosquitto_write_string(struct _mosquitto_packet *packet, const char *str, 
 {
 	assert(packet);
 	_mosquitto_write_uint16(packet, length);
-	_mosquitto_write_bytes(packet, (uint8_t *)str, length);
+	_mosquitto_write_bytes(packet, str, length);
 }
 
 int _mosquitto_read_uint16(struct _mosquitto_packet *packet, uint16_t *word)
