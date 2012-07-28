@@ -153,7 +153,7 @@ int mqtt3_handle_publish(mosquitto_db *db, struct mosquitto *context)
 
 					if(cur_topic->local_prefix){
 						/* This prefix needs adding. */
-						len = strlen(topic) + strlen(cur_topic->local_prefix);
+						len = strlen(topic) + strlen(cur_topic->local_prefix)+1;
 						topic_temp = _mosquitto_calloc(len+1, sizeof(char));
 						if(!topic_temp){
 							_mosquitto_free(topic);
