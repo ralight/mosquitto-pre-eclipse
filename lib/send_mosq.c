@@ -124,7 +124,7 @@ int _mosquitto_send_publish(struct mosquitto *mosq, uint16_t mid, const char *to
 			if(cur_topic->remote_prefix || cur_topic->local_prefix){
 				/* Topic mapping required on this topic if the message matches */
 
-				rc = mosquitto_topic_matches_sub(cur_topic->topic, topic, &match);
+				rc = mosquitto_topic_matches_sub(cur_topic->local_topic, topic, &match);
 				if(rc){
 					return rc;
 				}
