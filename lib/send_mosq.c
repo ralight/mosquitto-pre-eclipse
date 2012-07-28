@@ -94,6 +94,14 @@ int _mosquitto_send_publish(struct mosquitto *mosq, uint16_t mid, const char *to
 {
 #ifdef WITH_BROKER
 	int len;
+#ifdef WITH_BRIDGE
+	int i;
+	struct _mqtt3_bridge_topic *cur_topic;
+	bool match;
+	int rc;
+	char *mapped_topic = NULL;
+	char *topic_temp = NULL;
+#endif
 #endif
 	assert(mosq);
 	assert(topic);
@@ -109,11 +117,60 @@ int _mosquitto_send_publish(struct mosquitto *mosq, uint16_t mid, const char *to
 			return MOSQ_ERR_SUCCESS;
 		}
 	}
+#ifdef WITH_BRIDGE
+	if(mosq->bridge && mosq->bridge->topics && mosq->bridge->topic_remapping){
+		for(i=0; i<mosq->bridge->topic_count; i++){
+			cur_topic = &mosq->bridge->topics[i];
+			if(cur_topic->remote_prefix || cur_topic->local_prefix){
+				/* Topic mapping required on this topic if the message matches */
+
+				rc = mosquitto_topic_matches_sub(cur_topic->topic, topic, &match);
+				if(rc){
+					return rc;
+				}
+				if(match){
+					mapped_topic = _mosquitto_strdup(topic);
+					if(!mapped_topic) return MOSQ_ERR_NOMEM;
+					if(cur_topic->local_prefix){
+						/* This prefix needs removing. */
+						if(!strncmp(cur_topic->local_prefix, mapped_topic, strlen(cur_topic->local_prefix))){
+							topic_temp = _mosquitto_strdup(mapped_topic+strlen(cur_topic->local_prefix));
+							_mosquitto_free(mapped_topic);
+							if(!topic_temp){
+								return MOSQ_ERR_NOMEM;
+							}
+							mapped_topic = topic_temp;
+						}
+					}
+
+					if(cur_topic->remote_prefix){
+						/* This prefix needs adding. */
+						len = strlen(mapped_topic) + strlen(cur_topic->remote_prefix);
+						topic_temp = _mosquitto_calloc(len+1, sizeof(char));
+						if(!topic_temp){
+							_mosquitto_free(mapped_topic);
+							return MOSQ_ERR_NOMEM;
+						}
+						snprintf(topic_temp, len, "%s%s", cur_topic->remote_prefix, mapped_topic);
+						_mosquitto_free(mapped_topic);
+						mapped_topic = topic_temp;
+					}
+					_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBLISH to %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", mosq->id, dup, qos, retain, mid, mapped_topic, (long)payloadlen);
+					g_pub_bytes_sent += payloadlen;
+					rc =  _mosquitto_send_real_publish(mosq, mid, mapped_topic, payloadlen, payload, qos, retain, dup);
+					_mosquitto_free(mapped_topic);
+					return rc;
+				}
+			}
+		}
+	}
+#endif
 	_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBLISH to %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", mosq->id, dup, qos, retain, mid, topic, (long)payloadlen);
 	g_pub_bytes_sent += payloadlen;
 #else
 	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Sending PUBLISH (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", dup, qos, retain, mid, topic, (long)payloadlen);
 #endif
+
 	return _mosquitto_send_real_publish(mosq, mid, topic, payloadlen, payload, qos, retain, dup);
 }
 
