@@ -1228,12 +1228,21 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 						return MOSQ_ERR_INVAL;
 					}
 					if(cur_topic->local_prefix){
-						len = strlen(cur_topic->topic) + strlen(cur_topic->local_prefix);
-						cur_topic->local_topic = _mosquitto_calloc(len+1, sizeof(char));
-						if(!cur_topic->local_topic){
-							return MOSQ_ERR_NOMEM;
+						if(cur_topic->topic){
+							len = strlen(cur_topic->topic) + strlen(cur_topic->local_prefix)+1;
+							cur_topic->local_topic = _mosquitto_calloc(len+1, sizeof(char));
+							if(!cur_topic->local_topic){
+								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+								return MOSQ_ERR_NOMEM;
+							}
+							snprintf(cur_topic->local_topic, len+1, "%s%s", cur_topic->local_prefix, cur_topic->topic);
+						}else{
+							cur_topic->local_topic = _mosquitto_strdup(cur_topic->local_prefix);
+							if(!cur_topic->local_topic){
+								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+								return MOSQ_ERR_NOMEM;
+							}
 						}
-						snprintf(cur_topic->local_topic, len, "%s%s", cur_topic->local_prefix, cur_topic->topic);
 					}else{
 						cur_topic->local_topic = _mosquitto_strdup(cur_topic->topic);
 						if(!cur_topic->local_topic){
@@ -1241,18 +1250,37 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 							return MOSQ_ERR_NOMEM;
 						}
 					}
-					if(cur_topic->remote_prefix){
-						len = strlen(cur_topic->topic) + strlen(cur_topic->remote_prefix);
-						cur_topic->remote_topic = _mosquitto_calloc(len+1, sizeof(char));
-						if(!cur_topic->remote_topic){
-							return MOSQ_ERR_NOMEM;
+					if(cur_topic->local_topic){
+						if(_mosquitto_fix_sub_topic(&cur_topic->local_topic)){
+							return 1;
 						}
-						snprintf(cur_topic->remote_topic, len, "%s%s", cur_topic->remote_prefix, cur_topic->topic);
+					}
+
+					if(cur_topic->remote_prefix){
+						if(cur_topic->topic){
+							len = strlen(cur_topic->topic) + strlen(cur_topic->remote_prefix)+1;
+							cur_topic->remote_topic = _mosquitto_calloc(len+1, sizeof(char));
+							if(!cur_topic->remote_topic){
+								return MOSQ_ERR_NOMEM;
+							}
+							snprintf(cur_topic->remote_topic, len, "%s%s", cur_topic->remote_prefix, cur_topic->topic);
+						}else{
+							cur_topic->remote_topic = _mosquitto_strdup(cur_topic->remote_prefix);
+							if(!cur_topic->remote_topic){
+								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+								return MOSQ_ERR_NOMEM;
+							}
+						}
 					}else{
 						cur_topic->remote_topic = _mosquitto_strdup(cur_topic->topic);
 						if(!cur_topic->remote_topic){
 							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
 							return MOSQ_ERR_NOMEM;
+						}
+					}
+					if(cur_topic->remote_topic){
+						if(_mosquitto_fix_sub_topic(&cur_topic->remote_topic)){
+							return 1;
 						}
 					}
 #else
