@@ -27,6 +27,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -85,6 +86,7 @@ int mqtt3_packet_handle(mosquitto_db *db, struct mosquitto *context)
 int mqtt3_handle_publish(mosquitto_db *db, struct mosquitto *context)
 {
 	char *topic;
+	char *topic_temp;
 	void *payload = NULL;
 	uint32_t payloadlen;
 	uint8_t dup, qos, retain;
@@ -95,6 +97,9 @@ int mqtt3_handle_publish(mosquitto_db *db, struct mosquitto *context)
 	struct mosquitto_msg_store *stored = NULL;
 	int len;
 	char *topic_mount;
+	int i;
+	struct _mqtt3_bridge_topic *cur_topic;
+	bool match;
 
 	dup = (header & 0x08)>>3;
 	qos = (header & 0x06)>>1;
@@ -120,6 +125,50 @@ int mqtt3_handle_publish(mosquitto_db *db, struct mosquitto *context)
 		_mosquitto_free(topic);
 		return 1;
 	}
+#ifdef WITH_BRIDGE
+	if(context->bridge && context->bridge->topics && context->bridge->topic_remapping){
+		for(i=0; i<context->bridge->topic_count; i++){
+			cur_topic = &context->bridge->topics[i];
+			if(cur_topic->remote_prefix || cur_topic->local_prefix){
+				/* Topic mapping required on this topic if the message matches */
+
+				rc = mosquitto_topic_matches_sub(cur_topic->topic, topic, &match);
+				if(rc){
+					_mosquitto_free(topic);
+					return rc;
+				}
+				if(match){
+					if(cur_topic->remote_prefix){
+						/* This prefix needs removing. */
+						if(!strncmp(cur_topic->remote_prefix, topic, strlen(cur_topic->remote_prefix))){
+							topic_temp = _mosquitto_strdup(topic+strlen(cur_topic->remote_prefix));
+							if(!topic_temp){
+								_mosquitto_free(topic);
+								return MOSQ_ERR_NOMEM;
+							}
+							_mosquitto_free(topic);
+							topic = topic_temp;
+						}
+					}
+
+					if(cur_topic->local_prefix){
+						/* This prefix needs adding. */
+						len = strlen(topic) + strlen(cur_topic->local_prefix);
+						topic_temp = _mosquitto_calloc(len+1, sizeof(char));
+						if(!topic_temp){
+							_mosquitto_free(topic);
+							return MOSQ_ERR_NOMEM;
+						}
+						snprintf(topic_temp, len, "%s%s", cur_topic->local_prefix, topic);
+						_mosquitto_free(topic);
+						topic = topic_temp;
+					}
+					break;
+				}
+			}
+		}
+	}
+#endif
 	if(_mosquitto_topic_wildcard_len_check(topic) != MOSQ_ERR_SUCCESS){
 		/* Invalid publish topic, just swallow it. */
 		_mosquitto_free(topic);
