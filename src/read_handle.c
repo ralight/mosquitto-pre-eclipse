@@ -132,7 +132,7 @@ int mqtt3_handle_publish(mosquitto_db *db, struct mosquitto *context)
 			if(cur_topic->remote_prefix || cur_topic->local_prefix){
 				/* Topic mapping required on this topic if the message matches */
 
-				rc = mosquitto_topic_matches_sub(cur_topic->topic, topic, &match);
+				rc = mosquitto_topic_matches_sub(cur_topic->remote_topic, topic, &match);
 				if(rc){
 					_mosquitto_free(topic);
 					return rc;
