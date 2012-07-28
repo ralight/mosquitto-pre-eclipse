@@ -224,6 +224,10 @@ int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result
 		if(local_sub[spos] == local_topic[tpos]){
 			spos++;
 			tpos++;
+			if(spos == slen && tpos == tlen){
+				*result = true;
+				break;
+			}
 		}else{
 			if(local_sub[spos] == '+'){
 				spos++;
