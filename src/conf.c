@@ -1141,13 +1141,17 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
 							return MOSQ_ERR_NOMEM;
 						}
-						cur_bridge->topics[cur_bridge->topic_count-1].topic = _mosquitto_strdup(token);
-						if(!cur_bridge->topics[cur_bridge->topic_count-1].topic){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
-							return MOSQ_ERR_NOMEM;
-						}
-						if(_mosquitto_fix_sub_topic(&cur_bridge->topics[cur_bridge->topic_count-1].topic)){
-							return 1;
+						if(!strcmp(token, "\"\"")){
+							cur_bridge->topics[cur_bridge->topic_count-1].topic = NULL;
+						}else{
+							cur_bridge->topics[cur_bridge->topic_count-1].topic = _mosquitto_strdup(token);
+							if(!cur_bridge->topics[cur_bridge->topic_count-1].topic){
+								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+								return MOSQ_ERR_NOMEM;
+							}
+							if(_mosquitto_fix_sub_topic(&cur_bridge->topics[cur_bridge->topic_count-1].topic)){
+								return 1;
+							}
 						}
 						cur_bridge->topics[cur_bridge->topic_count-1].direction = bd_out;
 						cur_bridge->topics[cur_bridge->topic_count-1].qos = 0;
@@ -1212,6 +1216,13 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 								}
 							}
 						}
+					}
+					if(cur_bridge->topics[cur_bridge->topic_count-1].topic == NULL && 
+							(cur_bridge->topics[cur_bridge->topic_count-1].local_prefix == NULL ||
+							cur_bridge->topics[cur_bridge->topic_count-1].remote_prefix == NULL)){
+
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge remapping.");
+						return MOSQ_ERR_INVAL;
 					}
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
