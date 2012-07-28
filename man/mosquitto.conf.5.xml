@@ -699,7 +699,9 @@
 						first removed before the local prefix is added to the
 						topic. For outgoing messages, the local prefix will be
 						removed from the topic then the remote prefix added to
-						the topic.</para>
+						the topic. It is important to match the topic
+						subscribed to with the prefixes otherwise odd behaviour
+						can be produced.</para>
 					<para>When using topic mapping, an empty prefix can be
 						defined using the place marker "". Using the empty
 						marker for the topic itself is also valid. The table
