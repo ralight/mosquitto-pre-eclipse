@@ -44,7 +44,7 @@ int mqtt3_handle_connack(mosquitto_db *db, struct mosquitto *context)
 	int i;
 	char *notification_topic;
 	int notification_topic_len;
-	uint8_t notification_payload[2];
+	char notification_payload[2];
 
 	if(!context){
 		return MOSQ_ERR_INVAL;
@@ -65,11 +65,11 @@ int mqtt3_handle_connack(mosquitto_db *db, struct mosquitto *context)
 					notification_payload[1] = '\0';
 					if(context->bridge->notification_topic){
 						if(_mosquitto_send_real_publish(context, _mosquitto_mid_generate(context),
-								context->bridge->notification_topic, 2, (uint8_t *)&notification_payload, 1, true, 0)){
+								context->bridge->notification_topic, 2, &notification_payload, 1, true, 0)){
 
 							return 1;
 						}
-						mqtt3_db_messages_easy_queue(db, context, context->bridge->notification_topic, 1, 2, (uint8_t *)&notification_payload, 1);
+						mqtt3_db_messages_easy_queue(db, context, context->bridge->notification_topic, 1, 2, &notification_payload, 1);
 					}else{
 						notification_topic_len = strlen(context->id)+strlen("$SYS/broker/connection//state");
 						notification_topic = _mosquitto_malloc(sizeof(char)*(notification_topic_len+1));
@@ -79,12 +79,12 @@ int mqtt3_handle_connack(mosquitto_db *db, struct mosquitto *context)
 						notification_payload[0] = '1';
 						notification_payload[1] = '\0';
 						if(_mosquitto_send_real_publish(context, _mosquitto_mid_generate(context),
-								notification_topic, 2, (uint8_t *)&notification_payload, 1, true, 0)){
+								notification_topic, 2, &notification_payload, 1, true, 0)){
 
 							_mosquitto_free(notification_topic);
 							return 1;
 						}
-						mqtt3_db_messages_easy_queue(db, context, notification_topic, 1, 2, (uint8_t *)&notification_payload, 1);
+						mqtt3_db_messages_easy_queue(db, context, notification_topic, 1, 2, &notification_payload, 1);
 						_mosquitto_free(notification_topic);
 					}
 				}
