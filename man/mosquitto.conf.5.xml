@@ -507,6 +507,14 @@
 					</listitem>
 				</varlistentry>
 				<varlistentry>
+					<term><option>ciphers</option> <replaceable>cipher:list</replaceable></term>
+					<listitem>
+						<para>The list of allowed ciphers, each separated with
+							a colon. Available ciphers can be obtained using
+							the "openssl ciphers" command.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
 					<term><option>require_certificate</option> [ true | false ]</term>
 					<listitem>
 						<para>By default an SSL enabled listener will operate in a

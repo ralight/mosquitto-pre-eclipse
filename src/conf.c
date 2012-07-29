@@ -117,6 +117,7 @@ void mqtt3_config_init(mqtt3_config *config)
 	config->default_listener.capath = NULL;
 	config->default_listener.certfile = NULL;
 	config->default_listener.keyfile = NULL;
+	config->default_listener.ciphers = NULL;
 	config->default_listener.require_certificate = false;
 	config->default_listener.crlfile = NULL;
 	config->default_listener.use_cn_as_username = false;
@@ -283,6 +284,7 @@ int mqtt3_config_parse_args(mqtt3_config *config, int argc, char *argv[])
 		config->listeners[config->listener_count-1].capath = config->default_listener.capath;
 		config->listeners[config->listener_count-1].certfile = config->default_listener.certfile;
 		config->listeners[config->listener_count-1].keyfile = config->default_listener.keyfile;
+		config->listeners[config->listener_count-1].ciphers = config->default_listener.ciphers;
 		config->listeners[config->listener_count-1].require_certificate = config->default_listener.require_certificate;
 		config->listeners[config->listener_count-1].ssl_ctx = NULL;
 		config->listeners[config->listener_count-1].crlfile = config->default_listener.crlfile;
@@ -619,6 +621,17 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 						if(_conf_parse_string(&token, "certfile", &config->default_listener.certfile, saveptr)) return MOSQ_ERR_INVAL;
 					}else{
 						if(_conf_parse_string(&token, "certfile", &config->listeners[config->listener_count-1].certfile, saveptr)) return MOSQ_ERR_INVAL;
+					}
+#else
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");
+#endif
+				}else if(!strcmp(token, "ciphers")){
+#ifdef WITH_SSL
+					if(reload) continue; // Listeners not valid for reloading.
+					if(config->listener_count == 0){
+						if(_conf_parse_string(&token, "ciphers", &config->default_listener.ciphers, saveptr)) return MOSQ_ERR_INVAL;
+					}else{
+						if(_conf_parse_string(&token, "ciphers", &config->listeners[config->listener_count-1].ciphers, saveptr)) return MOSQ_ERR_INVAL;
 					}
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");

@@ -85,6 +85,7 @@ struct _mqtt3_listener {
 	char *capath;
 	char *certfile;
 	char *keyfile;
+	char *ciphers;
 	bool require_certificate;
 	SSL_CTX *ssl_ctx;
 	char *crlfile;
