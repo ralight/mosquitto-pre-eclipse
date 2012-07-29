@@ -466,8 +466,10 @@
 			</variablelist>
 		</refsect2>
 		<refsect2>
-			<title>SSL Support</title>
-			<para>The following options are available for all listeners to configure SSL support.</para>
+			<title>Certificate based SSL/TLS Support</title>
+			<para>The following options are available for all listeners to
+				configure certificate based SSL support. See also
+				"Pre-shared-key based SSL/TLS support".</para>
 			<variablelist>
 				<varlistentry>
 					<term><option>cafile</option> <replaceable>file path</replaceable></term>
@@ -547,6 +549,41 @@
 							access to particular client certificates. If you have
 							done this, use crlfile to point to the PEM encoded
 							revocation file.</para>
+					</listitem>
+				</varlistentry>
+			</variablelist>
+		</refsect2>
+		<refsect2>
+			<title>Pre-shared-key based SSL/TLS Support</title>
+			<para>The following options are available for all listeners to
+				configure pre-shared-key based SSL support. See also
+				"Certificate based SSL/TLS support".</para>
+			<variablelist>
+				<varlistentry>
+					<term><option>psk</option> <replaceable>hex key</replaceable></term>
+					<listitem>
+						<para>The psk option defines the key for this listener
+							and enables PSK based support. It must be in the
+							format of a hex number without a leading
+							"0x".</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>psk_hint</option> <replaceable>hint</replaceable></term>
+					<listitem>
+						<para></para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>ciphers</option> <replaceable>cipher:list</replaceable></term>
+					<listitem>
+						<para>When using PSK, the encryption ciphers used will
+							be chosen from the list of available PSK ciphers.
+							If you want to control which ciphers are available,
+							use the "ciphers" option.  The list of available
+							ciphers can be optained using the "openssl ciphers"
+							command and should be provided in the same format
+							as the output of that command.</para>
 					</listitem>
 				</varlistentry>
 			</variablelist>
