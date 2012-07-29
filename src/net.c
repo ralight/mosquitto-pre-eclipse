@@ -58,6 +58,11 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <memory_mosq.h>
 #include <net_mosq.h>
 
+#ifdef WITH_SSL
+static int ssl_ex_index_context = -1;
+static int ssl_ex_index_psk = -1;
+#endif
+
 int mqtt3_socket_accept(struct _mosquitto_db *db, int listensock)
 {
 	int i;
@@ -151,6 +156,10 @@ int mqtt3_socket_accept(struct _mosquitto_db *db, int listensock)
 				if(db->config->listeners[i].socks[j] == listensock){
 					if(db->config->listeners[i].ssl_ctx){
 						new_context->ssl = SSL_new(db->config->listeners[i].ssl_ctx);
+						SSL_set_ex_data(new_context->ssl, ssl_ex_index_context, new_context);
+						if(db->config->listeners[i].psk){
+							SSL_set_ex_data(new_context->ssl, ssl_ex_index_psk, db->config->listeners[i].psk);
+						}
 						new_context->want_read = true;
 						new_context->want_write = true;
 						bio = BIO_new_socket(new_sock, BIO_NOCLOSE);
@@ -181,6 +190,44 @@ static int client_certificate_verify(int preverify_ok, X509_STORE_CTX *ctx)
 {
 	/* Preverify should check expiry, revocation. */
 	return preverify_ok;
+}
+#endif
+
+#ifdef WITH_SSL
+static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned char *psk, unsigned int max_psk_len)
+{
+	// FIXME struct mosquitto *context;
+	BIGNUM *bn = NULL;
+	char *psk_key;
+	int len;
+
+	if(!identity) return 0;
+
+	/* FIXME
+	context = SSL_get_ex_data(ssl, ssl_ex_index_context);
+	if(!context) return 0;
+
+	context->username = _mosquitto_strdup(identity);
+	if(!context->username) return 0;
+	*/
+
+	psk_key = SSL_get_ex_data(ssl, ssl_ex_index_psk);
+	if(!psk_key) return 0;
+
+	if(BN_hex2bn(&bn, psk_key) == 0){
+		if(bn) BN_free(bn);
+		return 0;
+	}
+	if(BN_num_bytes(bn) > max_psk_len){
+		BN_free(bn);
+		return 0;
+	}
+
+	len = BN_bn2bin(bn, psk);
+	BN_free(bn);
+
+	if (len < 0) return 0;
+	return len;
 }
 #endif
 
@@ -285,7 +332,37 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 	/* We need to have at least one working socket. */
 	if(listener->sock_count > 0){
 #ifdef WITH_SSL
-		if((listener->cafile || listener->capath) && listener->certfile && listener->keyfile){
+		if(ssl_ex_index_context == -1){
+			ssl_ex_index_context = SSL_get_ex_new_index(0, "client context", NULL, NULL, NULL);
+		}
+		if(ssl_ex_index_psk == -1){
+			ssl_ex_index_psk = SSL_get_ex_new_index(0, "psk", NULL, NULL, NULL);
+		}
+		if(listener->psk){
+			listener->ssl_ctx = SSL_CTX_new(TLSv1_server_method());
+			if(!listener->ssl_ctx){
+				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create SSL context.");
+				COMPAT_CLOSE(sock);
+				return 1;
+			}
+			SSL_CTX_set_psk_server_callback(listener->ssl_ctx, psk_server_callback);
+			if(listener->psk_hint){
+				rc = SSL_CTX_use_psk_identity_hint(listener->ssl_ctx, listener->psk_hint);
+				if(rc == 0){
+					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set SSL psk hint.");
+					COMPAT_CLOSE(sock);
+					return 1;
+				}
+			}
+			if(listener->ciphers){
+				rc = SSL_CTX_set_cipher_list(listener->ssl_ctx, listener->ciphers);
+				if(rc == 0){
+					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set SSL ciphers. Check cipher list \"%s\".", listener->ciphers);
+					COMPAT_CLOSE(sock);
+					return 1;
+				}
+			}
+		}else if((listener->cafile || listener->capath) && listener->certfile && listener->keyfile){
 			listener->ssl_ctx = SSL_CTX_new(TLSv1_server_method());
 			if(!listener->ssl_ctx){
 				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create SSL context.");
