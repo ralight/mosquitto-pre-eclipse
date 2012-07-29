@@ -118,6 +118,8 @@ void mqtt3_config_init(mqtt3_config *config)
 	config->default_listener.certfile = NULL;
 	config->default_listener.keyfile = NULL;
 	config->default_listener.ciphers = NULL;
+	config->default_listener.psk = NULL;
+	config->default_listener.psk_hint = NULL;
 	config->default_listener.require_certificate = false;
 	config->default_listener.crlfile = NULL;
 	config->default_listener.use_cn_as_username = false;
@@ -285,6 +287,8 @@ int mqtt3_config_parse_args(mqtt3_config *config, int argc, char *argv[])
 		config->listeners[config->listener_count-1].certfile = config->default_listener.certfile;
 		config->listeners[config->listener_count-1].keyfile = config->default_listener.keyfile;
 		config->listeners[config->listener_count-1].ciphers = config->default_listener.ciphers;
+		config->listeners[config->listener_count-1].psk = config->default_listener.psk;
+		config->listeners[config->listener_count-1].psk_hint = config->default_listener.psk_hint;
 		config->listeners[config->listener_count-1].require_certificate = config->default_listener.require_certificate;
 		config->listeners[config->listener_count-1].ssl_ctx = NULL;
 		config->listeners[config->listener_count-1].crlfile = config->default_listener.crlfile;
@@ -596,8 +600,16 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 #ifdef WITH_SSL
 					if(reload) continue; // Listeners not valid for reloading.
 					if(config->listener_count == 0){
+						if(config->default_listener.psk){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single listener.");
+							return MOSQ_ERR_INVAL;
+						}
 						if(_conf_parse_string(&token, "cafile", &config->default_listener.cafile, saveptr)) return MOSQ_ERR_INVAL;
 					}else{
+						if(config->listeners[config->listener_count-1].psk){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single listener.");
+							return MOSQ_ERR_INVAL;
+						}
 						if(_conf_parse_string(&token, "cafile", &config->listeners[config->listener_count-1].cafile, saveptr)) return MOSQ_ERR_INVAL;
 					}
 #else
@@ -618,8 +630,16 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 #ifdef WITH_SSL
 					if(reload) continue; // Listeners not valid for reloading.
 					if(config->listener_count == 0){
+						if(config->default_listener.psk){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single listener.");
+							return MOSQ_ERR_INVAL;
+						}
 						if(_conf_parse_string(&token, "certfile", &config->default_listener.certfile, saveptr)) return MOSQ_ERR_INVAL;
 					}else{
+						if(config->listeners[config->listener_count-1].psk){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single listener.");
+							return MOSQ_ERR_INVAL;
+						}
 						if(_conf_parse_string(&token, "certfile", &config->listeners[config->listener_count-1].certfile, saveptr)) return MOSQ_ERR_INVAL;
 					}
 #else
@@ -861,6 +881,9 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 						config->listeners[config->listener_count-1].capath = NULL;
 						config->listeners[config->listener_count-1].certfile = NULL;
 						config->listeners[config->listener_count-1].keyfile = NULL;
+						config->listeners[config->listener_count-1].ciphers = NULL;
+						config->listeners[config->listener_count-1].psk = NULL;
+						config->listeners[config->listener_count-1].psk_hint = NULL;
 						config->listeners[config->listener_count-1].require_certificate = false;
 						config->listeners[config->listener_count-1].ssl_ctx = NULL;
 						config->listeners[config->listener_count-1].crlfile = NULL;
@@ -1066,6 +1089,36 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 						return MOSQ_ERR_INVAL;
 					}
 					config->default_listener.port = port_tmp;
+				}else if(!strcmp(token, "psk")){
+#ifdef WITH_SSL
+					if(reload) continue; // Listeners not valid for reloading.
+					if(config->listener_count == 0){
+						if(config->default_listener.cafile || config->default_listener.capath){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single listener.");
+							return MOSQ_ERR_INVAL;
+						}
+						if(_conf_parse_string(&token, "psk", &config->default_listener.psk, saveptr)) return MOSQ_ERR_INVAL;
+					}else{
+						if(config->listeners[config->listener_count-1].cafile || config->default_listener.capath){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single listener.");
+							return MOSQ_ERR_INVAL;
+						}
+						if(_conf_parse_string(&token, "psk", &config->listeners[config->listener_count-1].psk, saveptr)) return MOSQ_ERR_INVAL;
+					}
+#else
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");
+#endif
+				}else if(!strcmp(token, "psk_hint")){
+#ifdef WITH_SSL
+					if(reload) continue; // Listeners not valid for reloading.
+					if(config->listener_count == 0){
+						if(_conf_parse_string(&token, "psk_hint", &config->default_listener.psk_hint, saveptr)) return MOSQ_ERR_INVAL;
+					}else{
+						if(_conf_parse_string(&token, "psk_hint", &config->listeners[config->listener_count-1].psk_hint, saveptr)) return MOSQ_ERR_INVAL;
+					}
+#else
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");
+#endif
 				}else if(!strcmp(token, "queue_qos0_messages")){
 					if(_conf_parse_bool(&token, token, &config->queue_qos0_messages, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "require_certificate")){
