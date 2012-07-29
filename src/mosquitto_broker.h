@@ -239,31 +239,6 @@ struct _mqtt3_bridge_topic{
 	char *remote_topic; /* topic prefixed with remote_prefix */
 };
 
-/*
-"" a b
-
-outgoing:
-
-subscription to "a" on local
-match is against "a"
-remapped topic is "b"
-
-incoming:
-
-subscription to "b" on remote
-match is against "b"
-remapped topic is "a"
-
-
-a/# a/ b/
-
-outgoing:
-
-subscription to "a/#" on local
-match is against "a/#"
-remapped topic is "b/#"
-
-*/
 struct _mqtt3_bridge{
 	char *name;
 	char *address;
