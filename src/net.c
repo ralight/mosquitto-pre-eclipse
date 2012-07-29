@@ -292,6 +292,14 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 				COMPAT_CLOSE(sock);
 				return 1;
 			}
+			if(listener->ciphers){
+				rc = SSL_CTX_set_cipher_list(listener->ssl_ctx, listener->ciphers);
+				if(rc == 0){
+					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set SSL ciphers. Check cipher list \"%s\".", listener->ciphers);
+					COMPAT_CLOSE(sock);
+					return 1;
+				}
+			}
 			rc = SSL_CTX_load_verify_locations(listener->ssl_ctx, listener->cafile, listener->capath);
 			if(rc == 0){
 				if(listener->cafile && listener->capath){
