@@ -695,7 +695,10 @@ libmosq_EXPORT bool mosquitto_want_write(struct mosquitto *mosq);
 /*
  * Function: mosquitto_ssl_set
  *
- * Configure the client for SSL support. Must be called before <mosquitto_connect>.
+ * Configure the client for certificate based SSL support. Must be called
+ * before <mosquitto_connect>.
+ *
+ * Cannot be used in conjunction with <mosquitto_tls_psk_set>.
  *
  * Define the Certificate Authority certificates to be trusted (ie. the server
  * certificate must be signed with one of these certificates) using cafile.
@@ -733,7 +736,7 @@ libmosq_EXPORT bool mosquitto_want_write(struct mosquitto *mosq);
  * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
  *
  * See Also:
- *	<mosquitto_ssl_opts_set>
+ *	<mosquitto_ssl_opts_set>, <mosquitto_tls_psk_set>
  */
 libmosq_EXPORT int mosquitto_ssl_set(struct mosquitto *mosq,
 		const char *cafile, const char *capath,
@@ -769,6 +772,33 @@ libmosq_EXPORT int mosquitto_ssl_set(struct mosquitto *mosq,
  *	<mosquitto_ssl_set>
  */
 libmosq_EXPORT int mosquitto_ssl_opts_set(struct mosquitto *mosq, int cert_reqs, const char *ssl_version, const char *ciphers);
+
+/*
+ * Function: mosquitto_tls_psk_set
+ *
+ * Configure the client for pre-shared-key based SSL support. Must be called
+ * before <mosquitto_connect>.
+ *
+ * Cannot be used in conjunction with <mosquitto_ssl_set>.
+ *
+ * Parameters:
+ *  mosq -     a valid mosquitto instance.
+ *  psk -      the pre-shared-key in hex format with no leading "0x".
+ *  identity - the identity of this client. May be used as the username
+ *             depending on the server settings.
+ *	ciphers -  a string describing the PSK ciphers available for use. See the
+ *	           "openssl ciphers" tool for more information. If NULL, the
+ *	           default ciphers will be used.
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - on success.
+ * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ *
+ * See Also:
+ *	<mosquitto_ssl_set>
+ */
+libmosq_EXPORT int mosquitto_tls_psk_set(struct mosquitto *mosq, const char *psk, const char *identity);
 
 /* 
  * Function: mosquitto_connect_callback_set

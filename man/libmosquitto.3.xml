@@ -114,6 +114,12 @@
 			<paramdef><parameter>const char *ssl_version</parameter></paramdef>
 			<paramdef><parameter>const char *ciphers</parameter></paramdef>
 			</funcprototype></funcsynopsis>
+
+			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_tls_psk_set</function></funcdef>
+			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
+			<paramdef><parameter>const char *psk</parameter></paramdef>
+			<paramdef><parameter>const char *identity</parameter></paramdef>
+			</funcprototype></funcsynopsis>
 			</para>
 		</refsect2>
 

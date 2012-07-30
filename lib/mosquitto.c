@@ -470,6 +470,27 @@ int mosquitto_ssl_opts_set(struct mosquitto *mosq, int cert_reqs, const char *ss
 }
 
 
+int mosquitto_tls_psk_set(struct mosquitto *mosq, const char *psk, const char *identity)
+{
+#if defined(WITH_SSL) && defined(WITH_TLS_PSK)
+	if(!mosq || !psk || !identity) return MOSQ_ERR_INVAL;
+
+	mosq->ssl_psk = _mosquitto_strdup(psk);
+	if(!mosq->ssl_psk) return MOSQ_ERR_NOMEM;
+
+	mosq->ssl_psk_identity = _mosquitto_strdup(identity);
+	if(!mosq->ssl_psk_identity){
+		_mosquitto_free(mosq->ssl_psk);
+		return MOSQ_ERR_NOMEM;
+	}
+
+	return MOSQ_ERR_SUCCESS;
+#else
+	return MOSQ_ERR_NOT_SUPPORTED;
+#endif
+}
+
+
 int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 {
 #ifdef HAVE_PSELECT
