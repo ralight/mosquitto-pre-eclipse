@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <time.h>
 
-#if defined(WITH_SSL) && defined(WITH_TLS_PSK)
+#if defined(WITH_TLS) && defined(WITH_TLS_PSK)
 #include <openssl/ssl.h>
 #endif
 
@@ -272,7 +272,7 @@ int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result
 	return MOSQ_ERR_SUCCESS;
 }
 
-#if defined(WITH_SSL) && defined(WITH_TLS_PSK)
+#if defined(WITH_TLS) && defined(WITH_TLS_PSK)
 int _mosquitto_hex2bin(const char *hex, unsigned char *bin, int bin_max_len)
 {
 	BIGNUM *bn = NULL;

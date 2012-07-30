@@ -59,9 +59,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <net_mosq.h>
 #include <util_mosq.h>
 
-#ifdef WITH_SSL
-static int ssl_ex_index_context = -1;
-static int ssl_ex_index_psk = -1;
+#ifdef WITH_TLS
+static int tls_ex_index_context = -1;
+static int tls_ex_index_psk = -1;
 #endif
 
 int mqtt3_socket_accept(struct _mosquitto_db *db, int listensock)
@@ -72,7 +72,7 @@ int mqtt3_socket_accept(struct _mosquitto_db *db, int listensock)
 	struct mosquitto **tmp_contexts = NULL;
 	struct mosquitto *new_context;
 	int opt = 1;
-#ifdef WITH_SSL
+#ifdef WITH_TLS
 	BIO *bio;
 	int rc;
 #endif
@@ -150,16 +150,16 @@ int mqtt3_socket_accept(struct _mosquitto_db *db, int listensock)
 		}
 		new_context->listener->client_count++;
 
-#ifdef WITH_SSL
-		/* SSL init */
+#ifdef WITH_TLS
+		/* TLS init */
 		for(i=0; i<db->config->listener_count; i++){
 			for(j=0; j<db->config->listeners[i].sock_count; j++){
 				if(db->config->listeners[i].socks[j] == listensock){
 					if(db->config->listeners[i].ssl_ctx){
 						new_context->ssl = SSL_new(db->config->listeners[i].ssl_ctx);
-						SSL_set_ex_data(new_context->ssl, ssl_ex_index_context, new_context);
+						SSL_set_ex_data(new_context->ssl, tls_ex_index_context, new_context);
 						if(db->config->listeners[i].psk){
-							SSL_set_ex_data(new_context->ssl, ssl_ex_index_psk, db->config->listeners[i].psk);
+							SSL_set_ex_data(new_context->ssl, tls_ex_index_psk, db->config->listeners[i].psk);
 						}
 						new_context->want_read = true;
 						new_context->want_write = true;
@@ -186,7 +186,7 @@ int mqtt3_socket_accept(struct _mosquitto_db *db, int listensock)
 	return new_sock;
 }
 
-#ifdef WITH_SSL
+#ifdef WITH_TLS
 static int client_certificate_verify(int preverify_ok, X509_STORE_CTX *ctx)
 {
 	/* Preverify should check expiry, revocation. */
@@ -194,7 +194,7 @@ static int client_certificate_verify(int preverify_ok, X509_STORE_CTX *ctx)
 }
 #endif
 
-#if defined(WITH_SSL) && defined(WITH_TLS_PSK)
+#if defined(WITH_TLS) && defined(WITH_TLS_PSK)
 static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned char *psk, unsigned int max_psk_len)
 {
 	// FIXME struct mosquitto *context;
@@ -204,14 +204,14 @@ static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned
 	if(!identity) return 0;
 
 	/* FIXME
-	context = SSL_get_ex_data(ssl, ssl_ex_index_context);
+	context = SSL_get_ex_data(ssl, tls_ex_index_context);
 	if(!context) return 0;
 
 	context->username = _mosquitto_strdup(identity);
 	if(!context->username) return 0;
 	*/
 
-	psk_key = SSL_get_ex_data(ssl, ssl_ex_index_psk);
+	psk_key = SSL_get_ex_data(ssl, tls_ex_index_psk);
 	if(!psk_key) return 0;
 
 	len = _mosquitto_hex2bin(psk_key, psk, max_psk_len);
@@ -236,7 +236,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 #else
 	char ss_opt = 1;
 #endif
-#ifdef WITH_SSL
+#ifdef WITH_TLS
 	int rc;
 	X509_STORE *store;
 	X509_LOOKUP *lookup;
@@ -320,18 +320,18 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 
 	/* We need to have at least one working socket. */
 	if(listener->sock_count > 0){
-#ifdef WITH_SSL
+#ifdef WITH_TLS
 		if((listener->cafile || listener->capath) && listener->certfile && listener->keyfile){
 			listener->ssl_ctx = SSL_CTX_new(TLSv1_server_method());
 			if(!listener->ssl_ctx){
-				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create SSL context.");
+				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create TLS context.");
 				COMPAT_CLOSE(sock);
 				return 1;
 			}
 			if(listener->ciphers){
 				rc = SSL_CTX_set_cipher_list(listener->ssl_ctx, listener->ciphers);
 				if(rc == 0){
-					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set SSL ciphers. Check cipher list \"%s\".", listener->ciphers);
+					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set TLS ciphers. Check cipher list \"%s\".", listener->ciphers);
 					COMPAT_CLOSE(sock);
 					return 1;
 				}
@@ -376,7 +376,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 			if(listener->crlfile){
 				store = SSL_CTX_get_cert_store(listener->ssl_ctx);
 				if(!store){
-					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to obtain SSL store.");
+					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to obtain TLS store.");
 					COMPAT_CLOSE(sock);
 					return 1;
 				}
@@ -392,16 +392,16 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 
 #  ifdef WITH_TLS_PSK
 		}else if(listener->psk){
-			if(ssl_ex_index_context == -1){
-				ssl_ex_index_context = SSL_get_ex_new_index(0, "client context", NULL, NULL, NULL);
+			if(tls_ex_index_context == -1){
+				tls_ex_index_context = SSL_get_ex_new_index(0, "client context", NULL, NULL, NULL);
 			}
-			if(ssl_ex_index_psk == -1){
-				ssl_ex_index_psk = SSL_get_ex_new_index(0, "psk", NULL, NULL, NULL);
+			if(tls_ex_index_psk == -1){
+				tls_ex_index_psk = SSL_get_ex_new_index(0, "psk", NULL, NULL, NULL);
 			}
 
 			listener->ssl_ctx = SSL_CTX_new(TLSv1_server_method());
 			if(!listener->ssl_ctx){
-				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create SSL context.");
+				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create TLS context.");
 				COMPAT_CLOSE(sock);
 				return 1;
 			}
@@ -409,7 +409,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 			if(listener->psk_hint){
 				rc = SSL_CTX_use_psk_identity_hint(listener->ssl_ctx, listener->psk_hint);
 				if(rc == 0){
-					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set SSL psk hint.");
+					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set TLS PSK hint.");
 					COMPAT_CLOSE(sock);
 					return 1;
 				}
@@ -417,14 +417,14 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 			if(listener->ciphers){
 				rc = SSL_CTX_set_cipher_list(listener->ssl_ctx, listener->ciphers);
 				if(rc == 0){
-					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set SSL ciphers. Check cipher list \"%s\".", listener->ciphers);
+					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set TLS ciphers. Check cipher list \"%s\".", listener->ciphers);
 					COMPAT_CLOSE(sock);
 					return 1;
 				}
 			}
 #  endif /* WITH_TLS_PSK */
 		}
-#endif /* WITH_SSL */
+#endif /* WITH_TLS */
 		return 0;
 	}else{
 		return 1;

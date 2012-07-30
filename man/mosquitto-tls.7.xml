@@ -1,17 +1,17 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <?xml-stylesheet type="text/xsl" href="manpage.xsl"?>
 
-<refentry xml:id="mosquitto-ssl" xmlns:xlink="http://www.w3.org/1999/xlink">
+<refentry xml:id="mosquitto-tls" xmlns:xlink="http://www.w3.org/1999/xlink">
 	<refmeta>
-		<refentrytitle>mosquitto-ssl</refentrytitle>
+		<refentrytitle>mosquitto-tls</refentrytitle>
 		<manvolnum>7</manvolnum>
 		<refmiscinfo class="source">Mosquitto Project</refmiscinfo>
 		<refmiscinfo class="manual">Conventions and miscellaneous</refmiscinfo>
 	</refmeta>
 
 	<refnamediv>
-		<refname>mosquitto-ssl</refname>
-		<refpurpose>Configure SSL support for Mosquitto</refpurpose>
+		<refname>mosquitto-tls</refname>
+		<refpurpose>Configure SSL/TLS support for Mosquitto</refpurpose>
 	</refnamediv>
 
 	<refsect1>

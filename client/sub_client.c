@@ -459,8 +459,8 @@ int main(int argc, char *argv[])
 		mosquitto_lib_cleanup();
 		return 1;
 	}
-	if((cafile || capath) && mosquitto_ssl_set(mosq, cafile, capath, certfile, keyfile, NULL)){
-		if(!ud.quiet) fprintf(stderr, "Error: Problem setting SSL options.\n");
+	if((cafile || capath) && mosquitto_tls_set(mosq, cafile, capath, certfile, keyfile, NULL)){
+		if(!ud.quiet) fprintf(stderr, "Error: Problem setting TLS options.\n");
 		mosquitto_lib_cleanup();
 		return 1;
 	}

@@ -80,7 +80,7 @@ enum mosq_err_t {
 	MOSQ_ERR_CONN_REFUSED = 5,
 	MOSQ_ERR_NOT_FOUND = 6,
 	MOSQ_ERR_CONN_LOST = 7,
-	MOSQ_ERR_SSL = 8,
+	MOSQ_ERR_TLS = 8,
 	MOSQ_ERR_PAYLOAD_SIZE = 9,
 	MOSQ_ERR_NOT_SUPPORTED = 10,
 	MOSQ_ERR_AUTH = 11,
@@ -303,7 +303,7 @@ libmosq_EXPORT int mosquitto_username_pw_set(struct mosquitto *mosq, const char 
  *                     Windows.
  *
  * See Also:
- * 	<mosquitto_connect_async>, <mosquitto_reconnect>, <mosquitto_disconnect>, <mosquitto_ssl_set>
+ * 	<mosquitto_connect_async>, <mosquitto_reconnect>, <mosquitto_disconnect>, <mosquitto_tls_set>
  */
 libmosq_EXPORT int mosquitto_connect(struct mosquitto *mosq, const char *host, int port, int keepalive);
 
@@ -334,7 +334,7 @@ libmosq_EXPORT int mosquitto_connect(struct mosquitto *mosq, const char *host, i
  *                     Windows.
  *
  * See Also:
- * 	<mosquitto_connect>, <mosquitto_reconnect>, <mosquitto_disconnect>, <mosquitto_ssl_set>
+ * 	<mosquitto_connect>, <mosquitto_reconnect>, <mosquitto_disconnect>, <mosquitto_tls_set>
  */
 libmosq_EXPORT int mosquitto_connect_async(struct mosquitto *mosq, const char *host, int port, int keepalive);
 
@@ -693,9 +693,9 @@ libmosq_EXPORT int mosquitto_loop_misc(struct mosquitto *mosq);
 libmosq_EXPORT bool mosquitto_want_write(struct mosquitto *mosq);
 
 /*
- * Function: mosquitto_ssl_set
+ * Function: mosquitto_tls_set
  *
- * Configure the client for certificate based SSL support. Must be called
+ * Configure the client for certificate based SSL/TLS support. Must be called
  * before <mosquitto_connect>.
  *
  * Cannot be used in conjunction with <mosquitto_tls_psk_set>.
@@ -736,17 +736,17 @@ libmosq_EXPORT bool mosquitto_want_write(struct mosquitto *mosq);
  * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
  *
  * See Also:
- *	<mosquitto_ssl_opts_set>, <mosquitto_tls_psk_set>
+ *	<mosquitto_tls_opts_set>, <mosquitto_tls_psk_set>
  */
-libmosq_EXPORT int mosquitto_ssl_set(struct mosquitto *mosq,
+libmosq_EXPORT int mosquitto_tls_set(struct mosquitto *mosq,
 		const char *cafile, const char *capath,
 		const char *certfile, const char *keyfile,
 		int (*pw_callback)(char *buf, int size, int rwflag, void *userdata));
 
 /*
- * Function: mosquitto_ssl_opts_set
+ * Function: mosquitto_tls_opts_set
  *
- * Set advanced SSL options. Must be called before <mosquitto_connect>.
+ * Set advanced SSL/TLS options. Must be called before <mosquitto_connect>.
  *
  * Parameters:
  *  mosq -        a valid mosquitto instance.
@@ -756,7 +756,7 @@ libmosq_EXPORT int mosquitto_ssl_set(struct mosquitto *mosq,
  *	              * SSL_VERIFY_PEER (1): the server certificate will be verified
  *	                and the connection aborted if the verification fails.
  *	              The default and recommended value is SSL_VERIFY_PEER.
- *	ssl_version - the version of the SSL protocol to use as a string. If NULL,
+ *	tls_version - the version of the SSL/TLS protocol to use as a string. If NULL,
  *	              the default value is used. Currently the only available
  *	              version is "tlsv1". 
  *	ciphers -     a string describing the ciphers available for use. See the
@@ -769,17 +769,17 @@ libmosq_EXPORT int mosquitto_ssl_set(struct mosquitto *mosq,
  * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
  *
  * See Also:
- *	<mosquitto_ssl_set>
+ *	<mosquitto_tls_set>
  */
-libmosq_EXPORT int mosquitto_ssl_opts_set(struct mosquitto *mosq, int cert_reqs, const char *ssl_version, const char *ciphers);
+libmosq_EXPORT int mosquitto_tls_opts_set(struct mosquitto *mosq, int cert_reqs, const char *tls_version, const char *ciphers);
 
 /*
  * Function: mosquitto_tls_psk_set
  *
- * Configure the client for pre-shared-key based SSL support. Must be called
+ * Configure the client for pre-shared-key based TLS support. Must be called
  * before <mosquitto_connect>.
  *
- * Cannot be used in conjunction with <mosquitto_ssl_set>.
+ * Cannot be used in conjunction with <mosquitto_tls_set>.
  *
  * Parameters:
  *  mosq -     a valid mosquitto instance.
@@ -796,7 +796,7 @@ libmosq_EXPORT int mosquitto_ssl_opts_set(struct mosquitto *mosq, int cert_reqs,
  * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
  *
  * See Also:
- *	<mosquitto_ssl_set>
+ *	<mosquitto_tls_set>
  */
 libmosq_EXPORT int mosquitto_tls_psk_set(struct mosquitto *mosq, const char *psk, const char *identity);
 

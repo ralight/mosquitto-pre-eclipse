@@ -89,7 +89,7 @@
 					<paramdef>const char *<parameter>password</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
-			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_ssl_set</function></funcdef>
+			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_tls_set</function></funcdef>
 					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
 					<paramdef>const char *<parameter>cafile</parameter></paramdef>
 					<paramdef>const char *<parameter>capath</parameter></paramdef>
@@ -99,10 +99,10 @@
 			</funcprototype></funcsynopsis>
 
 
-			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_ssl_opts_set</function></funcdef>
+			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_tls_opts_set</function></funcdef>
 					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
 					<paramdef>int <parameter>cert_reqs</parameter></paramdef>
-					<paramdef>const char *<parameter>ssl_version</parameter></paramdef>
+					<paramdef>const char *<parameter>tls_version</parameter></paramdef>
 					<paramdef>const char *<parameter>ciphers</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 

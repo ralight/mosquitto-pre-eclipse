@@ -119,11 +119,11 @@ int mqtt3_bridge_new(mosquitto_db *db, struct _mqtt3_bridge *bridge)
 	new_context->username = new_context->bridge->username;
 	new_context->password = new_context->bridge->password;
 
-#ifdef WITH_SSL
-	new_context->ssl_cafile = new_context->bridge->ssl_cafile;
-	new_context->ssl_capath = new_context->bridge->ssl_capath;
-	new_context->ssl_certfile = new_context->bridge->ssl_certfile;
-	new_context->ssl_keyfile = new_context->bridge->ssl_keyfile;
+#ifdef WITH_TLS
+	new_context->tls_cafile = new_context->bridge->tls_cafile;
+	new_context->tls_capath = new_context->bridge->tls_capath;
+	new_context->tls_certfile = new_context->bridge->tls_certfile;
+	new_context->tls_keyfile = new_context->bridge->tls_keyfile;
 #endif
 
 	bridge->try_private_accepted = true;

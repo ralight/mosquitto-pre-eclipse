@@ -23,7 +23,7 @@ def on_disconnect(mosq, obj, rc):
 
 run = -1
 mosq = mosquitto.Mosquitto("08-ssl-connect-crt-auth", run)
-mosq.ssl_set("../ssl/test-ca.crt", "../ssl/client.crt", "../ssl/client.key")
+mosq.tls_set("../ssl/test-ca.crt", "../ssl/client.crt", "../ssl/client.key")
 mosq.on_connect = on_connect
 mosq.on_disconnect = on_disconnect
 

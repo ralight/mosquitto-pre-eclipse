@@ -36,7 +36,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <mosquitto_plugin.h>
 #include <mosquitto.h>
 
-#ifdef WITH_SSL
+#ifdef WITH_TLS
 #  include <openssl/ssl.h>
 #endif
 #include <time.h>
@@ -80,7 +80,7 @@ struct _mqtt3_listener {
 	int *socks;
 	int sock_count;
 	int client_count;
-#ifdef WITH_SSL
+#ifdef WITH_TLS
 	char *cafile;
 	char *capath;
 	char *certfile;
@@ -262,11 +262,11 @@ struct _mqtt3_bridge{
 	int threshold;
 	bool try_private;
 	bool try_private_accepted;
-#ifdef WITH_SSL
-	char *ssl_cafile;
-	char *ssl_capath;
-	char *ssl_certfile;
-	char *ssl_keyfile;
+#ifdef WITH_TLS
+	char *tls_cafile;
+	char *tls_capath;
+	char *tls_certfile;
+	char *tls_keyfile;
 #endif
 };
 

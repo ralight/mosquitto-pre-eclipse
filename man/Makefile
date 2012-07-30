@@ -2,14 +2,14 @@ include ../config.mk
 
 .PHONY : all clean install uninstall dist 
 
-all :  mosquitto.8 mosquitto-ssl.7 mosquitto.conf.5 mosquitto_pub.1 mosquitto_sub.1 mqtt.7 libmosquitto.3
+all :  mosquitto.8 mosquitto-tls.7 mosquitto.conf.5 mosquitto_pub.1 mosquitto_sub.1 mqtt.7 libmosquitto.3
 
 clean :
 
 reallyclean : clean
 	-rm -f *.orig
 
-dist : mosquitto.8 mosquitto-ssl.7 mosquitto.conf.5 mosquitto_pub.1 mosquitto_sub.1 mqtt.7 libmosquitto.3
+dist : mosquitto.8 mosquitto-tls.7 mosquitto.conf.5 mosquitto_pub.1 mosquitto_sub.1 mqtt.7 libmosquitto.3
 
 install :
 	$(INSTALL) -d ${DESTDIR}$(mandir)/man8
@@ -21,7 +21,7 @@ install :
 	$(INSTALL) -m 644 mosquitto_sub.1 ${DESTDIR}${mandir}/man1/mosquitto_sub.1
 	$(INSTALL) -d ${DESTDIR}$(mandir)/man7
 	$(INSTALL) -m 644 mqtt.7 ${DESTDIR}${mandir}/man7/mqtt.7
-	$(INSTALL) -m 644 mosquitto-ssl.7 ${DESTDIR}${mandir}/man7/mosquitto-ssl.7
+	$(INSTALL) -m 644 mosquitto-tls.7 ${DESTDIR}${mandir}/man7/mosquitto-tls.7
 	$(INSTALL) -d ${DESTDIR}$(mandir)/man3
 	$(INSTALL) -m 644 libmosquitto.3 ${DESTDIR}${mandir}/man3/libmosquitto.3
 
@@ -31,7 +31,7 @@ uninstall :
 	-rm -f ${DESTDIR}${mandir}/man1/mosquitto_pub.1
 	-rm -f ${DESTDIR}${mandir}/man1/mosquitto_sub.1
 	-rm -f ${DESTDIR}${mandir}/man7/mqtt.7
-	-rm -f ${DESTDIR}${mandir}/man7/mosquitto-ssl.7
+	-rm -f ${DESTDIR}${mandir}/man7/mosquitto-tls.7
 	-rm -f ${DESTDIR}${mandir}/man3/libmosquitto.3
 
 mosquitto.8 : mosquitto.8.xml
@@ -49,7 +49,7 @@ mosquitto_sub.1 : mosquitto_sub.1.xml
 mqtt.7 : mqtt.7.xml
 	$(XSLTPROC) $^
 
-mosquitto-ssl.7 : mosquitto-ssl.7.xml
+mosquitto-tls.7 : mosquitto-tls.7.xml
 	$(XSLTPROC) $^
 
 libmosquitto.3 : libmosquitto.3.xml
@@ -61,7 +61,7 @@ potgen :
 	 xml2po -o po/mosquitto_pub/mosquitto_pub.1.pot mosquitto_pub.1.xml
 	 xml2po -o po/mosquitto_sub/mosquitto_sub.1.pot mosquitto_sub.1.xml
 	 xml2po -o po/mqtt/mqtt.7.pot mqtt.7.xml
-	 xml2po -o po/mqtt/mosquitto-ssl.7.pot mosquitto-ssl.7.xml
+	 xml2po -o po/mqtt/mosquitto-tls.7.pot mosquitto-tls.7.xml
 	 xml2po -o po/libmosquitto/libmosquitto.3.pot libmosquitto.3.xml
 
 # To merge new translations do:

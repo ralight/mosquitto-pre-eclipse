@@ -53,7 +53,7 @@ int mqtt3_handle_connect(mosquitto_db *db, struct mosquitto *context)
 	int rc;
 	struct _mosquitto_acl_user *acl_tail;
 	int slen;
-#ifdef WITH_SSL
+#ifdef WITH_TLS
 	X509 *client_cert;
 	X509_NAME *name;
 	X509_NAME_ENTRY *name_entry;
@@ -185,7 +185,7 @@ int mqtt3_handle_connect(mosquitto_db *db, struct mosquitto *context)
 		}
 	}
 
-#ifdef WITH_SSL
+#ifdef WITH_TLS
 	if(context->listener->use_identity_as_username){
 		if(!context->ssl){
 			_mosquitto_send_connack(context, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
@@ -232,7 +232,7 @@ int mqtt3_handle_connect(mosquitto_db *db, struct mosquitto *context)
 			_mosquitto_free(client_id);
 			return MOSQ_ERR_SUCCESS;
 		}
-#ifdef WITH_SSL
+#ifdef WITH_TLS
 	}
 #endif
 
@@ -259,14 +259,14 @@ int mqtt3_handle_connect(mosquitto_db *db, struct mosquitto *context)
 			db->contexts[i]->last_msg_out = time(NULL);
 			db->contexts[i]->keepalive = context->keepalive;
 			db->contexts[i]->pollfd_index = context->pollfd_index;
-#ifdef WITH_SSL
+#ifdef WITH_TLS
 			db->contexts[i]->ssl = context->ssl;
 #endif
 			if(context->username){
 				db->contexts[i]->username = _mosquitto_strdup(context->username);
 			}
 			context->sock = -1;
-#ifdef WITH_SSL
+#ifdef WITH_TLS
 			context->ssl = NULL;
 #endif
 			context->state = mosq_cs_disconnecting;

@@ -36,7 +36,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #  include <winsock2.h>
 #endif
 
-#ifdef WITH_SSL
+#ifdef WITH_TLS
 #include <openssl/ssl.h>
 #endif
 #include <stdlib.h>
@@ -135,19 +135,19 @@ struct mosquitto {
 	struct _mosquitto_packet *current_out_packet;
 	struct _mosquitto_packet *out_packet;
 	struct mosquitto_message *will;
-#ifdef WITH_SSL
+#ifdef WITH_TLS
 	SSL *ssl;
 	SSL_CTX *ssl_ctx;
-	char *ssl_cafile;
-	char *ssl_capath;
-	char *ssl_certfile;
-	char *ssl_keyfile;
-	int (*ssl_pw_callback)(char *buf, int size, int rwflag, void *userdata);
-	int ssl_cert_reqs;
-	char *ssl_version;
-	char *ssl_ciphers;
-	char *ssl_psk;
-	char *ssl_psk_identity;
+	char *tls_cafile;
+	char *tls_capath;
+	char *tls_certfile;
+	char *tls_keyfile;
+	int (*tls_pw_callback)(char *buf, int size, int rwflag, void *userdata);
+	int tls_cert_reqs;
+	char *tls_version;
+	char *tls_ciphers;
+	char *tls_psk;
+	char *tls_psk_identity;
 #endif
 	bool want_read;
 	bool want_write;

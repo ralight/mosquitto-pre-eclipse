@@ -104,7 +104,7 @@ MOSQ_ERR_NO_CONN = 4
 MOSQ_ERR_CONN_REFUSED = 5
 MOSQ_ERR_NOT_FOUND = 6
 MOSQ_ERR_CONN_LOST = 7
-MOSQ_ERR_SSL = 8
+MOSQ_ERR_TLS = 8
 MOSQ_ERR_PAYLOAD_SIZE = 9
 MOSQ_ERR_NOT_SUPPORTED = 10
 MOSQ_ERR_AUTH = 11
@@ -138,8 +138,8 @@ def error_string(mosq_errno):
         return "Message not found (internal error)."
     elif mosq_errno == MOSQ_ERR_CONN_LOST:
         return "The connection was lost."
-    elif mosq_errno == MOSQ_ERR_SSL:
-        return "An SSL error occurred."
+    elif mosq_errno == MOSQ_ERR_TLS:
+        return "A TLS error occurred."
     elif mosq_errno == MOSQ_ERR_PAYLOAD_SIZE:
         return "Payload too large."
     elif mosq_errno == MOSQ_ERR_NOT_SUPPORTED:
@@ -419,17 +419,17 @@ class Mosquitto:
         self._thread = None
         self._thread_terminate = False
         self._ssl = None
-        self._ssl_certfile = None
-        self._ssl_keyfile = None
-        self._ssl_ca_certs = None
-        self._ssl_cert_reqs = None
-        self._ssl_ciphers = None
+        self._tls_certfile = None
+        self._tls_keyfile = None
+        self._tls_ca_certs = None
+        self._tls_cert_reqs = None
+        self._tls_ciphers = None
 
     def __del__(self):
         pass
 
-    def ssl_set(self, ca_certs, certfile=None, keyfile=None, cert_reqs=ssl.CERT_REQUIRED, ssl_version=ssl.PROTOCOL_TLSv1, ciphers=None):
-        """Configure network encryption and authentication options. Enables TLS/SSL support.
+    def tls_set(self, ca_certs, certfile=None, keyfile=None, cert_reqs=ssl.CERT_REQUIRED, tls_version=ssl.PROTOCOL_TLSv1, ciphers=None):
+        """Configure network encryption and authentication options. Enables SSL/TLS support.
 
         ca_certs : a string path to the Certificate Authority certificate files
         that are to be treated as trusted by this client. If this is the only
@@ -453,7 +453,7 @@ class Mosquitto:
         which means that the broker must provide a certificate. See the ssl
         pydoc for more information on this parameter.
         
-        ssl_version allows the version of the TLS/SSL protocol used to be
+        tls_version allows the version of the SSL/TLS protocol used to be
         specified. By default TLS v1 is used. Previous versions (all versions
         beginning with SSL) are possible but not recommended due to possible
         security problems.
@@ -464,25 +464,25 @@ class Mosquitto:
 
         Must be called before connect() or connect_async()."""
         if sys.version < '2.7':
-            raise ValueError('Python 2.7 is the minimum supported version for SSL.')
+            raise ValueError('Python 2.7 is the minimum supported version for TLS.')
 
         if ca_certs == None:
             raise ValueError('ca_certs must not be None.')
 
-        self._ssl_ca_certs = ca_certs
-        self._ssl_certfile = certfile
-        self._ssl_keyfile = keyfile
-        self._ssl_cert_reqs = cert_reqs
-        self._ssl_version = ssl_version
-        self._ssl_ciphers = ciphers
+        self._tls_ca_certs = ca_certs
+        self._tls_certfile = certfile
+        self._tls_keyfile = keyfile
+        self._tls_cert_reqs = cert_reqs
+        self._tls_version = tls_version
+        self._tls_ciphers = ciphers
 
     def connect(self, host, port=1883, keepalive=60):
         """Connect to a remote broker.
 
         host is the hostname or IP address of the remote broker.
         port is the network port of the server host to connect to. Defaults to
-        1883. Note that the default port for MQTT over SSL is 8883 so if you
-        are using ssl_set() the port may need providing.
+        1883. Note that the default port for MQTT over SSL/TLS is 8883 so if you
+        are using tls_set() the port may need providing.
         keepalive: Maximum period in seconds between communications with the
         broker. If no other messages are being exchanged, this controls the
         rate at which the client will send ping messages to the broker.
@@ -497,8 +497,8 @@ class Mosquitto:
 
         host is the hostname or IP address of the remote broker.
         port is the network port of the server host to connect to. Defaults to
-        1883. Note that the default port for MQTT over SSL is 8883 so if you
-        are using ssl_set() the port may need providing.
+        1883. Note that the default port for MQTT over SSL/TLS is 8883 so if you
+        are using tls_set() the port may need providing.
         keepalive: Maximum period in seconds between communications with the
         broker. If no other messages are being exchanged, this controls the
         rate at which the client will send ping messages to the broker.
@@ -541,14 +541,14 @@ class Mosquitto:
         # FIXME use create_connection here
 
 
-        if self._ssl_ca_certs != None:
+        if self._tls_ca_certs != None:
             self._ssl = ssl.wrap_socket(self._sock,
-                    certfile=self._ssl_certfile,
-                    keyfile=self._ssl_keyfile,
-                    ca_certs=self._ssl_ca_certs,
-                    cert_reqs=self._ssl_cert_reqs,
-                    ssl_version=self._ssl_version,
-                    ciphers=self._ssl_ciphers)
+                    certfile=self._tls_certfile,
+                    keyfile=self._tls_keyfile,
+                    ca_certs=self._tls_ca_certs,
+                    cert_reqs=self._tls_cert_reqs,
+                    ssl_version=self._tls_version,
+                    ciphers=self._tls_ciphers)
 
         try:
             self.socket().connect((self._host, self._port))

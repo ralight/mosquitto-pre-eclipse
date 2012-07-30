@@ -883,7 +883,7 @@
 				<manvolnum>8</manvolnum>
 			</citerefentry>
 			<citerefentry>
-				<refentrytitle><link xlink:href="mosquitto-ssl-7.html">mosquitto-ssl</link></refentrytitle>
+				<refentrytitle><link xlink:href="mosquitto-tls-7.html">mosquitto-tls</link></refentrytitle>
 				<manvolnum>7</manvolnum>
 			</citerefentry>
 			<citerefentry>
