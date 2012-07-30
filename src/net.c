@@ -57,6 +57,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <mqtt3_protocol.h>
 #include <memory_mosq.h>
 #include <net_mosq.h>
+#include <util_mosq.h>
 
 #ifdef WITH_SSL
 static int ssl_ex_index_context = -1;
@@ -197,7 +198,6 @@ static int client_certificate_verify(int preverify_ok, X509_STORE_CTX *ctx)
 static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned char *psk, unsigned int max_psk_len)
 {
 	// FIXME struct mosquitto *context;
-	BIGNUM *bn = NULL;
 	char *psk_key;
 	int len;
 
@@ -214,18 +214,7 @@ static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned
 	psk_key = SSL_get_ex_data(ssl, ssl_ex_index_psk);
 	if(!psk_key) return 0;
 
-	if(BN_hex2bn(&bn, psk_key) == 0){
-		if(bn) BN_free(bn);
-		return 0;
-	}
-	if(BN_num_bytes(bn) > max_psk_len){
-		BN_free(bn);
-		return 0;
-	}
-
-	len = BN_bn2bin(bn, psk);
-	BN_free(bn);
-
+	len = _mosquitto_hex2bin(psk_key, psk, max_psk_len);
 	if (len < 0) return 0;
 	return len;
 }
