@@ -17,6 +17,11 @@
 # Comment out to disable SSL support in the broker and client.
 WITH_SSL:=yes
 
+# Comment out to disable TLS/PSK support in the broker and client. Requires
+# WITH_SSL=yes.
+# This must be disabled if using openssl < 1.0.
+WITH_TLS_PSK:=yes
+
 # Comment out to disable client client threading support.
 WITH_THREADING:=yes
 
@@ -110,6 +115,11 @@ ifeq ($(WITH_SSL),yes)
 	ifeq ($(UNAME),SunOS)
 		BROKER_LIBS:=$(BROKER_LIBS) -lcrypto
 		LIB_LIBS:=$(LIB_LIBS) -lcrypto
+	endif
+
+	ifeq ($(WITH_TLS_PSK),yes)
+		BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_TLS_PSK
+		LIB_CFLAGS:=$(LIB_CFLAGS) -DWITH_TLS_PSK
 	endif
 endif
 
