@@ -112,7 +112,7 @@ void mqtt3_config_init(mqtt3_config *config)
 	config->default_listener.socks = NULL;
 	config->default_listener.sock_count = 0;
 	config->default_listener.client_count = 0;
-#ifdef WITH_SSL
+#ifdef WITH_TLS
 	config->default_listener.cafile = NULL;
 	config->default_listener.capath = NULL;
 	config->default_listener.certfile = NULL;
@@ -281,7 +281,7 @@ int mqtt3_config_parse_args(mqtt3_config *config, int argc, char *argv[])
 		config->listeners[config->listener_count-1].socks = NULL;
 		config->listeners[config->listener_count-1].sock_count = 0;
 		config->listeners[config->listener_count-1].client_count = 0;
-#ifdef WITH_SSL
+#ifdef WITH_TLS
 		config->listeners[config->listener_count-1].cafile = config->default_listener.cafile;
 		config->listeners[config->listener_count-1].capath = config->default_listener.capath;
 		config->listeners[config->listener_count-1].certfile = config->default_listener.certfile;
@@ -498,7 +498,7 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 					if(reload) continue; // Listener not valid for reloading.
 					if(_conf_parse_string(&token, "default listener bind_address", &config->default_listener.host, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "bridge_cafile")){
-#if defined(WITH_BRIDGE) && defined(WITH_SSL)
+#if defined(WITH_BRIDGE) && defined(WITH_TLS)
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
@@ -506,12 +506,12 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 					}
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
-						if(cur_bridge->ssl_cafile){
+						if(cur_bridge->tls_cafile){
 							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate bridge_cafile value in bridge configuration.");
 							return MOSQ_ERR_INVAL;
 						}
-						cur_bridge->ssl_cafile = _mosquitto_strdup(token);
-						if(!cur_bridge->ssl_cafile){
+						cur_bridge->tls_cafile = _mosquitto_strdup(token);
+						if(!cur_bridge->tls_cafile){
 							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
 							return MOSQ_ERR_NOMEM;
 						}
@@ -520,10 +520,10 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 						return MOSQ_ERR_INVAL;
 					}
 #else
-					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or SSL support not available.");
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS support not available.");
 #endif
 				}else if(!strcmp(token, "bridge_capath")){
-#if defined(WITH_BRIDGE) && defined(WITH_SSL)
+#if defined(WITH_BRIDGE) && defined(WITH_TLS)
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
@@ -531,12 +531,12 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 					}
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
-						if(cur_bridge->ssl_capath){
+						if(cur_bridge->tls_capath){
 							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate bridge_capath value in bridge configuration.");
 							return MOSQ_ERR_INVAL;
 						}
-						cur_bridge->ssl_capath = _mosquitto_strdup(token);
-						if(!cur_bridge->ssl_capath){
+						cur_bridge->tls_capath = _mosquitto_strdup(token);
+						if(!cur_bridge->tls_capath){
 							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
 							return MOSQ_ERR_NOMEM;
 						}
@@ -545,10 +545,10 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 						return MOSQ_ERR_INVAL;
 					}
 #else
-					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or SSL support not available.");
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS support not available.");
 #endif
 				}else if(!strcmp(token, "bridge_certfile")){
-#if defined(WITH_BRIDGE) && defined(WITH_SSL)
+#if defined(WITH_BRIDGE) && defined(WITH_TLS)
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
@@ -556,12 +556,12 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 					}
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
-						if(cur_bridge->ssl_certfile){
+						if(cur_bridge->tls_certfile){
 							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate bridge_certfile value in bridge configuration.");
 							return MOSQ_ERR_INVAL;
 						}
-						cur_bridge->ssl_certfile = _mosquitto_strdup(token);
-						if(!cur_bridge->ssl_certfile){
+						cur_bridge->tls_certfile = _mosquitto_strdup(token);
+						if(!cur_bridge->tls_certfile){
 							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
 							return MOSQ_ERR_NOMEM;
 						}
@@ -570,10 +570,10 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 						return MOSQ_ERR_INVAL;
 					}
 #else
-					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or SSL support not available.");
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS support not available.");
 #endif
 				}else if(!strcmp(token, "bridge_keyfile")){
-#if defined(WITH_BRIDGE) && defined(WITH_SSL)
+#if defined(WITH_BRIDGE) && defined(WITH_TLS)
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
@@ -581,12 +581,12 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 					}
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
-						if(cur_bridge->ssl_keyfile){
+						if(cur_bridge->tls_keyfile){
 							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate bridge_keyfile value in bridge configuration.");
 							return MOSQ_ERR_INVAL;
 						}
-						cur_bridge->ssl_keyfile = _mosquitto_strdup(token);
-						if(!cur_bridge->ssl_keyfile){
+						cur_bridge->tls_keyfile = _mosquitto_strdup(token);
+						if(!cur_bridge->tls_keyfile){
 							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
 							return MOSQ_ERR_NOMEM;
 						}
@@ -595,10 +595,10 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 						return MOSQ_ERR_INVAL;
 					}
 #else
-					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or SSL support not available.");
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS support not available.");
 #endif
 				}else if(!strcmp(token, "cafile")){
-#if defined(WITH_SSL)
+#if defined(WITH_TLS)
 					if(reload) continue; // Listeners not valid for reloading.
 					if(cur_listener->psk){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single listener.");
@@ -606,17 +606,17 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 					}
 					if(_conf_parse_string(&token, "cafile", &cur_listener->cafile, saveptr)) return MOSQ_ERR_INVAL;
 #else
-					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
 #endif
 				}else if(!strcmp(token, "capath")){
-#ifdef WITH_SSL
+#ifdef WITH_TLS
 					if(reload) continue; // Listeners not valid for reloading.
 					if(_conf_parse_string(&token, "capath", &cur_listener->capath, saveptr)) return MOSQ_ERR_INVAL;
 #else
-					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
 #endif
 				}else if(!strcmp(token, "certfile")){
-#ifdef WITH_SSL
+#ifdef WITH_TLS
 					if(reload) continue; // Listeners not valid for reloading.
 					if(cur_listener->psk){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single listener.");
@@ -624,14 +624,14 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 					}
 					if(_conf_parse_string(&token, "certfile", &cur_listener->certfile, saveptr)) return MOSQ_ERR_INVAL;
 #else
-					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
 #endif
 				}else if(!strcmp(token, "ciphers")){
-#ifdef WITH_SSL
+#ifdef WITH_TLS
 					if(reload) continue; // Listeners not valid for reloading.
 					if(_conf_parse_string(&token, "ciphers", &cur_listener->ciphers, saveptr)) return MOSQ_ERR_INVAL;
 #else
-					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
 #endif
 				}else if(!strcmp(token, "clientid")){
 #ifdef WITH_BRIDGE
@@ -707,11 +707,11 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 						cur_bridge->idle_timeout = 60;
 						cur_bridge->threshold = 10;
 						cur_bridge->try_private = true;
-#ifdef WITH_SSL
-						cur_bridge->ssl_cafile = NULL;
-						cur_bridge->ssl_capath = NULL;
-						cur_bridge->ssl_certfile = NULL;
-						cur_bridge->ssl_keyfile = NULL;
+#ifdef WITH_TLS
+						cur_bridge->tls_cafile = NULL;
+						cur_bridge->tls_capath = NULL;
+						cur_bridge->tls_certfile = NULL;
+						cur_bridge->tls_keyfile = NULL;
 #endif
 					}else{
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty connection value in configuration.");
@@ -723,11 +723,11 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 				}else if(!strcmp(token, "connection_messages")){
 					if(_conf_parse_bool(&token, token, &config->connection_messages, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "crlfile")){
-#ifdef WITH_SSL
+#ifdef WITH_TLS
 					if(reload) continue; // Listeners not valid for reloading.
 					if(_conf_parse_string(&token, "crlfile", &cur_listener->crlfile, saveptr)) return MOSQ_ERR_INVAL;
 #else
-					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
 #endif
 				}else if(!strcmp(token, "idle_timeout")){
 #ifdef WITH_BRIDGE
@@ -819,11 +819,11 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "keyfile")){
-#ifdef WITH_SSL
+#ifdef WITH_TLS
 					if(reload) continue; // Listeners not valid for reloading.
 					if(_conf_parse_string(&token, "keyfile", &cur_listener->keyfile, saveptr)) return MOSQ_ERR_INVAL;
 #else
-					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
 #endif
 				}else if(!strcmp(token, "listener")){
 					if(reload) continue; // Listeners not valid for reloading.
@@ -846,7 +846,7 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 						cur_listener->socks = NULL;
 						cur_listener->sock_count = 0;
 						cur_listener->client_count = 0;
-#ifdef WITH_SSL
+#ifdef WITH_TLS
 						cur_listener->cafile = NULL;
 						cur_listener->capath = NULL;
 						cur_listener->certfile = NULL;
@@ -1055,7 +1055,7 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 					}
 					config->default_listener.port = port_tmp;
 				}else if(!strcmp(token, "psk")){
-#if defined(WITH_SSL) && defined(WITH_TLS_PSK)
+#if defined(WITH_TLS) && defined(WITH_TLS_PSK)
 					if(reload) continue; // Listeners not valid for reloading.
 					if(cur_listener->cafile || config->default_listener.capath){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single listener.");
@@ -1063,23 +1063,23 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 					}
 					if(_conf_parse_string(&token, "psk", &cur_listener->psk, saveptr)) return MOSQ_ERR_INVAL;
 #else
-					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL/TLS-PSK support not available.");
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS/TLS-PSK support not available.");
 #endif
 				}else if(!strcmp(token, "psk_hint")){
-#if defined(WITH_SSL) && defined(WITH_TLS_PSK)
+#if defined(WITH_TLS) && defined(WITH_TLS_PSK)
 					if(reload) continue; // Listeners not valid for reloading.
 					if(_conf_parse_string(&token, "psk_hint", &cur_listener->psk_hint, saveptr)) return MOSQ_ERR_INVAL;
 #else
-					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL/TLS-PSK support not available.");
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS/TLS-PSK support not available.");
 #endif
 				}else if(!strcmp(token, "queue_qos0_messages")){
 					if(_conf_parse_bool(&token, token, &config->queue_qos0_messages, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "require_certificate")){
-#ifdef WITH_SSL
+#ifdef WITH_TLS
 					if(reload) continue; // Listeners not valid for reloading.
 					if(_conf_parse_bool(&token, "require_certificate", &cur_listener->require_certificate, saveptr)) return MOSQ_ERR_INVAL;
 #else
-					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
 #endif
 				}else if(!strcmp(token, "retry_interval")){
 					if(_conf_parse_int(&token, "retry_interval", &config->retry_interval, saveptr)) return MOSQ_ERR_INVAL;
@@ -1313,11 +1313,11 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "use_identity_as_username")){
-#ifdef WITH_SSL
+#ifdef WITH_TLS
 					if(reload) continue; // Listeners not valid for reloading.
 					if(_conf_parse_bool(&token, "use_identity_as_username", &cur_listener->use_identity_as_username, saveptr)) return MOSQ_ERR_INVAL;
 #else
-					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
 #endif
 				}else if(!strcmp(token, "user")){
 					if(reload) continue; // Drop privileges user not valid for reloading.

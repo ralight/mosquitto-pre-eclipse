@@ -8,17 +8,17 @@
 #
 # Can also be overriden at the command line, e.g.:
 #
-# make WITH_SSL=no
+# make WITH_TLS=no
 # =============================================================================
 
 # Uncomment to compile the broker with tcpd/libwrap support.
 #WITH_WRAP:=yes
 
-# Comment out to disable SSL support in the broker and client.
-WITH_SSL:=yes
+# Comment out to disable SSL/TLS support in the broker and client.
+WITH_TLS:=yes
 
 # Comment out to disable TLS/PSK support in the broker and client. Requires
-# WITH_SSL=yes.
+# WITH_TLS=yes.
 # This must be disabled if using openssl < 1.0.
 WITH_TLS_PSK:=yes
 
@@ -111,11 +111,11 @@ ifeq ($(WITH_WRAP),yes)
 	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_WRAP
 endif
 
-ifeq ($(WITH_SSL),yes)
+ifeq ($(WITH_TLS),yes)
 	BROKER_LIBS:=$(BROKER_LIBS) -lssl
 	LIB_LIBS:=$(LIB_LIBS) -lssl
-	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_SSL
-	LIB_CFLAGS:=$(LIB_CFLAGS) -DWITH_SSL
+	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_TLS
+	LIB_CFLAGS:=$(LIB_CFLAGS) -DWITH_TLS
 
 	ifeq ($(UNAME),cygwin)
 		BROKER_LIBS:=$(BROKER_LIBS) -lcrypto

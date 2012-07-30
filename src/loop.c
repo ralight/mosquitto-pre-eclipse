@@ -119,15 +119,12 @@ int mosquitto_main_loop(mosquitto_db *db, int *listensock, int listensock_count,
 
 					/* Local bridges never time out in this fashion. */
 					if(!(db->contexts[i]->keepalive) || db->contexts[i]->bridge || now - db->contexts[i]->last_msg_in < (time_t)(db->contexts[i]->keepalive)*3/2){
-						//if(mqtt3_db_message_write(db->contexts[i]) == MOSQ_ERR_SUCCESS || db->contexts[i]->want_read){
 						if(mqtt3_db_message_write(db->contexts[i]) == MOSQ_ERR_SUCCESS){
 							pollfds[pollfd_index].fd = db->contexts[i]->sock;
 							pollfds[pollfd_index].events = POLLIN | POLLRDHUP;
 							pollfds[pollfd_index].revents = 0;
-							//if(db->contexts[i]->out_packet || db->contexts[i]->want_write || (db->contexts[i]->ssl && db->contexts[i]->state == mosq_cs_new)){
 							if(db->contexts[i]->out_packet){
 								pollfds[pollfd_index].events |= POLLOUT;
-								//db->contexts[i]->want_write = false;
 							}
 							db->contexts[i]->pollfd_index = pollfd_index;
 							pollfd_index++;
@@ -291,7 +288,7 @@ static void loop_handle_reads_writes(mosquitto_db *db, struct pollfd *pollfds)
 		}
 		if(db->contexts[i] && db->contexts[i]->sock != INVALID_SOCKET){
 			assert(pollfds[db->contexts[i]->pollfd_index].fd == db->contexts[i]->sock);
-#ifdef WITH_SSL
+#ifdef WITH_TLS
 			if(pollfds[db->contexts[i]->pollfd_index].revents & POLLOUT ||
 					db->contexts[i]->want_write ||
 					(db->contexts[i]->ssl && db->contexts[i]->state == mosq_cs_new)){
@@ -313,7 +310,7 @@ static void loop_handle_reads_writes(mosquitto_db *db, struct pollfd *pollfds)
 		}
 		if(db->contexts[i] && db->contexts[i]->sock != INVALID_SOCKET){
 			assert(pollfds[db->contexts[i]->pollfd_index].fd == db->contexts[i]->sock);
-#ifdef WITH_SSL
+#ifdef WITH_TLS
 			if(pollfds[db->contexts[i]->pollfd_index].revents & POLLIN ||
 					db->contexts[i]->want_read ||
 					(db->contexts[i]->ssl && db->contexts[i]->state == mosq_cs_new)){

@@ -94,7 +94,7 @@ struct mosquitto *mqtt3_context_init(int sock)
 	}
 	context->bridge = NULL;
 	context->msgs = NULL;
-#ifdef WITH_SSL
+#ifdef WITH_TLS
 	context->ssl = NULL;
 #endif
 

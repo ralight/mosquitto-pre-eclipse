@@ -3,7 +3,7 @@
 
 Broker:
 
-- Add SSL support.
+- Add SSL/TLS support.
 - Add $SYS/broker/publish/messages/{sent|received} to show the number of
   PUBLISH messages sent/received.
 - Add $SYS/broker/publish/bytes/{sent|received} to show the number of
@@ -47,7 +47,7 @@ Broker:
 
 Client library:
 
-- Add SSL support.
+- Add SSL/TLS support.
 - Add "struct mosquitto *mosq" parameter for all callbacks in the client
   library. This is a binary incompatible change so the soversion of the
   libraries has been incremented. The new parameter should make it easier to
@@ -94,7 +94,7 @@ Client library:
   namespace directly, not mosquittopp class members.
 - The Python library is now written in pure Python and so no longer depends on
   libmosquitto. 
-- The Python library includes SSL support.
+- The Python library includes SSL/TLS support.
 - The Python library should now be compatible with Python 3.
 
 Other:

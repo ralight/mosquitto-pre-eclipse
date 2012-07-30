@@ -236,14 +236,14 @@ void mosquittopp::user_data_set(void *obj)
 	mosquitto_user_data_set(m_mosq, obj);
 }
 
-int mosquittopp::ssl_set(const char *cafile, const char *capath, const char *certfile, const char *keyfile, int (*pw_callback)(char *buf, int size, int rwflag, void *userdata))
+int mosquittopp::tls_set(const char *cafile, const char *capath, const char *certfile, const char *keyfile, int (*pw_callback)(char *buf, int size, int rwflag, void *userdata))
 {
-	return mosquitto_ssl_set(m_mosq, cafile, capath, certfile, keyfile, pw_callback);
+	return mosquitto_tls_set(m_mosq, cafile, capath, certfile, keyfile, pw_callback);
 }
 
-int mosquittopp::ssl_opts_set(int cert_reqs, const char *ssl_version, const char *ciphers)
+int mosquittopp::tls_opts_set(int cert_reqs, const char *tls_version, const char *ciphers)
 {
-	return mosquitto_ssl_opts_set(m_mosq, cert_reqs, ssl_version, ciphers);
+	return mosquitto_tls_opts_set(m_mosq, cert_reqs, tls_version, ciphers);
 }
 
 }
