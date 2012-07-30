@@ -85,7 +85,9 @@ void _mosquitto_check_keepalive(struct mosquitto *mosq)
 	time_t last_msg_out;
 	time_t last_msg_in;
 	time_t now = time(NULL);
+#ifndef WITH_BROKER
 	int rc;
+#endif
 
 	assert(mosq);
 #if defined(WITH_BROKER) && defined(WITH_BRIDGE)

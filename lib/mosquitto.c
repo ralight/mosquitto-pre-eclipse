@@ -280,13 +280,43 @@ int mosquitto_connect_async(struct mosquitto *mosq, const char *host, int port, 
 int mosquitto_reconnect(struct mosquitto *mosq)
 {
 	int rc;
+	struct _mosquitto_packet *packet;
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(!mosq->host || mosq->port <= 0) return MOSQ_ERR_INVAL;
 
-	mosq->ping_t = 0;
 	pthread_mutex_lock(&mosq->state_mutex);
 	mosq->state = mosq_cs_new;
 	pthread_mutex_unlock(&mosq->state_mutex);
+
+	pthread_mutex_lock(&mosq->msgtime_mutex);
+	mosq->last_msg_in = time(NULL);
+	mosq->last_msg_out = time(NULL);
+	pthread_mutex_unlock(&mosq->msgtime_mutex);
+
+	mosq->ping_t = 0;
+
+	pthread_mutex_lock(&mosq->current_out_packet_mutex);
+	pthread_mutex_lock(&mosq->out_packet_mutex);
+
+	if(mosq->out_packet && !mosq->current_out_packet){
+		mosq->current_out_packet = mosq->out_packet;
+		mosq->out_packet = mosq->out_packet->next;
+	}
+
+	while(mosq->current_out_packet){
+		packet = mosq->current_out_packet;
+		/* Free data and reset values */
+		mosq->current_out_packet = mosq->out_packet;
+		if(mosq->out_packet){
+			mosq->out_packet = mosq->out_packet->next;
+		}
+
+		_mosquitto_packet_cleanup(packet);
+		_mosquitto_free(packet);
+	}
+	pthread_mutex_unlock(&mosq->out_packet_mutex);
+	pthread_mutex_unlock(&mosq->current_out_packet_mutex);
+
 	rc = _mosquitto_socket_connect(mosq, mosq->host, mosq->port);
 	if(rc){
 		return rc;
