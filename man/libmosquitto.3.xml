@@ -41,9 +41,9 @@
 
 			<para>
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_lib_version</function></funcdef>
-			<paramdef><parameter>int *major</parameter></paramdef>
-			<paramdef><parameter>int *minor</parameter></paramdef>
-			<paramdef><parameter>int *revision</parameter></paramdef>
+					<paramdef>int *<parameter>major</parameter></paramdef>
+					<paramdef>int *<parameter>minor</parameter></paramdef>
+					<paramdef>int *<parameter>revision</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 			</para>
 			<para>Obtain version information about the library. If any of
@@ -73,16 +73,16 @@
 
 			<para>
 			<funcsynopsis><funcprototype><funcdef>struct mosquitto *<function>mosquitto_new</function></funcdef>
-			<paramdef><parameter>const char *id</parameter></paramdef>
-			<paramdef><parameter>bool clean_session</parameter></paramdef>
-			<paramdef><parameter>void *obj</parameter></paramdef>
+					<paramdef>const char *<parameter>id</parameter></paramdef>
+					<paramdef>bool <parameter>clean_session</parameter></paramdef>
+					<paramdef>void *<parameter>obj</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 			</para>
 			<para>Create a new mosquitto client instance.</para>
 
 			<para>
 			<funcsynopsis><funcprototype><funcdef>void <function>mosquitto_destroy</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 			</para>
 			<para>Use to free memory associated with a mosquitto client instance.</para>
@@ -93,32 +93,32 @@
 
 			<para>
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_username_pw_set</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
-			<paramdef><parameter>const char *username</parameter></paramdef>
-			<paramdef><parameter>const char *password</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>const char *<parameter>username</parameter></paramdef>
+					<paramdef>const char *<parameter>password</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_ssl_set</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
-			<paramdef><parameter>const char *cafile</parameter></paramdef>
-			<paramdef><parameter>const char *capath</parameter></paramdef>
-			<paramdef><parameter>const char *certfile</parameter></paramdef>
-			<paramdef><parameter>const char *keyfile</parameter></paramdef>
-			<paramdef><parameter>int (*pw_callback)(char *buf, int size, int rwflag, void *userdata)</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>const char *<parameter>cafile</parameter></paramdef>
+					<paramdef>const char *<parameter>capath</parameter></paramdef>
+					<paramdef>const char *<parameter>certfile</parameter></paramdef>
+					<paramdef>const char *<parameter>keyfile</parameter></paramdef>
+					<paramdef>int <parameter>(*pw_callback)(char *buf, int size, int rwflag, void *userdata)</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_ssl_opts_set</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
-			<paramdef><parameter>int cert_reqs</parameter></paramdef>
-			<paramdef><parameter>const char *ssl_version</parameter></paramdef>
-			<paramdef><parameter>const char *ciphers</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>int <parameter>cert_reqs</parameter></paramdef>
+					<paramdef>const char *<parameter>ssl_version</parameter></paramdef>
+					<paramdef>const char *<parameter>ciphers</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_tls_psk_set</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
-			<paramdef><parameter>const char *psk</parameter></paramdef>
-			<paramdef><parameter>const char *identity</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>const char *<parameter>psk</parameter></paramdef>
+					<paramdef>const char *<parameter>identity</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 			</para>
 		</refsect2>
@@ -128,16 +128,16 @@
 
 			<para>
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_will_set</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
-			<paramdef><parameter>const char *topic</parameter></paramdef>
-			<paramdef><parameter>int payloadlen</parameter></paramdef>
-			<paramdef><parameter>const void *payload</parameter></paramdef>
-			<paramdef><parameter>int qos</parameter></paramdef>
-			<paramdef><parameter>bool retain</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>const char *<parameter>topic</parameter></paramdef>
+					<paramdef>int <parameter>payloadlen</parameter></paramdef>
+					<paramdef>const void *<parameter>payload</parameter></paramdef>
+					<paramdef>int <parameter>qos</parameter></paramdef>
+					<paramdef>bool <parameter>retain</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_will_clear</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
+					<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 			</para>
 		</refsect2>
@@ -147,25 +147,25 @@
 
 			<para>
 			<funcsynopsis><funcprototype><funcdef>void <function>mosquitto_connect</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
-			<paramdef><parameter>const char *host</parameter></paramdef>
-			<paramdef><parameter>int port</parameter></paramdef>
-			<paramdef><parameter>int keepalive</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>const char *<parameter>host</parameter></paramdef>
+					<paramdef>int <parameter>port</parameter></paramdef>
+					<paramdef>int <parameter>keepalive</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 			<funcsynopsis><funcprototype><funcdef>void <function>mosquitto_connect_async</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
-			<paramdef><parameter>const char *host</parameter></paramdef>
-			<paramdef><parameter>int port</parameter></paramdef>
-			<paramdef><parameter>int keepalive</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>const char *<parameter>host</parameter></paramdef>
+					<paramdef>int <parameter>port</parameter></paramdef>
+					<paramdef>int <parameter>keepalive</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 			<funcsynopsis><funcprototype><funcdef>void <function>mosquitto_reconnect</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_disconnect</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 			</para>
 		</refsect2>
@@ -175,13 +175,13 @@
 
 			<para>
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_publish</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
-			<paramdef><parameter>int *mid</parameter></paramdef>
-			<paramdef><parameter>const char *topic</parameter></paramdef>
-			<paramdef><parameter>int payloadlen</parameter></paramdef>
-			<paramdef><parameter>const void *payload</parameter></paramdef>
-			<paramdef><parameter>int qos</parameter></paramdef>
-			<paramdef><parameter>bool retain</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>int *<parameter>mid</parameter></paramdef>
+					<paramdef>const char *<parameter>topic</parameter></paramdef>
+					<paramdef>int <parameter>payloadlen</parameter></paramdef>
+					<paramdef>const void *<parameter>payload</parameter></paramdef>
+					<paramdef>int <parameter>qos</parameter></paramdef>
+					<paramdef>bool <parameter>retain</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 			</para>
 		</refsect2>
@@ -191,16 +191,16 @@
 
 			<para>
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_subscribe</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
-			<paramdef><parameter>int *mid</parameter></paramdef>
-			<paramdef><parameter>const char *sub</parameter></paramdef>
-			<paramdef><parameter>int qos</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>int *<parameter>mid</parameter></paramdef>
+					<paramdef>const char *<parameter>sub</parameter></paramdef>
+					<paramdef>int <parameter>qos</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_unsubscribe</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
-			<paramdef><parameter>int *mid</parameter></paramdef>
-			<paramdef><parameter>const char *sub</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>int *<parameter>mid</parameter></paramdef>
+					<paramdef>const char *<parameter>sub</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 			</para>
 		</refsect2>
@@ -210,31 +210,31 @@
 
 			<para>
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_loop</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
-			<paramdef><parameter>int timeout</parameter></paramdef>
-			<paramdef><parameter>int max_packets</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>int <parameter>timeout</parameter></paramdef>
+					<paramdef>int <parameter>max_packets</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_loop_read</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
-			<paramdef><parameter>int max_packets</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>int <parameter>max_packets</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_loop_write</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
-			<paramdef><parameter>int max_packets</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>int <parameter>max_packets</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_loop_misc</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_socket</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 			<funcsynopsis><funcprototype><funcdef>bool <function>mosquitto_want_write</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 			</para>
 		</refsect2>
@@ -244,12 +244,12 @@
 
 			<para>
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_loop_start</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_loop_stop</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
-			<paramdef><parameter>bool force</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>bool <parameter>force</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 			</para>
 		</refsect2>
@@ -259,13 +259,13 @@
 
 			<para>
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_message_retry_set</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
-			<paramdef><parameter>unsigned int message_retry</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>unsigned int <parameter>message_retry</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_user_data_set</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
-			<paramdef><parameter>void *obj</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>void *<parameter>obj</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 			</para>
 		</refsect2>
@@ -275,38 +275,38 @@
 
 			<para>
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_connect_callback_set</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
-			<paramdef><parameter>void (*on_connect)(struct mosquitto *, void *, int)</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>void <parameter>(*on_connect)(struct mosquitto *, void *, int)</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_disconnect_callback_set</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
-			<paramdef><parameter>void (*on_disconnect)(struct mosquitto *, void *, int)</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>void <parameter>(*on_disconnect)(struct mosquitto *, void *, int)</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_publish_callback_set</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
-			<paramdef><parameter>void (*on_publish)(struct mosquitto *, void *, int)</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>void <parameter>(*on_publish)(struct mosquitto *, void *, int)</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_message_callback_set</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
-			<paramdef><parameter>void (*on_message)(struct mosquitto *, void *, const struct mosquitto_message *)</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>void <parameter>(*on_message)(struct mosquitto *, void *, const struct mosquitto_message *)</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_subscribe_callback_set</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
-			<paramdef><parameter>void (*on_subscribe)(struct mosquitto *, void *, int, int, const int *)</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>void <parameter>(*on_subscribe)(struct mosquitto *, void *, int, int, const int *)</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_unsubscribe_callback_set</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
-			<paramdef><parameter>void (*on_unsubscribe)(struct mosquitto *, void *, int)</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>void <parameter>(*on_unsubscribe)(struct mosquitto *, void *, int)</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_log_callback_set</function></funcdef>
-			<paramdef><parameter>struct mosquitto *mosq</parameter></paramdef>
-			<paramdef><parameter>void (*on_unsubscribe)(struct mosquitto *, void *, int, const char *)</parameter></paramdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>void <parameter>(*on_unsubscribe)(struct mosquitto *, void *, int, const char *)</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 			</para>
 		</refsect2>
@@ -316,37 +316,37 @@
 			<para>
 
 			<funcsynopsis><funcprototype><funcdef>const char *<function>mosquitto_connack_string</function></funcdef>
-			<paramdef><parameter>int connack_code</parameter></paramdef>
+					<paramdef>int <parameter>connack_code</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_message_copy</function></funcdef>
-			<paramdef><parameter>struct mosquitto_message *dst</parameter></paramdef>
-			<paramdef><parameter>const struct mosquitto_message *src</parameter></paramdef>
+					<paramdef>struct mosquitto_message *<parameter>dst</parameter></paramdef>
+					<paramdef>const struct mosquitto_message *<parameter>src</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_message_free</function></funcdef>
-			<paramdef><parameter>struct mosquitto_message **message</parameter></paramdef>
+					<paramdef>struct mosquitto_message **<parameter>message</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 			<funcsynopsis><funcprototype><funcdef>const char *<function>mosquitto_strerror</function></funcdef>
-			<paramdef><parameter>int mosq_errno</parameter></paramdef>
+					<paramdef>int <parameter>mosq_errno</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_sub_topic_tokenise</function></funcdef>
-			<paramdef><parameter>const char *subtopic</parameter></paramdef>
-			<paramdef><parameter>char ***topics</parameter></paramdef>
-			<paramdef><parameter>int *count</parameter></paramdef>
+					<paramdef>const char *<parameter>subtopic</parameter></paramdef>
+					<paramdef>char ***<parameter>topics</parameter></paramdef>
+					<paramdef>int *<parameter>count</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_sub_topic_tokens_free</function></funcdef>
-			<paramdef><parameter>char ***topics</parameter></paramdef>
-			<paramdef><parameter>int count</parameter></paramdef>
+					<paramdef>char ***<parameter>topics</parameter></paramdef>
+					<paramdef>int <parameter>count</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_topic_matches_sub</function></funcdef>
-			<paramdef><parameter>const char *sub</parameter></paramdef>
-			<paramdef><parameter>const char *topic</parameter></paramdef>
-			<paramdef><parameter>bool *result</parameter></paramdef>
+					<paramdef>const char *<parameter>sub</parameter></paramdef>
+					<paramdef>const char *<parameter>topic</parameter></paramdef>
+					<paramdef>bool *<parameter>result</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 			</para>
 		</refsect2>
