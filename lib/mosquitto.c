@@ -295,6 +295,8 @@ int mosquitto_reconnect(struct mosquitto *mosq)
 
 	mosq->ping_t = 0;
 
+	_mosquitto_packet_cleanup(&mosq->in_packet);
+		
 	pthread_mutex_lock(&mosq->current_out_packet_mutex);
 	pthread_mutex_lock(&mosq->out_packet_mutex);
 
