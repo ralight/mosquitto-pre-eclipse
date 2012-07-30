@@ -78,12 +78,18 @@ DB_HTML_XSL=man/html.xsl
 
 UNAME:=$(shell uname -s)
 ifeq ($(UNAME),SunOS)
-	CFLAGS=-Wall -O
+	ifeq ($(CC),cc)
+		CFLAGS:=-O
+	else
+		CFLAGS:=-Wall -ggdb -O2
+	endif
 else
-	CFLAGS=-Wall -ggdb -O2
+	CFLAGS:=-Wall -ggdb -O2
 endif
 
 LIB_CFLAGS:=${CFLAGS} -I. -I.. -I../lib
+LIB_CXXFLAGS:=$(LIB_CFLAGS)
+
 BROKER_CFLAGS:=${LIB_CFLAGS} -DVERSION="\"${VERSION}\"" -DTIMESTAMP="\"${TIMESTAMP}\"" -DWITH_BROKER
 CLIENT_CFLAGS:=${CFLAGS} -I../lib
 
@@ -92,6 +98,23 @@ LIB_LIBS:=
 
 CLIENT_LDFLAGS:=$(LDFLAGS) -L../lib ../lib/libmosquitto.so.${SOVERSION}
 
+ifeq ($(UNAME),SunOS)
+	ifeq ($(CC),cc)
+		LIB_CFLAGS:=$(LIB_CFLAGS) -xc99 -KPIC
+	else
+		LIB_CFLAGS:=$(LIB_CFLAGS) -fPIC
+	endif
+
+	ifeq ($(CXX),CC)
+		LIB_CXXFLAGS:=$(LIB_CXXFLAGS) -KPIC
+	else
+		LIB_CXXFLAGS:=$(LIB_CXXFLAGS) -fPIC
+	endif
+else
+	LIB_CFLAGS:=$(LIB_CFLAGS) -fPIC
+	LIB_CXXFLAGS:=$(LIB_CXXFLAGS) -fPIC
+endif
+
 ifneq ($(UNAME),SunOS)
 	LIB_LDFLAGS:=$(LIB_LDFLAGS) -Wl,--version-script=linker.version -Wl,-soname,libmosquitto.so.$(SOVERSION)
 endif
@@ -99,11 +122,6 @@ endif
 ifeq ($(UNAME),QNX)
 	BROKER_LIBS:=$(BROKER_LIBS) -lsocket
 	LIB_LIBS:=$(LIB_LIBS) -lsocket
-endif
-
-ifeq ($(UNAME),SunOS)
-	BROKER_LIBS:=$(BROKER_LIBS) -lsocket -lnsl
-	LIB_LIBS:=$(LIB_LIBS) -lsocket -lnsl
 endif
 
 ifeq ($(WITH_WRAP),yes)
@@ -161,15 +179,11 @@ endif
 #	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_DB_UPGRADE
 #endif
 
-LIB_CXXFLAGS:=$(LIB_CFLAGS)
-
 ifeq ($(UNAME),SunOS)
-	LIB_CFLAGS:=$(LIB_CFLAGS) -xc99 -KPIC
-	LIB_CXXFLAGS:=$(LIB_CXXFLAGS) -KPIC
-else
-	LIB_CFLAGS:=$(LIB_CFLAGS) -fPIC
-	LIB_CXXFLAGS:=$(LIB_CXXFLAGS) -fPIC
+	BROKER_LIBS:=$(BROKER_LIBS) -lsocket -lnsl
+	LIB_LIBS:=$(LIB_LIBS) -lsocket -lnsl
 endif
+
 
 INSTALL?=install
 prefix=/usr/local
