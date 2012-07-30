@@ -274,6 +274,14 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 			return MOSQ_ERR_INVAL;
 		}
 
+		if(mosq->tls_ciphers){
+			ret = SSL_CTX_set_cipher_list(mosq->ssl_ctx, mosq->tls_ciphers);
+			if(ret == 0){
+				_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to set TLS ciphers. Check cipher list \"%s\".", mosq->tls_ciphers);
+				COMPAT_CLOSE(sock);
+				return MOSQ_ERR_TLS;
+			}
+		}
 		ret = SSL_CTX_load_verify_locations(mosq->ssl_ctx, mosq->tls_cafile, mosq->tls_capath);
 		if(ret == 0){
 #ifdef WITH_BROKER
