@@ -85,6 +85,8 @@ void _mosquitto_check_keepalive(struct mosquitto *mosq)
 	time_t last_msg_out;
 	time_t last_msg_in;
 	time_t now = time(NULL);
+	int rc;
+
 	assert(mosq);
 #if defined(WITH_BROKER) && defined(WITH_BRIDGE)
 	/* Check if a lazy bridge should be timed out due to idle. */
@@ -120,6 +122,22 @@ void _mosquitto_check_keepalive(struct mosquitto *mosq)
 			mosq->listener = NULL;
 #endif
 			_mosquitto_socket_close(mosq);
+#ifndef WITH_BROKER
+			pthread_mutex_lock(&mosq->state_mutex);
+			if(mosq->state == mosq_cs_disconnecting){
+				rc = MOSQ_ERR_SUCCESS;
+			}else{
+				rc = 1;
+			}
+			pthread_mutex_unlock(&mosq->state_mutex);
+			pthread_mutex_lock(&mosq->callback_mutex);
+			if(mosq->on_disconnect){
+				mosq->in_callback = true;
+				mosq->on_disconnect(mosq, mosq->obj, rc);
+				mosq->in_callback = false;
+			}
+			pthread_mutex_unlock(&mosq->callback_mutex);
+#endif
 		}
 	}
 }

@@ -599,6 +599,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 int mosquitto_loop_misc(struct mosquitto *mosq)
 {
 	time_t now = time(NULL);
+	int rc;
 
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
@@ -613,6 +614,20 @@ int mosquitto_loop_misc(struct mosquitto *mosq)
 		 * This hasn't happened in the keepalive time so we should disconnect.
 		 */
 		_mosquitto_socket_close(mosq);
+		pthread_mutex_lock(&mosq->state_mutex);
+		if(mosq->state == mosq_cs_disconnecting){
+			rc = MOSQ_ERR_SUCCESS;
+		}else{
+			rc = 1;
+		}
+		pthread_mutex_unlock(&mosq->state_mutex);
+		pthread_mutex_lock(&mosq->callback_mutex);
+		if(mosq->on_disconnect){
+			mosq->in_callback = true;
+			mosq->on_disconnect(mosq, mosq->obj, rc);
+			mosq->in_callback = false;
+		}
+		pthread_mutex_unlock(&mosq->callback_mutex);
 		return MOSQ_ERR_CONN_LOST;
 	}
 	return MOSQ_ERR_SUCCESS;

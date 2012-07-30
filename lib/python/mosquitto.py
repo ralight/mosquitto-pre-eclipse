@@ -863,6 +863,16 @@ class Mosquitto:
             else:
                 self._sock.close()
             self._sock = None
+            self._callback_mutex.acquire()
+            if self._state == mosq_cs_disconnecting:
+                rc = MOSQ_ERR_SUCCESS
+            else:
+                rc = 1
+            if self.on_disconnect:
+                self._in_callback = True
+                self.on_disconnect(self, self._obj, rc)
+                self._in_callback = False
+            self._callback_mutex.release()
             return MOSQ_ERR_CONN_LOST
 
         return MOSQ_ERR_SUCCESS
@@ -1117,6 +1127,16 @@ class Mosquitto:
                 else:
                     self._sock.close()
                 self._sock = None
+                if self._state == mosq_cs_disconnecting:
+                    rc = MOSQ_ERR_SUCCESS
+                else:
+                    rc = 1
+                self._callback_mutex.acquire()
+                if self.on_disconnect:
+                    self._in_callback = True
+                    self.on_disconnect(self, self._obj, rc)
+                    self._in_callback = False
+                self._callback_mutex.release()
 
     def _mid_generate(self):
         self._last_mid = self._last_mid + 1
