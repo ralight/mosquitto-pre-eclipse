@@ -146,6 +146,8 @@ struct mosquitto {
 	int ssl_cert_reqs;
 	char *ssl_version;
 	char *ssl_ciphers;
+	char *ssl_psk;
+	char *ssl_psk_identity;
 #endif
 	bool want_read;
 	bool want_write;
