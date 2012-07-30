@@ -397,6 +397,7 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 	struct dirent *de;
 #endif
 	int len;
+	struct _mqtt3_listener *cur_listener = &config->default_listener;
 	
 	fptr = fopen(file, "rt");
 	if(!fptr) return 1;
@@ -599,60 +600,36 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 				}else if(!strcmp(token, "cafile")){
 #if defined(WITH_SSL)
 					if(reload) continue; // Listeners not valid for reloading.
-					if(config->listener_count == 0){
-						if(config->default_listener.psk){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single listener.");
-							return MOSQ_ERR_INVAL;
-						}
-						if(_conf_parse_string(&token, "cafile", &config->default_listener.cafile, saveptr)) return MOSQ_ERR_INVAL;
-					}else{
-						if(config->listeners[config->listener_count-1].psk){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single listener.");
-							return MOSQ_ERR_INVAL;
-						}
-						if(_conf_parse_string(&token, "cafile", &config->listeners[config->listener_count-1].cafile, saveptr)) return MOSQ_ERR_INVAL;
+					if(cur_listener->psk){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single listener.");
+						return MOSQ_ERR_INVAL;
 					}
+					if(_conf_parse_string(&token, "cafile", &cur_listener->cafile, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");
 #endif
 				}else if(!strcmp(token, "capath")){
 #ifdef WITH_SSL
 					if(reload) continue; // Listeners not valid for reloading.
-					if(config->listener_count == 0){
-						if(_conf_parse_string(&token, "capath", &config->default_listener.capath, saveptr)) return MOSQ_ERR_INVAL;
-					}else{
-						if(_conf_parse_string(&token, "capath", &config->listeners[config->listener_count-1].capath, saveptr)) return MOSQ_ERR_INVAL;
-					}
+					if(_conf_parse_string(&token, "capath", &cur_listener->capath, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");
 #endif
 				}else if(!strcmp(token, "certfile")){
 #ifdef WITH_SSL
 					if(reload) continue; // Listeners not valid for reloading.
-					if(config->listener_count == 0){
-						if(config->default_listener.psk){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single listener.");
-							return MOSQ_ERR_INVAL;
-						}
-						if(_conf_parse_string(&token, "certfile", &config->default_listener.certfile, saveptr)) return MOSQ_ERR_INVAL;
-					}else{
-						if(config->listeners[config->listener_count-1].psk){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single listener.");
-							return MOSQ_ERR_INVAL;
-						}
-						if(_conf_parse_string(&token, "certfile", &config->listeners[config->listener_count-1].certfile, saveptr)) return MOSQ_ERR_INVAL;
+					if(cur_listener->psk){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single listener.");
+						return MOSQ_ERR_INVAL;
 					}
+					if(_conf_parse_string(&token, "certfile", &cur_listener->certfile, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");
 #endif
 				}else if(!strcmp(token, "ciphers")){
 #ifdef WITH_SSL
 					if(reload) continue; // Listeners not valid for reloading.
-					if(config->listener_count == 0){
-						if(_conf_parse_string(&token, "ciphers", &config->default_listener.ciphers, saveptr)) return MOSQ_ERR_INVAL;
-					}else{
-						if(_conf_parse_string(&token, "ciphers", &config->listeners[config->listener_count-1].ciphers, saveptr)) return MOSQ_ERR_INVAL;
-					}
+					if(_conf_parse_string(&token, "ciphers", &cur_listener->ciphers, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");
 #endif
@@ -748,11 +725,7 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 				}else if(!strcmp(token, "crlfile")){
 #ifdef WITH_SSL
 					if(reload) continue; // Listeners not valid for reloading.
-					if(config->listener_count == 0){
-						if(_conf_parse_string(&token, "crlfile", &config->default_listener.crlfile, saveptr)) return MOSQ_ERR_INVAL;
-					}else{
-						if(_conf_parse_string(&token, "crlfile", &config->listeners[config->listener_count-1].crlfile, saveptr)) return MOSQ_ERR_INVAL;
-					}
+					if(_conf_parse_string(&token, "crlfile", &cur_listener->crlfile, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");
 #endif
@@ -848,11 +821,7 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 				}else if(!strcmp(token, "keyfile")){
 #ifdef WITH_SSL
 					if(reload) continue; // Listeners not valid for reloading.
-					if(config->listener_count == 0){
-						if(_conf_parse_string(&token, "keyfile", &config->default_listener.keyfile, saveptr)) return MOSQ_ERR_INVAL;
-					}else{
-						if(_conf_parse_string(&token, "keyfile", &config->listeners[config->listener_count-1].keyfile, saveptr)) return MOSQ_ERR_INVAL;
-					}
+					if(_conf_parse_string(&token, "keyfile", &cur_listener->keyfile, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");
 #endif
@@ -871,28 +840,29 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid port value (%d).", port_tmp);
 							return MOSQ_ERR_INVAL;
 						}
-						config->listeners[config->listener_count-1].mount_point = NULL;
-						config->listeners[config->listener_count-1].port = port_tmp;
-						config->listeners[config->listener_count-1].socks = NULL;
-						config->listeners[config->listener_count-1].sock_count = 0;
-						config->listeners[config->listener_count-1].client_count = 0;
+						cur_listener = &config->listeners[config->listener_count-1];
+						cur_listener->mount_point = NULL;
+						cur_listener->port = port_tmp;
+						cur_listener->socks = NULL;
+						cur_listener->sock_count = 0;
+						cur_listener->client_count = 0;
 #ifdef WITH_SSL
-						config->listeners[config->listener_count-1].cafile = NULL;
-						config->listeners[config->listener_count-1].capath = NULL;
-						config->listeners[config->listener_count-1].certfile = NULL;
-						config->listeners[config->listener_count-1].keyfile = NULL;
-						config->listeners[config->listener_count-1].ciphers = NULL;
-						config->listeners[config->listener_count-1].psk = NULL;
-						config->listeners[config->listener_count-1].psk_hint = NULL;
-						config->listeners[config->listener_count-1].require_certificate = false;
-						config->listeners[config->listener_count-1].ssl_ctx = NULL;
-						config->listeners[config->listener_count-1].crlfile = NULL;
+						cur_listener->cafile = NULL;
+						cur_listener->capath = NULL;
+						cur_listener->certfile = NULL;
+						cur_listener->keyfile = NULL;
+						cur_listener->ciphers = NULL;
+						cur_listener->psk = NULL;
+						cur_listener->psk_hint = NULL;
+						cur_listener->require_certificate = false;
+						cur_listener->ssl_ctx = NULL;
+						cur_listener->crlfile = NULL;
 #endif
 						token = strtok_r(NULL, " ", &saveptr);
 						if(token){
-							config->listeners[config->listener_count-1].host = _mosquitto_strdup(token);
+							cur_listener->host = _mosquitto_strdup(token);
 						}else{
-							config->listeners[config->listener_count-1].host = NULL;
+							cur_listener->host = NULL;
 						}
 					}else{
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty listener value in configuration.");
@@ -949,13 +919,8 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 					if(reload) continue; // Listeners not valid for reloading.
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
-						if(config->listener_count > 0){
-							config->listeners[config->listener_count-1].max_connections = atoi(token);
-							if(config->listeners[config->listener_count-1].max_connections < 0) config->listeners[config->listener_count-1].max_connections = -1;
-						}else{
-							config->default_listener.max_connections = atoi(token);
-							if(config->default_listener.max_connections < 0) config->default_listener.max_connections = -1;
-						}
+						cur_listener->max_connections = atoi(token);
+						if(cur_listener->max_connections < 0) cur_listener->max_connections = -1;
 					}else{
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty max_connections value in configuration.");
 					}
@@ -981,7 +946,7 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: You must use create a listener before using the mount_point option in the configuration file.");
 						return MOSQ_ERR_INVAL;
 					}
-					if(_conf_parse_string(&token, "mount_point", &config->listeners[config->listener_count-1].mount_point, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_string(&token, "mount_point", &cur_listener->mount_point, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "notifications")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
@@ -1092,30 +1057,18 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 				}else if(!strcmp(token, "psk")){
 #if defined(WITH_SSL) && defined(WITH_TLS_PSK)
 					if(reload) continue; // Listeners not valid for reloading.
-					if(config->listener_count == 0){
-						if(config->default_listener.cafile || config->default_listener.capath){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single listener.");
-							return MOSQ_ERR_INVAL;
-						}
-						if(_conf_parse_string(&token, "psk", &config->default_listener.psk, saveptr)) return MOSQ_ERR_INVAL;
-					}else{
-						if(config->listeners[config->listener_count-1].cafile || config->default_listener.capath){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single listener.");
-							return MOSQ_ERR_INVAL;
-						}
-						if(_conf_parse_string(&token, "psk", &config->listeners[config->listener_count-1].psk, saveptr)) return MOSQ_ERR_INVAL;
+					if(cur_listener->cafile || config->default_listener.capath){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single listener.");
+						return MOSQ_ERR_INVAL;
 					}
+					if(_conf_parse_string(&token, "psk", &cur_listener->psk, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL/TLS-PSK support not available.");
 #endif
 				}else if(!strcmp(token, "psk_hint")){
 #if defined(WITH_SSL) && defined(WITH_TLS_PSK)
 					if(reload) continue; // Listeners not valid for reloading.
-					if(config->listener_count == 0){
-						if(_conf_parse_string(&token, "psk_hint", &config->default_listener.psk_hint, saveptr)) return MOSQ_ERR_INVAL;
-					}else{
-						if(_conf_parse_string(&token, "psk_hint", &config->listeners[config->listener_count-1].psk_hint, saveptr)) return MOSQ_ERR_INVAL;
-					}
+					if(_conf_parse_string(&token, "psk_hint", &cur_listener->psk_hint, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL/TLS-PSK support not available.");
 #endif
@@ -1124,11 +1077,7 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 				}else if(!strcmp(token, "require_certificate")){
 #ifdef WITH_SSL
 					if(reload) continue; // Listeners not valid for reloading.
-					if(config->listener_count == 0){
-						if(_conf_parse_bool(&token, "require_certificate", &config->default_listener.require_certificate, saveptr)) return MOSQ_ERR_INVAL;
-					}else{
-						if(_conf_parse_bool(&token, "require_certificate", &config->listeners[config->listener_count-1].require_certificate, saveptr)) return MOSQ_ERR_INVAL;
-					}
+					if(_conf_parse_bool(&token, "require_certificate", &cur_listener->require_certificate, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");
 #endif
@@ -1366,11 +1315,7 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 				}else if(!strcmp(token, "use_cn_as_username")){
 #ifdef WITH_SSL
 					if(reload) continue; // Listeners not valid for reloading.
-					if(config->listener_count == 0){
-						if(_conf_parse_bool(&token, "use_cn_as_username", &config->default_listener.use_cn_as_username, saveptr)) return MOSQ_ERR_INVAL;
-					}else{
-						if(_conf_parse_bool(&token, "use_cn_as_username", &config->listeners[config->listener_count-1].use_cn_as_username, saveptr)) return MOSQ_ERR_INVAL;
-					}
+					if(_conf_parse_bool(&token, "use_cn_as_username", &cur_listener->use_cn_as_username, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");
 #endif
