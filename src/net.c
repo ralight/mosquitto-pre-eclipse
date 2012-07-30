@@ -157,6 +157,10 @@ int mqtt3_socket_accept(struct _mosquitto_db *db, int listensock)
 				if(db->config->listeners[i].socks[j] == listensock){
 					if(db->config->listeners[i].ssl_ctx){
 						new_context->ssl = SSL_new(db->config->listeners[i].ssl_ctx);
+						if(!new_context->ssl){
+							COMPAT_CLOSE(new_sock);
+							return -1;
+						}
 						SSL_set_ex_data(new_context->ssl, tls_ex_index_context, new_context);
 						if(db->config->listeners[i].psk){
 							SSL_set_ex_data(new_context->ssl, tls_ex_index_psk, db->config->listeners[i].psk);
