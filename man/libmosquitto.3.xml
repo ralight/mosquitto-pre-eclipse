@@ -110,6 +110,7 @@
 					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
 					<paramdef>const char *<parameter>psk</parameter></paramdef>
 					<paramdef>const char *<parameter>identity</parameter></paramdef>
+					<paramdef>const char *<parameter>ciphers</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 		</refsect2>
 

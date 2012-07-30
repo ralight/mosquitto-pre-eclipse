@@ -470,7 +470,7 @@ int mosquitto_tls_opts_set(struct mosquitto *mosq, int cert_reqs, const char *tl
 }
 
 
-int mosquitto_tls_psk_set(struct mosquitto *mosq, const char *psk, const char *identity)
+int mosquitto_tls_psk_set(struct mosquitto *mosq, const char *psk, const char *identity, const char *ciphers)
 {
 #if defined(WITH_TLS) && defined(WITH_TLS_PSK)
 	if(!mosq || !psk || !identity) return MOSQ_ERR_INVAL;
@@ -482,6 +482,12 @@ int mosquitto_tls_psk_set(struct mosquitto *mosq, const char *psk, const char *i
 	if(!mosq->tls_psk_identity){
 		_mosquitto_free(mosq->tls_psk);
 		return MOSQ_ERR_NOMEM;
+	}
+	if(ciphers){
+		mosq->tls_ciphers = _mosquitto_strdup(ciphers);
+		if(!mosq->tls_ciphers) return MOSQ_ERR_NOMEM;
+	}else{
+		mosq->tls_ciphers = NULL;
 	}
 
 	return MOSQ_ERR_SUCCESS;
@@ -723,7 +729,7 @@ const char *mosquitto_strerror(int mosq_errno)
 		case MOSQ_ERR_CONN_LOST:
 			return "The connection was lost.";
 		case MOSQ_ERR_TLS:
-			return "An TLS error occurred.";
+			return "A TLS error occurred.";
 		case MOSQ_ERR_PAYLOAD_SIZE:
 			return "Payload too large.";
 		case MOSQ_ERR_NOT_SUPPORTED:
