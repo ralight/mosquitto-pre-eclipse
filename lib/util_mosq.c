@@ -31,6 +31,10 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <time.h>
 
+#if defined(WITH_SSL) && defined(WITH_TLS_PSK)
+#include <openssl/ssl.h>
+#endif
+
 #include <mosquitto.h>
 #include <memory_mosq.h>
 #include <net_mosq.h>
@@ -268,3 +272,23 @@ int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result
 	return MOSQ_ERR_SUCCESS;
 }
 
+#if defined(WITH_SSL) && defined(WITH_TLS_PSK)
+int _mosquitto_hex2bin(const char *hex, unsigned char *bin, int bin_max_len)
+{
+	BIGNUM *bn = NULL;
+	int len;
+
+	if(BN_hex2bn(&bn, hex) == 0){
+		if(bn) BN_free(bn);
+		return 0;
+	}
+	if(BN_num_bytes(bn) > bin_max_len){
+		BN_free(bn);
+		return 0;
+	}
+
+	len = BN_bn2bin(bn, bin);
+	BN_free(bn);
+	return len;
+}
+#endif
