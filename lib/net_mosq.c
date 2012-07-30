@@ -177,6 +177,7 @@ int _mosquitto_socket_close(struct mosquitto *mosq)
 	return rc;
 }
 
+#ifdef WITH_TLS_PSK
 static unsigned int psk_client_callback(SSL *ssl, const char *hint,
 		char *identity, unsigned int max_identity_len,
 		unsigned char *psk, unsigned int max_psk_len)
@@ -193,6 +194,7 @@ static unsigned int psk_client_callback(SSL *ssl, const char *hint,
 	if (len < 0) return 0;
 	return len;
 }
+#endif
 
 /* Create a socket and connect it to 'ip' on port 'port'.
  * Returns -1 on failure (ip is NULL, socket creation/connection error)
@@ -371,8 +373,10 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 					return MOSQ_ERR_TLS;
 				}
 			}
+#ifdef WITH_TLS_PSK
 		}else if(mosq->tls_psk){
 			SSL_CTX_set_psk_client_callback(mosq->ssl_ctx, psk_client_callback);
+#endif
 		}
 
 		mosq->ssl = SSL_new(mosq->ssl_ctx);
