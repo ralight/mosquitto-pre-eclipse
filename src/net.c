@@ -193,7 +193,7 @@ static int client_certificate_verify(int preverify_ok, X509_STORE_CTX *ctx)
 }
 #endif
 
-#ifdef WITH_SSL
+#if defined(WITH_SSL) && defined(WITH_TLS_PSK)
 static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned char *psk, unsigned int max_psk_len)
 {
 	// FIXME struct mosquitto *context;
@@ -332,37 +332,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 	/* We need to have at least one working socket. */
 	if(listener->sock_count > 0){
 #ifdef WITH_SSL
-		if(ssl_ex_index_context == -1){
-			ssl_ex_index_context = SSL_get_ex_new_index(0, "client context", NULL, NULL, NULL);
-		}
-		if(ssl_ex_index_psk == -1){
-			ssl_ex_index_psk = SSL_get_ex_new_index(0, "psk", NULL, NULL, NULL);
-		}
-		if(listener->psk){
-			listener->ssl_ctx = SSL_CTX_new(TLSv1_server_method());
-			if(!listener->ssl_ctx){
-				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create SSL context.");
-				COMPAT_CLOSE(sock);
-				return 1;
-			}
-			SSL_CTX_set_psk_server_callback(listener->ssl_ctx, psk_server_callback);
-			if(listener->psk_hint){
-				rc = SSL_CTX_use_psk_identity_hint(listener->ssl_ctx, listener->psk_hint);
-				if(rc == 0){
-					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set SSL psk hint.");
-					COMPAT_CLOSE(sock);
-					return 1;
-				}
-			}
-			if(listener->ciphers){
-				rc = SSL_CTX_set_cipher_list(listener->ssl_ctx, listener->ciphers);
-				if(rc == 0){
-					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set SSL ciphers. Check cipher list \"%s\".", listener->ciphers);
-					COMPAT_CLOSE(sock);
-					return 1;
-				}
-			}
-		}else if((listener->cafile || listener->capath) && listener->certfile && listener->keyfile){
+		if((listener->cafile || listener->capath) && listener->certfile && listener->keyfile){
 			listener->ssl_ctx = SSL_CTX_new(TLSv1_server_method());
 			if(!listener->ssl_ctx){
 				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create SSL context.");
@@ -430,8 +400,42 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 				}
 				X509_STORE_set_flags(store, X509_V_FLAG_CRL_CHECK);
 			}
+
+#  ifdef WITH_TLS_PSK
+		}else if(listener->psk){
+			if(ssl_ex_index_context == -1){
+				ssl_ex_index_context = SSL_get_ex_new_index(0, "client context", NULL, NULL, NULL);
+			}
+			if(ssl_ex_index_psk == -1){
+				ssl_ex_index_psk = SSL_get_ex_new_index(0, "psk", NULL, NULL, NULL);
+			}
+
+			listener->ssl_ctx = SSL_CTX_new(TLSv1_server_method());
+			if(!listener->ssl_ctx){
+				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create SSL context.");
+				COMPAT_CLOSE(sock);
+				return 1;
+			}
+			SSL_CTX_set_psk_server_callback(listener->ssl_ctx, psk_server_callback);
+			if(listener->psk_hint){
+				rc = SSL_CTX_use_psk_identity_hint(listener->ssl_ctx, listener->psk_hint);
+				if(rc == 0){
+					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set SSL psk hint.");
+					COMPAT_CLOSE(sock);
+					return 1;
+				}
+			}
+			if(listener->ciphers){
+				rc = SSL_CTX_set_cipher_list(listener->ssl_ctx, listener->ciphers);
+				if(rc == 0){
+					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set SSL ciphers. Check cipher list \"%s\".", listener->ciphers);
+					COMPAT_CLOSE(sock);
+					return 1;
+				}
+			}
+#  endif /* WITH_TLS_PSK */
 		}
-#endif
+#endif /* WITH_SSL */
 		return 0;
 	}else{
 		return 1;

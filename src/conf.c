@@ -597,7 +597,7 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or SSL support not available.");
 #endif
 				}else if(!strcmp(token, "cafile")){
-#ifdef WITH_SSL
+#if defined(WITH_SSL)
 					if(reload) continue; // Listeners not valid for reloading.
 					if(config->listener_count == 0){
 						if(config->default_listener.psk){
@@ -1090,7 +1090,7 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 					}
 					config->default_listener.port = port_tmp;
 				}else if(!strcmp(token, "psk")){
-#ifdef WITH_SSL
+#if defined(WITH_SSL) && defined(WITH_TLS_PSK)
 					if(reload) continue; // Listeners not valid for reloading.
 					if(config->listener_count == 0){
 						if(config->default_listener.cafile || config->default_listener.capath){
@@ -1106,10 +1106,10 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 						if(_conf_parse_string(&token, "psk", &config->listeners[config->listener_count-1].psk, saveptr)) return MOSQ_ERR_INVAL;
 					}
 #else
-					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL/TLS-PSK support not available.");
 #endif
 				}else if(!strcmp(token, "psk_hint")){
-#ifdef WITH_SSL
+#if defined(WITH_SSL) && defined(WITH_TLS_PSK)
 					if(reload) continue; // Listeners not valid for reloading.
 					if(config->listener_count == 0){
 						if(_conf_parse_string(&token, "psk_hint", &config->default_listener.psk_hint, saveptr)) return MOSQ_ERR_INVAL;
@@ -1117,7 +1117,7 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 						if(_conf_parse_string(&token, "psk_hint", &config->listeners[config->listener_count-1].psk_hint, saveptr)) return MOSQ_ERR_INVAL;
 					}
 #else
-					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL/TLS-PSK support not available.");
 #endif
 				}else if(!strcmp(token, "queue_qos0_messages")){
 					if(_conf_parse_bool(&token, token, &config->queue_qos0_messages, saveptr)) return MOSQ_ERR_INVAL;
