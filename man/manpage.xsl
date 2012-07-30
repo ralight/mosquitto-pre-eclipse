@@ -8,4 +8,6 @@
 	<xsl:param name="man.base.url.for.relative.links">http://mosquitto.org/man/</xsl:param>
 	<!-- Don't output filename when generating. -->
 	<xsl:param name="man.output.quietly" select="1"></xsl:param>
+	<!-- Generate ansi style function synopses. -->
+	<xsl:param name="man.funcsynopsis.style">ansi</xsl:param>
 </xsl:stylesheet>
