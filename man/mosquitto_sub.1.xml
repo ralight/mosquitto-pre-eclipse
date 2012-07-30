@@ -44,6 +44,9 @@
 				</group>
 				<arg>--cert <replaceable>file</replaceable></arg>
 				<arg>--key <replaceable>file</replaceable></arg>
+			</arg> |<arg>
+				<arg choice='plain'>--psk <replaceable>hex-key</replaceable></arg>
+				<arg choice='plain'>--psk-identity <replaceable>identity</replaceable></arg>
 			</arg>
 			<arg choice='plain' rep='repeat'>-t <replaceable>message-topic</replaceable></arg>
 		</cmdsynopsis>
@@ -183,6 +186,24 @@
 					the broker. Using this argument without also specifying a
 					username is invalid. This requires a broker that supports
 					MQTT v3.1.  See also the <option>--username</option> option.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>--psk</option></term>
+				<listitem>
+					<para>Provide the hexadecimal (no leading 0x)
+						pre-shared-key matching the one used on the broker to
+						use TLS-PSK encryption support.
+						<option>--psk-identity</option> must also be provided
+						to enable TLS-PSK.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>--psk-identity</option></term>
+				<listitem>
+					<para>The client identity to use with TLS-PSK support. This
+						may be used instead of a username if the broker is
+						configured to do so.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

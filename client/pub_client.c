@@ -209,6 +209,7 @@ void print_usage(void)
 	printf("                     [-u username [-P password]]\n");
 	printf("                     [--will-topic [--will-payload payload] [--will-qos qos] [--will-retain]]\n");
 	printf("                     [{--cafile file | --capath dir} [--cert file] [--key file]]\n");
+	printf("                     [--psk hex-key --psk-identity identity]\n");
 	printf("       mosquitto_pub --help\n\n");
 	printf(" -d : enable debug messages.\n");
 	printf(" -f : send the contents of a file as the message.\n");
@@ -240,6 +241,8 @@ void print_usage(void)
 	printf("            communication.\n");
 	printf(" --cert : client certificate for authentication, if required by server.\n");
 	printf(" --key : client private key for authentication, if required by server.\n");
+	printf(" --psk : pre-shared-key in hexadecimal (no leading 0x) to enable TLS-PSK mode.\n");
+	printf(" --psk-identity : client identity string for TLS-PSK mode.\n");
 	printf("\nSee http://mosquitto.org/ for more information.\n\n");
 }
 
@@ -270,6 +273,9 @@ int main(int argc, char *argv[])
 	char *capath = NULL;
 	char *certfile = NULL;
 	char *keyfile = NULL;
+
+	char *psk = NULL;
+	char *psk_identity = NULL;
 
 	for(i=1; i<argc; i++){
 		if(!strcmp(argv[i], "-p") || !strcmp(argv[i], "--port")){
@@ -533,6 +539,15 @@ int main(int argc, char *argv[])
 		print_usage();
 		return 1;
 	}
+	if((cafile || capath) && psk){
+		if(!quiet) fprintf(stderr, "Error: Only one of --psk or --cafile/--capath may be used at once.\n");
+		return 1;
+	}
+	if(psk && !psk_identity){
+		if(!quiet) fprintf(stderr, "Error: --psk-identity required if --psk used.\n");
+		return 1;
+	}
+
 	mosquitto_lib_init();
 
 	if(id_prefix){
@@ -585,6 +600,11 @@ int main(int argc, char *argv[])
 	}
 	if((cafile || capath) && mosquitto_tls_set(mosq, cafile, capath, certfile, keyfile, NULL)){
 		if(!quiet) fprintf(stderr, "Error: Problem setting TLS options.\n");
+		mosquitto_lib_cleanup();
+		return 1;
+	}
+	if(psk && mosquitto_tls_psk_set(mosq, psk, psk_identity, NULL)){
+		if(!quiet) fprintf(stderr, "Error: Problem setting TLS-PSK options.\n");
 		mosquitto_lib_cleanup();
 		return 1;
 	}
