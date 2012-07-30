@@ -475,6 +475,10 @@ int mosquitto_tls_psk_set(struct mosquitto *mosq, const char *psk, const char *i
 #if defined(WITH_TLS) && defined(WITH_TLS_PSK)
 	if(!mosq || !psk || !identity) return MOSQ_ERR_INVAL;
 
+	/* Check for hex only digits */
+	if(strspn(psk, "0123456789abcdefABCDEF") < strlen(psk)){
+		return MOSQ_ERR_INVAL;
+	}
 	mosq->tls_psk = _mosquitto_strdup(psk);
 	if(!mosq->tls_psk) return MOSQ_ERR_NOMEM;
 

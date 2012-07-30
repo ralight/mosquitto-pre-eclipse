@@ -1062,6 +1062,11 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 						return MOSQ_ERR_INVAL;
 					}
 					if(_conf_parse_string(&token, "psk", &cur_listener->psk, saveptr)) return MOSQ_ERR_INVAL;
+					/* Check for hex only digits */
+					if(strspn(cur_listener->psk, "0123456789abcdefABCDEF") < strlen(cur_listener->psk)){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: psk must only contain hexadecimal characters.");
+						return MOSQ_ERR_INVAL;
+					}
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS/TLS-PSK support not available.");
 #endif
