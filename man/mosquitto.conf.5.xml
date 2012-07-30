@@ -532,10 +532,10 @@
 					</listitem>
 				</varlistentry>
 				<varlistentry>
-					<term><option>use_cn_as_username</option> [ true | false ]</term>
+					<term><option>use_identity_as_username</option> [ true | false ]</term>
 					<listitem>
 						<para>If require_certificate is true, you may set
-							use_cn_as_username to true to use the CN value from the
+							use_identity_as_username to true to use the CN value from the
 							client certificate as a username. If this is true, the
 							password_file option will not be used for this
 							listener.</para>

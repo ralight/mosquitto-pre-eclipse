@@ -91,7 +91,7 @@ struct _mqtt3_listener {
 	bool require_certificate;
 	SSL_CTX *ssl_ctx;
 	char *crlfile;
-	bool use_cn_as_username;
+	bool use_identity_as_username;
 #endif
 };
 

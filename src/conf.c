@@ -122,7 +122,7 @@ void mqtt3_config_init(mqtt3_config *config)
 	config->default_listener.psk_hint = NULL;
 	config->default_listener.require_certificate = false;
 	config->default_listener.crlfile = NULL;
-	config->default_listener.use_cn_as_username = false;
+	config->default_listener.use_identity_as_username = false;
 #endif
 	config->listeners = NULL;
 	config->listener_count = 0;
@@ -292,7 +292,7 @@ int mqtt3_config_parse_args(mqtt3_config *config, int argc, char *argv[])
 		config->listeners[config->listener_count-1].require_certificate = config->default_listener.require_certificate;
 		config->listeners[config->listener_count-1].ssl_ctx = NULL;
 		config->listeners[config->listener_count-1].crlfile = config->default_listener.crlfile;
-		config->listeners[config->listener_count-1].use_cn_as_username = config->default_listener.use_cn_as_username;
+		config->listeners[config->listener_count-1].use_identity_as_username = config->default_listener.use_identity_as_username;
 #endif
 	}
 
@@ -1312,10 +1312,10 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
-				}else if(!strcmp(token, "use_cn_as_username")){
+				}else if(!strcmp(token, "use_identity_as_username")){
 #ifdef WITH_SSL
 					if(reload) continue; // Listeners not valid for reloading.
-					if(_conf_parse_bool(&token, "use_cn_as_username", &cur_listener->use_cn_as_username, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_bool(&token, "use_identity_as_username", &cur_listener->use_identity_as_username, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: SSL support not available.");
 #endif

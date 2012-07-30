@@ -186,7 +186,7 @@ int mqtt3_handle_connect(mosquitto_db *db, struct mosquitto *context)
 	}
 
 #ifdef WITH_SSL
-	if(context->listener->use_cn_as_username){
+	if(context->listener->use_identity_as_username){
 		if(!context->ssl){
 			_mosquitto_send_connack(context, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
 			mqtt3_context_disconnect(db, context);
