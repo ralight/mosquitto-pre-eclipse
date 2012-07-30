@@ -4,6 +4,8 @@
 Broker:
 
 - Add SSL/TLS support.
+- Add TLS-PSK support, providing a simpler encryption method for constrained
+  devices.
 - Add $SYS/broker/publish/messages/{sent|received} to show the number of
   PUBLISH messages sent/received.
 - Add $SYS/broker/publish/bytes/{sent|received} to show the number of
@@ -48,6 +50,8 @@ Broker:
 Client library:
 
 - Add SSL/TLS support.
+- Add TLS-PSK support, providing a simpler encryption method for constrained
+  devices.
 - Add "struct mosquitto *mosq" parameter for all callbacks in the client
   library. This is a binary incompatible change so the soversion of the
   libraries has been incremented. The new parameter should make it easier to

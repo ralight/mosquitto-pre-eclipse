@@ -125,6 +125,7 @@ void print_usage(void)
 	printf("                     [-u username [-P password]]\n");
 	printf("                     [--will-topic [--will-payload payload] [--will-qos qos] [--will-retain]]\n");
 	printf("                     [{--cafile file | --capath dir} [--cert file] [--key file]]\n");
+	printf("                     [--psk hex-key --psk-identity identity]\n");
 	printf("       mosquitto_sub --help\n\n");
 	printf(" -c : disable 'clean session' (store subscription and pending messages when client disconnects).\n");
 	printf(" -d : enable debug messages.\n");
@@ -148,11 +149,13 @@ void print_usage(void)
 	printf(" --will-retain : if given, make the client Will retained.\n");
 	printf(" --will-topic : the topic on which to publish the client Will.\n");
 	printf(" --cafile : path to a file containing trusted CA certificates to enable encrypted\n");
-	printf("            communication.\n");
+	printf("            certificate based communication.\n");
 	printf(" --capath : path to a directory containing trusted CA certificates to enable encrypted\n");
 	printf("            communication.\n");
 	printf(" --cert : client certificate for authentication, if required by server.\n");
 	printf(" --key : client private key for authentication, if required by server.\n");
+	printf(" --psk : pre-shared-key in hexadecimal (no leading 0x) to enable TLS-PSK mode.\n");
+	printf(" --psk-identity : client identity string for TLS-PSK mode.\n");
 	printf("\nSee http://mosquitto.org/ for more information.\n\n");
 }
 
@@ -182,6 +185,9 @@ int main(int argc, char *argv[])
 	char *capath = NULL;
 	char *certfile = NULL;
 	char *keyfile = NULL;
+
+	char *psk = NULL;
+	char *psk_identity = NULL;
 
 	memset(&ud, 0, sizeof(struct userdata));
 
@@ -294,6 +300,24 @@ int main(int argc, char *argv[])
 				keyfile = argv[i+1];
 			}
 			i++;
+		}else if(!strcmp(argv[i], "--psk")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --psk argument given but no key specified.\n\n");
+				print_usage();
+				return 1;
+			}else{
+				psk = argv[i+1];
+			}
+			i++;
+		}else if(!strcmp(argv[i], "--psk-identity")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --psk-identity argument given but no identity specified.\n\n");
+				print_usage();
+				return 1;
+			}else{
+				psk_identity = argv[i+1];
+			}
+			i++;
 		}else if(!strcmp(argv[i], "-q") || !strcmp(argv[i], "--qos")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: -q argument given but no QoS specified.\n\n");
@@ -381,6 +405,7 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 	}
+
 	if(clean_session == false && (id_prefix || !id)){
 		if(!ud.quiet) fprintf(stderr, "Error: You must provide a client id if you are using the -c option.\n");
 		return 1;
@@ -409,6 +434,15 @@ int main(int argc, char *argv[])
 		print_usage();
 		return 1;
 	}
+	if((cafile || capath) && psk){
+		if(!ud.quiet) fprintf(stderr, "Error: Only one of --psk or --cafile/--capath may be used at once.\n");
+		return 1;
+	}
+	if(psk && !psk_identity){
+		if(!ud.quiet) fprintf(stderr, "Error: --psk-identity required if --psk used.\n");
+		return 1;
+	}
+
 	mosquitto_lib_init();
 
 	if(id_prefix){
@@ -461,6 +495,11 @@ int main(int argc, char *argv[])
 	}
 	if((cafile || capath) && mosquitto_tls_set(mosq, cafile, capath, certfile, keyfile, NULL)){
 		if(!ud.quiet) fprintf(stderr, "Error: Problem setting TLS options.\n");
+		mosquitto_lib_cleanup();
+		return 1;
+	}
+	if(psk && mosquitto_tls_psk_set(mosq, psk, psk_identity, NULL)){
+		if(!ud.quiet) fprintf(stderr, "Error: Problem setting TLS-PSK options.\n");
 		mosquitto_lib_cleanup();
 		return 1;
 	}
