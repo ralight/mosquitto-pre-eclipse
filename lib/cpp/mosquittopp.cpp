@@ -246,4 +246,9 @@ int mosquittopp::tls_opts_set(int cert_reqs, const char *tls_version, const char
 	return mosquitto_tls_opts_set(m_mosq, cert_reqs, tls_version, ciphers);
 }
 
+int mosquittopp::tls_psk_set(const char *psk, const char *identity, const char *ciphers)
+{
+	return mosquitto_tls_psk_set(m_mosq, psk, identity, ciphers);
+}
+
 }
