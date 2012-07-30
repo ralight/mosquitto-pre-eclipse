@@ -1,9 +1,4 @@
-INSTALL?=install
-SOVERSION=1
-CLIENT_CFLAGS=${CFLAGS} -I../lib -Wall -ggdb
-CLIENT_LDFLAGS=${LDFLAGS} -L../lib ../lib/libmosquitto.so.${SOVERSION}
-
-prefix=/usr/local
+include ../config.mk
 
 .PHONY: all install uninstall reallyclean clean
 

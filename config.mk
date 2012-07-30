@@ -66,6 +66,9 @@ WITH_MEMORY_TRACKING:=yes
 VERSION=0.15.90
 TIMESTAMP:=$(shell date "+%F %T%z")
 
+# Client library SO version. Bump if incompatible API/ABI changes are made.
+SOVERSION=1
+
 # Man page generation requires xsltproc and docbook-xsl
 XSLTPROC=xsltproc
 # For html generation
@@ -82,9 +85,16 @@ endif
 
 LIB_CFLAGS:=${CFLAGS} -I. -I.. -I../lib
 BROKER_CFLAGS:=${LIB_CFLAGS} -DVERSION="\"${VERSION}\"" -DTIMESTAMP="\"${TIMESTAMP}\"" -DWITH_BROKER
+CLIENT_CFLAGS:=${CFLAGS} -I../lib
 
 BROKER_LIBS:=-ldl
 LIB_LIBS:=
+
+CLIENT_LDFLAGS:=$(LDFLAGS) -L../lib ../lib/libmosquitto.so.${SOVERSION}
+
+ifneq ($(UNAME),SunOS)
+	LIB_LDFLAGS:=$(LIB_LDFLAGS) -Wl,--version-script=linker.version -Wl,-soname,libmosquitto.so.$(SOVERSION)
+endif
 
 ifeq ($(UNAME),QNX)
 	BROKER_LIBS:=$(BROKER_LIBS) -lsocket
