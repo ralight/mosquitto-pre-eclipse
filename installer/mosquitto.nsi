@@ -56,6 +56,7 @@ Section "Files" SecInstall
 	File "..\build\lib\Release\mosquitto.lib"
 	File "..\lib\cpp\mosquittopp.h"
 	File "..\build\lib\cpp\Release\mosquittopp.lib"
+	File "..\src\mosquitto_plugin.h"
 
 	SetOutPath "$INSTDIR\python"
 	File "..\lib\python\mosquitto.py"
@@ -98,6 +99,7 @@ Section "Uninstall"
 	Delete "$INSTDIR\devel\mosquitto.lib"
 	Delete "$INSTDIR\devel\mosquittopp.h"
 	Delete "$INSTDIR\devel\mosquittopp.lib"
+	Delete "$INSTDIR\devel\mosquitto_plugin.h"
 
 	Delete "$INSTDIR\python\mosquitto.py"
 	Delete "$INSTDIR\python\setup.py"
