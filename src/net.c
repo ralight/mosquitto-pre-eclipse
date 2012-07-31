@@ -201,19 +201,17 @@ static int client_certificate_verify(int preverify_ok, X509_STORE_CTX *ctx)
 #if defined(WITH_TLS) && defined(WITH_TLS_PSK)
 static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned char *psk, unsigned int max_psk_len)
 {
-	// FIXME struct mosquitto *context;
+	struct mosquitto *context;
 	char *psk_key;
 	int len;
 
 	if(!identity) return 0;
 
-	/* FIXME
 	context = SSL_get_ex_data(ssl, tls_ex_index_context);
 	if(!context) return 0;
 
 	context->username = _mosquitto_strdup(identity);
 	if(!context->username) return 0;
-	*/
 
 	psk_key = SSL_get_ex_data(ssl, tls_ex_index_psk);
 	if(!psk_key) return 0;

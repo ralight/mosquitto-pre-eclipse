@@ -575,6 +575,17 @@
 					</listitem>
 				</varlistentry>
 				<varlistentry>
+					<term><option>use_identity_as_username</option> [ true | false ]</term>
+					<listitem>
+						<para>Set use_identity_as_username to have the psk
+							identity sent by the client used as its username.
+							The username will be checked as normal, so
+							password_file or another means of authentication
+							checking must be used. No password will be
+							used.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
 					<term><option>ciphers</option> <replaceable>cipher:list</replaceable></term>
 					<listitem>
 						<para>When using PSK, the encryption ciphers used will
