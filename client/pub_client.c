@@ -421,6 +421,24 @@ int main(int argc, char *argv[])
 			}else{
 				mode = MSGMODE_NULL;
 			}
+		}else if(!strcmp(argv[i], "--psk")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --psk argument given but no key specified.\n\n");
+				print_usage();
+				return 1;
+			}else{
+				psk = argv[i+1];
+			}
+			i++;
+		}else if(!strcmp(argv[i], "--psk-identity")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --psk-identity argument given but no identity specified.\n\n");
+				print_usage();
+				return 1;
+			}else{
+				psk_identity = argv[i+1];
+			}
+			i++;
 		}else if(!strcmp(argv[i], "-q") || !strcmp(argv[i], "--qos")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: -q argument given but no QoS specified.\n\n");
