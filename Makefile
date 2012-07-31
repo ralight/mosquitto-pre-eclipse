@@ -27,7 +27,7 @@ reallyclean :
 	$(MAKE) -C test reallyclean
 	-rm -f *.orig
 
-test : all
+test : mosquitto
 	$(MAKE) -C test test
 
 install : mosquitto
