@@ -17,16 +17,12 @@
 	<refsynopsisdiv>
 		<cmdsynopsis>
 			<command>mosquitto</command>
-			<group choice='opt'>
-				<arg><option>-c</option> <replaceable>config file</replaceable></arg>
+			<arg>-c <replaceable>config file</replaceable></arg>
+			<group>
+				<arg choice='plain'>-d</arg>
+				<arg choice='plain'>--daemon</arg>
 			</group>
-			<group choice='opt'>
-				<arg><option>-d</option></arg>
-				<arg><option>--daemon</option></arg>
-			</group>
-			<group choice='opt'>
-				<arg><option>-p</option> <replaceable>port number</replaceable></arg>
-			</group>
+			<arg>-p <replaceable>port number</replaceable></arg>
 		</cmdsynopsis>
 	</refsynopsisdiv>
 

@@ -42,17 +42,20 @@
 				<arg>--will-qos <replaceable>qos</replaceable></arg>
 				<arg>--will-retain</arg>
 			</arg>
-			<arg>
-				<group choice='req'>
-					<arg choice='plain'>--cafile <replaceable>file</replaceable></arg>
-					<arg choice='plain'>--capath <replaceable>dir</replaceable></arg>
-				</group>
-				<arg>--cert <replaceable>file</replaceable></arg>
-				<arg>--key <replaceable>file</replaceable></arg>
-			</arg> |<arg>
-				<arg choice='plain'>--psk <replaceable>hex-key</replaceable></arg>
-				<arg choice='plain'>--psk-identity <replaceable>identity</replaceable></arg>
-			</arg>
+			<group>
+				<arg>
+					<group choice='req'>
+						<arg choice='plain'>--cafile <replaceable>file</replaceable></arg>
+						<arg choice='plain'>--capath <replaceable>dir</replaceable></arg>
+					</group>
+					<arg>--cert <replaceable>file</replaceable></arg>
+					<arg>--key <replaceable>file</replaceable></arg>
+				</arg>
+				<arg>
+					<arg choice='plain'>--psk <replaceable>hex-key</replaceable></arg>
+					<arg choice='plain'>--psk-identity <replaceable>identity</replaceable></arg>
+				</arg>
+			</group>
 			<arg choice='plain'>-t <replaceable>message-topic</replaceable></arg>
 		</cmdsynopsis>
 		<cmdsynopsis>
