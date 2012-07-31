@@ -1,9 +1,5 @@
 include ../config.mk
 
-ifneq ($(UNAME),SunOS)
-	LIB_LDFLAGS:=$(LDFLAGS) -Wl,--version-script=linker.version -Wl,-soname,libmosquitto.so.${SOVERSION}
-endif
-
 .PHONY : really clean install
 
 MOSQ_OBJS=mosquitto.o \
