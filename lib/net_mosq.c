@@ -53,6 +53,10 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <netinet/in.h>
 #endif
 
+#ifdef WITH_TLS
+#include <openssl/err.h>
+#endif
+
 #ifdef WITH_BROKER
 #  include <mosquitto_broker.h>
    extern uint64_t g_bytes_received;
@@ -63,9 +67,9 @@ POSSIBILITY OF SUCH DAMAGE.
    extern unsigned long g_pub_msgs_sent;
 #else
 #  include <read_handle.h>
-#  include "logging_mosq.h"
 #endif
 
+#include "logging_mosq.h"
 #include <memory_mosq.h>
 #include <mqtt3_protocol.h>
 #include <net_mosq.h>
@@ -509,6 +513,8 @@ ssize_t _mosquitto_net_read(struct mosquitto *mosq, void *buf, size_t count)
 #ifdef WITH_TLS
 	int ret;
 	int err;
+	char ebuf[256];
+	unsigned long e;
 #endif
 	assert(mosq);
 #ifdef WITH_TLS
@@ -525,8 +531,11 @@ ssize_t _mosquitto_net_read(struct mosquitto *mosq, void *buf, size_t count)
 				mosq->want_write = true;
 				errno = EAGAIN;
 			}else{
-				/* FIXME - probably a protocol error, but better checking here
-				 * would be good. */
+				e = ERR_get_error();
+				while(e){
+					_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "OpenSSL Error: %s", ERR_error_string(e, ebuf));
+					e = ERR_get_error();
+				}
 				errno = EPROTO;
 			}
 		}
@@ -552,6 +561,8 @@ ssize_t _mosquitto_net_write(struct mosquitto *mosq, void *buf, size_t count)
 #ifdef WITH_TLS
 	int ret;
 	int err;
+	char ebuf[256];
+	unsigned long e;
 #endif
 	assert(mosq);
 
@@ -569,8 +580,11 @@ ssize_t _mosquitto_net_write(struct mosquitto *mosq, void *buf, size_t count)
 				mosq->want_write = true;
 				errno = EAGAIN;
 			}else{
-				/* FIXME - probably a protocol error, but better checking here
-				 * would be good. */
+				e = ERR_get_error();
+				while(e){
+					_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "OpenSSL Error: %s", ERR_error_string(e, ebuf));
+					e = ERR_get_error();
+				}
 				errno = EPROTO;
 			}
 		}
