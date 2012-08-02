@@ -23,6 +23,8 @@ import sys
 import time
 from struct import *
 
+import mosq_test
+
 rc = 1
 keepalive = 60
 connect_packet = pack('!BBH6sBBHH17s', 16, 12+2+17,6,"MQIsdp",3,2,keepalive,17,"publish-qos1-test")
@@ -56,36 +58,19 @@ try:
     conn.settimeout(5)
     connect_recvd = conn.recv(256)
 
-    if connect_recvd != connect_packet:
-        print("FAIL: Received incorrect connect.")
-        print("Received: "+connect_recvd+" length="+str(len(connect_recvd)))
-        print("Expected: "+connect_packet+" length="+str(len(connect_packet)))
-    else:
+    if mosq_test.packet_matches("connect", connect_recvd, connect_packet):
         conn.send(connack_packet)
         publish_recvd = conn.recv(256)
 
-        if publish_recvd != publish_packet:
-            print("FAIL: Received incorrect publish.")
-            print("Received: "+publish_recvd+" length="+str(len(publish_recvd)))
-            print("Expected: "+publish_packet+" length="+str(len(publish_packet)))
-        else:
+        if mosq_test.packet_matches("publish", publish_recvd, publish_packet):
             # Delay for > 3 seconds (message retry time)
             publish_recvd = conn.recv(256)
 
-            if publish_recvd != publish_packet_dup:
-                print("FAIL: Received incorrect publish.")
-                print("Received: "+publish_recvd+" length="+str(len(publish_recvd)))
-                print("Expected: "+publish_packet_dup+" length="+str(len(publish_packet_dup)))
-            else:
+            if mosq_test.packet_matches("dup publish", publish_recvd, publish_packet_dup):
                 conn.send(puback_packet)
                 disconnect_recvd = conn.recv(256)
 
-                if disconnect_recvd != disconnect_packet:
-                    print("FAIL: Received incorrect disconnect.")
-                    (cmd, rl) = unpack('!BB', disconnect_recvd)
-                    print("Received: "+str(cmd)+", " + str(rl))
-                    print("Expected: 224, 0")
-                else:
+                if mosq_test.packet_matches("disconnect", disconnect_recvd, disconnect_packet):
                     rc = 0
 
     conn.close()

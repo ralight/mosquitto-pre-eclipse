@@ -23,6 +23,8 @@ import sys
 import time
 from struct import *
 
+import mosq_test
+
 rc = 1
 keepalive = 60
 connect_packet = pack('!BBH6sBBHH17s', 16, 12+2+17,6,"MQIsdp",3,2,keepalive,17,"publish-qos2-test")
@@ -57,34 +59,18 @@ try:
     conn.settimeout(10)
     connect_recvd = conn.recv(256)
 
-    if connect_recvd != connect_packet:
-        print("FAIL: Received incorrect connect.")
-        print("Received: "+connect_recvd+" length="+str(len(connect_recvd)))
-        print("Expected: "+connect_packet+" length="+str(len(connect_packet)))
-    else:
+    if mosq_test.packet_matches("connect", connect_recvd, connect_packet):
         conn.send(connack_packet)
         conn.send(publish_packet)
         pubrec_recvd = conn.recv(256)
 
-        if pubrec_recvd != pubrec_packet:
-            print("FAIL: Received incorrect pubrec.")
-            print("Received: "+pubrec_recvd+" length="+str(len(pubrec_recvd)))
-            print("Expected: "+pubrec_packet+" length="+str(len(pubrec_packet)))
-        else:
+        if mosq_test.packet_matches("pubrec", pubrec_recvd, pubrec_packet):
             # Should be repeated due to timeout
             pubrec_recvd = conn.recv(256)
-            if pubrec_recvd != pubrec_packet:
-                print("FAIL: Received incorrect pubrec.")
-                print("Received: "+pubrec_recvd+" length="+str(len(pubrec_recvd)))
-                print("Expected: "+pubrec_packet+" length="+str(len(pubrec_packet)))
-            else:
+            if mosq_test.packet_matches("pubrec", pubrec_recvd, pubrec_packet):
                 conn.send(pubrel_packet)
                 pubcomp_recvd = conn.recv(256)
-                if pubcomp_recvd != pubcomp_packet:
-                    print("FAIL: Received incorrect pubcomp.")
-                    print("Received: "+pubcomp_recvd+" length="+str(len(pubcomp_recvd)))
-                    print("Expected: "+pubcomp_packet+" length="+str(len(pubcomp_packet)))
-                else:
+                if mosq_test.packet_matches("pubcomp", pubcomp_recvd, pubcomp_packet):
                     rc = 0
 
     conn.close()

@@ -9,6 +9,8 @@ import sys
 import time
 from struct import *
 
+import mosq_test
+
 rc = 1
 keepalive = 60
 mid = 16
@@ -38,19 +40,11 @@ try:
     conn.settimeout(10)
     connect_recvd = conn.recv(256)
 
-    if connect_recvd != connect_packet:
-        print("FAIL: Received incorrect connect.")
-        print("Received: "+connect_recvd+" length="+str(len(connect_recvd)))
-        print("Expected: "+connect_packet+" length="+str(len(connect_packet)))
-    else:
+    if mosq_test.packet_matches("connect", connect_recvd, connect_packet):
         conn.send(connack_packet)
         publish_recvd = conn.recv(256)
 
-        if publish_recvd != publish_packet:
-            print("FAIL: Received incorrect publish.")
-            print("Received: "+publish_recvd+" length="+str(len(publish_recvd)))
-            print("Expected: "+publish_packet+" length="+str(len(publish_packet)))
-        else:
+        if mosq_test.packet_matches("publish", publish_recvd, publish_packet):
             rc = 0
         
     conn.close()
