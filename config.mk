@@ -130,20 +130,10 @@ ifeq ($(WITH_WRAP),yes)
 endif
 
 ifeq ($(WITH_TLS),yes)
-	BROKER_LIBS:=$(BROKER_LIBS) -lssl
-	LIB_LIBS:=$(LIB_LIBS) -lssl
+	BROKER_LIBS:=$(BROKER_LIBS) -lssl -lcrypto
+	LIB_LIBS:=$(LIB_LIBS) -lssl -lcrypto
 	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_TLS
 	LIB_CFLAGS:=$(LIB_CFLAGS) -DWITH_TLS
-
-	ifeq ($(UNAME),cygwin)
-		BROKER_LIBS:=$(BROKER_LIBS) -lcrypto
-		LIB_LIBS:=$(LIB_LIBS) -lcrypto
-	endif
-	
-	ifeq ($(UNAME),SunOS)
-		BROKER_LIBS:=$(BROKER_LIBS) -lcrypto
-		LIB_LIBS:=$(LIB_LIBS) -lcrypto
-	endif
 
 	ifeq ($(WITH_TLS_PSK),yes)
 		BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_TLS_PSK
