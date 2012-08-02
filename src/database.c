@@ -522,6 +522,73 @@ int mqtt3_db_message_store_find(struct mosquitto *context, uint16_t mid, struct 
 	return 1;
 }
 
+/* Called on reconnect to set outgoing messages to a sensible state and force a
+ * retry, and to clear incoming messages. */
+int mqtt3_db_message_reconnect_reset(struct mosquitto *context)
+{
+	mosquitto_client_msg *msg;
+	mosquitto_client_msg *prev = NULL;
+
+	msg = context->msgs;
+	while(msg){
+		if(msg->direction == mosq_md_out){
+			if(msg->state != ms_queued){
+				switch(msg->qos){
+					case 0:
+						msg->state = ms_publish_qos0;
+						break;
+					case 1:
+						msg->state = ms_publish_qos1;
+						break;
+					case 2:
+						msg->state = ms_publish_qos2;
+						break;
+				}
+			}
+		}else{
+			/* Client must resend any partially completed messages. */
+			msg->store->ref_count--;
+			if(prev){
+				prev->next = msg->next;
+				_mosquitto_free(msg);
+				msg = prev;
+			}else{
+				context->msgs = msg->next;
+				_mosquitto_free(msg);
+				msg = context->msgs;
+			}
+		}
+		prev = msg;
+		msg = msg->next;
+	}
+	/* Messages received when the client was disconnected are put
+	 * in the ms_queued state. If we don't change them to the
+	 * appropriate "publish" state, then the queued messages won't
+	 * get sent until the client next receives a message - and they
+	 * will be sent out of order.
+	 * This only sets a single message up to be published, but once
+	 * it is sent the full max_inflight amount of messages will be
+	 * queued up for sending.
+	 */
+	if(context->msgs){
+		if(context->msgs->state == ms_queued){
+			switch(context->msgs->qos){
+				case 0:
+					context->msgs->state = ms_publish_qos0;
+					break;
+				case 1:
+					context->msgs->state = ms_publish_qos1;
+					break;
+				case 2:
+					context->msgs->state = ms_publish_qos2;
+					break;
+			}
+		}
+	}
+
+	return MOSQ_ERR_SUCCESS;
+}
+
 int mqtt3_db_message_timeout_check(mosquitto_db *db, unsigned int timeout)
 {
 	int i;
@@ -636,6 +703,7 @@ int mqtt3_db_message_write(struct mosquitto *context)
 				case ms_publish_qos0:
 					rc = _mosquitto_send_publish(context, mid, topic, payloadlen, payload, qos, retain, retries);
 					if(!rc){
+						tail->dup = 1; /* Any retry attempts are a duplicate. */
 						if(last){
 							last->next = tail->next;
 							tail->store->ref_count--;
@@ -655,6 +723,7 @@ int mqtt3_db_message_write(struct mosquitto *context)
 				case ms_publish_qos1:
 					rc = _mosquitto_send_publish(context, mid, topic, payloadlen, payload, qos, retain, retries);
 					if(!rc){
+						tail->dup = 1; /* Any retry attempts are a duplicate. */
 						tail->state = ms_wait_for_puback;
 					}else{
 						return rc;
@@ -666,6 +735,7 @@ int mqtt3_db_message_write(struct mosquitto *context)
 				case ms_publish_qos2:
 					rc = _mosquitto_send_publish(context, mid, topic, payloadlen, payload, qos, retain, retries);
 					if(!rc){
+						tail->dup = 1; /* Any retry attempts are a duplicate. */
 						tail->state = ms_wait_for_pubrec;
 					}else{
 						return rc;

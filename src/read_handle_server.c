@@ -290,28 +290,7 @@ int mqtt3_handle_connect(mosquitto_db *db, struct mosquitto *context)
 			context->state = mosq_cs_disconnecting;
 			context = db->contexts[i];
 			if(context->msgs){
-				/* Messages received when the client was disconnected are put
-				 * in the ms_queued state. If we don't change them to the
-				 * appropriate "publish" state, then the queued messages won't
-				 * get sent until the client next receives a message - and they
-				 * will be sent out of order.
-				 * This only sets a single message up to be published, but once
-				 * it is sent the full max_inflight amount of messages will be
-				 * queued up for sending.
-				 */
-				if(context->msgs->state == ms_queued && context->msgs->direction == mosq_md_out){
-					switch(context->msgs->qos){
-						case 0:
-							context->msgs->state = ms_publish_qos0;
-							break;
-						case 1:
-							context->msgs->state = ms_publish_qos1;
-							break;
-						case 2:
-							context->msgs->state = ms_publish_qos2;
-							break;
-					}
-				}
+				mqtt3_db_message_reconnect_reset(context);
 			}
 			break;
 		}

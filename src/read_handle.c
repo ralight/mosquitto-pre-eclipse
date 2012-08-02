@@ -244,6 +244,8 @@ int mqtt3_handle_publish(mosquitto_db *db, struct mosquitto *context)
 			}else{
 				res = 0;
 			}
+			/* mqtt3_db_message_insert() returns 2 to indicate dropped message
+			 * due to queue. This isn't an error so don't disconnect them. */
 			if(!res){
 				if(_mosquitto_send_pubrec(context, mid)) rc = 1;
 			}else if(res == 1){
