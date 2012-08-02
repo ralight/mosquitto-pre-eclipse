@@ -3,7 +3,8 @@ syntax: glob
 *.o
 *.exe
 *.db
-*.test
+c/*.test
+cpp/*.test
 *.pyc
 
 client/mosquitto_pub
