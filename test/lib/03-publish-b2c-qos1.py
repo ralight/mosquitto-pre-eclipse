@@ -18,6 +18,8 @@ import sys
 import time
 from struct import *
 
+import mosq_test
+
 rc = 1
 keepalive = 60
 connect_packet = pack('!BBH6sBBHH17s', 16, 12+2+17,6,"MQIsdp",3,2,keepalive,17,"publish-qos1-test")
@@ -50,20 +52,12 @@ try:
     conn.settimeout(10)
     connect_recvd = conn.recv(256)
 
-    if connect_recvd != connect_packet:
-        print("FAIL: Received incorrect connect.")
-        print("Received: "+connect_recvd+" length="+str(len(connect_recvd)))
-        print("Expected: "+connect_packet+" length="+str(len(connect_packet)))
-    else:
+    if mosq_test.packet_matches("connect", connect_recvd, connect_packet):
         conn.send(connack_packet)
         conn.send(publish_packet)
         puback_recvd = conn.recv(256)
 
-        if puback_recvd != puback_packet:
-            print("FAIL: Received incorrect puback.")
-            print("Received: "+puback_recvd+" length="+str(len(puback_recvd)))
-            print("Expected: "+puback_packet+" length="+str(len(puback_packet)))
-        else:
+        if mosq_test.packet_matches("puback", puback_recvd, puback_packet):
             rc = 0
 
     conn.close()

@@ -14,6 +14,8 @@ import sys
 import time
 from struct import *
 
+import mosq_test
+
 rc = 1
 keepalive = 60
 connect_packet = pack('!BBH6sBBHH11sH30sH12s', 16, 12+2+11+2+30+2+12,6,"MQIsdp",3,2+4+8+32,keepalive,11,"01-will-set",30,"topic/on/unexpected/disconnect",12,"will message")
@@ -39,11 +41,7 @@ try:
     conn.settimeout(10)
     connect_recvd = conn.recv(256)
 
-    if connect_recvd != connect_packet:
-        print("FAIL: Received incorrect connect.")
-        print("Received: "+connect_recvd+" length="+str(len(connect_recvd)))
-        print("Expected: "+connect_packet+" length="+str(len(connect_packet)))
-    else:
+    if mosq_test.packet_matches("connect", connect_recvd, connect_packet):
         rc = 0
 
     conn.close()
