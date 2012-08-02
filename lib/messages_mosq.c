@@ -100,6 +100,18 @@ int _mosquitto_message_delete(struct mosquitto *mosq, uint16_t mid, enum mosquit
 	return rc;
 }
 
+void _mosquitto_messages_force_retry(struct mosquitto *mosq)
+{
+	struct mosquitto_message_all *message;
+	assert(mosq);
+
+	message = mosq->messages;
+	while(message){
+		message->timestamp = 0;
+		message = message->next;
+	}
+}
+
 void mosquitto_message_free(struct mosquitto_message **message)
 {
 	struct mosquitto_message *msg;
