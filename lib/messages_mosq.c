@@ -158,6 +158,7 @@ void _mosquitto_messages_reconnect_reset(struct mosquitto *mosq)
 				message = mosq->messages;
 			}
 		}
+		prev = message;
 		message = message->next;
 	}
 }
