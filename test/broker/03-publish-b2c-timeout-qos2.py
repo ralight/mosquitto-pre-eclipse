@@ -8,6 +8,14 @@ import time
 from struct import *
 from os import environ
 
+import inspect, os, sys
+# From http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder
+cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"..")))
+if cmd_subfolder not in sys.path:
+    sys.path.insert(0, cmd_subfolder)
+
+import mosq_test
+
 rc = 1
 mid = 3265
 keepalive = 60
@@ -28,65 +36,46 @@ pubcomp_packet = pack('!BBH', 112, 2, mid)
 broker = subprocess.Popen(['../../src/mosquitto', '-c', '03-publish-b2c-timeout-qos2.conf'], stderr=subprocess.PIPE)
 
 try:
-	time.sleep(0.5)
+    time.sleep(0.5)
 
-	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	sock.settimeout(60) # 60 seconds timeout is much longer than 5 seconds message retry.
-	sock.connect(("localhost", 1888))
-	sock.send(connect_packet)
-	connack_recvd = sock.recv(256)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(60) # 60 seconds timeout is much longer than 5 seconds message retry.
+    sock.connect(("localhost", 1888))
+    sock.send(connect_packet)
+    connack_recvd = sock.recv(256)
 
-	if connack_recvd != connack_packet:
-		print("FAIL: Connect failed.")
-	else:
-		sock.send(subscribe_packet)
-		suback_recvd = sock.recv(256)
+    if mosq_test.packet_matches("connack", connack_recvd, connack_packet):
+        sock.send(subscribe_packet)
+        suback_recvd = sock.recv(256)
 
-		if suback_recvd != suback_packet:
-			(cmd, rl, mid_recvd, qos) = unpack('!BBHB', suback_recvd)
-			print("FAIL: Expected 144,3,"+str(mid)+",2 got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd) + "," + str(qos))
-		else:
-			pub = subprocess.Popen(['./03-publish-b2c-timeout-qos2-helper.py'])
-			pub.wait()
-			# Should have now received a publish command
-			publish_recvd = sock.recv(256)
+        if mosq_test.packet_matches("suback", suback_recvd, suback_packet):
+            pub = subprocess.Popen(['./03-publish-b2c-timeout-qos2-helper.py'])
+            pub.wait()
+            # Should have now received a publish command
+            publish_recvd = sock.recv(256)
 
-			if publish_recvd != publish_packet:
-				print("FAIL: Received publish not correct.")
-				print("Received: "+publish_recvd+" length="+str(len(publish_recvd)))
-				print("Expected: "+publish_packet+" length="+str(len(publish_packet)))
-			else:
-				# Wait for longer than 5 seconds to get republish with dup set
-				# This is covered by the 8 second timeout
-				publish_recvd = sock.recv(256)
+            if mosq_test.packet_matches("publish", publish_recvd, publish_packet):
+                # Wait for longer than 5 seconds to get republish with dup set
+                # This is covered by the 8 second timeout
+                publish_recvd = sock.recv(256)
 
-				if publish_recvd != publish_dup_packet:
-					print("FAIL: Received publish with dup not correct.")
-					print("Received: "+publish_recvd+" length="+str(len(publish_recvd)))
-					print("Expected: "+publish_packet+" length="+str(len(publish_packet)))
-				else:
-					sock.send(pubrec_packet)
-					pubrel_recvd = sock.recv(256)
+                if mosq_test.packet_matches("dup publish", publish_recvd, publish_dup_packet):
+                    sock.send(pubrec_packet)
+                    pubrel_recvd = sock.recv(256)
 
-					if pubrel_recvd != pubrel_packet:
-						(cmd, rl, mid) = unpack('!BBH', pubrel_recvd)
-						print("FAIL: Expected 98,2,"+str(mid)+" got " + str(cmd) + "," + str(rl) + "," + str(mid))
-					else:
-						# Wait for longer than 5 seconds to get republish with dup set
-						# This is covered by the 8 second timeout
-						pubrel_recvd = sock.recv(256)
+                    if mosq_test.packet_matches("pubrel", pubrel_recvd, pubrel_packet):
+                        # Wait for longer than 5 seconds to get republish with dup set
+                        # This is covered by the 8 second timeout
+                        pubrel_recvd = sock.recv(256)
 
-						if pubrel_recvd != pubrel_dup_packet:
-							(cmd, rl, mid) = unpack('!BBH', pubrel_recvd)
-							print("FAIL: Expected 106,2,"+str(mid)+" got " + str(cmd) + "," + str(rl) + "," + str(mid))
-						else:
-							sock.send(pubcomp_packet)
-							rc = 0
+                        if mosq_test.packet_matches("dup pubrel", pubrel_recvd, pubrel_dup_packet):
+                            sock.send(pubcomp_packet)
+                            rc = 0
 
-	sock.close()
+    sock.close()
 finally:
-	broker.terminate()
-	broker.wait()
+    broker.terminate()
+    broker.wait()
 
 exit(rc)
 
