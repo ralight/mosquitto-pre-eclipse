@@ -88,7 +88,8 @@ def to_string(packet):
         return s
     elif cmd == 0x20:
         # CONNACK
-        (cmd, rl, resv, rc) = unpack('!BBBB', packet)
+        print(len(packet))
+        (cmd, rl, resv, rc) = struct.unpack('!BBBB', packet)
         return "CONNACK, rl="+str(rl)+", res="+str(resv)+", rc="+str(rc)
     elif cmd == 0x30:
         # PUBLISH
@@ -118,8 +119,9 @@ def to_string(packet):
         return "PUBREC, rl="+str(rl)+", mid="+str(mid)
     elif cmd == 0x60:
         # PUBREL
+        dup = (packet0 & 0x08)>>3
         (cmd, rl, mid) = struct.unpack('!BBH', packet)
-        return "PUBREL, rl="+str(rl)+", mid="+str(mid)
+        return "PUBREL, rl="+str(rl)+", mid="+str(mid)+", dup="+str(dup)
     elif cmd == 0x70:
         # PUBCOMP
         (cmd, rl, mid) = struct.unpack('!BBH', packet)

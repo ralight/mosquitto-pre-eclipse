@@ -340,6 +340,7 @@ int mqtt3_db_message_store(mosquitto_db *db, const char *source, uint16_t source
 int mqtt3_db_message_store_find(struct mosquitto *context, uint16_t mid, struct mosquitto_msg_store **stored);
 /* Check all messages waiting on a client reply and resend if timeout has been exceeded. */
 int mqtt3_db_message_timeout_check(mosquitto_db *db, unsigned int timeout);
+int mqtt3_db_message_reconnect_reset(struct mosquitto *context);
 int mqtt3_retain_queue(mosquitto_db *db, struct mosquitto *context, const char *sub, int sub_qos);
 void mqtt3_db_store_clean(mosquitto_db *db);
 void mqtt3_db_sys_update(mosquitto_db *db, int interval, time_t start_time);

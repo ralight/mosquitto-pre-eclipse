@@ -28,8 +28,10 @@ test : test-compile
 	./03-publish-qos1.py
 	./03-publish-qos2.py
 	./03-publish-b2c-timeout-qos1.py
+	./03-publish-b2c-disconnect-qos1.py
 	./03-publish-c2b-timeout-qos2.py
 	./03-publish-b2c-timeout-qos2.py
+	./03-publish-b2c-disconnect-qos2.py
 	./04-retain-qos0.py
 	./04-retain-qos0-fresh.py
 	./04-retain-qos0-repeated.py
