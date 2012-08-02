@@ -18,7 +18,9 @@ import mosq_test
 
 rc = 1
 keepalive = 60
-connect_packet = pack('!BBH6sBBHH21s', 16, 12+2+21,6,"MQIsdp",128+3,0,keepalive,21,"erskine.bridge_sample")
+client_id = socket.gethostname()+".bridge_sample"
+clen = len(client_id)
+connect_packet = pack('!BBH6sBBHH'+str(clen)+'s', 16, 12+2+clen,6,"MQIsdp",128+3,0,keepalive,clen,client_id)
 connack_packet = pack('!BBBB', 32, 2, 0, 0);
 
 mid = 1
