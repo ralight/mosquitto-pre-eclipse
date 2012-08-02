@@ -101,7 +101,7 @@ def to_string(packet):
         (tlen, packet) = struct.unpack(pack_format, packet)
         pack_format = "!" + str(tlen)+'s' + str(len(packet)-tlen) + 's'
         (topic, packet) = struct.unpack(pack_format, packet)
-        s = "PUBLISH, rl="+str(rl)+", qos="+str(qos)+", retain="+str(retain)+", dup="+str(dup)
+        s = "PUBLISH, rl="+str(rl)+", topic="+topic+", qos="+str(qos)+", retain="+str(retain)+", dup="+str(dup)
         if qos > 0:
             pack_format = "!H" + str(len(packet)-2) + 's'
             (mid, packet) = struct.unpack(pack_format, packet)

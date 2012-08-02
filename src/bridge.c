@@ -150,6 +150,7 @@ int mqtt3_bridge_connect(mosquitto_db *db, struct mosquitto *context)
 	context->in_packet.payload = NULL;
 	context->ping_t = 0;
 	mqtt3_bridge_packet_cleanup(context);
+	mqtt3_db_message_reconnect_reset(context);
 
 	for(i=0; i<context->bridge->topic_count; i++){
 		if(context->bridge->topics[i].direction == bd_out || context->bridge->topics[i].direction == bd_both){

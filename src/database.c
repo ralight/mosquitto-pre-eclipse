@@ -703,7 +703,6 @@ int mqtt3_db_message_write(struct mosquitto *context)
 				case ms_publish_qos0:
 					rc = _mosquitto_send_publish(context, mid, topic, payloadlen, payload, qos, retain, retries);
 					if(!rc){
-						tail->dup = 1; /* Any retry attempts are a duplicate. */
 						if(last){
 							last->next = tail->next;
 							tail->store->ref_count--;
@@ -723,6 +722,7 @@ int mqtt3_db_message_write(struct mosquitto *context)
 				case ms_publish_qos1:
 					rc = _mosquitto_send_publish(context, mid, topic, payloadlen, payload, qos, retain, retries);
 					if(!rc){
+						tail->timestamp = time(NULL);
 						tail->dup = 1; /* Any retry attempts are a duplicate. */
 						tail->state = ms_wait_for_puback;
 					}else{
@@ -735,6 +735,7 @@ int mqtt3_db_message_write(struct mosquitto *context)
 				case ms_publish_qos2:
 					rc = _mosquitto_send_publish(context, mid, topic, payloadlen, payload, qos, retain, retries);
 					if(!rc){
+						tail->timestamp = time(NULL);
 						tail->dup = 1; /* Any retry attempts are a duplicate. */
 						tail->state = ms_wait_for_pubrec;
 					}else{
