@@ -537,6 +537,9 @@ class Mosquitto:
             self._sock.close()
             self._sock = None
 
+        # Put messages in progress in a valid state.
+        self._messages_reconnect_reset()
+
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # FIXME use create_connection here
 
@@ -1374,6 +1377,17 @@ class Mosquitto:
                     m.timestamp = now
                     m.dup = True
                     self._send_pubrel(m.mid, True)
+
+    def _messages_reconnect_reset(self):
+        for m in self._messages:
+            m.timestamp = 0
+            if m.direction == mosq_md_out:
+                if m.qos == 1:
+                    m.state = mosq_ms_wait_puback
+                elif m.qos == 2:
+                    m.state = mosq_ms_wait_pubrec
+            else:
+                self._messages.pop(self._messages.index(m))
 
     def _packet_queue(self, command, packet, mid, qos):
         mpkt = MosquittoPacket(command, packet, mid, qos)

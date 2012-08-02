@@ -9,16 +9,16 @@ from struct import *
 
 import mosquitto
 
-sent_mid = -1
+first_connection = 1
 
 def on_connect(mosq, obj, rc):
-    global sent_mid
+    global first_connection
     if rc != 0:
         exit(rc)
     else:
-        if sent_mid == -1:
-            res = mosq.publish("pub/qos1/test", "message", 1)
-            sent_mid = res[1]
+        if first_connection == 1:
+            mosq.publish("pub/qos2/test", "message", 2)
+            first_connection = 0
 
 def on_disconnect(mosq, obj, rc):
     if rc == 1:
@@ -27,14 +27,10 @@ def on_disconnect(mosq, obj, rc):
         run = 0
 
 def on_publish(mosq, obj, mid):
-    global sent_mid
-    if mid == sent_mid:
-        mosq.disconnect()
-    else:
-        exit(1)
+    mosq.disconnect()
 
 run = -1
-mosq = mosquitto.Mosquitto("publish-qos1-test", run)
+mosq = mosquitto.Mosquitto("publish-qos2-test", run)
 mosq.message_retry_set(3)
 mosq.on_connect = on_connect
 mosq.on_disconnect = on_disconnect

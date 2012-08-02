@@ -319,7 +319,7 @@ int mosquitto_reconnect(struct mosquitto *mosq)
 	pthread_mutex_unlock(&mosq->out_packet_mutex);
 	pthread_mutex_unlock(&mosq->current_out_packet_mutex);
 
-	_mosquitto_messages_force_retry(mosq);
+	_mosquitto_messages_reconnect_reset(mosq);
 
 	rc = _mosquitto_socket_connect(mosq, mosq->host, mosq->port);
 	if(rc){
