@@ -8,6 +8,14 @@ import socket
 import time
 from struct import *
 
+import inspect, os, sys
+# From http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder
+cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"..")))
+if cmd_subfolder not in sys.path:
+    sys.path.insert(0, cmd_subfolder)
+
+import mosq_test
+
 rc = 1
 keepalive = 60
 connect_packet = pack('!BBH6sBBHH17s', 16, 12+2+17,6,"MQIsdp",3,2,keepalive,17,"retain-clear-test")
@@ -26,66 +34,51 @@ unsuback_packet = pack('!BBH', 176, 2, mid_unsub)
 broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'], stderr=subprocess.PIPE)
 
 try:
-	time.sleep(0.5)
+    time.sleep(0.5)
 
-	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	sock.settimeout(4) # Reduce timeout for when we don't expect incoming data.
-	sock.connect(("localhost", 1888))
-	sock.send(connect_packet)
-	connack_recvd = sock.recv(256)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(4) # Reduce timeout for when we don't expect incoming data.
+    sock.connect(("localhost", 1888))
+    sock.send(connect_packet)
+    connack_recvd = sock.recv(256)
 
-	if connack_recvd != connack_packet:
-		print("FAIL: Connect failed.")
-	else:
-		# Send retained message
-		sock.send(publish_packet)
-		# Subscribe to topic, we should get the retained message back.
-		sock.send(subscribe_packet)
-		suback_recvd = sock.recv(256)
+    if mosq_test.packet_matches("connack", connack_recvd, connack_packet):
+        # Send retained message
+        sock.send(publish_packet)
+        # Subscribe to topic, we should get the retained message back.
+        sock.send(subscribe_packet)
+        suback_recvd = sock.recv(256)
 
-		if suback_recvd != suback_packet:
-			(cmd, rl, mid_recvd, qos) = unpack('!BBHB', suback_recvd)
-			print("FAIL: Expected 144,3,"+str(mid_sub)+",0 got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd) + "," + str(qos))
-		else:
-			publish_recvd = sock.recv(256)
+        if mosq_test.packet_matches("suback", suback_recvd, suback_packet):
+            publish_recvd = sock.recv(256)
 
-			if publish_recvd != publish_packet:
-				print("FAIL: Received incorrect publish.")
-				print("Received: "+publish_recvd+" length="+str(len(publish_recvd)))
-				print("Expected: "+publish_packet+" length="+str(len(publish_packet)))
-			else:
-				# Now unsubscribe from the topic before we clear the retained
-				# message.
-				sock.send(unsubscribe_packet)
-				unsuback_recvd = sock.recv(256)
+            if mosq_test.packet_matches("publish", publish_recvd, publish_packet):
+                # Now unsubscribe from the topic before we clear the retained
+                # message.
+                sock.send(unsubscribe_packet)
+                unsuback_recvd = sock.recv(256)
 
-				if unsuback_recvd != unsuback_packet:
-					(cmd, rl, mid_recvd) = unpack('!BBH', unsuback_recvd)
-					print("FAIL: Expected 176,2,"+str(mid_unsub)+",0 got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd))
-				else:
-					# Now clear the retained message.
-					sock.send(retain_clear_packet)
+                if mosq_test.packet_matches("unsuback", unsuback_recvd, unsuback_packet):
+                    # Now clear the retained message.
+                    sock.send(retain_clear_packet)
 
-					# Subscribe to topic, we shouldn't get anything back apart
-					# from the SUBACK.
-					sock.send(subscribe_packet)
-					suback_recvd = sock.recv(256)
-					if suback_recvd != suback_packet:
-						(cmd, rl, mid_recvd, qos) = unpack('!BBHB', suback_recvd)
-						print("FAIL: Expected 144,3,"+str(mid_sub)+",0 got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd) + "," + str(qos))
-					else:
-						try:
-							retain_clear = sock.recv(256)
-						except socket.timeout:
-							# This is the expected event
-							rc = 0
-						else:
-							print("FAIL: Received unexpected message.")
+                    # Subscribe to topic, we shouldn't get anything back apart
+                    # from the SUBACK.
+                    sock.send(subscribe_packet)
+                    suback_recvd = sock.recv(256)
+                    if mosq_test.packet_matches("suback", suback_recvd, suback_packet):
+                        try:
+                            retain_clear = sock.recv(256)
+                        except socket.timeout:
+                            # This is the expected event
+                            rc = 0
+                        else:
+                            print("FAIL: Received unexpected message.")
 
-	sock.close()
+    sock.close()
 finally:
-	broker.terminate()
-	broker.wait()
+    broker.terminate()
+    broker.wait()
 
 exit(rc)
 

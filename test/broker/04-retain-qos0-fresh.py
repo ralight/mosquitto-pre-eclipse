@@ -8,6 +8,14 @@ import socket
 import time
 from struct import *
 
+import inspect, os, sys
+# From http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder
+cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"..")))
+if cmd_subfolder not in sys.path:
+    sys.path.insert(0, cmd_subfolder)
+
+import mosq_test
+
 rc = 1
 keepalive = 60
 mid = 16
@@ -29,25 +37,16 @@ try:
     sock.send(connect_packet)
     connack_recvd = sock.recv(256)
 
-    if connack_recvd != connack_packet:
-        print("FAIL: Connect failed.")
-    else:
+    if mosq_test.packet_matches("connack", connack_recvd, connack_packet):
         sock.send(subscribe_packet)
 
         suback_recvd = sock.recv(256)
 
-        if suback_recvd != suback_packet:
-            (cmd, rl, mid_recvd, qos) = unpack('!BBHB', suback_recvd)
-            print("FAIL: Expected 144,3,"+str(mid)+",0 got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd) + "," + str(qos))
-        else:
+        if mosq_test.packet_matches("suback", suback_recvd, suback_packet):
             sock.send(publish_packet)
             publish_recvd = sock.recv(256)
 
-            if publish_recvd != publish_fresh_packet:
-                print("FAIL: Received incorrect publish.")
-                print("Received: "+publish_recvd+" length="+str(len(publish_recvd)))
-                print("Expected: "+publish_fresh_packet+" length="+str(len(publish_fresh_packet)))
-            else:
+            if mosq_test.packet_matches("publish", publish_recvd, publish_fresh_packet):
                 rc = 0
     sock.close()
 finally:

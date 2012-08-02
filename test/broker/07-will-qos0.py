@@ -7,6 +7,14 @@ import socket
 import time
 from struct import *
 
+import inspect, os, sys
+# From http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder
+cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"..")))
+if cmd_subfolder not in sys.path:
+    sys.path.insert(0, cmd_subfolder)
+
+import mosq_test
+
 rc = 1
 mid = 53
 keepalive = 60
@@ -21,40 +29,31 @@ publish_packet = pack('!BBH14s12s', 48, 2+14+12, 14, "will/qos0/test", "will-mes
 broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'], stderr=subprocess.PIPE)
 
 try:
-	time.sleep(0.5)
+    time.sleep(0.5)
 
-	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	sock.settimeout(30)
-	sock.connect(("localhost", 1888))
-	sock.send(connect_packet)
-	connack_recvd = sock.recv(256)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(30)
+    sock.connect(("localhost", 1888))
+    sock.send(connect_packet)
+    connack_recvd = sock.recv(256)
 
-	if connack_recvd != connack_packet:
-		print("FAIL: Connect failed.")
-	else:
-		sock.send(subscribe_packet)
-		suback_recvd = sock.recv(256)
+    if mosq_test.packet_matches("connack", connack_recvd, connack_packet):
+        sock.send(subscribe_packet)
+        suback_recvd = sock.recv(256)
 
-		if suback_recvd != suback_packet:
-			(cmd, rl, mid_recvd, qos) = unpack('!BBHB', suback_recvd)
-			print("FAIL: Expected 144,3,"+str(mid)+",0 got " + str(cmd) + "," + str(rl) + "," + str(mid_recvd) + "," + str(qos))
-		else:
-			will = subprocess.Popen(['./07-will-qos0-helper.py'])
-			will.wait()
+        if mosq_test.packet_matches("suback", suback_recvd, suback_packet):
+            will = subprocess.Popen(['./07-will-qos0-helper.py'])
+            will.wait()
 
-			publish_recvd = sock.recv(256)
+            publish_recvd = sock.recv(256)
 
-			if publish_recvd != publish_packet:
-				print("FAIL: Received publish not correct.")
-				print("Received: "+publish_recvd+" length="+str(len(publish_recvd)))
-				print("Expected: "+publish_packet+" length="+str(len(publish_packet)))
-			else:
-				rc = 0
+            if mosq_test.packet_matches("publish", publish_recvd, publish_packet):
+                rc = 0
 
-	sock.close()
+    sock.close()
 finally:
-	broker.terminate()
-	broker.wait()
+    broker.terminate()
+    broker.wait()
 
 exit(rc)
 
