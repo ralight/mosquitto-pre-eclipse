@@ -55,12 +55,12 @@ client = subprocess.Popen(client_args, env=env)
 try:
     (conn, address) = sock.accept()
     conn.settimeout(10)
-    connect_recvd = conn.recv(256)
+    connect_recvd = conn.recv(len(connect_packet))
 
     if mosq_test.packet_matches("connect", connect_recvd, connect_packet):
         conn.send(connack_packet)
         conn.send(publish_packet)
-        puback_recvd = conn.recv(256)
+        puback_recvd = conn.recv(len(puback_packet))
 
         if mosq_test.packet_matches("puback", puback_recvd, puback_packet):
             rc = 0

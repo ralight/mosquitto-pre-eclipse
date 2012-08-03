@@ -41,31 +41,31 @@ try:
     sock.settimeout(60) # 60 seconds timeout is much longer than 5 seconds message retry.
     sock.connect(("localhost", 1888))
     sock.send(connect_packet)
-    connack_recvd = sock.recv(256)
+    connack_recvd = sock.recv(len(connack_packet))
 
     if mosq_test.packet_matches("connack", connack_recvd, connack_packet):
         sock.send(subscribe_packet)
-        suback_recvd = sock.recv(256)
+        suback_recvd = sock.recv(len(suback_packet))
 
         if mosq_test.packet_matches("suback", suback_recvd, suback_packet):
             pub = subprocess.Popen(['./03-publish-b2c-timeout-qos2-helper.py'])
             pub.wait()
             # Should have now received a publish command
-            publish_recvd = sock.recv(256)
+            publish_recvd = sock.recv(len(publish_packet))
 
             if mosq_test.packet_matches("publish", publish_recvd, publish_packet):
                 # Wait for longer than 5 seconds to get republish with dup set
                 # This is covered by the 8 second timeout
-                publish_recvd = sock.recv(256)
+                publish_recvd = sock.recv(len(publish_dup_packet))
 
                 if mosq_test.packet_matches("dup publish", publish_recvd, publish_dup_packet):
                     sock.send(pubrec_packet)
-                    pubrel_recvd = sock.recv(256)
+                    pubrel_recvd = sock.recv(len(pubrel_packet))
 
                     if mosq_test.packet_matches("pubrel", pubrel_recvd, pubrel_packet):
                         # Wait for longer than 5 seconds to get republish with dup set
                         # This is covered by the 8 second timeout
-                        pubrel_recvd = sock.recv(256)
+                        pubrel_recvd = sock.recv(len(pubrel_dup_packet))
 
                         if mosq_test.packet_matches("dup pubrel", pubrel_recvd, pubrel_dup_packet):
                             sock.send(pubcomp_packet)

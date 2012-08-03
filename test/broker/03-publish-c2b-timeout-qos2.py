@@ -36,19 +36,19 @@ try:
     sock.settimeout(60) # 60 seconds timeout is much longer than 5 seconds message retry.
     sock.connect(("localhost", 1888))
     sock.send(connect_packet)
-    connack_recvd = sock.recv(256)
+    connack_recvd = sock.recv(len(connack_packet))
 
     if mosq_test.packet_matches("connack", connack_recvd, connack_packet):
         sock.send(publish_packet)
-        pubrec_recvd = sock.recv(256)
+        pubrec_recvd = sock.recv(len(pubrec_packet))
 
         if mosq_test.packet_matches("pubrec", pubrec_recvd, pubrec_packet):
             # Timeout is 8 seconds which means the broker should repeat the PUBREC.
-            pubrec_recvd = sock.recv(256)
+            pubrec_recvd = sock.recv(len(pubrec_packet))
 
             if mosq_test.packet_matches("pubrec", pubrec_recvd, pubrec_packet):
                 sock.send(pubrel_packet)
-                pubcomp_recvd = sock.recv(256)
+                pubcomp_recvd = sock.recv(len(pubcomp_packet))
 
                 if mosq_test.packet_matches("pubcomp", pubcomp_recvd, pubcomp_packet):
                     rc = 0

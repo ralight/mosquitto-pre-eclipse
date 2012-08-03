@@ -44,26 +44,26 @@ try:
     sock.settimeout(10)
     sock.connect(("localhost", 1888))
     sock.send(connect_packet)
-    connack_recvd = sock.recv(256)
+    connack_recvd = sock.recv(len(connack_packet))
 
     if mosq_test.packet_matches("connack", connack_recvd, connack_packet):
         sock.send(subscribe_packet)
-        suback_recvd = sock.recv(256)
+        suback_recvd = sock.recv(len(suback_packet))
 
         if mosq_test.packet_matches("suback", suback_recvd, suback_packet):
             sock.send(publish_packet)
-            pubrec_recvd = sock.recv(256)
+            pubrec_recvd = sock.recv(len(pubrec_packet))
 
             if mosq_test.packet_matches("pubrec", pubrec_recvd, pubrec_packet):
                 sock.send(pubrel_packet)
-                pubcomp_recvd = sock.recv(256)
+                pubcomp_recvd = sock.recv(len(pubcomp_packet))
 
                 if mosq_test.packet_matches("pubcomp", pubcomp_recvd, pubcomp_packet):
-                    publish_recvd = sock.recv(256)
+                    publish_recvd = sock.recv(len(publish_packet2))
 
                     if mosq_test.packet_matches("publish2", publish_recvd, publish_packet2):
                         sock.send(pubrec_packet2)
-                        pubrel_recvd = sock.recv(256)
+                        pubrel_recvd = sock.recv(len(pubrel_packet2))
 
                         if mosq_test.packet_matches("pubrel2", pubrel_recvd, pubrel_packet2):
                             # Broker side of flow complete so can quit here.
