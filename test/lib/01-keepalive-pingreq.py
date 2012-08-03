@@ -16,7 +16,6 @@ import subprocess
 import socket
 import sys
 import time
-from struct import *
 
 # From http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder
 cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"..")))
@@ -27,10 +26,10 @@ import mosq_test
 
 rc = 1
 keepalive = 4
-connect_packet = pack('!BBH6sBBHH20s', 16, 12+2+20,6,"MQIsdp",3,2,keepalive,20,"01-keepalive-pingreq")
-connack_packet = pack('!BBBB', 32, 2, 0, 0);
+connect_packet = mosq_test.gen_connect("01-keepalive-pingreq", keepalive=keepalive)
+connack_packet = mosq_test.gen_connack(rc=0)
 
-pingreq_packet = pack('!BB', 192, 0)
+pingreq_packet = mosq_test.gen_pingreq()
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

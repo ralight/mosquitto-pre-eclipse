@@ -6,7 +6,6 @@
 import subprocess
 import socket
 import time
-from struct import *
 
 import inspect, os, sys
 # From http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder
@@ -19,16 +18,16 @@ import mosq_test
 rc = 1
 keepalive = 60
 mid = 16
-connect_packet = pack('!BBH6sBBHH20s', 16, 12+2+20,6,"MQIsdp",3,2,keepalive,20,"retain-qos0-rep-test")
-connack_packet = pack('!BBBB', 32, 2, 0, 0);
+connect_packet = mosq_test.gen_connect("retain-qos0-rep-test", keepalive=keepalive)
+connack_packet = mosq_test.gen_connack(rc=0)
 
-publish_packet = pack('!BBH16s16s', 48+1, 2+16+16, 16, "retain/qos0/test", "retained message")
-subscribe_packet = pack('!BBHH16sB', 130, 2+2+16+1, mid, 16, "retain/qos0/test", 0)
-suback_packet = pack('!BBHB', 144, 2+1, mid, 0)
+publish_packet = mosq_test.gen_publish("retain/qos0/test", qos=0, payload="retained message", retain=True)
+subscribe_packet = mosq_test.gen_subscribe(mid, "retain/qos0/test", 0)
+suback_packet = mosq_test.gen_suback(mid, 0)
 
 unsub_mid = 13
-unsubscribe_packet = pack('!BBHH16s', 162, 2+2+16, unsub_mid, 16, "retain/qos0/test")
-unsuback_packet = pack('!BBH', 176, 2, unsub_mid)
+unsubscribe_packet = mosq_test.gen_unsubscribe(unsub_mid, "retain/qos0/test/")
+unsuback_packet = mosq_test.gen_unsuback(unsub_mid)
 
 broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'], stderr=subprocess.PIPE)
 

@@ -3,7 +3,6 @@
 import subprocess
 import socket
 import time
-from struct import *
 from os import environ
 
 import inspect, os, sys
@@ -17,20 +16,20 @@ import mosq_test
 rc = 1
 mid = 3265
 keepalive = 60
-connect_packet = pack('!BBH6sBBHH19s', 16, 12+2+19,6,"MQIsdp",3,0,keepalive,19,"pub-qos1-disco-test")
-connack_packet = pack('!BBBB', 32, 2, 0, 0);
+connect_packet = mosq_test.gen_connect("pub-qos1-disco-test", keepalive=keepalive, clean_session=False)
+connack_packet = mosq_test.gen_connack(rc=0)
 
-subscribe_packet = pack('!BBHH20sB', 130, 2+2+20+1, mid, 20, "qos1/disconnect/test", 1)
-suback_packet = pack('!BBHB', 144, 2+1, mid, 1)
+subscribe_packet = mosq_test.gen_subscribe(mid, "qos1/disconnect/test", 1)
+suback_packet = mosq_test.gen_suback(mid, 1)
 
 mid = 1
-publish_packet = pack('!BBH20sH18s', 48+2, 2+20+2+18, 20, "qos1/disconnect/test", mid, "disconnect-message")
-publish_dup_packet = pack('!BBH20sH18s', 48+8+2, 2+20+2+18, 20, "qos1/disconnect/test", mid, "disconnect-message")
-puback_packet = pack('!BBH', 64, 2, mid)
+publish_packet = mosq_test.gen_publish("qos1/disconnect/test", qos=1, mid=mid, payload="disconnect-message")
+publish_dup_packet = mosq_test.gen_publish("qos1/disconnect/test", qos=1, mid=mid, payload="disconnect-message", dup=True)
+puback_packet = mosq_test.gen_puback(mid)
 
 mid = 3266
-publish2_packet = pack('!BBH13sH16s', 48+2, 2+13+2+16, 17, "qos1/outgoing", mid, "outgoing-message")
-puback2_packet = pack('!BBH', 64, 2, mid)
+publish2_packet = mosq_test.gen_publish("qos1/outgoing", qos=1, mid=mid, payload="outgoing-message")
+puback2_packet = mosq_test.gen_puback(mid)
 
 broker = subprocess.Popen(['../../src/mosquitto', '-c', '03-publish-b2c-disconnect-qos1.conf'], stderr=subprocess.PIPE)
 

@@ -5,7 +5,6 @@
 import subprocess
 import socket
 import time
-from struct import *
 
 import inspect, os, sys
 # From http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder
@@ -18,17 +17,17 @@ import mosq_test
 rc = 1
 mid = 109
 keepalive = 60
-connect_packet = pack('!BBH6sBBHH15s', 16, 12+2+15,6,"MQIsdp",3,0,keepalive,15,"clean-qos2-test")
-connack_packet = pack('!BBBB', 32, 2, 0, 0);
+connect_packet = mosq_test.gen_connect("clean-qos2-test", keepalive=keepalive, clean_session=False)
+connack_packet = mosq_test.gen_connack(rc=0)
 
-disconnect_packet = pack('!BB', 224, 0,)
+disconnect_packet = mosq_test.gen_disconnect()
 
-subscribe_packet = pack('!BBHH23sB', 130, 2+2+23+1, mid, 23, "qos1/clean_session/test", 1)
-suback_packet = pack('!BBHB', 144, 2+1, mid, 1)
+subscribe_packet = mosq_test.gen_subscribe(mid, "qos1/clean_session/test", 1)
+suback_packet = mosq_test.gen_suback(mid, 1)
 
 mid = 1
-publish_packet = pack('!BBH23sH21s', 48+2, 2+23+2+21, 23, "qos1/clean_session/test", mid, "clean-session-message")
-puback_packet = pack('!BBH', 64, 2, mid)
+publish_packet = mosq_test.gen_publish("qos1/clean_session/test", qos=1, mid=mid, payload="clean-session-message")
+puback_packet = mosq_test.gen_puback(mid)
 
 broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'], stderr=subprocess.PIPE)
 
