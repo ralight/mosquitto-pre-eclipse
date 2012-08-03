@@ -700,6 +700,14 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>restart_timeout</option> <replaceable>value</replaceable></term>
+				<listitem>
+					<para>Set the amount of time a bridge using the automatic
+						start type will wait until attempting to reconnect.
+						Defaults to 30 seconds.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>start_type</option> [ automatic | lazy | once ]</term>
 				<listitem>
 					<para>Set the start type of the bridge. This controls how

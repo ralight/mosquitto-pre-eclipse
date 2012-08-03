@@ -143,7 +143,7 @@ int mosquitto_main_loop(mosquitto_db *db, int *listensock, int listensock_count,
 					if(db->contexts[i]->bridge){
 						/* Want to try to restart the bridge connection */
 						if(!db->contexts[i]->bridge->restart_t){
-							db->contexts[i]->bridge->restart_t = time(NULL)+30;
+							db->contexts[i]->bridge->restart_t = time(NULL)+db->contexts[i]->bridge->restart_timeout;
 						}else{
 							if(db->contexts[i]->bridge->start_type == bst_automatic && time(NULL) > db->contexts[i]->bridge->restart_t){
 								db->contexts[i]->bridge->restart_t = 0;

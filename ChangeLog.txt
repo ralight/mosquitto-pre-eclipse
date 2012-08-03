@@ -30,6 +30,8 @@ Broker:
   protocol version number is set. This requires support from the remote broker.
 - Add support for notification_topic option.
 - Add $SYS/broker/subscriptions/count and $SYS/broker/retained messages/count.
+- Add restart_timeout to control the amount of time an automatic bridge will
+  wait before reconnecting.
 - Overlapping subscriptions are now handled properly. Fixes bug #928538.
 - Fix reloading of persistence_file and persistence_location.
 - Fix broker crash on incorrect protocol number.
