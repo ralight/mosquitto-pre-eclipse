@@ -705,6 +705,7 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 						cur_bridge->notification_topic = NULL;
 						cur_bridge->start_type = bst_automatic;
 						cur_bridge->idle_timeout = 60;
+						cur_bridge->restart_timeout = 30;
 						cur_bridge->threshold = 10;
 						cur_bridge->try_private = true;
 #ifdef WITH_TLS
@@ -1085,6 +1086,21 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 					if(_conf_parse_bool(&token, "require_certificate", &cur_listener->require_certificate, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
+#endif
+				}else if(!strcmp(token, "restart_timeout")){
+#ifdef WITH_BRIDGE
+					if(reload) continue; // FIXME
+					if(!cur_bridge){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
+						return MOSQ_ERR_INVAL;
+					}
+					if(_conf_parse_int(&token, "restart_timeout", &cur_bridge->restart_timeout, saveptr)) return MOSQ_ERR_INVAL;
+					if(cur_bridge->restart_timeout < 1){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "restart_timeout interval too low, using 1 second.");
+						cur_bridge->restart_timeout = 1;
+					}
+#else
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "retry_interval")){
 					if(_conf_parse_int(&token, "retry_interval", &config->retry_interval, saveptr)) return MOSQ_ERR_INVAL;

@@ -67,7 +67,7 @@ try:
                 bridge.settimeout(10)
                 connect_recvd = bridge.recv(256)
 
-                if mosq_test.packet_matches("connect", connect_recvd, connect_packet):
+                if mosq_test.packet_matches("2nd connect", connect_recvd, connect_packet):
                     bridge.send(connack_packet)
                     subscribe_recvd = bridge.recv(256)
                     if mosq_test.packet_matches("2nd subscribe", subscribe_recvd, subscribe2_packet):

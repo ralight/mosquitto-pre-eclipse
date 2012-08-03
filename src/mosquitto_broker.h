@@ -259,6 +259,7 @@ struct _mqtt3_bridge{
 	char *notification_topic;
 	enum mosquitto_bridge_start_type start_type;
 	int idle_timeout;
+	int restart_timeout;
 	int threshold;
 	bool try_private;
 	bool try_private_accepted;
