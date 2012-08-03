@@ -6,7 +6,6 @@ import os
 import subprocess
 import socket
 import time
-from struct import *
 
 import inspect, os, sys
 # From http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder
@@ -19,28 +18,27 @@ import mosq_test
 rc = 1
 keepalive = 60
 client_id = socket.gethostname()+".bridge_sample"
-clen = len(client_id)
-connect_packet = pack('!BBH6sBBHH'+str(clen)+'s', 16, 12+2+clen,6,"MQIsdp",128+3,0,keepalive,clen,client_id)
-connack_packet = pack('!BBBB', 32, 2, 0, 0);
+connect_packet = mosq_test.gen_connect(client_id, keepalive=keepalive, clean_session=False, proto_ver=128+3)
+connack_packet = mosq_test.gen_connack(rc=0)
 
 mid = 1
-subscribe_packet = pack('!BBHH8sB', 130, 2+2+8+1, mid, 8, "bridge/#", 2)
-suback_packet = pack('!BBHB', 144, 2+1, mid, 2)
+subscribe_packet = mosq_test.gen_subscribe(mid, "bridge/#", 2)
+suback_packet = mosq_test.gen_suback(mid, 2)
 
 mid = 3
-subscribe2_packet = pack('!BBHH8sB', 130, 2+2+8+1, mid, 8, "bridge/#", 2)
-suback2_packet = pack('!BBHB', 144, 2+1, mid, 2)
+subscribe2_packet = mosq_test.gen_subscribe(mid, "bridge/#", 2)
+suback2_packet = mosq_test.gen_suback(mid, 2)
 
 mid = 4
-subscribe3_packet = pack('!BBHH8sB', 130, 2+2+8+1, mid, 8, "bridge/#", 2)
-suback3_packet = pack('!BBHB', 144, 2+1, mid, 2)
+subscribe3_packet = mosq_test.gen_subscribe(mid, "bridge/#", 2)
+suback3_packet = mosq_test.gen_suback(mid, 2)
 
 mid = 2
-publish_packet = pack('!BBH22sH18s', 48+4, 2+22+2+18, 22, "bridge/disconnect/test", mid, "disconnect-message")
-publish_dup_packet = pack('!BBH22sH18s', 48+8+4, 2+22+2+18, 22, "bridge/disconnect/test", mid, "disconnect-message")
-pubrec_packet = pack('!BBH', 80, 2, mid)
-pubrel_packet = pack('!BBH', 96+2, 2, mid)
-pubcomp_packet = pack('!BBH', 112, 2, mid)
+publish_packet = mosq_test.gen_publish("bridge/disconnect/test", qos=2, mid=mid, payload="disconnect-message")
+publish_dup_packet = mosq_test.gen_publish("bridge/disconnect/test", qos=2, mid=mid, payload="disconnect-message", dup=True)
+pubrec_packet = mosq_test.gen_pubrec(mid)
+pubrel_packet = mosq_test.gen_pubrel(mid)
+pubcomp_packet = mosq_test.gen_pubcomp(mid)
 
 ssock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 ssock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -48,8 +46,7 @@ ssock.settimeout(40)
 ssock.bind(('', 1888))
 ssock.listen(5)
 
-#broker = subprocess.Popen(['../../src/mosquitto', '-c', '06-bridge-br2b-disconnect-qos2.conf'], stderr=subprocess.PIPE)
-broker = subprocess.Popen(['../../src/mosquitto', '-c', '06-bridge-br2b-disconnect-qos2.conf'])
+broker = subprocess.Popen(['../../src/mosquitto', '-c', '06-bridge-br2b-disconnect-qos2.conf'], stderr=subprocess.PIPE)
 
 try:
     time.sleep(0.5)

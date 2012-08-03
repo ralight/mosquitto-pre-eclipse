@@ -185,3 +185,119 @@ def to_string(packet):
     elif cmd == 0xF0:
         # Reserved
         return "0xF0"
+
+def gen_connect(client_id, clean_session=True, keepalive=60, username=None, password=None, will_topic=None, will_qos=0, will_retain=False, will_payload="", proto_ver=3):
+    remaining_length = 12 + 2+len(client_id)
+    connect_flags = 0
+    if clean_session:
+        connect_flags = connect_flags | 0x02
+
+    if will_topic != None:
+        remaining_length = remaining_length + 2+len(will_topic) + 2+len(will_payload)
+        connect_flags = connect_flags | 0x04 | ((will_qos&0x03) << 3)
+        if will_retain:
+            connect_flags = connect_flags | 32
+
+    if username != None:
+        remaining_length = remaining_length + 2+len(username)
+        connect_flags = connect_flags | 0x80
+        if password != None:
+            connect_flags = connect_flags | 0x40
+            remaining_length = remaining_length + 2+len(password)
+
+    rl = pack_remaining_length(remaining_length)
+    packet = struct.pack("!B"+str(len(rl))+"s", 0x10, rl)
+    packet = packet + struct.pack("!H6sBBH", len("MQIsdp"), "MQIsdp", proto_ver, connect_flags, keepalive)
+    packet = packet + struct.pack("!H"+str(len(client_id))+"s", len(client_id), client_id)
+
+    if will_topic != None:
+        packet = packet + struct.pack("!H"+str(len(will_topic))+"s", len(will_topic), will_topic)
+        if len(will_payload) > 0:
+            packet = packet + struct.pack("!H"+str(len(will_payload))+"s", len(will_payload), will_payload)
+        else:
+            packet = packet + struct.pack("!H", 0)
+
+    if username != None:
+        packet = packet + struct.pack("!H"+str(len(username))+"s", len(username), username)
+        if password != None:
+            packet = packet + struct.pack("!H"+str(len(password))+"s", len(password), password)
+    return packet
+
+def gen_connack(resv=0, rc=0):
+    return struct.pack('!BBBB', 32, 2, resv, rc);
+
+def gen_publish(topic, qos, payload=None, retain=False, dup=False, mid=0):
+    rl = 2+len(topic)
+    pack_format = "!BBH"+str(len(topic))+"s"
+    if qos > 0:
+        rl = rl + 2
+        pack_format = pack_format + "H"
+    if payload != None:
+        rl = rl + len(payload)
+        pack_format = pack_format + str(len(payload))+"s"
+    else:
+        payload = ""
+        pack_format = pack_format + "0s"
+
+    cmd = 48 | (qos<<1)
+    if retain:
+        cmd = cmd + 1
+    if dup:
+        cmd = cmd + 8
+
+    if qos > 0:
+        return struct.pack(pack_format, cmd, rl, len(topic), topic, mid, payload)
+    else:
+        return struct.pack(pack_format, cmd, rl, len(topic), topic, payload)
+
+def gen_puback(mid):
+    return struct.pack('!BBH', 64, 2, mid)
+
+def gen_pubrec(mid):
+    return struct.pack('!BBH', 80, 2, mid)
+
+def gen_pubrel(mid, dup=False):
+    if dup:
+        cmd = 96+8+2
+    else:
+        cmd = 96+2
+    return struct.pack('!BBH', cmd, 2, mid)
+
+def gen_pubcomp(mid):
+    return struct.pack('!BBH', 112, 2, mid)
+
+def gen_subscribe(mid, topic, qos):
+    pack_format = "!BBHH"+str(len(topic))+"sB"
+    return struct.pack(pack_format, 130, 2+2+len(topic)+1, mid, len(topic), topic, qos)
+
+def gen_suback(mid, qos):
+    return struct.pack('!BBHB', 144, 2+1, mid, qos)
+
+def gen_unsubscribe(mid, topic):
+    pack_format = "!BBHH"+str(len(topic))+"s"
+    return struct.pack(pack_format, 162, 2+2+len(topic), mid, len(topic), topic)
+
+def gen_unsuback(mid):
+    return struct.pack('!BBH', 176, 2, mid)
+
+def gen_pingreq():
+    return struct.pack('!BB', 192, 0)
+
+def gen_pingresp():
+    return struct.pack('!BB', 208, 0)
+
+def gen_disconnect():
+    return struct.pack('!BB', 224, 0)
+
+def pack_remaining_length(remaining_length):
+    s = ""
+    while True:
+        byte = remaining_length % 128
+        remaining_length = remaining_length // 128
+        # If there are more digits to encode, set the top bit of this digit
+        if remaining_length > 0:
+            byte = byte | 0x80
+
+        s = s + struct.pack("!B", byte)
+        if remaining_length == 0:
+            return s

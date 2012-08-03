@@ -13,7 +13,6 @@ import subprocess
 import socket
 import sys
 import time
-from struct import *
 
 # From http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder
 cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"..")))
@@ -24,9 +23,9 @@ import mosq_test
 
 rc = 1
 keepalive = 60
-connect_packet = pack('!BBH6sBBHH17sH10sH12sH8sH16s', 16,
-        12+2+17+2+10+2+12+2+8+2+16,6,"MQIsdp",3,2+4+16+64+128,keepalive,17,"01-will-unpwd-set",10,"will-topic",12,
-        "will message",8,"oibvvwqw",16,"#'^2hg9a&nm38*us")
+connect_packet = mosq_test.gen_connect("01-will-unpwd-set",
+        keepalive=keepalive, username="oibvvwqw", password="#'^2hg9a&nm38*us",
+        will_topic="will-topic", will_qos=2, will_payload="will message")
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

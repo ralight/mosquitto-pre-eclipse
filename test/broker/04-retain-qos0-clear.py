@@ -6,7 +6,6 @@
 import subprocess
 import socket
 import time
-from struct import *
 
 import inspect, os, sys
 # From http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder
@@ -18,18 +17,18 @@ import mosq_test
 
 rc = 1
 keepalive = 60
-connect_packet = pack('!BBH6sBBHH17s', 16, 12+2+17,6,"MQIsdp",3,2,keepalive,17,"retain-clear-test")
-connack_packet = pack('!BBBB', 32, 2, 0, 0);
+connect_packet = mosq_test.gen_connect("retain-clear-test", keepalive=keepalive)
+connack_packet = mosq_test.gen_connack(rc=0)
 
-publish_packet = pack('!BBH17s17s', 48+1, 2+17+17, 17, "retain/clear/test", "retained message")
-retain_clear_packet = pack('!BBH17s', 48+1, 2+17, 17, "retain/clear/test")
+publish_packet = mosq_test.gen_publish("retain/clear/test", qos=0, payload="retained message", retain=True)
+retain_clear_packet = mosq_test.gen_publish("retain/clear/test", qos=0, payload=None, retain=True)
 mid_sub = 592
-subscribe_packet = pack('!BBHH17sB', 130, 2+2+17+1, mid_sub, 17, "retain/clear/test", 0)
-suback_packet = pack('!BBHB', 144, 2+1, mid_sub, 0)
+subscribe_packet = mosq_test.gen_subscribe(mid_sub, "retain/clear/test", 0)
+suback_packet = mosq_test.gen_suback(mid_sub, 0)
 
 mid_unsub = 593
-unsubscribe_packet = pack('!BBHH17s', 162, 2+2+17, mid_unsub, 17, "retain/clear/test")
-unsuback_packet = pack('!BBH', 176, 2, mid_unsub)
+unsubscribe_packet = mosq_test.gen_unsubscribe(mid_unsub, "retain/clear/test")
+unsuback_packet = mosq_test.gen_unsuback(mid_unsub)
 
 broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'], stderr=subprocess.PIPE)
 

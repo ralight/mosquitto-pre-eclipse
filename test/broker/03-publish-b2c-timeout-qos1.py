@@ -5,7 +5,6 @@
 import subprocess
 import socket
 import time
-from struct import *
 from os import environ
 
 import inspect, os, sys
@@ -19,16 +18,16 @@ import mosq_test
 rc = 1
 mid = 3265
 keepalive = 60
-connect_packet = pack('!BBH6sBBHH21s', 16, 12+2+21,6,"MQIsdp",3,2,keepalive,21,"pub-qos1-timeout-test")
-connack_packet = pack('!BBBB', 32, 2, 0, 0);
+connect_packet = mosq_test.gen_connect("pub-qos1-timeout-test", keepalive=keepalive)
+connack_packet = mosq_test.gen_connack(rc=0)
 
-subscribe_packet = pack('!BBHH17sB', 130, 2+2+17+1, mid, 17, "qos1/timeout/test", 1)
-suback_packet = pack('!BBHB', 144, 2+1, mid, 1)
+subscribe_packet = mosq_test.gen_subscribe(mid, "qos1/timeout/test", 1)
+suback_packet = mosq_test.gen_suback(mid, 1)
 
 mid = 1
-publish_packet = pack('!BBH17sH15s', 48+2, 2+17+2+15, 17, "qos1/timeout/test", mid, "timeout-message")
-publish_dup_packet = pack('!BBH17sH15s', 48+8+2, 2+17+2+15, 17, "qos1/timeout/test", mid, "timeout-message")
-puback_packet = pack('!BBH', 64, 2, mid)
+publish_packet = mosq_test.gen_publish("qos1/timeout/test", qos=1, mid=mid, payload="timeout-message")
+publish_dup_packet = mosq_test.gen_publish("qos1/timeout/test", qos=1, mid=mid, payload="timeout-message", dup=True)
+puback_packet = mosq_test.gen_puback(mid)
 
 broker = subprocess.Popen(['../../src/mosquitto', '-c', '03-publish-b2c-timeout-qos1.conf'], stderr=subprocess.PIPE)
 

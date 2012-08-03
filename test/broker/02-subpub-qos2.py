@@ -5,7 +5,6 @@
 import subprocess
 import socket
 import time
-from struct import *
 
 import inspect, os, sys
 # From http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder
@@ -18,23 +17,23 @@ import mosq_test
 rc = 1
 mid = 530
 keepalive = 60
-connect_packet = pack('!BBH6sBBHH16s', 16, 12+2+16,6,"MQIsdp",3,2,keepalive,16,"subpub-qos2-test")
-connack_packet = pack('!BBBB', 32, 2, 0, 0);
+connect_packet = mosq_test.gen_connect("subpub-qos2-test", keepalive=keepalive)
+connack_packet = mosq_test.gen_connack(rc=0)
 
-subscribe_packet = pack('!BBHH11sB', 130, 2+2+11+1, mid, 11, "subpub/qos2", 2)
-suback_packet = pack('!BBHB', 144, 2+1, mid, 2)
+subscribe_packet = mosq_test.gen_subscribe(mid, "subpub/qos2", 2)
+suback_packet = mosq_test.gen_suback(mid, 2)
 
 mid = 301
-publish_packet = pack('!BBH11sH7s', 48+4, 2+11+2+7, 11, "subpub/qos2", mid, "message")
-pubrec_packet = pack('!BBH', 80, 2, mid)
-pubrel_packet = pack('!BBH', 96+2, 2, mid)
-pubcomp_packet = pack('!BBH', 112, 2, mid)
+publish_packet = mosq_test.gen_publish("subpub/qos2", qos=2, mid=mid, payload="message")
+pubrec_packet = mosq_test.gen_pubrec(mid)
+pubrel_packet = mosq_test.gen_pubrel(mid)
+pubcomp_packet = mosq_test.gen_pubcomp(mid)
 
 mid = 1
-publish_packet2 = pack('!BBH11sH7s', 48+4, 2+11+2+7, 11, "subpub/qos2", mid, "message")
-pubrec_packet2 = pack('!BBH', 80, 2, mid)
-pubrel_packet2 = pack('!BBH', 96+2, 2, mid)
-pubcomp_packet2 = pack('!BBH', 112, 2, mid)
+publish_packet2 = mosq_test.gen_publish("subpub/qos2", qos=2, mid=mid, payload="message")
+pubrec_packet2 = mosq_test.gen_pubrec(mid)
+pubrel_packet2 = mosq_test.gen_pubrel(mid)
+pubcomp_packet2 = mosq_test.gen_pubcomp(mid)
 
 broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'], stderr=subprocess.PIPE)
 

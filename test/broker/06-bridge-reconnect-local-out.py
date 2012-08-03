@@ -7,7 +7,6 @@ import os
 import subprocess
 import socket
 import time
-from struct import *
 
 import inspect, os, sys
 # From http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder
@@ -19,13 +18,13 @@ import mosq_test
 
 rc = 1
 keepalive = 60
-connect_packet = pack('!BBH6sBBHH21s', 16, 12+2+21,6,"MQIsdp",3,2,keepalive,21,"bridge-reconnect-test")
-connack_packet = pack('!BBBB', 32, 2, 0, 0);
+connect_packet = mosq_test.gen_connect("bridge-reconnect-test", keepalive=keepalive)
+connack_packet = mosq_test.gen_connack(rc=0)
 
 mid = 180
-subscribe_packet = pack('!BBHH8sB', 130, 2+2+8+1, mid, 8, "bridge/#", 0)
-suback_packet = pack('!BBHB', 144, 2+1, mid, 0)
-publish_packet = pack('!BBH16s24s', 48, 2+16+24, 16, "bridge/reconnect", "bridge-reconnect-message")
+subscribe_packet = mosq_test.gen_subscribe(mid, "bridge/#", 0)
+suback_packet = mosq_test.gen_suback(mid, 0)
+publish_packet = mosq_test.gen_publish("bridge/reconnect", qos=0, payload="bridge-reconnect-message")
 
 try:
     os.remove('mosquitto.db')

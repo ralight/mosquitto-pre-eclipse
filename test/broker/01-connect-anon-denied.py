@@ -5,7 +5,6 @@
 import subprocess
 import socket
 import time
-from struct import *
 
 import inspect, os, sys
 # From http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder
@@ -17,8 +16,8 @@ import mosq_test
 
 rc = 1
 keepalive = 10
-connect_packet = pack('!BBH6sBBHH17s', 16, 12+2+17,6,"MQIsdp",3,2,keepalive,17,"connect-anon-test")
-connack_packet = pack('!BBBB', 32, 2, 0, 5);
+connect_packet = mosq_test.gen_connect("connect-anon-test", keepalive=keepalive)
+connack_packet = mosq_test.gen_connack(rc=5)
 
 broker = subprocess.Popen(['../../src/mosquitto', '-c', '01-connect-anon-denied.conf'], stderr=subprocess.PIPE)
 

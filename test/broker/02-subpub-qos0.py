@@ -5,7 +5,6 @@
 import subprocess
 import socket
 import time
-from struct import *
 
 import inspect, os, sys
 # From http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder
@@ -18,13 +17,13 @@ import mosq_test
 rc = 1
 mid = 53
 keepalive = 60
-connect_packet = pack('!BBH6sBBHH16s', 16, 12+2+16,6,"MQIsdp",3,2,keepalive,16,"subpub-qos0-test")
-connack_packet = pack('!BBBB', 32, 2, 0, 0);
+connect_packet = mosq_test.gen_connect("subpub-qos0-test", keepalive=keepalive)
+connack_packet = mosq_test.gen_connack(rc=0)
 
-subscribe_packet = pack('!BBHH11sB', 130, 2+2+11+1, mid, 11, "subpub/qos0", 0)
-suback_packet = pack('!BBHB', 144, 2+1, mid, 0)
+subscribe_packet = mosq_test.gen_subscribe(mid, "subpub/qos0", 0)
+suback_packet = mosq_test.gen_suback(mid, 0)
 
-publish_packet = pack('!BBH11s7s', 48, 2+11+7, 11, "subpub/qos0", "message")
+publish_packet = mosq_test.gen_publish("subpub/qos0", qos=0, payload="message")
 
 broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'], stderr=subprocess.PIPE)
 
