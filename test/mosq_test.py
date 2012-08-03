@@ -3,8 +3,15 @@ import struct
 def packet_matches(name, recvd, expected):
     if recvd != expected:
         print("FAIL: Received incorrect "+name+".")
-        print("Received: "+to_string(recvd))
-        print("Expected: "+to_string(expected))
+        try:
+            print("Received: "+to_string(recvd))
+        except struct.error:
+            print("Received (not decoded): "+recvd)
+        try:
+            print("Expected: "+to_string(expected))
+        except struct.error:
+            print("Expected (not decoded): "+expected)
+
         return 0
     else:
         return 1
