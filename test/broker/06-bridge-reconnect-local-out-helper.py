@@ -22,7 +22,7 @@ publish_packet = mosq_test.gen_publish("bridge/reconnect", qos=0, payload="bridg
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.connect(("localhost", 1889))
 sock.send(connect_packet)
-connack_recvd = sock.recv(256)
+connack_recvd = sock.recv(len(connack_packet))
 
 if mosq_test.packet_matches("connack", connack_recvd, connack_packet):
     sock.send(publish_packet)

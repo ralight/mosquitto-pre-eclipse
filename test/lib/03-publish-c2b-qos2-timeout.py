@@ -68,26 +68,26 @@ client = subprocess.Popen(client_args, env=env)
 try:
     (conn, address) = sock.accept()
     conn.settimeout(5)
-    connect_recvd = conn.recv(256)
+    connect_recvd = conn.recv(len(connect_packet))
 
     if mosq_test.packet_matches("connect", connect_recvd, connect_packet):
         conn.send(connack_packet)
-        publish_recvd = conn.recv(256)
+        publish_recvd = conn.recv(len(publish_packet))
 
         if mosq_test.packet_matches("publish", publish_recvd, publish_packet):
             # Delay for > 3 seconds (message retry time)
-            publish_recvd = conn.recv(256)
+            publish_recvd = conn.recv(len(publish_dup_packet))
 
             if mosq_test.packet_matches("dup publish", publish_recvd, publish_dup_packet):
                 conn.send(pubrec_packet)
-                pubrel_recvd = conn.recv(256)
+                pubrel_recvd = conn.recv(len(pubrel_packet))
                 
                 if mosq_test.packet_matches("pubrel", pubrel_recvd, pubrel_packet):
-                    pubrel_recvd = conn.recv(256)
+                    pubrel_recvd = conn.recv(len(pubrel_dup_packet))
                 
                     if mosq_test.packet_matches("dup pubrel", pubrel_recvd, pubrel_dup_packet):
                         conn.send(pubcomp_packet)
-                        disconnect_recvd = conn.recv(256)
+                        disconnect_recvd = conn.recv(len(disconnect_packet))
 
                         if mosq_test.packet_matches("disconnect", disconnect_recvd, disconnect_packet):
                             rc = 0

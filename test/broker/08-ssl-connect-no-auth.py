@@ -35,7 +35,7 @@ try:
     ssock.settimeout(5)
     ssock.connect(("localhost", 1888))
     ssock.send(connect_packet)
-    connack_recvd = ssock.recv(256)
+    connack_recvd = ssock.recv(len(connack_packet))
     ssock.close()
 
     if mosq_test.packet_matches("connack", connack_recvd, connack_packet):

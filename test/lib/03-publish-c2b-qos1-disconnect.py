@@ -48,11 +48,11 @@ client = subprocess.Popen(client_args, env=env)
 try:
     (conn, address) = sock.accept()
     conn.settimeout(5)
-    connect_recvd = conn.recv(256)
+    connect_recvd = conn.recv(len(connect_packet))
 
     if mosq_test.packet_matches("connect", connect_recvd, connect_packet):
         conn.send(connack_packet)
-        publish_recvd = conn.recv(256)
+        publish_recvd = conn.recv(len(publish_packet))
 
         if mosq_test.packet_matches("publish", publish_recvd, publish_packet):
             # Disconnect client. It should reconnect.
@@ -60,15 +60,15 @@ try:
 
             (conn, address) = sock.accept()
             conn.settimeout(5)
-            connect_recvd = conn.recv(256)
+            connect_recvd = conn.recv(len(connect_packet))
 
             if mosq_test.packet_matches("connect", connect_recvd, connect_packet):
                 conn.send(connack_packet)
-                publish_recvd = conn.recv(256)
+                publish_recvd = conn.recv(len(publish_packet_dup))
 
                 if mosq_test.packet_matches("retried publish", publish_recvd, publish_packet_dup):
                     conn.send(puback_packet)
-                    disconnect_recvd = conn.recv(256)
+                    disconnect_recvd = conn.recv(len(disconnect_packet))
 
                     if mosq_test.packet_matches("disconnect", disconnect_recvd, disconnect_packet):
                         rc = 0
