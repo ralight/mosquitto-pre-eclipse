@@ -1,5 +1,9 @@
 import struct
 
+def check_received_packet(sock, name, expected):
+    received = sock.recv(len(expected))
+    return packet_matches(name, received, expected)
+
 def packet_matches(name, recvd, expected):
     if recvd != expected:
         print("FAIL: Received incorrect "+name+".")
