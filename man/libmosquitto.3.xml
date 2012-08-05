@@ -78,6 +78,13 @@
 					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 			<para>Use to free memory associated with a mosquitto client instance.</para>
+
+			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_reinitialise</function></funcdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>const char *<parameter>id</parameter></paramdef>
+					<paramdef>bool <parameter>clean_session</parameter></paramdef>
+					<paramdef>void *<parameter>obj</parameter></paramdef>
+			</funcprototype></funcsynopsis>
 		</refsect2>
 
 		<refsect2>

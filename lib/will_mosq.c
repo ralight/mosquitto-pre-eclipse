@@ -110,6 +110,8 @@ cleanup:
 
 int _mosquitto_will_clear(struct mosquitto *mosq)
 {
+	if(!mosq->will) return MOSQ_ERR_SUCCESS;
+
 	if(mosq->will->topic){
 		_mosquitto_free(mosq->will->topic);
 		mosq->will->topic = NULL;

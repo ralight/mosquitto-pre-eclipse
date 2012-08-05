@@ -136,6 +136,22 @@ mosquittopp::~mosquittopp()
 	mosquitto_destroy(m_mosq);
 }
 
+int mosquittopp::reinitialise(const char *id, bool clean_session)
+{
+	int rc;
+	rc = mosquitto_reinitialise(m_mosq, id, clean_session, this);
+	if(rc == MOSQ_ERR_SUCCESS){
+		mosquitto_connect_callback_set(m_mosq, on_connect_wrapper);
+		mosquitto_disconnect_callback_set(m_mosq, on_disconnect_wrapper);
+		mosquitto_publish_callback_set(m_mosq, on_publish_wrapper);
+		mosquitto_message_callback_set(m_mosq, on_message_wrapper);
+		mosquitto_subscribe_callback_set(m_mosq, on_subscribe_wrapper);
+		mosquitto_unsubscribe_callback_set(m_mosq, on_unsubscribe_wrapper);
+		mosquitto_log_callback_set(m_mosq, on_log_wrapper);
+	}
+	return rc;
+}
+
 int mosquittopp::connect(const char *host, int port, int keepalive)
 {
 	return mosquitto_connect(m_mosq, host, port, keepalive);

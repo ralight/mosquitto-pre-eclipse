@@ -428,6 +428,16 @@ class Mosquitto:
     def __del__(self):
         pass
 
+    def reinitialise(self, client_id="", clean_session=True, obj=None):
+        if self._ssl:
+            self._ssl.close()
+            self._ssl = None
+            self._sock = None
+        elif self._sock:
+            self._sock.close()
+            self._sock = None
+        self.__init__(client_id, clean_session, obj)
+
     def tls_set(self, ca_certs, certfile=None, keyfile=None, cert_reqs=ssl.CERT_REQUIRED, tls_version=ssl.PROTOCOL_TLSv1, ciphers=None):
         """Configure network encryption and authentication options. Enables SSL/TLS support.
 

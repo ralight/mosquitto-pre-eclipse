@@ -68,6 +68,7 @@ class mosqpp_EXPORT mosquittopp {
 		mosquittopp(const char *id=NULL, bool clean_session=true);
 		~mosquittopp();
 
+		int reinitialise(const char *id, bool clean_session);
 		int socket();
 		int will_set(const char *topic, int payloadlen=0, const void *payload=NULL, int qos=0, bool retain=false);
 		int will_clear();

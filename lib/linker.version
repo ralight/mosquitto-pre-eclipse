@@ -9,6 +9,7 @@ VERS_1.0 {
 		mosquitto_lib_cleanup;
 		mosquitto_new;
 		mosquitto_destroy;
+		mosquitto_reinitialise;
 		mosquitto_will_set;
 		mosquitto_will_clear;
 		mosquitto_username_pw_set;

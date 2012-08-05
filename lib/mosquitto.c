@@ -57,6 +57,8 @@ typedef int ssize_t;
 #define HAVE_PSELECT
 #endif
 
+void _mosquitto_destroy(struct mosquitto *mosq);
+
 int mosquitto_lib_version(int *major, int *minor, int *revision)
 {
 	if(major) *major = LIBMOSQUITTO_MAJOR;
@@ -91,7 +93,7 @@ int mosquitto_lib_cleanup(void)
 struct mosquitto *mosquitto_new(const char *id, bool clean_session, void *obj)
 {
 	struct mosquitto *mosq = NULL;
-	int i;
+	int rc;
 
 	if(clean_session == false && id == NULL){
 		errno = EINVAL;
@@ -100,74 +102,98 @@ struct mosquitto *mosquitto_new(const char *id, bool clean_session, void *obj)
 
 	mosq = (struct mosquitto *)_mosquitto_calloc(1, sizeof(struct mosquitto));
 	if(mosq){
-		if(obj){
-			mosq->obj = obj;
-		}else{
-			mosq->obj = mosq;
-		}
 		mosq->sock = INVALID_SOCKET;
-		mosq->keepalive = 60;
-		mosq->message_retry = 20;
-		mosq->last_retry_check = 0;
-		mosq->clean_session = clean_session;
-		if(id){
-			if(strlen(id) == 0){
-				_mosquitto_free(mosq);
+		rc = mosquitto_reinitialise(mosq, id, clean_session, obj);
+		if(rc){
+			mosquitto_destroy(mosq);
+			if(rc == MOSQ_ERR_INVAL){
 				errno = EINVAL;
-				return NULL;
-			}
-			mosq->id = _mosquitto_strdup(id);
-		}else{
-			mosq->id = (char *)_mosquitto_calloc(24, sizeof(char));
-			if(!mosq->id){
-				_mosquitto_free(mosq);
+			}else if(rc == MOSQ_ERR_NOMEM){
 				errno = ENOMEM;
-				return NULL;
 			}
-			mosq->id[0] = 'm';
-			mosq->id[1] = 'o';
-			mosq->id[2] = 's';
-			mosq->id[3] = 'q';
-			mosq->id[4] = '/';
-
-			for(i=5; i<23; i++){
-				mosq->id[i] = (rand()%73)+48;
-			}
+			return NULL;
 		}
-		mosq->username = NULL;
-		mosq->password = NULL;
-		mosq->in_packet.payload = NULL;
-		_mosquitto_packet_cleanup(&mosq->in_packet);
-		mosq->out_packet = NULL;
-		mosq->current_out_packet = NULL;
-		mosq->last_msg_in = time(NULL);
-		mosq->last_msg_out = time(NULL);
-		mosq->ping_t = 0;
-		mosq->last_mid = 0;
-		mosq->state = mosq_cs_new;
-		mosq->messages = NULL;
-		mosq->will = NULL;
-		mosq->on_connect = NULL;
-		mosq->on_publish = NULL;
-		mosq->on_message = NULL;
-		mosq->on_subscribe = NULL;
-		mosq->on_unsubscribe = NULL;
-		mosq->host = NULL;
-		mosq->port = 1883;
-		mosq->in_callback = false;
-#ifdef WITH_TLS
-		mosq->ssl = NULL;
-#endif
-		pthread_mutex_init(&mosq->callback_mutex, NULL);
-		pthread_mutex_init(&mosq->log_callback_mutex, NULL);
-		pthread_mutex_init(&mosq->state_mutex, NULL);
-		pthread_mutex_init(&mosq->out_packet_mutex, NULL);
-		pthread_mutex_init(&mosq->current_out_packet_mutex, NULL);
-		pthread_mutex_init(&mosq->msgtime_mutex, NULL);
 	}else{
 		errno = ENOMEM;
 	}
 	return mosq;
+}
+
+int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_session, void *obj)
+{
+	int i;
+
+	if(!mosq) return MOSQ_ERR_INVAL;
+
+	if(clean_session == false && id == NULL){
+		return MOSQ_ERR_INVAL;
+	}
+
+	_mosquitto_destroy(mosq);
+	memset(mosq, 0, sizeof(struct mosquitto));
+
+	if(obj){
+		mosq->obj = obj;
+	}else{
+		mosq->obj = mosq;
+	}
+	mosq->sock = INVALID_SOCKET;
+	mosq->keepalive = 60;
+	mosq->message_retry = 20;
+	mosq->last_retry_check = 0;
+	mosq->clean_session = clean_session;
+	if(id){
+		if(strlen(id) == 0){
+			return MOSQ_ERR_INVAL;
+		}
+		mosq->id = _mosquitto_strdup(id);
+	}else{
+		mosq->id = (char *)_mosquitto_calloc(24, sizeof(char));
+		if(!mosq->id){
+			return MOSQ_ERR_NOMEM;
+		}
+		mosq->id[0] = 'm';
+		mosq->id[1] = 'o';
+		mosq->id[2] = 's';
+		mosq->id[3] = 'q';
+		mosq->id[4] = '/';
+
+		for(i=5; i<23; i++){
+			mosq->id[i] = (rand()%73)+48;
+		}
+	}
+	mosq->in_packet.payload = NULL;
+	_mosquitto_packet_cleanup(&mosq->in_packet);
+	mosq->out_packet = NULL;
+	mosq->current_out_packet = NULL;
+	mosq->last_msg_in = time(NULL);
+	mosq->last_msg_out = time(NULL);
+	mosq->ping_t = 0;
+	mosq->last_mid = 0;
+	mosq->state = mosq_cs_new;
+	mosq->messages = NULL;
+	mosq->will = NULL;
+	mosq->on_connect = NULL;
+	mosq->on_publish = NULL;
+	mosq->on_message = NULL;
+	mosq->on_subscribe = NULL;
+	mosq->on_unsubscribe = NULL;
+	mosq->host = NULL;
+	mosq->port = 1883;
+	mosq->in_callback = false;
+#ifdef WITH_TLS
+	mosq->ssl = NULL;
+#endif
+#ifdef WITH_THREADING
+	pthread_mutex_init(&mosq->callback_mutex, NULL);
+	pthread_mutex_init(&mosq->log_callback_mutex, NULL);
+	pthread_mutex_init(&mosq->state_mutex, NULL);
+	pthread_mutex_init(&mosq->out_packet_mutex, NULL);
+	pthread_mutex_init(&mosq->current_out_packet_mutex, NULL);
+	pthread_mutex_init(&mosq->msgtime_mutex, NULL);
+#endif
+
+	return MOSQ_ERR_SUCCESS;
 }
 
 int mosquitto_will_set(struct mosquitto *mosq, const char *topic, int payloadlen, const void *payload, int qos, bool retain)
@@ -215,18 +241,20 @@ int mosquitto_username_pw_set(struct mosquitto *mosq, const char *username, cons
 }
 
 
-void mosquitto_destroy(struct mosquitto *mosq)
+void _mosquitto_destroy(struct mosquitto *mosq)
 {
-	if(mosq->id) _mosquitto_free(mosq->id);
+	struct _mosquitto_packet *packet;
+	if(!mosq) return;
+
+	if(mosq->thread_id){
+		pthread_cancel(mosq->thread_id);
+		pthread_join(mosq->thread_id, NULL);
+	}
+	if(mosq->sock != INVALID_SOCKET){
+		_mosquitto_socket_close(mosq);
+	}
 	_mosquitto_message_cleanup_all(mosq);
-	if(mosq->will){
-		if(mosq->will->topic) _mosquitto_free(mosq->will->topic);
-		if(mosq->will->payload) _mosquitto_free(mosq->will->payload);
-		_mosquitto_free(mosq->will);
-	}
-	if(mosq->host){
-		_mosquitto_free(mosq->host);
-	}
+	_mosquitto_will_clear(mosq);
 #ifdef WITH_TLS
 	if(mosq->ssl){
 		SSL_free(mosq->ssl);
@@ -234,13 +262,55 @@ void mosquitto_destroy(struct mosquitto *mosq)
 	if(mosq->ssl_ctx){
 		SSL_CTX_free(mosq->ssl_ctx);
 	}
+	if(mosq->tls_cafile) _mosquitto_free(mosq->tls_cafile);
+	if(mosq->tls_capath) _mosquitto_free(mosq->tls_capath);
+	if(mosq->tls_certfile) _mosquitto_free(mosq->tls_certfile);
+	if(mosq->tls_keyfile) _mosquitto_free(mosq->tls_keyfile);
+	if(mosq->tls_pw_callback) mosq->tls_pw_callback = NULL;
+	if(mosq->tls_version) _mosquitto_free(mosq->tls_version);
+	if(mosq->tls_ciphers) _mosquitto_free(mosq->tls_ciphers);
+	if(mosq->tls_psk) _mosquitto_free(mosq->tls_psk);
+	if(mosq->tls_psk_identity) _mosquitto_free(mosq->tls_psk_identity);
 #endif
+
+	if(mosq->address) _mosquitto_free(mosq->address);
+	if(mosq->id) _mosquitto_free(mosq->id);
+	if(mosq->username) _mosquitto_free(mosq->username);
+	if(mosq->password) _mosquitto_free(mosq->password);
+	if(mosq->host) _mosquitto_free(mosq->host);
+
+	/* Out packet cleanup */
+	if(mosq->out_packet && !mosq->current_out_packet){
+		mosq->current_out_packet = mosq->out_packet;
+		mosq->out_packet = mosq->out_packet->next;
+	}
+	while(mosq->current_out_packet){
+		packet = mosq->current_out_packet;
+		/* Free data and reset values */
+		mosq->current_out_packet = mosq->out_packet;
+		if(mosq->out_packet){
+			mosq->out_packet = mosq->out_packet->next;
+		}
+
+		_mosquitto_packet_cleanup(packet);
+		_mosquitto_free(packet);
+	}
+
+	_mosquitto_packet_cleanup(&mosq->in_packet);
+
+#ifdef WITH_THREADING
 	pthread_mutex_destroy(&mosq->callback_mutex);
 	pthread_mutex_destroy(&mosq->log_callback_mutex);
 	pthread_mutex_destroy(&mosq->state_mutex);
 	pthread_mutex_destroy(&mosq->out_packet_mutex);
 	pthread_mutex_destroy(&mosq->current_out_packet_mutex);
 	pthread_mutex_destroy(&mosq->msgtime_mutex);
+#endif
+}
+
+void mosquitto_destroy(struct mosquitto *mosq)
+{
+	_mosquitto_destroy(mosq);
 	_mosquitto_free(mosq);
 }
 
