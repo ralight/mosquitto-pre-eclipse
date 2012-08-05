@@ -36,9 +36,10 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <memory_mosq.h>
 
 static int _aclfile_parse(struct _mosquitto_db *db);
-static int _pwfile_parse(struct _mosquitto_db *db);
+static int _unpwd_file_parse(struct _mosquitto_db *db);
 static int _acl_cleanup(struct _mosquitto_db *db, bool reload);
-static int _unpwd_cleanup(struct _mosquitto_db *db, bool reload);
+static int _unpwd_cleanup(struct _mosquitto_unpwd **unpwd, bool reload);
+static int _psk_file_parse(struct _mosquitto_db *db);
 
 int mosquitto_security_init_default(mosquitto_db *db, bool reload)
 {
@@ -46,7 +47,7 @@ int mosquitto_security_init_default(mosquitto_db *db, bool reload)
 
 	/* Load username/password data if required. */
 	if(db->config->password_file){
-		rc = _pwfile_parse(db);
+		rc = _unpwd_file_parse(db);
 		if(rc){
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error opening password file.");
 			return rc;
@@ -61,6 +62,16 @@ int mosquitto_security_init_default(mosquitto_db *db, bool reload)
 			return rc;
 		}
 	}
+
+	/* Load psk data if required. */
+	if(db->config->psk_file){
+		rc = _psk_file_parse(db);
+		if(rc){
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error opening psk file \"%s\".", db->config->psk_file);
+			return rc;
+		}
+	}
+
 	return MOSQ_ERR_SUCCESS;
 }
 
@@ -69,7 +80,9 @@ int mosquitto_security_cleanup_default(mosquitto_db *db, bool reload)
 	int rc;
 	rc = _acl_cleanup(db, reload);
 	if(rc != MOSQ_ERR_SUCCESS) return rc;
-	return _unpwd_cleanup(db, reload);
+	rc = _unpwd_cleanup(&db->unpwd, reload);
+	if(rc != MOSQ_ERR_SUCCESS) return rc;
+	return _unpwd_cleanup(&db->psk_id, reload);
 }
 
 
@@ -582,7 +595,7 @@ static int _acl_cleanup(struct _mosquitto_db *db, bool reload)
 	return MOSQ_ERR_SUCCESS;
 }
 
-static int _pwfile_parse(struct _mosquitto_db *db)
+static int _pwfile_parse(const char *file, struct _mosquitto_unpwd **root)
 {
 	FILE *pwfile;
 	struct _mosquitto_unpwd *unpwd;
@@ -591,11 +604,7 @@ static int _pwfile_parse(struct _mosquitto_db *db)
 	int len;
 	char *saveptr = NULL;
 
-	if(!db || !db->config) return MOSQ_ERR_INVAL;
-
-	if(!db->config->password_file) return MOSQ_ERR_SUCCESS;
-
-	pwfile = fopen(db->config->password_file, "rt");
+	pwfile = fopen(file, "rt");
 	if(!pwfile) return 1;
 
 	while(!feof(pwfile)){
@@ -603,9 +612,15 @@ static int _pwfile_parse(struct _mosquitto_db *db)
 			username = strtok_r(buf, ":", &saveptr);
 			if(username){
 				unpwd = _mosquitto_calloc(1, sizeof(struct _mosquitto_unpwd));
-				if(!unpwd) return MOSQ_ERR_NOMEM;
+				if(!unpwd){
+					fclose(pwfile);
+					return MOSQ_ERR_NOMEM;
+				}
 				unpwd->username = _mosquitto_strdup(username);
-				if(!unpwd->username) return MOSQ_ERR_NOMEM;
+				if(!unpwd->username){
+					fclose(pwfile);
+					return MOSQ_ERR_NOMEM;
+				}
 				len = strlen(unpwd->username);
 				while(unpwd->username[len-1] == 10 || unpwd->username[len-1] == 13){
 					unpwd->username[len-1] = '\0';
@@ -614,21 +629,42 @@ static int _pwfile_parse(struct _mosquitto_db *db)
 				password = strtok_r(NULL, ":", &saveptr);
 				if(password){
 					unpwd->password = _mosquitto_strdup(password);
-					if(!unpwd->password) return MOSQ_ERR_NOMEM;
+					if(!unpwd->password){
+						fclose(pwfile);
+						return MOSQ_ERR_NOMEM;
+					}
 					len = strlen(unpwd->password);
 					while(unpwd->password[len-1] == 10 || unpwd->password[len-1] == 13){
 						unpwd->password[len-1] = '\0';
 						len = strlen(unpwd->password);
 					}
 				}
-				unpwd->next = db->unpwd;
-				db->unpwd = unpwd;
+				unpwd->next = *root;
+				*root = unpwd;
 			}
 		}
 	}
 	fclose(pwfile);
 
 	return MOSQ_ERR_SUCCESS;
+}
+
+static int _unpwd_file_parse(struct _mosquitto_db *db)
+{
+	if(!db || !db->config) return MOSQ_ERR_INVAL;
+
+	if(!db->config->password_file) return MOSQ_ERR_SUCCESS;
+
+	return _pwfile_parse(db->config->password_file, &db->unpwd);
+}
+
+static int _psk_file_parse(struct _mosquitto_db *db)
+{
+	if(!db || !db->config) return MOSQ_ERR_INVAL;
+
+	if(!db->config->psk_file) return MOSQ_ERR_SUCCESS;
+
+	return _pwfile_parse(db->config->psk_file, &db->psk_id);
 }
 
 int mosquitto_unpwd_check_default(struct _mosquitto_db *db, const char *username, const char *password)
@@ -659,19 +695,24 @@ int mosquitto_unpwd_check_default(struct _mosquitto_db *db, const char *username
 	return MOSQ_ERR_AUTH;
 }
 
-static int _unpwd_cleanup(struct _mosquitto_db *db, bool reload)
+static int _unpwd_cleanup(struct _mosquitto_unpwd **root, bool reload)
 {
 	struct _mosquitto_unpwd *tail;
+	struct _mosquitto_unpwd *unpwd;
 
-	if(!db) return MOSQ_ERR_INVAL;
+	if(!root) return MOSQ_ERR_INVAL;
 
-	while(db->unpwd){
-		tail = db->unpwd->next;
-		if(db->unpwd->password) _mosquitto_free(db->unpwd->password);
-		if(db->unpwd->username) _mosquitto_free(db->unpwd->username);
-		_mosquitto_free(db->unpwd);
-		db->unpwd = tail;
+	unpwd = *root;
+
+	while(unpwd){
+		tail = unpwd->next;
+		if(unpwd->password) _mosquitto_free(unpwd->password);
+		if(unpwd->username) _mosquitto_free(unpwd->username);
+		_mosquitto_free(unpwd);
+		unpwd = tail;
 	}
+
+	*root = NULL;
 
 	return MOSQ_ERR_SUCCESS;
 }

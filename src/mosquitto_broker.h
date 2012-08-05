@@ -116,6 +116,7 @@ typedef struct {
 	char *persistence_file;
 	char *persistence_filepath;
 	time_t persistent_client_expiration;
+	char *psk_file;
 	bool queue_qos0_messages;
 	int retry_interval;
 	int store_clean_interval;
@@ -208,6 +209,7 @@ typedef struct _mosquitto_db{
 	struct _mosquitto_unpwd *unpwd;
 	struct _mosquitto_acl_user *acl_list;
 	struct _mosquitto_acl *acl_patterns;
+	struct _mosquitto_unpwd *psk_id;
 	struct mosquitto **contexts;
 	int context_count;
 	struct mosquitto_msg_store *msg_store;
