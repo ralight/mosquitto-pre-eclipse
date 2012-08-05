@@ -156,6 +156,9 @@ int mosquitto_main_loop(mosquitto_db *db, int *listensock, int listensock_count,
 									}
 									db->contexts[i]->pollfd_index = pollfd_index;
 									pollfd_index++;
+								}else{
+									/* Retry later. */
+									db->contexts[i]->bridge->restart_t = time(NULL)+db->contexts[i]->bridge->restart_timeout;
 								}
 							}
 						}
