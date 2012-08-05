@@ -84,6 +84,8 @@ static void _config_init_reload(mqtt3_config *config)
 	if(config->persistence_file) _mosquitto_free(config->persistence_file);
 	config->persistence_file = NULL;
 	config->persistent_client_expiration = 0;
+	if(config->psk_file) _mosquitto_free(config->psk_file);
+	config->psk_file = NULL;
 	config->queue_qos0_messages = false;
 	config->retry_interval = 20;
 	config->store_clean_interval = 10;
@@ -118,7 +120,6 @@ void mqtt3_config_init(mqtt3_config *config)
 	config->default_listener.certfile = NULL;
 	config->default_listener.keyfile = NULL;
 	config->default_listener.ciphers = NULL;
-	config->default_listener.psk = NULL;
 	config->default_listener.psk_hint = NULL;
 	config->default_listener.require_certificate = false;
 	config->default_listener.crlfile = NULL;
@@ -143,9 +144,11 @@ void mqtt3_config_cleanup(mqtt3_config *config)
 	if(config->clientid_prefixes) _mosquitto_free(config->clientid_prefixes);
 	if(config->config_file) _mosquitto_free(config->config_file);
 	if(config->password_file) _mosquitto_free(config->password_file);
+	if(config->psk_file) _mosquitto_free(config->psk_file);
 	if(config->persistence_location) _mosquitto_free(config->persistence_location);
 	if(config->persistence_file) _mosquitto_free(config->persistence_file);
 	if(config->persistence_filepath) _mosquitto_free(config->persistence_filepath);
+	if(config->psk_file) _mosquitto_free(config->psk_file);
 	if(config->listeners){
 		for(i=0; i<config->listener_count; i++){
 			if(config->listeners[i].host) _mosquitto_free(config->listeners[i].host);
@@ -287,7 +290,6 @@ int mqtt3_config_parse_args(mqtt3_config *config, int argc, char *argv[])
 		config->listeners[config->listener_count-1].certfile = config->default_listener.certfile;
 		config->listeners[config->listener_count-1].keyfile = config->default_listener.keyfile;
 		config->listeners[config->listener_count-1].ciphers = config->default_listener.ciphers;
-		config->listeners[config->listener_count-1].psk = config->default_listener.psk;
 		config->listeners[config->listener_count-1].psk_hint = config->default_listener.psk_hint;
 		config->listeners[config->listener_count-1].require_certificate = config->default_listener.require_certificate;
 		config->listeners[config->listener_count-1].ssl_ctx = NULL;
@@ -600,7 +602,7 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 				}else if(!strcmp(token, "cafile")){
 #if defined(WITH_TLS)
 					if(reload) continue; // Listeners not valid for reloading.
-					if(cur_listener->psk){
+					if(cur_listener->psk_hint){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single listener.");
 						return MOSQ_ERR_INVAL;
 					}
@@ -618,7 +620,7 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 				}else if(!strcmp(token, "certfile")){
 #ifdef WITH_TLS
 					if(reload) continue; // Listeners not valid for reloading.
-					if(cur_listener->psk){
+					if(cur_listener->psk_hint){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single listener.");
 						return MOSQ_ERR_INVAL;
 					}
@@ -853,7 +855,6 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 						cur_listener->certfile = NULL;
 						cur_listener->keyfile = NULL;
 						cur_listener->ciphers = NULL;
-						cur_listener->psk = NULL;
 						cur_listener->psk_hint = NULL;
 						cur_listener->require_certificate = false;
 						cur_listener->ssl_ctx = NULL;
@@ -1055,19 +1056,20 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 						return MOSQ_ERR_INVAL;
 					}
 					config->default_listener.port = port_tmp;
-				}else if(!strcmp(token, "psk")){
+				}else if(!strcmp(token, "psk_file")){
 #if defined(WITH_TLS) && defined(WITH_TLS_PSK)
 					if(reload) continue; // Listeners not valid for reloading.
 					if(cur_listener->cafile || config->default_listener.capath){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single listener.");
 						return MOSQ_ERR_INVAL;
 					}
-					if(_conf_parse_string(&token, "psk", &cur_listener->psk, saveptr)) return MOSQ_ERR_INVAL;
-					/* Check for hex only digits */
-					if(strspn(cur_listener->psk, "0123456789abcdefABCDEF") < strlen(cur_listener->psk)){
-						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: psk must only contain hexadecimal characters.");
-						return MOSQ_ERR_INVAL;
+					if(reload){
+						if(config->psk_file){
+							_mosquitto_free(config->psk_file);
+							config->psk_file = NULL;
+						}
 					}
+					if(_conf_parse_string(&token, "psk_file", &config->psk_file, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS/TLS-PSK support not available.");
 #endif

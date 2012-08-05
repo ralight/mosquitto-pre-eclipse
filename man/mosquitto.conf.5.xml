@@ -324,6 +324,22 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>psk_file</option> <replaceable>file path</replaceable></term>
+				<listitem>
+					<para>Set the path to a pre-shared-key file. This option
+						requires a listener to be have PSK support enabled. If
+						defined, the contents of the file are used to control
+						client access to the broker. Each line should be in the
+						format "identity:key", where the key is a hexadecimal
+						string with no leading "0x". A client connecting to a
+						listener that has PSK support enabled must provide a
+						matching identity and PSK to allow the encrypted connection to proceed.</para>
+					<para>Reloaded on reload signal. The currently loaded
+						identity and key data will be freed and reloaded.
+						Clients that are already connected will not be
+						affected.</para>
+				</listitem> </varlistentry>
+			<varlistentry>
 				<term><option>queue_qos0_messages</option> [ true | false ]</term>
 				<listitem>
 					<para>Set to true to queue messages with QoS 0 when a
@@ -560,18 +576,18 @@
 				"Certificate based SSL/TLS support".</para>
 			<variablelist>
 				<varlistentry>
-					<term><option>psk</option> <replaceable>hex key</replaceable></term>
-					<listitem>
-						<para>The psk option defines the key for this listener
-							and enables PSK based support. It must be in the
-							format of a hex number without a leading
-							"0x".</para>
-					</listitem>
-				</varlistentry>
-				<varlistentry>
 					<term><option>psk_hint</option> <replaceable>hint</replaceable></term>
 					<listitem>
-						<para></para>
+						<para>The psk_hint option enables pre-shared-key
+							support for this listener and also acts as an
+							identifier for this listener. The hint is sent to
+							clients and may be used locally to aid
+							authentication. The hint is a free form string that
+							doesn't have much meaning in itself, so feel free
+							to be creative.</para>
+						<para>If this option is provided, see
+							psk_file to define the pre-shared keys to be used
+							or create a security plugin to handle them.</para>
 					</listitem>
 				</varlistentry>
 				<varlistentry>
