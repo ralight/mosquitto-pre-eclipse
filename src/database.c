@@ -559,7 +559,7 @@ int mqtt3_db_message_reconnect_reset(struct mosquitto *context)
 			}
 		}
 		prev = msg;
-		msg = msg->next;
+		if(msg) msg = msg->next;
 	}
 	/* Messages received when the client was disconnected are put
 	 * in the ms_queued state. If we don't change them to the
