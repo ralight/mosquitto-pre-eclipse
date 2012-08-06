@@ -39,6 +39,54 @@
 	</refsect1>
 
 	<refsect1>
+		<title>Authentication</title>
+		<para>The authentication options described below allow a wide range of
+			possibilities in conjunction with the listener options. This
+			section aims to clarify the possibilities.</para>
+		<para>The simplest option is to have no authentication at all. This is
+			the default if no other options are given. Unauthenticated
+			encrypted support is provided by using the certificate based
+			SSL/TLS based options cafile/capath, certfile and keyfile.</para>
+		<para>MQTT provides username/password authentication as part of the
+			protocol. Use the password_file option to define the valid
+			usernames and passwords. Be sure to use network encryption if you
+			are using this option otherwise the username and password will be
+			vulnerable to interception.</para>
+		<para>When using certificate based encryption there are two options
+			that affect authentication. The first is require_certificate, which
+			may be set to true or false. If false, the SSL/TLS component of the
+			client will verify the server but there is no requirement for the
+			client to provide anything for the server: authentication is
+			limited to the MQTT built in username/password. If
+			require_certificate is true, the client must provide a valid
+			certificate in order to connect successfully. In this case, the
+			second option, use_identity_as_username, becomes relevant. If set
+			to true, the Common Name (CN) from the client certificate is used
+			instead of the MQTT username for access control purposes. The
+			password is not replaced because it is assumed that only
+			authenticated clients have valid certificates. If
+			use_identity_as_username is false, the client must authenticate as
+			normal (if required by password_file) through the MQTT
+			options.</para>
+		<para>When using pre-shared-key based encryption through the psk_hint
+			and psk_file options, the client must provide a valid identity and
+			key in order to connect to the broker before any MQTT communication
+			takes place. If use_identity_as_username is true, the PSK identity
+			is used instead of the MQTT username for access control purposes.
+			If use_identity_as_username is false, the client may still
+			authenticate using the MQTT username/password if using the
+			password_file option.</para>
+		<para>Both certificate and PSK based encryption are configured on a per-listener basis.</para>
+		<para>Authentication plugins can be created to replace the
+			password_file and psk_file options (as well as the ACL options)
+			with e.g. SQL based lookups.</para>
+		<para>It is possible to support multiple authentication schemes at
+			once. A config could be created that had a listener for all of the
+			different encryption options described above and hence a large
+			number of ways of authenticating.</para>
+	</refsect1>
+
+	<refsect1>
 		<title>General Options</title>
 		<variablelist>
 			<varlistentry>
@@ -535,7 +583,7 @@
 				<varlistentry>
 					<term><option>require_certificate</option> [ true | false ]</term>
 					<listitem>
-						<para>By default an SSL enabled listener will operate in a
+						<para>By default an SSL/TLS enabled listener will operate in a
 							similar fashion to a https enabled web server, in that
 							the server has a certificate signed by a CA and the
 							client will verify that it is a trusted certificate.
@@ -849,15 +897,15 @@
 			</varlistentry>
 		</variablelist>
 		<refsect2>
-			<title>SSL Support</title>
-			<para>The following options are available for all listeners to configure SSL support.</para>
+			<title>SSL/TLS Support</title>
+			<para>The following options are available for all listeners to configure SSL/TLS support.</para>
 			<variablelist>
 				<varlistentry>
 					<term><option>bridge_cafile</option> <replaceable>file path</replaceable></term>
 					<listitem>
 						<para>One of <option>bridge_cafile</option> or
 							<option>bridge_capath</option> must be provided to
-							allow SSL support.</para>
+							allow SSL/TLS support.</para>
 						<para>bridge_cafile is used to define the path to a file
 							containing the PEM encoded CA certificates that
 							have signed the certificate for the remote broker.
@@ -869,7 +917,7 @@
 					<listitem>
 						<para>One of <option>bridge_capath</option> or
 							<option>bridge_capath</option> must be provided to
-							allow SSL support.</para>
+							allow SSL/TLS support.</para>
 						<para>bridge_capath is used to define the path to a
 							directory containing the PEM encoded CA
 							certificates that have signed the certificate for
