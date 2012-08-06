@@ -141,6 +141,18 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>$SYS/broker/connection/#</option></term>
+				<listitem>
+					<para>When bridges are configured to/from the broker,
+						common practice is to provide a status topic that
+						indicates the state of the connection. This is provided
+						within $SYS/broker/connection/ by default. If the value
+						of the topic is 1 the connection is active, if 0 then
+						it is not active. See the Bridges section below for
+						more information on bridges.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>$SYS/broker/heap/current size</option></term>
 				<listitem>
 					<para>The current size of the heap memory in use by
