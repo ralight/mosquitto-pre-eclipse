@@ -61,7 +61,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef WITH_TLS
 static int tls_ex_index_context = -1;
-static int tls_ex_index_psk = -1;
+static int tls_ex_index_listener = -1;
 #endif
 
 int mqtt3_socket_accept(struct _mosquitto_db *db, int listensock)
@@ -162,9 +162,7 @@ int mqtt3_socket_accept(struct _mosquitto_db *db, int listensock)
 							return -1;
 						}
 						SSL_set_ex_data(new_context->ssl, tls_ex_index_context, new_context);
-						if(db->config->listeners[i].psk){
-							SSL_set_ex_data(new_context->ssl, tls_ex_index_psk, db->config->listeners[i].psk);
-						}
+						SSL_set_ex_data(new_context->ssl, tls_ex_index_listener, &db->config->listeners[i]);
 						new_context->want_read = true;
 						new_context->want_write = true;
 						bio = BIO_new_socket(new_sock, BIO_NOCLOSE);
@@ -201,23 +199,42 @@ static int client_certificate_verify(int preverify_ok, X509_STORE_CTX *ctx)
 #if defined(WITH_TLS) && defined(WITH_TLS_PSK)
 static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned char *psk, unsigned int max_psk_len)
 {
+	struct _mosquitto_db *db;
 	struct mosquitto *context;
-	char *psk_key;
+	struct _mqtt3_listener *listener;
+	char *psk_key = NULL;
 	int len;
+	const char *psk_hint;
 
 	if(!identity) return 0;
+
+	db = _mosquitto_get_db();
 
 	context = SSL_get_ex_data(ssl, tls_ex_index_context);
 	if(!context) return 0;
 
-	context->username = _mosquitto_strdup(identity);
-	if(!context->username) return 0;
+	listener = SSL_get_ex_data(ssl, tls_ex_index_listener);
+	if(!listener) return 0;
 
-	psk_key = SSL_get_ex_data(ssl, tls_ex_index_psk);
+	psk_hint = listener->psk_hint;
+
+	/* The hex to BN conversion results in the length halving, so we can pass
+	 * max_psk_len*2 as the max hex key here. */
+	psk_key = _mosquitto_calloc(1, max_psk_len*2 + 1);
 	if(!psk_key) return 0;
+
+	if(mosquitto_psk_key_get(db, psk_hint, identity, psk_key, max_psk_len*2) != MOSQ_ERR_SUCCESS){
+		return 0;
+	}
 
 	len = _mosquitto_hex2bin(psk_key, psk, max_psk_len);
 	if (len < 0) return 0;
+
+	if(listener->use_identity_as_username){
+		context->username = _mosquitto_strdup(identity);
+		if(!context->username) return 0;
+	}
+
 	return len;
 }
 #endif
@@ -393,12 +410,12 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 			}
 
 #  ifdef WITH_TLS_PSK
-		}else if(listener->psk){
+		}else if(listener->psk_hint){
 			if(tls_ex_index_context == -1){
 				tls_ex_index_context = SSL_get_ex_new_index(0, "client context", NULL, NULL, NULL);
 			}
-			if(tls_ex_index_psk == -1){
-				tls_ex_index_psk = SSL_get_ex_new_index(0, "psk", NULL, NULL, NULL);
+			if(tls_ex_index_listener == -1){
+				tls_ex_index_listener = SSL_get_ex_new_index(0, "listener", NULL, NULL, NULL);
 			}
 
 			listener->ssl_ctx = SSL_CTX_new(TLSv1_server_method());

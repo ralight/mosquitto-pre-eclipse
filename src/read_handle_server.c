@@ -194,17 +194,13 @@ int mqtt3_handle_connect(mosquitto_db *db, struct mosquitto *context)
 			return MOSQ_ERR_SUCCESS;
 		}
 #ifdef WITH_TLS_PSK
-		if(context->listener->psk){
-			/* Client should have provided an identity */
-			rc = mosquitto_unpwd_check(db, context->username, NULL);
-			if(rc == MOSQ_ERR_AUTH){
+		if(context->listener->psk_hint){
+			/* Client should have provided an identity to get this far. */
+			if(!context->username){
 				_mosquitto_send_connack(context, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
 				mqtt3_context_disconnect(db, context);
 				_mosquitto_free(client_id);
 				return MOSQ_ERR_SUCCESS;
-			}else if(rc == MOSQ_ERR_INVAL){
-				_mosquitto_free(client_id);
-				return MOSQ_ERR_INVAL;
 			}
 		}else{
 #endif /* WITH_TLS_PSK */

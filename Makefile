@@ -37,18 +37,20 @@ install : mosquitto
 	$(INSTALL) -m 644 mosquitto.conf ${DESTDIR}/etc/mosquitto/mosquitto.conf
 	$(INSTALL) -m 644 aclfile.example ${DESTDIR}/etc/mosquitto/aclfile.example
 	$(INSTALL) -m 644 pwfile.example ${DESTDIR}/etc/mosquitto/pwfile.example
+	$(INSTALL) -m 644 pskfile.example ${DESTDIR}/etc/mosquitto/pskfile.example
 
 uninstall :
 	@for d in ${DIRS}; do $(MAKE) -C $${d} uninstall; done
 	rm -f ${DESTDIR}/etc/mosquitto/mosquitto.conf
 	rm -f ${DESTDIR}/etc/mosquitto/aclfile.example
 	rm -f ${DESTDIR}/etc/mosquitto/pwfile.example
+	rm -f ${DESTDIR}/etc/mosquitto/pskfile.example
 
 dist : reallyclean
 	@for d in ${DISTDIRS}; do $(MAKE) -C $${d} dist; done
 	
 	mkdir -p dist/mosquitto-${VERSION}
-	cp -r client examples installer lib logo man misc security service src test ChangeLog.txt CMakeLists.txt COPYING Makefile compiling.txt config.h config.mk readme.txt readme-windows.txt mosquitto.conf aclfile.example pwfile.example dist/mosquitto-${VERSION}/
+	cp -r client examples installer lib logo man misc security service src test ChangeLog.txt CMakeLists.txt COPYING Makefile compiling.txt config.h config.mk readme.txt readme-windows.txt mosquitto.conf aclfile.example pskfile.example pwfile.example dist/mosquitto-${VERSION}/
 	cd dist; tar -zcf mosquitto-${VERSION}.tar.gz mosquitto-${VERSION}/
 	for m in man/*.xml; \
 		do \

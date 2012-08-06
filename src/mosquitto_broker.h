@@ -86,7 +86,6 @@ struct _mqtt3_listener {
 	char *certfile;
 	char *keyfile;
 	char *ciphers;
-	char *psk;
 	char *psk_hint;
 	bool require_certificate;
 	SSL_CTX *ssl_ctx;
@@ -201,6 +200,7 @@ struct _mosquitto_auth_plugin{
 	int (*security_cleanup)(void *user_data, struct mosquitto_auth_opt *auth_opts, int auth_opt_count, bool reload);
 	int (*acl_check)(void *user_data, const char *username, const char *topic, int access);
 	int (*unpwd_check)(void *user_data, const char *username, const char *password);
+	int (*psk_key_get)(void *user_data, const char *hint, const char *identity, char *key, int max_key_len);
 };
 
 typedef struct _mosquitto_db{
@@ -279,6 +279,7 @@ struct _mqtt3_bridge{
  * Main functions
  * ============================================================ */
 int mosquitto_main_loop(mosquitto_db *db, int *listensock, int listensock_count, int listener_max);
+struct _mosquitto_db *_mosquitto_get_db(void);
 
 /* ============================================================
  * Config functions
@@ -392,12 +393,14 @@ int mosquitto_security_apply(struct _mosquitto_db *db);
 int mosquitto_security_cleanup(mosquitto_db *db, bool reload);
 int mosquitto_acl_check(struct _mosquitto_db *db, struct mosquitto *context, const char *topic, int access);
 int mosquitto_unpwd_check(struct _mosquitto_db *db, const char *username, const char *password);
+int mosquitto_psk_key_get(struct _mosquitto_db *db, const char *hint, const char *identity, char *key, int max_key_len);
 
 int mosquitto_security_init_default(mosquitto_db *db, bool reload);
 int mosquitto_security_apply_default(struct _mosquitto_db *db);
 int mosquitto_security_cleanup_default(mosquitto_db *db, bool reload);
 int mosquitto_acl_check_default(struct _mosquitto_db *db, struct mosquitto *context, const char *topic, int access);
 int mosquitto_unpwd_check_default(struct _mosquitto_db *db, const char *username, const char *password);
+int mosquitto_psk_key_get_default(struct _mosquitto_db *db, const char *hint, const char *identity, char *key, int max_key_len);
 
 /* ============================================================
  * Window service related functions

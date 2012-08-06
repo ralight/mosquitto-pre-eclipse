@@ -660,11 +660,31 @@ static int _unpwd_file_parse(struct _mosquitto_db *db)
 
 static int _psk_file_parse(struct _mosquitto_db *db)
 {
+	int rc;
+	struct _mosquitto_unpwd *tail;
+
 	if(!db || !db->config) return MOSQ_ERR_INVAL;
 
+	/* We haven't been asked to parse a psk file. */
 	if(!db->config->psk_file) return MOSQ_ERR_SUCCESS;
 
-	return _pwfile_parse(db->config->psk_file, &db->psk_id);
+	rc = _pwfile_parse(db->config->psk_file, &db->psk_id);
+	if(rc) return rc;
+
+	tail = db->psk_id;
+	while(tail){
+		/* Check for hex only digits */
+		if(!tail->password){
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty psk for identity \"%s\".", tail->username);
+			return MOSQ_ERR_INVAL;
+		}
+		if(strspn(tail->password, "0123456789abcdefABCDEF") < strlen(tail->password)){
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: psk for identity \"%s\" contains non-hexadecimal characters.", tail->username);
+			return MOSQ_ERR_INVAL;
+		}
+		tail = tail->next;
+	}
+	return MOSQ_ERR_SUCCESS;
 }
 
 int mosquitto_unpwd_check_default(struct _mosquitto_db *db, const char *username, const char *password)
@@ -799,5 +819,24 @@ int mosquitto_security_apply_default(struct _mosquitto_db *db)
 		}
 	}
 	return MOSQ_ERR_SUCCESS;
+}
+
+int mosquitto_psk_key_get_default(struct _mosquitto_db *db, const char *hint, const char *identity, char *key, int max_key_len)
+{
+	struct _mosquitto_unpwd *tail;
+
+	if(!db || !hint || !identity || !key) return MOSQ_ERR_INVAL;
+	if(!db->psk_id) return MOSQ_ERR_AUTH;
+
+	tail = db->psk_id;
+	while(tail){
+		if(!strcmp(tail->username, identity)){
+			strncpy(key, tail->password, max_key_len);
+			return MOSQ_ERR_SUCCESS;
+		}
+		tail = tail->next;
+	}
+
+	return MOSQ_ERR_AUTH;
 }
 
