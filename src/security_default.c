@@ -639,8 +639,7 @@ static int _pwfile_parse(const char *file, struct _mosquitto_unpwd **root)
 						len = strlen(unpwd->password);
 					}
 				}
-				unpwd->next = *root;
-				*root = unpwd;
+				HASH_ADD_KEYPTR(hh, *root, unpwd->username, strlen(unpwd->username), unpwd);
 			}
 		}
 	}
@@ -661,7 +660,7 @@ static int _unpwd_file_parse(struct _mosquitto_db *db)
 static int _psk_file_parse(struct _mosquitto_db *db)
 {
 	int rc;
-	struct _mosquitto_unpwd *tail;
+	struct _mosquitto_unpwd *u, *tmp;
 
 	if(!db || !db->config) return MOSQ_ERR_INVAL;
 
@@ -671,35 +670,32 @@ static int _psk_file_parse(struct _mosquitto_db *db)
 	rc = _pwfile_parse(db->config->psk_file, &db->psk_id);
 	if(rc) return rc;
 
-	tail = db->psk_id;
-	while(tail){
+	HASH_ITER(hh, db->psk_id, u, tmp){
 		/* Check for hex only digits */
-		if(!tail->password){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty psk for identity \"%s\".", tail->username);
+		if(!u->password){
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty psk for identity \"%s\".", u->username);
 			return MOSQ_ERR_INVAL;
 		}
-		if(strspn(tail->password, "0123456789abcdefABCDEF") < strlen(tail->password)){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: psk for identity \"%s\" contains non-hexadecimal characters.", tail->username);
+		if(strspn(u->password, "0123456789abcdefABCDEF") < strlen(u->password)){
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: psk for identity \"%s\" contains non-hexadecimal characters.", u->username);
 			return MOSQ_ERR_INVAL;
 		}
-		tail = tail->next;
 	}
 	return MOSQ_ERR_SUCCESS;
 }
 
 int mosquitto_unpwd_check_default(struct _mosquitto_db *db, const char *username, const char *password)
 {
-	struct _mosquitto_unpwd *tail;
+	struct _mosquitto_unpwd *u, *tmp;
 
 	if(!db || !username) return MOSQ_ERR_INVAL;
 	if(!db->unpwd) return MOSQ_ERR_SUCCESS;
 
-	tail = db->unpwd;
-	while(tail){
-		if(!strcmp(tail->username, username)){
-			if(tail->password){
+	HASH_ITER(hh, db->unpwd, u, tmp){
+		if(!strcmp(u->username, username)){
+			if(u->password){
 				if(password){
-					if(!strcmp(tail->password, password)){
+					if(!strcmp(u->password, password)){
 						return MOSQ_ERR_SUCCESS;
 					}
 				}else{
@@ -709,7 +705,6 @@ int mosquitto_unpwd_check_default(struct _mosquitto_db *db, const char *username
 				return MOSQ_ERR_SUCCESS;
 			}
 		}
-		tail = tail->next;
 	}
 
 	return MOSQ_ERR_AUTH;
@@ -717,19 +712,15 @@ int mosquitto_unpwd_check_default(struct _mosquitto_db *db, const char *username
 
 static int _unpwd_cleanup(struct _mosquitto_unpwd **root, bool reload)
 {
-	struct _mosquitto_unpwd *tail;
-	struct _mosquitto_unpwd *unpwd;
+	struct _mosquitto_unpwd *u, *tmp;
 
 	if(!root) return MOSQ_ERR_INVAL;
 
-	unpwd = *root;
-
-	while(unpwd){
-		tail = unpwd->next;
-		if(unpwd->password) _mosquitto_free(unpwd->password);
-		if(unpwd->username) _mosquitto_free(unpwd->username);
-		_mosquitto_free(unpwd);
-		unpwd = tail;
+	HASH_ITER(hh, *root, u, tmp){
+		HASH_DEL(*root, u);
+		if(u->password) _mosquitto_free(u->password);
+		if(u->username) _mosquitto_free(u->username);
+		_mosquitto_free(u);
 	}
 
 	*root = NULL;
@@ -746,7 +737,7 @@ static int _unpwd_cleanup(struct _mosquitto_unpwd **root, bool reload)
 int mosquitto_security_apply_default(struct _mosquitto_db *db)
 {
 	struct _mosquitto_acl_user *acl_user_tail;
-	struct _mosquitto_unpwd *unpwd_tail;
+	struct _mosquitto_unpwd *u, *tmp;
 	bool allow_anonymous;
 	int i;
 	bool unpwd_ok;
@@ -767,12 +758,11 @@ int mosquitto_security_apply_default(struct _mosquitto_db *db)
 				/* Check for connected clients that are no longer authorised */
 				if(db->unpwd && db->contexts[i]->username){
 					unpwd_ok = false;
-					unpwd_tail = db->unpwd;
-					while(unpwd_tail){
-						if(!strcmp(db->contexts[i]->username, unpwd_tail->username)){
-							if(unpwd_tail->password){
+					HASH_ITER(hh, db->unpwd, u, tmp){
+						if(!strcmp(db->contexts[i]->username, u->username)){
+							if(u->password){
 								if(!db->contexts[i]->password 
-										|| strcmp(db->contexts[i]->password, unpwd_tail->password)){
+										|| strcmp(db->contexts[i]->password, u->password)){
 
 									/* Non matching password to username. */
 									db->contexts[i]->state = mosq_cs_disconnecting;
@@ -787,7 +777,6 @@ int mosquitto_security_apply_default(struct _mosquitto_db *db)
 								unpwd_ok = true;
 							}
 						}
-						unpwd_tail = unpwd_tail->next;
 					}
 					if(!unpwd_ok){
 						db->contexts[i]->state = mosq_cs_disconnecting;
@@ -823,18 +812,16 @@ int mosquitto_security_apply_default(struct _mosquitto_db *db)
 
 int mosquitto_psk_key_get_default(struct _mosquitto_db *db, const char *hint, const char *identity, char *key, int max_key_len)
 {
-	struct _mosquitto_unpwd *tail;
+	struct _mosquitto_unpwd *u, *tmp;
 
 	if(!db || !hint || !identity || !key) return MOSQ_ERR_INVAL;
 	if(!db->psk_id) return MOSQ_ERR_AUTH;
 
-	tail = db->psk_id;
-	while(tail){
-		if(!strcmp(tail->username, identity)){
-			strncpy(key, tail->password, max_key_len);
+	HASH_ITER(hh, db->psk_id, u, tmp){
+		if(!strcmp(u->username, identity)){
+			strncpy(key, u->password, max_key_len);
 			return MOSQ_ERR_SUCCESS;
 		}
-		tail = tail->next;
 	}
 
 	return MOSQ_ERR_AUTH;

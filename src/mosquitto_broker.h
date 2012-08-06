@@ -35,6 +35,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <mosquitto_internal.h>
 #include <mosquitto_plugin.h>
 #include <mosquitto.h>
+#include "uthash.h"
 
 #ifdef WITH_TLS
 #  include <openssl/ssl.h>
@@ -170,9 +171,9 @@ typedef struct _mosquitto_client_msg{
 } mosquitto_client_msg;
 
 struct _mosquitto_unpwd{
-	struct _mosquitto_unpwd *next;
 	char *username;
 	char *password;
+	UT_hash_handle hh;
 };
 
 struct _mosquitto_acl{
