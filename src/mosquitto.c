@@ -67,6 +67,11 @@ void handle_sigint(int signal);
 void handle_sigusr1(int signal);
 void handle_sigusr2(int signal);
 
+struct _mosquitto_db *_mosquitto_get_db(void)
+{
+	return &int_db;
+}
+
 /* mosquitto shouldn't run as root.
  * This function will attempt to change to an unprivileged user and group if
  * running as root. The user is given in config->user.

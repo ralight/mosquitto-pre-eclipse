@@ -144,7 +144,6 @@ void mqtt3_config_cleanup(mqtt3_config *config)
 	if(config->clientid_prefixes) _mosquitto_free(config->clientid_prefixes);
 	if(config->config_file) _mosquitto_free(config->config_file);
 	if(config->password_file) _mosquitto_free(config->password_file);
-	if(config->psk_file) _mosquitto_free(config->psk_file);
 	if(config->persistence_location) _mosquitto_free(config->persistence_location);
 	if(config->persistence_file) _mosquitto_free(config->persistence_file);
 	if(config->persistence_filepath) _mosquitto_free(config->persistence_filepath);
