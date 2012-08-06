@@ -6,6 +6,7 @@
 	/etc/mosquitto/mosquitto.conf r,
 	/etc/mosquitto/ca_cert/* r,
 	/etc/mosquitto/cert/* r,
+	/etc/mosquitto/conf.d/* r,
 	/var/lib/mosquitto/ r,
 	/var/lib/mosquitto/mosquitto.db rwk,
 	/var/run/mosquitto.pid rw,
