@@ -116,9 +116,9 @@ int mosquitto_security_module_init(mosquitto_db *db)
 			return 1;
 		}
 
-		if(!(db->auth_plugin.psk_key_get = (FUNC_auth_plugin_psk_key_get)LIB_SYM(lib, "mosquitto_psk_key_get"))){
+		if(!(db->auth_plugin.psk_key_get = (FUNC_auth_plugin_psk_key_get)LIB_SYM(lib, "mosquitto_auth_psk_key_get"))){
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR,
-					"Error: Unable to load auth plugin function mosquitto_psk_key_get().");
+					"Error: Unable to load auth plugin function mosquitto_auth_psk_key_get().");
 			LIB_CLOSE(lib);
 			return 1;
 		}

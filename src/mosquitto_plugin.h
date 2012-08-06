@@ -169,7 +169,7 @@ struct mosquitto_auth_opt {
  *
  * Function: mosquitto_psk_key_get
  *
- * int mosquitto_psk_key_get(void *user_data, const char *hint, const char *identity, char *key, int max_key_len);
+ * int mosquitto_auth_psk_key_get(void *user_data, const char *hint, const char *identity, char *key, int max_key_len);
  *
  * Called by the broker when a client connects to a listener using TLS/PSK.
  * This is used to retrieve the pre-shared-key associated with a client
