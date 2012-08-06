@@ -153,6 +153,14 @@ void mqtt3_config_cleanup(mqtt3_config *config)
 			if(config->listeners[i].host) _mosquitto_free(config->listeners[i].host);
 			if(config->listeners[i].mount_point) _mosquitto_free(config->listeners[i].mount_point);
 			if(config->listeners[i].socks) _mosquitto_free(config->listeners[i].socks);
+#ifdef WITH_TLS
+			if(config->listeners[i].cafile) _mosquitto_free(config->listeners[i].cafile);
+			if(config->listeners[i].capath) _mosquitto_free(config->listeners[i].capath);
+			if(config->listeners[i].keyfile) _mosquitto_free(config->listeners[i].keyfile);
+			if(config->listeners[i].ciphers) _mosquitto_free(config->listeners[i].ciphers);
+			if(config->listeners[i].psk_hint) _mosquitto_free(config->listeners[i].psk_hint);
+			if(config->listeners[i].crlfile) _mosquitto_free(config->listeners[i].crlfile);
+#endif
 		}
 		_mosquitto_free(config->listeners);
 	}
