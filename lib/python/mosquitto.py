@@ -365,7 +365,10 @@ class Mosquitto:
         the broker will remove all information about this client when it
         disconnects. If False, the client is a persistent client and
         subscription information and queued messages will be retained when the
-        client disconnects.
+        client disconnects. 
+        Note that a client will never discard its own outgoing messages on
+        disconnect. Calling connect() or reconnect() will cause the messages to
+        be resent.  Use reinitialise() to reset a client to its original state.
 
         obj is user defined data of any type that is passed as the "obj"
         parameter to callbacks. It may be updated at a later point with the
