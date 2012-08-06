@@ -48,3 +48,8 @@ int mosquitto_auth_unpwd_check(void *user_data, const char *username, const char
 	}
 }
 
+int mosquitto_auth_psk_key_get(void *user_data, const char *hint, const char *identity, char *key, int max_key_len)
+{
+	return MOSQ_ERR_AUTH;
+}
+
