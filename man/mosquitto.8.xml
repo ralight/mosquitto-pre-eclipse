@@ -62,7 +62,8 @@
 		<title>Configuration</title>
 		<para>The broker can be configured using a configuration file as
 			described in
-			<citerefentry><refentrytitle>mosquitto.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>.
+			<citerefentry><refentrytitle>mosquitto.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+			and this is the main point of information for mosquitto.
 			The files required for SSL/TLS support are described in 
 			<citerefentry><refentrytitle>mosquitto-tls</refentrytitle><manvolnum>7</manvolnum></citerefentry>.
 		</para>
