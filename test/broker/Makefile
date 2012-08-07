@@ -51,6 +51,7 @@ test : test-compile
 	./08-ssl-connect-cert-auth-expired.py
 	./08-ssl-connect-cert-auth-revoked.py
 	./08-tls-psk-pub.py
+	./08-tls-psk-bridge.py
 	./09-plugin-auth-unpwd-success.py
 
 # Tests for with WITH_STRICT_PROTOCOL defined

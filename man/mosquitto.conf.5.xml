@@ -937,10 +937,34 @@
 					</listitem>
 				</varlistentry>
 				<varlistentry>
+					<term><option>bridge_identity</option> <replaceable>identity</replaceable></term>
+					<listitem>
+						<para>Pre-shared-key encryption provides an alternative
+							to certificate based encryption. A bridge can be
+							configured to use PSK with the bridge_identity and
+							bridge_psk options.  This is the client identity
+							used with PSK encryption. Only one of certificate
+							and PSK based encryption can be used on one bridge
+							at once.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
 					<term><option>bridge_keyfile</option> <replaceable>file path</replaceable></term>
 					<listitem>
 						<para>Path to the PEM encoded private key for this
 							bridge, if required by the remote broker.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>bridge_psk</option> <replaceable>key</replaceable></term>
+					<listitem>
+						<para>Pre-shared-key encryption provides an alternative
+							to certificate based encryption. A bridge can be
+							configured to use PSK with the bridge_identity and
+							bridge_psk options.  This is the pre-shared-key in
+							hexadecimal format with no "0x". Only one of
+							certificate and PSK based encryption can be used on
+							one bridge at once.</para>
 					</listitem>
 				</varlistentry>
 			</variablelist>

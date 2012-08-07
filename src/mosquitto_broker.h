@@ -271,6 +271,10 @@ struct _mqtt3_bridge{
 	char *tls_capath;
 	char *tls_certfile;
 	char *tls_keyfile;
+#  ifdef WITH_TLS_PSK
+	char *tls_psk_identity;
+	char *tls_psk;
+#  endif
 #endif
 };
 
