@@ -246,10 +246,12 @@ void _mosquitto_destroy(struct mosquitto *mosq)
 	struct _mosquitto_packet *packet;
 	if(!mosq) return;
 
+#ifdef WITH_THREADING
 	if(mosq->thread_id){
 		pthread_cancel(mosq->thread_id);
 		pthread_join(mosq->thread_id, NULL);
 	}
+#endif
 	if(mosq->sock != INVALID_SOCKET){
 		_mosquitto_socket_close(mosq);
 	}
