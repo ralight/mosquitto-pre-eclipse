@@ -40,5 +40,8 @@ except ssl.SSLError as err:
 
 broker.terminate()
 broker.wait
+if rc:
+    (stdo, stde) = broker.communicate()
+    print(stde)
 exit(rc)
 
