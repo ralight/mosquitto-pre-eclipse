@@ -738,7 +738,7 @@
 					<para>If set to true, publish notification messages to the
 					local and remote brokers giving information about the state
 					of the bridge connection. Retained messages are published
-					to the topic $SYS/bridge/connection/&lt;clientid&gt;/state
+					to the topic $SYS/broker/connection/&lt;clientid&gt;/state
 					unless otherwise set with notification_topics.  If the
 					message is 1 then the connection is active, or 0 if the
 					connection has failed. Defaults to true.</para>
