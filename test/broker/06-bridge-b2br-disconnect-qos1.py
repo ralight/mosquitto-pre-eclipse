@@ -89,6 +89,9 @@ finally:
 
     broker.terminate()
     broker.wait()
+    if rc:
+        (stdo, stde) = broker.communicate()
+        print(stde)
     ssock.close()
 
 exit(rc)
