@@ -15,6 +15,9 @@
 #WITH_WRAP:=yes
 
 # Comment out to disable SSL/TLS support in the broker and client.
+# Disabling this will also mean that passwords must be stored in plain text. It
+# is strongly recommended that you only disable WITH_TLS if you are not using
+# password authentication at all.
 WITH_TLS:=yes
 
 # Comment out to disable TLS/PSK support in the broker and client. Requires
@@ -95,6 +98,7 @@ CLIENT_CFLAGS:=${CFLAGS} -I../lib
 
 BROKER_LIBS:=-ldl
 LIB_LIBS:=
+PASSWD_LIBS:=
 
 CLIENT_LDFLAGS:=$(LDFLAGS) -L../lib ../lib/libmosquitto.so.${SOVERSION}
 
@@ -134,6 +138,7 @@ ifeq ($(WITH_TLS),yes)
 	LIB_LIBS:=$(LIB_LIBS) -lssl -lcrypto
 	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_TLS
 	LIB_CFLAGS:=$(LIB_CFLAGS) -DWITH_TLS
+	PASSWD_LIBS:= -lssl -lcrypto
 
 	ifeq ($(WITH_TLS_PSK),yes)
 		BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_TLS_PSK

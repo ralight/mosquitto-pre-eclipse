@@ -6,6 +6,7 @@ Broker:
 - Add SSL/TLS support.
 - Add TLS-PSK support, providing a simpler encryption method for constrained
   devices.
+- Add mosquitto_passwd for handling password files.
 - Add $SYS/broker/publish/messages/{sent|received} to show the number of
   PUBLISH messages sent/received.
 - Add $SYS/broker/publish/bytes/{sent|received} to show the number of
