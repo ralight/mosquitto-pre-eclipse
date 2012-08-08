@@ -28,30 +28,30 @@
 			<arg><option>--quiet</option></arg>
 			<arg><option>-v</option></arg>
 			<arg>
-				<arg>-u <replaceable>username</replaceable></arg>
-				<arg>-P <replaceable>password</replaceable></arg>
+				<arg><option>-u</option> <replaceable>username</replaceable></arg>
+				<arg><option>-P</option> <replaceable>password</replaceable></arg>
 			</arg>
 			<arg>
-				--will-topic <replaceable>topic</replaceable>
-				<arg>--will-payload <replaceable>payload</replaceable></arg>
-				<arg>--will-qos <replaceable>qos</replaceable></arg>
-				<arg>--will-retain</arg>
+				<option>--will-topic</option> <replaceable>topic</replaceable>
+				<arg><option>--will-payload</option> <replaceable>payload</replaceable></arg>
+				<arg><option>--will-qos</option> <replaceable>qos</replaceable></arg>
+				<arg><option>--will-retain</option></arg>
 			</arg>
 			<group>
 				<arg>
 					<group choice='req'>
-						<arg choice='plain'>--cafile <replaceable>file</replaceable></arg>
-						<arg choice='plain'>--capath <replaceable>dir</replaceable></arg>
+						<arg choice='plain'><option>--cafile</option> <replaceable>file</replaceable></arg>
+						<arg choice='plain'><option>--capath</option> <replaceable>dir</replaceable></arg>
 					</group>
-					<arg>--cert <replaceable>file</replaceable></arg>
-					<arg>--key <replaceable>file</replaceable></arg>
+					<arg><option>--cert</option> <replaceable>file</replaceable></arg>
+					<arg><option>--key</option> <replaceable>file</replaceable></arg>
 				</arg>
 				<arg>
-					<arg choice='plain'>--psk <replaceable>hex-key</replaceable></arg>
-					<arg choice='plain'>--psk-identity <replaceable>identity</replaceable></arg>
+					<arg choice='plain'><option>--psk</option> <replaceable>hex-key</replaceable></arg>
+					<arg choice='plain'><option>--psk-identity</option> <replaceable>identity</replaceable></arg>
 				</arg>
 			</group>
-			<arg choice='plain' rep='repeat'>-t <replaceable>message-topic</replaceable></arg>
+			<arg choice='plain' rep='repeat'><option>-t</option> <replaceable>message-topic</replaceable></arg>
 		</cmdsynopsis>
 		<cmdsynopsis>
 			<command>mosquitto_sub</command>

@@ -17,51 +17,51 @@
 	<refsynopsisdiv>
 		<cmdsynopsis>
 			<command>mosquitto_pub</command>
-			<arg>-d</arg>
-			<arg>-h <replaceable>hostname</replaceable></arg>
-			<arg>-i <replaceable>client_id</replaceable></arg>
-			<arg>-I <replaceable>client id prefix</replaceable></arg>
-			<arg>-p <replaceable>port number</replaceable></arg>
-			<arg>-q <replaceable>message QoS</replaceable></arg>
-			<arg>--quiet</arg>
-			<arg>-r</arg>
+			<arg><option>-d</option></arg>
+			<arg><option>-h</option> <replaceable>hostname</replaceable></arg>
+			<arg><option>-i</option> <replaceable>client_id</replaceable></arg>
+			<arg><option>-I</option> <replaceable>client id prefix</replaceable></arg>
+			<arg><option>-p</option> <replaceable>port number</replaceable></arg>
+			<arg><option>-q</option> <replaceable>message QoS</replaceable></arg>
+			<arg><option>--quiet</option></arg>
+			<arg><option>-r</option></arg>
 			<group choice='req'>
-				<arg choice='plain'>-f <replaceable>file</replaceable></arg>
-				<arg choice='plain'>-l</arg>
-				<arg choice='plain'>-m <replaceable>message</replaceable></arg>
-				<arg choice='plain'>-n</arg>
-				<arg choice='plain'>-s</arg>
+				<arg choice='plain'><option>-f</option> <replaceable>file</replaceable></arg>
+				<arg choice='plain'><option>-l</option></arg>
+				<arg choice='plain'><option>-m</option> <replaceable>message</replaceable></arg>
+				<arg choice='plain'><option>-n</option></arg>
+				<arg choice='plain'><option>-s</option></arg>
 			</group>
 			<arg>
-				<arg>-u <replaceable>username</replaceable></arg>
-				<arg>-P <replaceable>password</replaceable></arg>
+				<arg><option>-u</option> <replaceable>username</replaceable></arg>
+				<arg><option>-P</option> <replaceable>password</replaceable></arg>
 			</arg>
 			<arg>
-				--will-topic <replaceable>topic</replaceable>
-				<arg>--will-payload <replaceable>payload</replaceable></arg>
-				<arg>--will-qos <replaceable>qos</replaceable></arg>
-				<arg>--will-retain</arg>
+				<option>--will-topic</option> <replaceable>topic</replaceable>
+				<arg><option>--will-payload</option> <replaceable>payload</replaceable></arg>
+				<arg><option>--will-qos</option> <replaceable>qos</replaceable></arg>
+				<arg><option>--will-retain</option></arg>
 			</arg>
 			<group>
 				<arg>
 					<group choice='req'>
-						<arg choice='plain'>--cafile <replaceable>file</replaceable></arg>
-						<arg choice='plain'>--capath <replaceable>dir</replaceable></arg>
+						<arg choice='plain'><option>--cafile</option> <replaceable>file</replaceable></arg>
+						<arg choice='plain'><option>--capath</option> <replaceable>dir</replaceable></arg>
 					</group>
-					<arg>--cert <replaceable>file</replaceable></arg>
-					<arg>--key <replaceable>file</replaceable></arg>
+					<arg><option>--cert</option> <replaceable>file</replaceable></arg>
+					<arg><option>--key</option> <replaceable>file</replaceable></arg>
 				</arg>
 				<arg>
-					<arg choice='plain'>--psk <replaceable>hex-key</replaceable></arg>
-					<arg choice='plain'>--psk-identity <replaceable>identity</replaceable></arg>
+					<arg choice='plain'><option>--psk</option> <replaceable>hex-key</replaceable></arg>
+					<arg choice='plain'><option>--psk-identity</option> <replaceable>identity</replaceable></arg>
 				</arg>
 			</group>
-			<arg choice='plain'>-t <replaceable>message-topic</replaceable></arg>
+			<arg choice='plain'><option>-t</option> <replaceable>message-topic</replaceable></arg>
 		</cmdsynopsis>
 		<cmdsynopsis>
 			<command>mosquitto_pub</command>
 			<group choice='plain'>
-				<arg>--help</arg>
+				<arg><option>--help</option></arg>
 			</group>
 		</cmdsynopsis>
 	</refsynopsisdiv>
