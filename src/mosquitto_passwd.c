@@ -31,6 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <openssl/buffer.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,6 +45,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define MAX_BUFFER_LEN 1024
 #define SALT_LEN 12
+
+static char temp_file[100];
 
 int base64_encode(unsigned char *in, unsigned int in_len, char **encoded)
 {
@@ -255,16 +258,35 @@ int get_password(char *password, int len)
 	return 0;
 }
 
+void handle_sigint(int signal)
+{
+#ifndef WIN32
+	struct termios ts;
+
+	tcgetattr(0, &ts);
+	ts.c_lflag |= ECHO | ICANON;
+	tcsetattr(0, TCSANOW, &ts);
+#endif
+	if(temp_file[0] != '\0'){
+		/* Temp file may have been created, so delete it. */
+		unlink(temp_file);
+	}
+	exit(0);
+}
+
 int main(int argc, char *argv[])
 {
 	char *password_file = NULL;
-	char temp_file[100];
 	char *username = NULL;
 	bool create_new = false;
 	bool delete_user = false;
 	FILE *fptr, *fnew;
 	char password[MAX_BUFFER_LEN];
 	int rc;
+
+	memset(temp_file, 0, 100);
+	signal(SIGINT, handle_sigint);
+	signal(SIGTERM, handle_sigint);
 
 	OpenSSL_add_all_digests();
 
