@@ -99,7 +99,6 @@ def to_string(packet):
         return s
     elif cmd == 0x20:
         # CONNACK
-        print(len(packet))
         (cmd, rl, resv, rc) = struct.unpack('!BBBB', packet)
         return "CONNACK, rl="+str(rl)+", res="+str(resv)+", rc="+str(rc)
     elif cmd == 0x30:
