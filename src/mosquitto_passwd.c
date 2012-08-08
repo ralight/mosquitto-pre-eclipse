@@ -65,7 +65,7 @@ int base64_encode(unsigned char *in, unsigned int in_len, char **encoded)
 		return 1;
 	}
 	memcpy(*encoded, bptr->data, bptr->length);
-	encoded[bptr->length] = '\0';
+	(*encoded)[bptr->length] = '\0';
 	BIO_free_all(b64);
 
 	return 0;
