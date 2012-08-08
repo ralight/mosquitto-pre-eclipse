@@ -39,6 +39,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #  include <process.h>
 #else
 #  include <unistd.h>
+#  include <termios.h>
 #endif
 
 #define MAX_BUFFER_LEN 1024
@@ -193,11 +194,26 @@ int update_pwuser(FILE *fptr, FILE *fnew, const char *username, const char *pass
 int get_password(char *password, int len)
 {
 	char pw1[MAX_BUFFER_LEN], pw2[MAX_BUFFER_LEN];
+	char *s;
+#ifndef WIN32
+	struct termios ts_quiet, ts_orig;
+
+	tcgetattr(0, &ts_orig);
+	ts_quiet = ts_orig;
+	ts_quiet.c_lflag &= ~(ECHO | ICANON);
+	tcsetattr(0, TCSANOW, &ts_quiet);
+#endif
 
 	printf("Password: ");
-	/* FIXME - shouldn't echo password to screen. */
-	if(!fgets(pw1, MAX_BUFFER_LEN, stdin)){
+	s = fgets(pw1, MAX_BUFFER_LEN, stdin);
+#ifndef WIN32
+	printf("\n");
+#endif
+	if(!s){
 		fprintf(stderr, "Error: Empty password.\n");
+#ifndef WIN32
+		tcsetattr(0, TCSANOW, &ts_orig);
+#endif
 		return 1;
 	}else{
 		while(pw1[strlen(pw1)-1] == 10 || pw1[strlen(pw1)-1] == 13){
@@ -205,12 +221,19 @@ int get_password(char *password, int len)
 		}
 		if(strlen(pw1) == 0){
 			fprintf(stderr, "Error: Empty password.\n");
+#ifndef WIN32
+			tcsetattr(0, TCSANOW, &ts_orig);
+#endif
 			return 1;
 		}
 	}
 	printf("Reenter password: ");
-	/* FIXME - shouldn't echo password to screen. */
-	if(!fgets(pw2, MAX_BUFFER_LEN, stdin)){
+	s = fgets(pw2, MAX_BUFFER_LEN, stdin);
+#ifndef WIN32
+	printf("\n");
+	tcsetattr(0, TCSANOW, &ts_orig);
+#endif
+	if(!s){
 		fprintf(stderr, "Error: Empty password.\n");
 		return 1;
 	}else{
