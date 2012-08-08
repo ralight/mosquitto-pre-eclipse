@@ -173,6 +173,11 @@ typedef struct _mosquitto_client_msg{
 struct _mosquitto_unpwd{
 	char *username;
 	char *password;
+#ifdef WITH_TLS
+	unsigned int password_len;
+	unsigned char *salt;
+	unsigned int salt_len;
+#endif
 	UT_hash_handle hh;
 };
 
