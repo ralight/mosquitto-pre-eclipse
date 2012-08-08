@@ -75,6 +75,13 @@ endif (NOT WIN32)
 install(TARGETS mosquitto RUNTIME DESTINATION ${SBINDIR} LIBRARY DESTINATION ${LIBDIR})
 install(FILES mosquitto_plugin.h DESTINATION ${INCLUDEDIR})
 
+
+if (${WITH_TLS} STREQUAL ON)
+	add_executable(mosquitto_passwd mosquitto_passwd.c)
+	target_link_libraries(mosquitto_passwd ${OPENSSL_LIBRARIES})
+	install(TARGETS mosquitto_passwd RUNTIME DESTINATION ${BINDIR} LIBRARY DESTINATION ${LIBDIR})
+endif (${WITH_TLS} STREQUAL ON)
+
 if (UNIX)
 	install(CODE "EXEC_PROGRAM(/sbin/ldconfig)")
 endif (UNIX)

@@ -391,6 +391,10 @@
 				<manvolnum>5</manvolnum>
 			</citerefentry>
 			<citerefentry>
+				<refentrytitle><link xlink:href="mosquitto_passwd-1.html">mosquitto_passwd</link></refentrytitle>
+				<manvolnum>1</manvolnum>
+			</citerefentry>
+			<citerefentry>
 				<refentrytitle><link xlink:href="mosquitto_pub-1.html">mosquitto_pub</link></refentrytitle>
 				<manvolnum>1</manvolnum>
 			</citerefentry>

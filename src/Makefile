@@ -2,7 +2,11 @@ include ../config.mk
 
 .PHONY: all install uninstall clean reallyclean
 
+ifeq ($(WITH_TLS),yes)
+all : mosquitto mosquitto_passwd
+else
 all : mosquitto
+endif
 
 mosquitto : mosquitto.o bridge.o conf.o context.o database.o logging.o loop.o memory_mosq.o persist.o net.o net_mosq.o read_handle.o read_handle_client.o read_handle_server.o read_handle_shared.o security.o security_default.o send_client_mosq.o send_mosq.o send_server.o service.o subs.o util_mosq.o will_mosq.o
 	${CC} $^ -o $@ ${LDFLAGS} $(BROKER_LIBS)
@@ -79,17 +83,26 @@ util_mosq.o : ../lib/util_mosq.c ../lib/util_mosq.h
 will_mosq.o : ../lib/will_mosq.c ../lib/will_mosq.h
 	${CC} $(BROKER_CFLAGS) -c $< -o $@
 
+mosquitto_passwd : mosquitto_passwd.o
+	${CC} $^ -o $@ ${LDFLAGS} $(PASSWD_LIBS)
+
+mosquitto_passwd.o : mosquitto_passwd.c
+	#${CC} $(CFLAGS) -c $< -o $@
+	${CC} -ggdb -c $< -o $@
+
 install : all
 	$(INSTALL) -d ${DESTDIR}$(prefix)/sbin
 	$(INSTALL) -s mosquitto ${DESTDIR}${prefix}/sbin/mosquitto
 	$(INSTALL) mosquitto_plugin.h ${DESTDIR}${prefix}/include/mosquitto_plugin.h
+	$(INSTALL) mosquitto_passwd ${DESTDIR}${prefix}/bin/mosquitto_passwd
 
 uninstall :
 	-rm -f ${DESTDIR}${prefix}/sbin/mosquitto
 	-rm -f ${DESTDIR}${prefix}/include/mosquitto_plugin.h
+	-rm -f ${DESTDIR}${prefix}/bin/mosquitto_passwd
 
 clean : 
-	-rm -f *.o mosquitto
+	-rm -f *.o mosquitto mosquitto_passwd
 
 reallyclean : clean
 	-rm -rf *.orig *.db

@@ -299,6 +299,8 @@
 					<para>Reloaded on reload signal. The currently loaded username and
 					password data will be freed and reloaded. Clients that are
 					already connected will not be affected.</para>
+					<para>See also
+						<citerefentry><refentrytitle>mosquitto_passwd</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
 				</listitem> </varlistentry>
 			<varlistentry>
 				<term><option>persistence</option> [ true | false ]</term>
@@ -988,6 +990,10 @@
 			<citerefentry>
 				<refentrytitle><link xlink:href="mosquitto-8.html">mosquitto</link></refentrytitle>
 				<manvolnum>8</manvolnum>
+			</citerefentry>
+			<citerefentry>
+				<refentrytitle><link xlink:href="mosquitto_passwd-1.html">mosquitto_passwd</link></refentrytitle>
+				<manvolnum>1</manvolnum>
 			</citerefentry>
 			<citerefentry>
 				<refentrytitle><link xlink:href="mosquitto-tls-7.html">mosquitto-tls</link></refentrytitle>
