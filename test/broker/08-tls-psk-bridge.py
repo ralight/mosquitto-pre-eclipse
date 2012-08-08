@@ -74,8 +74,14 @@ try:
 finally:
     broker.terminate()
     broker.wait()
+    if rc:
+        (stdo, stde) = broker.communicate()
+        print(stde)
     bridge.terminate()
     bridge.wait()
+    if rc:
+        (stdo, stde) = bridge.communicate()
+        print(stde)
 
 exit(rc)
 

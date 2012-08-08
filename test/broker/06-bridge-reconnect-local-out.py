@@ -67,8 +67,14 @@ try:
 finally:
     broker.terminate()
     broker.wait()
+    if rc:
+        (stdo, stde) = broker.communicate()
+        print(stde)
     local_broker.terminate()
     local_broker.wait()
+    if rc:
+        (stdo, stde) = local_broker.communicate()
+        print(stde)
     try:
         os.remove('mosquitto.db')
     except OSError:
