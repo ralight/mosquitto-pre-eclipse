@@ -262,6 +262,7 @@ int main(int argc, char *argv[])
 	int rc2;
 	char hostname[256];
 	char err[1024];
+	int len;
 
 	char *will_payload = NULL;
 	long will_payloadlen = 0;
@@ -577,16 +578,17 @@ int main(int argc, char *argv[])
 		}
 		snprintf(id, strlen(id_prefix)+10, "%s%d", id_prefix, getpid());
 	}else if(!id){
-		id = malloc(MOSQ_MQTT_ID_MAX_LENGTH + 1);
+		hostname[0] = '\0';
+		gethostname(hostname, 256);
+		hostname[255] = '\0';
+		len = strlen("mosqpub/-") + 6 + strlen(hostname);
+		id = malloc(len);
 		if(!id){
 			if(!quiet) fprintf(stderr, "Error: Out of memory.\n");
 			mosquitto_lib_cleanup();
 			return 1;
 		}
-		hostname[0] = '\0';
-		gethostname(hostname, 256);
-		hostname[255] = '\0';
-		snprintf(id, MOSQ_MQTT_ID_MAX_LENGTH, "mosqpub/%d-%s", getpid(), hostname);
+		snprintf(id, len, "mosqpub/%d-%s", getpid(), hostname);
 		id[MOSQ_MQTT_ID_MAX_LENGTH] = '\0';
 	}
 
