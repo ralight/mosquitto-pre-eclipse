@@ -11,7 +11,7 @@ cmake_minimum_required(VERSION 2.6)
 set (VERSION 0.15.90)
 
 if (WIN32)
-	execute_process(COMMAND echo "%DATE% %TIME%" OUTPUT_VARIABLE TIMESTAMP
+	execute_process(COMMAND cmd /c echo %DATE% %TIME% OUTPUT_VARIABLE TIMESTAMP
 			OUTPUT_STRIP_TRAILING_WHITESPACE)
 else (WIN32)
 	execute_process(COMMAND date "+%F %T%z" OUTPUT_VARIABLE TIMESTAMP
