@@ -86,6 +86,6 @@ reallyclean : clean
 	-rm -f *.orig
 
 clean : 
-	-rm -f *.o random_client qos msgsps_pub msgsps_sub fake_user test_client
+	-rm -f *.o random_client qos msgsps_pub msgsps_sub fake_user test_client *.pyc
 	$(MAKE) -C lib clean
 	$(MAKE) -C broker clean
