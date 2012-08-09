@@ -46,6 +46,8 @@ option(WITH_TLS
 if (${WITH_TLS} STREQUAL ON)
 	find_package(OpenSSL REQUIRED)
 	add_definitions("-DWITH_TLS")
+else (${WITH_TLS} STREQUAL ON)
+	set (OPENSSL_INCLUDE_DIR "")
 endif (${WITH_TLS} STREQUAL ON)
 
 # ========================================
