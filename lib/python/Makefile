@@ -14,4 +14,4 @@ mosquitto.pyc : mosquitto.py
 	python ./setup.py build
 
 clean :
-	-rm -rf build mosquitto.pyc
+	-rm -rf build mosquitto.pyc __pycache__
