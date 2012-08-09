@@ -32,13 +32,19 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <openssl/rand.h>
 #include <openssl/buffer.h>
 #include <signal.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #ifdef WIN32
 #  include <process.h>
+#	ifndef __cplusplus
+#		define bool char
+#		define true 1
+#		define false 0
+#	endif
+#   define snprintf sprintf_s
 #else
+#  include <stdbool.h>
 #  include <unistd.h>
 #  include <termios.h>
 #endif
