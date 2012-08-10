@@ -464,7 +464,7 @@
 	<refsect1>
 		<title>Listeners</title>
 		<para>The network ports that mosquitto listens on can be controlled
-			using listeners. The default listener options can be overriden and
+			using listeners. The default listener options can be overridden and
 			further listeners can be created.</para>
 		<refsect2>
 			<title>General Options</title>
