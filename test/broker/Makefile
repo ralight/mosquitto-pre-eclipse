@@ -44,6 +44,7 @@ test : test-compile
 	./06-bridge-b2br-disconnect-qos1.py
 	./06-bridge-b2br-disconnect-qos2.py
 	./07-will-qos0.py
+	./07-will-null.py
 	./08-ssl-connect-no-auth.py
 	./08-ssl-connect-no-auth-wrong-ca.py
 	./08-ssl-connect-cert-auth.py
