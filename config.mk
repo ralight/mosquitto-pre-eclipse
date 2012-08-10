@@ -82,12 +82,12 @@ DB_HTML_XSL=man/html.xsl
 UNAME:=$(shell uname -s)
 ifeq ($(UNAME),SunOS)
 	ifeq ($(CC),cc)
-		CFLAGS:=-O
+		CFLAGS?=-O
 	else
-		CFLAGS:=-Wall -ggdb -O2
+		CFLAGS?=-Wall -ggdb -O2
 	endif
 else
-	CFLAGS:=-Wall -ggdb -O2
+	CFLAGS?=-Wall -ggdb -O2
 endif
 
 LIB_CFLAGS:=${CFLAGS} -I. -I.. -I../lib
