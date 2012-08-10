@@ -44,7 +44,8 @@ int mqtt3_handle_connect(mosquitto_db *db, struct mosquitto *context)
 	uint8_t protocol_version;
 	uint8_t connect_flags;
 	char *client_id;
-	char *will_message = NULL, *will_topic = NULL;
+	char *will_payload = NULL, *will_topic = NULL;
+	uint16_t will_payloadlen;
 	struct mosquitto_message *will_struct = NULL;
 	uint8_t will, will_retain, will_qos, clean_session;
 	uint8_t username_flag, password_flag;
@@ -155,7 +156,21 @@ int mqtt3_handle_connect(mosquitto_db *db, struct mosquitto *context)
 			mqtt3_context_disconnect(db, context);
 			return 1;
 		}
-		if(_mosquitto_read_string(&context->in_packet, &will_message)){
+		if(_mosquitto_read_uint16(&context->in_packet, &will_payloadlen)){
+			_mosquitto_free(client_id);
+			mqtt3_context_disconnect(db, context);
+			return 1;
+		}
+		will_payload = _mosquitto_malloc(will_payloadlen);
+		if(!will_payload){
+			_mosquitto_free(client_id);
+			mqtt3_context_disconnect(db, context);
+			return 1;
+		}
+
+		rc = _mosquitto_read_bytes(&context->in_packet, will_payload, will_payloadlen);
+		if(rc){
+			_mosquitto_free(will_payload);
 			_mosquitto_free(client_id);
 			mqtt3_context_disconnect(db, context);
 			return 1;
@@ -304,9 +319,9 @@ int mqtt3_handle_connect(mosquitto_db *db, struct mosquitto *context)
 	context->will = will_struct;
 	if(context->will){
 		context->will->topic = will_topic;
-		if(will_message){
-			context->will->payload = will_message;
-			context->will->payloadlen = strlen(will_message);
+		if(will_payload){
+			context->will->payload = will_payload;
+			context->will->payloadlen = will_payloadlen;
 		}else{
 			context->will->payload = NULL;
 			context->will->payloadlen = 0;
