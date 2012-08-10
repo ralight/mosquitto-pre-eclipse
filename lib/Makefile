@@ -22,7 +22,7 @@ all : libmosquitto.so.${SOVERSION} libmosquitto.a
 
 install : all
 	$(INSTALL) -d ${DESTDIR}$(prefix)/lib${LIB_SUFFIX}/
-	$(INSTALL) libmosquitto.so.${SOVERSION} ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.so.${SOVERSION}
+	$(INSTALL) -s libmosquitto.so.${SOVERSION} ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.so.${SOVERSION}
 	ln -sf libmosquitto.so.${SOVERSION} ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.so
 	$(INSTALL) -d ${DESTDIR}${prefix}/include/
 	$(INSTALL) mosquitto.h ${DESTDIR}${prefix}/include/mosquitto.h
