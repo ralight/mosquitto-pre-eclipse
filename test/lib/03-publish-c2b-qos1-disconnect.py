@@ -47,7 +47,7 @@ client = subprocess.Popen(client_args, env=env)
 
 try:
     (conn, address) = sock.accept()
-    conn.settimeout(5)
+    conn.settimeout(15)
     connect_recvd = conn.recv(len(connect_packet))
 
     if mosq_test.packet_matches("connect", connect_recvd, connect_packet):
@@ -59,7 +59,7 @@ try:
             conn.close()
 
             (conn, address) = sock.accept()
-            conn.settimeout(5)
+            conn.settimeout(15)
             connect_recvd = conn.recv(len(connect_packet))
 
             if mosq_test.packet_matches("connect", connect_recvd, connect_packet):
