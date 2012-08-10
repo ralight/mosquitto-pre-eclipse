@@ -63,7 +63,7 @@ sign : dist
 	cd dist; gpg --detach-sign -a mosquitto-${VERSION}.tar.gz
 
 copy : sign
-	cd dist; scp mosquitto-${VERSION}.tar.gz mosquitto-${VERSION}.tar.gz.asc mosquitto:mosquitto.org/files/source/
-	cd dist; scp *.html mosquitto:mosquitto.org/man/
-	scp ChangeLog.txt mosquitto:mosquitto.org/
+	cd dist; scp mosquitto-${VERSION}.tar.gz mosquitto-${VERSION}.tar.gz.asc mosquitto:site/mosquitto.org/files/source/
+	cd dist; scp *.html mosquitto:site/mosquitto.org/man/
+	scp ChangeLog.txt mosquitto:site/mosquitto.org/
 
