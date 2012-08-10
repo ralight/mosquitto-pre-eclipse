@@ -93,7 +93,7 @@ install : all
 	$(INSTALL) -d ${DESTDIR}$(prefix)/sbin
 	$(INSTALL) -s mosquitto ${DESTDIR}${prefix}/sbin/mosquitto
 	$(INSTALL) mosquitto_plugin.h ${DESTDIR}${prefix}/include/mosquitto_plugin.h
-	$(INSTALL) mosquitto_passwd ${DESTDIR}${prefix}/bin/mosquitto_passwd
+	$(INSTALL) -s mosquitto_passwd ${DESTDIR}${prefix}/bin/mosquitto_passwd
 
 uninstall :
 	-rm -f ${DESTDIR}${prefix}/sbin/mosquitto

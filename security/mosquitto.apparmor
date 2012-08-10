@@ -4,7 +4,7 @@
 
 	/usr/sbin/mosquitto r,
 	/etc/mosquitto/mosquitto.conf r,
-	/etc/mosquitto/ca_cert/* r,
+	/etc/mosquitto/ca_certificates/* r,
 	/etc/mosquitto/cert/* r,
 	/etc/mosquitto/conf.d/* r,
 	/var/lib/mosquitto/ r,
