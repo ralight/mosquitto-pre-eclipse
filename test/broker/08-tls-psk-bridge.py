@@ -33,7 +33,7 @@ env['PYTHONPATH'] = '../../lib/python:'+pp
 
 
 rc = 1
-keepalive = 10
+keepalive = 60
 connect_packet = mosq_test.gen_connect("no-psk-test-client", keepalive=keepalive)
 connack_packet = mosq_test.gen_connack(rc=0)
 
@@ -50,7 +50,7 @@ try:
     time.sleep(0.5)
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.settimeout(5)
+    sock.settimeout(30)
     sock.connect(("localhost", 1888))
     sock.send(connect_packet)
 
