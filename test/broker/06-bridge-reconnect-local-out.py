@@ -39,6 +39,7 @@ local_broker.terminate()
 local_broker.wait()
 local_broker = subprocess.Popen(['../../src/mosquitto', '-c', '06-bridge-reconnect-local-out.conf'], stderr=subprocess.PIPE)
 
+pub = None
 try:
     time.sleep(0.5)
 
@@ -56,7 +57,7 @@ try:
             suback_recvd = sock.recv(len(suback_packet))
 
             if mosq_test.packet_matches("suback", suback_recvd, suback_packet):
-                pub = subprocess.Popen(['./06-bridge-reconnect-local-out-helper.py'])
+                pub = subprocess.Popen(['./06-bridge-reconnect-local-out-helper.py'], stdout=subprocess.PIPE)
                 pub.wait()
                 # Should have now received a publish command
                 publish_recvd = sock.recv(len(publish_packet))
@@ -75,6 +76,10 @@ finally:
     if rc:
         (stdo, stde) = local_broker.communicate()
         print(stde)
+        if pub:
+            (stdo, stde) = pub.communicate()
+            print(stdo)
+
     try:
         os.remove('mosquitto.db')
     except OSError:

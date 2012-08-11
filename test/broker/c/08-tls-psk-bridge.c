@@ -8,6 +8,11 @@
 static int run = -1;
 static int sent_mid;
 
+void on_log(struct mosquitto *mosq, void *obj, int level, const char *str)
+{
+	printf("%s\n", str);
+}
+
 void on_connect(struct mosquitto *mosq, void *obj, int rc)
 {
 	if(rc){
@@ -43,6 +48,7 @@ int main(int argc, char *argv[])
 	mosquitto_connect_callback_set(mosq, on_connect);
 	mosquitto_disconnect_callback_set(mosq, on_disconnect);
 	mosquitto_publish_callback_set(mosq, on_publish);
+	mosquitto_log_callback_set(mosq, on_log);
 
 	rc = mosquitto_connect(mosq, "localhost", 1890, 60);
 	if(rc) return rc;
