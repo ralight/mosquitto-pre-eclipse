@@ -46,6 +46,7 @@ publish_packet = mosq_test.gen_publish(topic="psk/test", payload="message", qos=
 broker = subprocess.Popen(['../../src/mosquitto', '-c', '08-tls-psk-bridge.conf'], stderr=subprocess.PIPE)
 bridge = subprocess.Popen(['../../src/mosquitto', '-c', '08-tls-psk-bridge.conf2'], stderr=subprocess.PIPE)
 
+pub = None
 try:
     time.sleep(0.5)
 
@@ -62,7 +63,7 @@ try:
         suback_recvd = sock.recv(len(suback_packet))
         if mosq_test.packet_matches("suback", suback_recvd, suback_packet):
 
-            pub = subprocess.Popen(['./c/08-tls-psk-bridge.test'], env=env)
+            pub = subprocess.Popen(['./c/08-tls-psk-bridge.test'], env=env, stdout=subprocess.PIPE)
             if pub.wait():
                 raise ValueError
                 exit(1)
@@ -74,14 +75,17 @@ try:
 finally:
     broker.terminate()
     broker.wait()
-    if rc:
-        (stdo, stde) = broker.communicate()
-        print(stde)
     bridge.terminate()
     bridge.wait()
     if rc:
+        (stdo, stde) = broker.communicate()
+        print(stde)
         (stdo, stde) = bridge.communicate()
         print(stde)
+        if pub:
+            (stdo, stde) = pub.communicate()
+            print(stdo)
+
 
 exit(rc)
 
