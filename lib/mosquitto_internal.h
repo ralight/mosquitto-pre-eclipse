@@ -42,13 +42,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <time.h>
 
-#ifdef WITH_THREADING
-#  ifdef WIN32
-#    include <dummypthread.h>
-#    pragma message("Threading not supported in Windows native builds.")
-#  else
-#    include <pthread.h>
-#  endif
+#if defined(WITH_THREADING) && !defined(WITH_BROKER)
+#  include <pthread.h>
 #else
 #  include <dummypthread.h>
 #endif
@@ -151,7 +146,7 @@ struct mosquitto {
 #endif
 	bool want_read;
 	bool want_write;
-#ifdef WITH_THREADING
+#if defined(WITH_THREADING) && !defined(WITH_BROKER)
 	pthread_mutex_t callback_mutex;
 	pthread_mutex_t log_callback_mutex;
 	pthread_mutex_t msgtime_mutex;
