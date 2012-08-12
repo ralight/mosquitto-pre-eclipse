@@ -58,6 +58,7 @@ int mosquitto_loop_stop(struct mosquitto *mosq, bool force)
 		pthread_cancel(mosq->thread_id);
 	}
 	pthread_join(mosq->thread_id, NULL);
+	mosq->thread_id = pthread_self();
 
 	return MOSQ_ERR_SUCCESS;
 #else

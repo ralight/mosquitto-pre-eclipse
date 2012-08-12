@@ -191,6 +191,7 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 	pthread_mutex_init(&mosq->out_packet_mutex, NULL);
 	pthread_mutex_init(&mosq->current_out_packet_mutex, NULL);
 	pthread_mutex_init(&mosq->msgtime_mutex, NULL);
+	mosq->thread_id = pthread_self();
 #endif
 
 	return MOSQ_ERR_SUCCESS;
@@ -247,7 +248,7 @@ void _mosquitto_destroy(struct mosquitto *mosq)
 	if(!mosq) return;
 
 #ifdef WITH_THREADING
-	if(mosq->thread_id){
+	if(!pthread_equal(mosq->thread_id, pthread_self())){
 		pthread_cancel(mosq->thread_id);
 		pthread_join(mosq->thread_id, NULL);
 	}
