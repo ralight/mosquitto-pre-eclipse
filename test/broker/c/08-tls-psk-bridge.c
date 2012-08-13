@@ -18,7 +18,7 @@ void on_connect(struct mosquitto *mosq, void *obj, int rc)
 	if(rc){
 		exit(1);
 	}else{
-		mosquitto_publish(mosq, &sent_mid, "psk/test", strlen("message"), "message", 0, false);
+		mosquitto_publish(mosq, &sent_mid, "psk/test", strlen("message"), "message", 1, false);
 	}
 }
 
