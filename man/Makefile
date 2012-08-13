@@ -67,7 +67,7 @@ potgen :
 	 xml2po -o po/mosquitto_pub/mosquitto_pub.1.pot mosquitto_pub.1.xml
 	 xml2po -o po/mosquitto_sub/mosquitto_sub.1.pot mosquitto_sub.1.xml
 	 xml2po -o po/mqtt/mqtt.7.pot mqtt.7.xml
-	 xml2po -o po/mqtt/mosquitto-tls.7.pot mosquitto-tls.7.xml
+	 xml2po -o po/mosquitto-tls/mosquitto-tls.7.pot mosquitto-tls.7.xml
 	 xml2po -o po/libmosquitto/libmosquitto.3.pot libmosquitto.3.xml
 
 # To merge new translations do:

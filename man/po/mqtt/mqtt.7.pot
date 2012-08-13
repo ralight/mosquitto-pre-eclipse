@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2011-04-29 17:23+0100\n"
+"POT-Creation-Date: 2012-08-13 23:30+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -9,28 +9,36 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: mqtt.7.xml:7(refentrytitle) mqtt.7.xml:12(refname) mqtt.7.xml:18(command)
+#: mqtt.7.xml:6(refentrytitle) mqtt.7.xml:13(refname) mqtt.7.xml:19(command)
 msgid "mqtt"
 msgstr ""
 
-#: mqtt.7.xml:8(manvolnum)
+#: mqtt.7.xml:7(manvolnum)
 msgid "7"
 msgstr ""
 
-#: mqtt.7.xml:13(refpurpose)
+#: mqtt.7.xml:8(refmiscinfo)
+msgid "Mosquitto Project"
+msgstr ""
+
+#: mqtt.7.xml:9(refmiscinfo)
+msgid "Conventions and miscellaneous"
+msgstr ""
+
+#: mqtt.7.xml:14(refpurpose)
 msgid "MQ Telemetry Transport"
 msgstr ""
 
-#: mqtt.7.xml:23(title)
+#: mqtt.7.xml:24(title)
 msgid "Description"
 msgstr ""
 
-#: mqtt.7.xml:24(para)
-msgid "<command>mqtt</command> is a publish/subscribe messaging protocol intended that is designed to be lightweight. It is useful for use with low power sensors, but is applicable to many scenarios."
+#: mqtt.7.xml:25(para)
+msgid "<command>mqtt</command> is a lightweight publish/subscribe messaging protocol. It is useful for use with low power sensors, but is applicable to many scenarios."
 msgstr ""
 
 #: mqtt.7.xml:27(para)
-msgid "This manual describes some of the features of mqtt version 3.1, to assist end users in getting the most out of it. For more complete information on mqtt, see <uri type=\"webpage\">http://mqtt.org/</uri>."
+msgid "This manual describes some of the features of mqtt version 3.1, to assist end users in getting the most out of the protocol. For more complete information on mqtt, see <uri type=\"webpage\">http://mqtt.org/</uri>."
 msgstr ""
 
 #: mqtt.7.xml:34(title)
@@ -49,7 +57,7 @@ msgstr ""
 msgid "Messages in mqtt are published on topics. There is no need to configure a topic, publishing on it is enough. Topics are treated as a hierarchy, using a slash (/) as a separator. This allows sensible arrangement of common themes to be created, much in the same way as a filesystem. For example, multiple computers may all publish their hard drive temperature information on the following topic, with their own computer and hard drive name being replaced as appropriate:"
 msgstr ""
 
-#: mqtt.7.xml:57(listitem)
+#: mqtt.7.xml:57(para)
 msgid "sensors/COMPUTER_NAME/temperature/HARDDRIVE_NAME"
 msgstr ""
 
@@ -61,7 +69,7 @@ msgstr ""
 msgid "<option>+</option> can be used as a wildcard for a single level of hierarchy. It could be used with the topic above to get information on all computers and hard drives as follows:"
 msgstr ""
 
-#: mqtt.7.xml:67(listitem)
+#: mqtt.7.xml:67(para)
 msgid "sensors/+/temperature/+"
 msgstr ""
 
@@ -141,15 +149,15 @@ msgstr ""
 msgid "Higher levels of QoS are more reliable, but involve higher latency and have higher bandwidth requirements."
 msgstr ""
 
-#: mqtt.7.xml:114(listitem)
+#: mqtt.7.xml:114(para)
 msgid "0: The broker/client will deliver the message once, with no confirmation."
 msgstr ""
 
-#: mqtt.7.xml:115(listitem)
+#: mqtt.7.xml:115(para)
 msgid "1: The broker/client will deliver the message at least once, with confirmation required."
 msgstr ""
 
-#: mqtt.7.xml:116(listitem)
+#: mqtt.7.xml:116(para)
 msgid "2: The broker/client will deliver the message exactly once by using a four step handshake."
 msgstr ""
 
@@ -181,7 +189,7 @@ msgstr ""
 msgid "See Also"
 msgstr ""
 
-#: mqtt.7.xml:155(refentrytitle)
+#: mqtt.7.xml:155(link)
 msgid "mosquitto"
 msgstr ""
 
@@ -189,7 +197,7 @@ msgstr ""
 msgid "8"
 msgstr ""
 
-#: mqtt.7.xml:159(refentrytitle)
+#: mqtt.7.xml:159(link)
 msgid "mosquitto_pub"
 msgstr ""
 
@@ -197,7 +205,7 @@ msgstr ""
 msgid "1"
 msgstr ""
 
-#: mqtt.7.xml:163(refentrytitle)
+#: mqtt.7.xml:163(link)
 msgid "mosquitto_sub"
 msgstr ""
 
