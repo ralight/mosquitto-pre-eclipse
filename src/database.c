@@ -843,7 +843,9 @@ void mqtt3_db_sys_update(mosquitto_db *db, int interval, time_t start_time)
 	int value;
 	int inactive;
 	int active;
+#ifndef WIN32
 	unsigned long value_ul;
+#endif
 
 	static int msg_store_count = -1;
 	static int client_count = -1;
