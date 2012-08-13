@@ -207,7 +207,9 @@ static unsigned int psk_client_callback(SSL *ssl, const char *hint,
 int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t port)
 {
 	int sock = INVALID_SOCKET;
+#ifndef WIN32
 	int opt;
+#endif
 	struct addrinfo hints;
 	struct addrinfo *ainfo, *rp;
 	int s;

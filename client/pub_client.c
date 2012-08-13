@@ -254,7 +254,9 @@ int main(int argc, char *argv[])
 	char *host = "localhost";
 	int port = 1883;
 	int keepalive = 60;
+#ifndef WIN32
 	int opt;
+#endif
 	char buf[1024];
 	bool debug = false;
 	struct mosquitto *mosq = NULL;
