@@ -200,60 +200,76 @@ int update_pwuser(FILE *fptr, FILE *fnew, const char *username, const char *pass
 	}
 }
 
-int get_password(char *password, int len)
+int gets_quiet(char *s, int len)
 {
-	char pw1[MAX_BUFFER_LEN], pw2[MAX_BUFFER_LEN];
-	char *s;
-#ifndef WIN32
-	struct termios ts_quiet, ts_orig;
+#ifdef WIN32
+	HANDLE h;
+	DWORD con_orig, con_quiet;
+	DWORD read_len = 0;
 
+	memset(s, 0, len);
+	h  = GetStdHandle(STD_INPUT_HANDLE);
+	GetConsoleMode(h, &con_orig);
+	con_quiet &= ~ENABLE_ECHO_INPUT;
+	con_quiet |= ENABLE_LINE_INPUT;
+	SetConsoleMode(h, con_quiet);
+	if(!ReadConsole(h, s, len, &read_len, NULL)){
+		SetConsoleMode(h, con_orig);
+		return 1;
+	}
+	while(s[strlen(s)-1] == 10 || s[strlen(s)-1] == 13){
+		s[strlen(s)-1] = 0;
+	}
+	if(strlen(s) == 0){
+		return 1;
+	}
+	SetConsoleMode(h, con_orig);
+
+	return 0;
+#else
+	struct termios ts_quiet, ts_orig;
+	char *rs;
+
+	memset(s, 0, len);
 	tcgetattr(0, &ts_orig);
 	ts_quiet = ts_orig;
 	ts_quiet.c_lflag &= ~(ECHO | ICANON);
 	tcsetattr(0, TCSANOW, &ts_quiet);
+
+	rs = fgets(s, len, stdin);
+	tcsetattr(0, TCSANOW, &ts_orig);
+
+	if(!rs){
+		return 1;
+	}else{
+		while(s[strlen(s)-1] == 10 || s[strlen(s)-1] == 13){
+			s[strlen(s)-1] = 0;
+		}
+		if(strlen(s) == 0){
+			return 1;
+		}
+	}
+	return 0;
 #endif
+}
+
+int get_password(char *password, int len)
+{
+	char pw1[MAX_BUFFER_LEN], pw2[MAX_BUFFER_LEN];
 
 	printf("Password: ");
-	s = fgets(pw1, MAX_BUFFER_LEN, stdin);
-#ifndef WIN32
-	printf("\n");
-#endif
-	if(!s){
+	if(gets_quiet(pw1, MAX_BUFFER_LEN)){
 		fprintf(stderr, "Error: Empty password.\n");
-#ifndef WIN32
-		tcsetattr(0, TCSANOW, &ts_orig);
-#endif
 		return 1;
-	}else{
-		while(pw1[strlen(pw1)-1] == 10 || pw1[strlen(pw1)-1] == 13){
-			pw1[strlen(pw1)-1] = 0;
-		}
-		if(strlen(pw1) == 0){
-			fprintf(stderr, "Error: Empty password.\n");
-#ifndef WIN32
-			tcsetattr(0, TCSANOW, &ts_orig);
-#endif
-			return 1;
-		}
 	}
+	printf("\n");
+
 	printf("Reenter password: ");
-	s = fgets(pw2, MAX_BUFFER_LEN, stdin);
-#ifndef WIN32
-	printf("\n");
-	tcsetattr(0, TCSANOW, &ts_orig);
-#endif
-	if(!s){
+	if(gets_quiet(pw2, MAX_BUFFER_LEN)){
 		fprintf(stderr, "Error: Empty password.\n");
 		return 1;
-	}else{
-		while(pw2[strlen(pw2)-1] == 10 || pw2[strlen(pw2)-1] == 13){
-			pw2[strlen(pw2)-1] = 0;
-		}
-		if(strlen(pw2) == 0){
-			fprintf(stderr, "Error: Empty password.\n");
-			return 1;
-		}
 	}
+	printf("\n");
 
 	if(strcmp(pw1, pw2)){
 		fprintf(stderr, "Error: Passwords do not match.\n");
