@@ -4,22 +4,21 @@ option(WITH_THREADING "Include client library threading support?" ON)
 if (${WITH_THREADING} STREQUAL ON)
 	add_definitions("-DWITH_THREADING")
 	if (WIN32)
-		set (PTHREAD_LIBRARIES pthreadVC2)
+		set (PTHREAD_LIBRARIES C:\\pthreads\\Pre-built.2\\lib\\x86\\pthreadVC2.lib)
 		set (PTHREAD_INCLUDE_DIR C:\\pthreads\\Pre-built.2\\include)
-		set (PTHREAD_LIB_DIR C:\\pthreads\\Pre-built.2\\lib\\x86)
 	else (WIN32)
 		set (PTHREAD_LIBRARIES pthread)
 		set (PTHREAD_INCLUDE_DIR "")
-		set (PTHREAD_LIB_DIR "")
 	endif (WIN32)
 else (${WITH_THREADING} STREQUAL ON)
 	set (PTHREAD_LIBRARIES "")
+	set (PTHREAD_INCLUDE_DIR "")
 endif (${WITH_THREADING} STREQUAL ON)
 
 include_directories(${mosquitto_SOURCE_DIR} ${mosquitto_SOURCE_DIR}/lib
 			${STDBOOL_H_PATH} ${STDINT_H_PATH}
 			${OPENSSL_INCLUDE_DIR} ${PTHREAD_INCLUDE_DIR})
-link_directories(${mosquitto_SOURCE_DIR}/lib ${PTHREAD_LIB_DIR})
+link_directories(${mosquitto_SOURCE_DIR}/lib)
 
 add_library(libmosquitto SHARED
 	logging_mosq.c logging_mosq.h
