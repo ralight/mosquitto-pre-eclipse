@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
 				mosquitto_subscribe(mosq, NULL, "#", 0);
 
 				while(run){
-					rc = mosquitto_loop(mosq, -1);
+					rc = mosquitto_loop(mosq, -1, 1);
 					if(run && rc){
 						sleep(20);
 						mosquitto_reconnect(mosq);
