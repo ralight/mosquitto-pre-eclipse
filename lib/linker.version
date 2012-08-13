@@ -2,7 +2,7 @@
  * symbols are exported.
  */
 
-VERS_1.0 {
+MOSQ_1.0 {
 	global:
 		mosquitto_lib_version;
 		mosquitto_lib_init;
