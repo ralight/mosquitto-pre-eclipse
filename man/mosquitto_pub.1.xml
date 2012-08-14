@@ -11,7 +11,7 @@
 
 	<refnamediv>
 		<refname>mosquitto_pub</refname>
-		<refpurpose>an mqtt version 3.1 client for publishing simple messages</refpurpose>
+		<refpurpose>an MQTT version 3.1 client for publishing simple messages</refpurpose>
 	</refnamediv>
 
 	<refsynopsisdiv>
@@ -68,7 +68,7 @@
 
 	<refsect1>
 		<title>Description</title>
-		<para><command>mosquitto_pub</command> is a simple mqtt version 3.1 client that will publish a single message on a topic and exit.</para>
+		<para><command>mosquitto_pub</command> is a simple MQTT version 3.1 client that will publish a single message on a topic and exit.</para>
 	</refsect1>
 
 	<refsect1>
@@ -252,7 +252,7 @@
 				<term><option>-t</option></term>
 				<term><option>--topic</option></term>
 				<listitem>
-					<para>The mqtt topic on which to publish the message. See <citerefentry><refentrytitle>mqtt</refentrytitle><manvolnum>7</manvolnum></citerefentry> for more information on mqtt topics.</para>
+					<para>The MQTT topic on which to publish the message. See <citerefentry><refentrytitle>mqtt</refentrytitle><manvolnum>7</manvolnum></citerefentry> for more information on MQTT topics.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

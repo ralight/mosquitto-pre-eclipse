@@ -11,7 +11,7 @@
 
 	<refnamediv>
 		<refname>mosquitto</refname>
-		<refpurpose>an mqtt broker</refpurpose>
+		<refpurpose>an MQTT broker</refpurpose>
 	</refnamediv>
 
 	<refsynopsisdiv>
@@ -28,7 +28,7 @@
 
 	<refsect1>
 		<title>Description</title>
-		<para><command>mosquitto</command> is a broker for the mqtt protocol version 3.1.</para>
+		<para><command>mosquitto</command> is a broker for the MQTT protocol version 3.1.</para>
 	</refsect1>
 
 	<refsect1>

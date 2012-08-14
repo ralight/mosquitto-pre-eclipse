@@ -16,28 +16,28 @@
 
 	<refsynopsisdiv>
 		<cmdsynopsis>
-			<command>mqtt</command>
+			<command>MQTT</command>
 		</cmdsynopsis>
 	</refsynopsisdiv>
 
 	<refsect1>
 		<title>Description</title>
-		<para><command>mqtt</command> is a lightweight publish/subscribe
+		<para><command>MQTT</command> is a lightweight publish/subscribe
 		messaging protocol.  It is useful for use with low power sensors, but
 		is applicable to many scenarios.</para> <para>This manual describes
-		some of the features of mqtt version 3.1, to assist end users in
+		some of the features of MQTT version 3.1, to assist end users in
 		getting the most out of the protocol. For more complete information on
-		mqtt, see <uri type="webpage">http://mqtt.org/</uri>.</para>
+		MQTT, see <uri type="webpage">http://mqtt.org/</uri>.</para>
 	</refsect1>
 
 	<refsect1>
 		<title>Publish/Subscribe</title>
-		<para>The mqtt protocol is based on the principle of publishing
+		<para>The MQTT protocol is based on the principle of publishing
 		messages and subscribing to topics, or "pub/sub". Multiple clients
 		connect to a broker and subscribe to topics that they are interested
 		in. Clients also connect to the broker and publish messages to topics.
 		Many clients may subscribe to the same topics and do with the
-		information as they please. The broker and mqtt act as a simple, common
+		information as they please. The broker and MQTT act as a simple, common
 		interface for everything to connect to. This means that you if you have
 		clients that dump subscribed messages to a database, to twitter,
 		pachube or even a simple text file, then it becomes very simple to add
@@ -46,7 +46,7 @@
 
 	<refsect1>
 		<title>Topics/Subscriptions</title>
-		<para>Messages in mqtt are published on topics. There is no need to
+		<para>Messages in MQTT are published on topics. There is no need to
 		configure a topic, publishing on it is enough. Topics are treated as a
 		hierarchy, using a slash (/) as a separator. This allows sensible
 		arrangement of common themes to be created, much in the same way as a
@@ -97,7 +97,7 @@
 
 	<refsect1>
 		<title>Quality of Service</title>
-		<para>mqtt defines three levels of Quality of Service (QoS). The QoS
+		<para>MQTT defines three levels of Quality of Service (QoS). The QoS
 		defines how hard the broker/client will try to ensure that a message is
 		received. Messages may be sent at any QoS level, and clients may
 		attempt to subscribe to topics at any QoS level. This means that the
