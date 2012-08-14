@@ -1125,7 +1125,7 @@ class Mosquitto:
 
     def _easy_log(self, level, buf):
         if self.on_log:
-            self.on_log(obj, level, buf)
+            self.on_log(self, self._obj, level, buf)
 
     def _check_keepalive(self):
         now = time.time()

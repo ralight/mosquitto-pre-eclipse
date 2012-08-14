@@ -6,6 +6,8 @@
 - Fix mqtt/MQTT capitalisation in man pages.
 - Clients now don't display TLS/TLS-PSK usage help if they don't support it.
 - Update compiling.txt.
+- Fix incorrect parameters in Python on_log() callback call. Fixes bug
+  #1036818.
 
 1.0 - 20120814
 ==============
