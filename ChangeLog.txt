@@ -1,3 +1,11 @@
+1.0.1 - 201208xx
+================
+
+- Fix TLS-PSK support in the CMake build files.
+- Fix man page installation in the CMake build files.
+- Fix mqtt/MQTT capitalisation in man pages.
+- Clients now don't display TLS/TLS-PSK usage help if they don't support it.
+
 1.0 - 20120814
 ==============
 

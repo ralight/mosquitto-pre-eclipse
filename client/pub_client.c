@@ -208,8 +208,12 @@ void print_usage(void)
 	printf("                     [-d] [--quiet]\n");
 	printf("                     [-u username [-P password]]\n");
 	printf("                     [--will-topic [--will-payload payload] [--will-qos qos] [--will-retain]]\n");
+#ifdef WITH_TLS
 	printf("                     [{--cafile file | --capath dir} [--cert file] [--key file]]\n");
+#ifdef WITH_TLS_PSK
 	printf("                     [--psk hex-key --psk-identity identity]\n");
+#endif
+#endif
 	printf("       mosquitto_pub --help\n\n");
 	printf(" -d : enable debug messages.\n");
 	printf(" -f : send the contents of a file as the message.\n");
@@ -235,14 +239,18 @@ void print_usage(void)
 	printf(" --will-qos : QoS level for the client Will.\n");
 	printf(" --will-retain : if given, make the client Will retained.\n");
 	printf(" --will-topic : the topic on which to publish the client Will.\n");
+#ifdef WITH_TLS
 	printf(" --cafile : path to a file containing trusted CA certificates to enable encrypted\n");
 	printf("            communication.\n");
 	printf(" --capath : path to a directory containing trusted CA certificates to enable encrypted\n");
 	printf("            communication.\n");
 	printf(" --cert : client certificate for authentication, if required by server.\n");
 	printf(" --key : client private key for authentication, if required by server.\n");
+#ifdef WITH_TLS_PSK
 	printf(" --psk : pre-shared-key in hexadecimal (no leading 0x) to enable TLS-PSK mode.\n");
 	printf(" --psk-identity : client identity string for TLS-PSK mode.\n");
+#endif
+#endif
 	printf("\nSee http://mosquitto.org/ for more information.\n\n");
 }
 
