@@ -5,6 +5,7 @@
 - Fix man page installation in the CMake build files.
 - Fix mqtt/MQTT capitalisation in man pages.
 - Clients now don't display TLS/TLS-PSK usage help if they don't support it.
+- Update compiling.txt.
 
 1.0 - 20120814
 ==============
