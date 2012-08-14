@@ -1,6 +1,4 @@
 # This is a cmake script.
-# It is intended to be the default means of building mosquitto, but isn't
-# quite ready for all cases yet.
 
 set(CMAKE_LEGACY_CYGWIN_WIN32 0)
 
@@ -8,7 +6,7 @@ project(mosquitto)
 
 cmake_minimum_required(VERSION 2.6)
 
-set (VERSION 1.0)
+set (VERSION 1.0.1)
 
 if (WIN32)
 	execute_process(COMMAND cmd /c echo %DATE% %TIME% OUTPUT_VARIABLE TIMESTAMP
