@@ -11,7 +11,7 @@
 
 	<refnamediv>
 		<refname>mosquitto_sub</refname>
-		<refpurpose>an mqtt version 3.1 client for subscribing to topics</refpurpose>
+		<refpurpose>an MQTT version 3.1 client for subscribing to topics</refpurpose>
 	</refnamediv>
 
 	<refsynopsisdiv>
@@ -63,7 +63,7 @@
 
 	<refsect1>
 		<title>Description</title>
-		<para><command>mosquitto_sub</command> is a simple mqtt version 3.1
+		<para><command>mosquitto_sub</command> is a simple MQTT version 3.1
 		client that will subscribe to a topic and print the messages that it
 		receives.</para>
 	</refsect1>
@@ -234,9 +234,9 @@
 				<term><option>-t</option></term>
 				<term><option>--topic</option></term>
 				<listitem>
-					<para>The mqtt topic to subscribe to. See
+					<para>The MQTT topic to subscribe to. See
 					<citerefentry><refentrytitle>mqtt</refentrytitle><manvolnum>7</manvolnum></citerefentry>
-					for more information on mqtt topics.</para>
+					for more information on MQTT topics.</para>
 					<para>This option may be repeated to subscribe to multiple topics.</para>
 				</listitem>
 			</varlistentry>
