@@ -43,9 +43,14 @@ endif (WIN32)
 
 option(WITH_TLS
 	"Include SSL/TLS support?" ON)
+option(WITH_TLS_PSK
+	"Include TLS-PSK support (requires WITH_TLS)?" ON)
 if (${WITH_TLS} STREQUAL ON)
 	find_package(OpenSSL REQUIRED)
 	add_definitions("-DWITH_TLS")
+	if (${WITH_TLS_PSK} STREQUAL ON)
+		add_definitions("-DWITH_TLS_PSK")
+	endif (${WITH_TLS_PSK} STREQUAL ON)
 else (${WITH_TLS} STREQUAL ON)
 	set (OPENSSL_INCLUDE_DIR "")
 endif (${WITH_TLS} STREQUAL ON)
