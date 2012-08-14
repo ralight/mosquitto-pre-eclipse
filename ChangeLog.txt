@@ -8,6 +8,7 @@
 - Update compiling.txt.
 - Fix incorrect parameters in Python on_log() callback call. Fixes bug
   #1036818.
+- Fix incorrect callback docs in mosquitto.py. Fixes bug #1036607.
 
 1.0 - 20120814
 ==============
