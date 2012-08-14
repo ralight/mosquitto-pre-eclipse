@@ -31,6 +31,10 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <time.h>
 
+#ifdef WIN32
+#include <winsock2.h>
+#endif
+
 #if defined(WITH_TLS) && defined(WITH_TLS_PSK)
 #include <openssl/ssl.h>
 #endif
