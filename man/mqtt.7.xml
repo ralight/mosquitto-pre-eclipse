@@ -39,9 +39,9 @@
 		Many clients may subscribe to the same topics and do with the
 		information as they please. The broker and MQTT act as a simple, common
 		interface for everything to connect to. This means that you if you have
-		clients that dump subscribed messages to a database, to twitter,
-		pachube or even a simple text file, then it becomes very simple to add
-		new sensors or other data input to a database, twitter or so on.</para>
+		clients that dump subscribed messages to a database, to Twitter,
+		Cosm or even a simple text file, then it becomes very simple to add
+		new sensors or other data input to a database, Twitter or so on.</para>
 	</refsect1>
 
 	<refsect1>
