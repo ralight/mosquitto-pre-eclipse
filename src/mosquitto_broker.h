@@ -415,7 +415,7 @@ int mosquitto_psk_key_get_default(struct _mosquitto_db *db, const char *hint, co
 /* ============================================================
  * Window service related functions
  * ============================================================ */
-#ifdef WIN32
+#if defined(WIN32) || defined(__CYGWIN__)
 void service_install(void);
 void service_uninstall(void);
 void service_run(void);
