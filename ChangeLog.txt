@@ -1,17 +1,26 @@
 1.0.1 - 201208xx
 ================
 
-- Fix TLS-PSK support in the CMake build files.
-- Fix man page installation in the CMake build files.
-- Fix mqtt/MQTT capitalisation in man pages.
-- Clients now don't display TLS/TLS-PSK usage help if they don't support it.
-- Update compiling.txt.
+Broker:
+- Fix default log_dest when running as a Windows service.
+
+Client library:
 - Fix incorrect parameters in Python on_log() callback call. Fixes bug
   #1036818.
-- Fix incorrect callback docs in mosquitto.py. Fixes bug #1036607.
+
+Clients:
+- Clients now don't display TLS/TLS-PSK usage help if they don't support it.
+
+Build scripts:
+- Fix TLS-PSK support in the CMake build files.
+- Fix man page installation in the CMake build files.
 - Fix SYSCONFDIR in cmake on *nix when installing to /usr. Fixes bug #1036908.
+
+Documentation:
+- Fix mqtt/MQTT capitalisation in man pages.
+- Update compiling.txt.
+- Fix incorrect callback docs in mosquitto.py. Fixes bug #1036607.
 - Fix various doc typos and remove obsolete script. Fixes bug #1037088.
-- Fix default log_dest when running as a Windows service.
 
 1.0 - 20120814
 ==============
