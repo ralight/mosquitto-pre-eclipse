@@ -9,6 +9,7 @@
 - Fix incorrect parameters in Python on_log() callback call. Fixes bug
   #1036818.
 - Fix incorrect callback docs in mosquitto.py. Fixes bug #1036607.
+- Fix SYSCONFDIR in cmake on *nix when installing to /usr. Fixes bug #1036908.
 
 1.0 - 20120814
 ==============
