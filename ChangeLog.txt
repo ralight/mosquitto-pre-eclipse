@@ -10,6 +10,7 @@
   #1036818.
 - Fix incorrect callback docs in mosquitto.py. Fixes bug #1036607.
 - Fix SYSCONFDIR in cmake on *nix when installing to /usr. Fixes bug #1036908.
+- Fix various doc typos and remove obsolete script. Fixes bug #1037088.
 
 1.0 - 20120814
 ==============
