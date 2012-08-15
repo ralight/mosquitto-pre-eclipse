@@ -34,7 +34,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <memory_mosq.h>
 
 extern int run;
-static SERVICE_STATUS_HANDLE service_handle;
+SERVICE_STATUS_HANDLE service_handle = 0;
 static SERVICE_STATUS service_status;
 int main(int argc, char *argv[]);
 

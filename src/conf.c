@@ -51,6 +51,11 @@ struct config_recurse {
 	int max_queued_messages;
 };
 
+#if defined(WIN32) || defined(__CYGWIN__)
+#include <windows.h>
+extern SERVICE_STATUS_HANDLE service_handle;
+#endif
+
 static int _conf_parse_bool(char **token, const char *name, bool *value, char *saveptr);
 static int _conf_parse_int(char **token, const char *name, int *value, char *saveptr);
 static int _conf_parse_string(char **token, const char *name, char **value, char *saveptr);
@@ -68,12 +73,18 @@ static void _config_init_reload(mqtt3_config *config)
 	if(config->clientid_prefixes) _mosquitto_free(config->clientid_prefixes);
 	config->connection_messages = true;
 	config->clientid_prefixes = NULL;
-#ifndef WIN32
+#if defined(WIN32) || defined(__CYGWIN__)
+	if(service_handle){
+		/* This is running as a Windows service. Default to no logging. Using
+		 * stdout/stderr is forbidden because the first clients to connect will
+		 * get log information sent to them for some reason. */
+		config->log_dest = MQTT3_LOG_NONE;
+	}else{
+		config->log_dest = MQTT3_LOG_STDERR;
+	}
+#else
 	config->log_dest = MQTT3_LOG_STDERR;
 	config->log_type = MOSQ_LOG_ERR | MOSQ_LOG_WARNING | MOSQ_LOG_NOTICE | MOSQ_LOG_INFO;
-#else
-	config->log_dest = MQTT3_LOG_SYSLOG;
-	config->log_type = MOSQ_LOG_ERR | MOSQ_LOG_WARNING;
 #endif
 	config->log_timestamp = true;
 	if(config->password_file) _mosquitto_free(config->password_file);
@@ -984,6 +995,14 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid log_dest value (%s).", token);
 							return MOSQ_ERR_INVAL;
 						}
+#if defined(WIN32) || defined(__CYGWIN__)
+						if(service_handle){
+							if(cr->log_dest == MQTT3_LOG_STDOUT || cr->log_dest == MQTT3_LOG_STDERR){
+								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot log to stdout/stderr when running as a Windows service.");
+								return MOSQ_ERR_INVAL;
+							}
+						}
+#endif
 					}else{
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty log_dest value in configuration.");
 						return MOSQ_ERR_INVAL;
