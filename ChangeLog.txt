@@ -1,6 +1,13 @@
 xxxxxxxxxxxxxxxx
 ================
 
+Library:
+- Fix threading problem on some systems.
+
+Tests:
+- Close socket after 08-ssl-connect-no-auth-wrong-ca.py test to prevent
+  subsequent tests having problems.
+
 Build scripts:
 - Install pskfile.example in CMake. Fixes bug #1037504.
 
