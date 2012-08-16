@@ -37,6 +37,8 @@ try:
 except ssl.SSLError as err:
     if err.errno == 1:
         rc = 0
+finally:
+    ssock.close()
 
 broker.terminate()
 broker.wait
