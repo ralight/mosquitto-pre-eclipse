@@ -103,6 +103,9 @@ struct mosquitto *mosquitto_new(const char *id, bool clean_session, void *obj)
 	mosq = (struct mosquitto *)_mosquitto_calloc(1, sizeof(struct mosquitto));
 	if(mosq){
 		mosq->sock = INVALID_SOCKET;
+#ifdef WITH_THREADING
+		mosq->thread_id = pthread_self();
+#endif
 		rc = mosquitto_reinitialise(mosq, id, clean_session, obj);
 		if(rc){
 			mosquitto_destroy(mosq);
