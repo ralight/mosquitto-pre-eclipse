@@ -1,3 +1,9 @@
+xxxxxxxxxxxxxxxx
+================
+
+Build scripts:
+- Install pskfile.example in CMake. Fixes bug #1037504.
+
 1.0.1 - 20120815
 ================
 
