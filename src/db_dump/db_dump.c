@@ -118,15 +118,15 @@ static int _db_client_msg_chunk_restore(mosquitto_db *db, FILE *db_fd)
 	printf("\tMID: %d\n", mid);
 
 	read_e(db_fd, &qos, sizeof(uint8_t));
-	printf("\tQoS: %d\n", mid);
+	printf("\tQoS: %d\n", qos);
 	read_e(db_fd, &retain, sizeof(uint8_t));
-	printf("\tRetain: %d\n", mid);
+	printf("\tRetain: %d\n", retain);
 	read_e(db_fd, &direction, sizeof(uint8_t));
-	printf("\tDirection: %d\n", mid);
+	printf("\tDirection: %d\n", direction);
 	read_e(db_fd, &state, sizeof(uint8_t));
-	printf("\tState: %d\n", mid);
+	printf("\tState: %d\n", state);
 	read_e(db_fd, &dup, sizeof(uint8_t));
-	printf("\tDup: %d\n", mid);
+	printf("\tDup: %d\n", dup);
 
 	free(client_id);
 
@@ -178,7 +178,7 @@ static int _db_msg_store_chunk_restore(mosquitto_db *db, FILE *db_fd)
 
 	read_e(db_fd, &i16temp, sizeof(uint16_t));
 	mid = ntohs(i16temp);
-	printf("\tMID: %d\n", source_mid);
+	printf("\tMID: %d\n", mid);
 
 	read_e(db_fd, &i16temp, sizeof(uint16_t));
 	slen = ntohs(i16temp);
@@ -293,7 +293,7 @@ static int _db_sub_chunk_restore(mosquitto_db *db, FILE *db_fd)
 		return 1;
 	}
 	read_e(db_fd, topic, slen);
-	printf("\tTopic: %s\n", client_id);
+	printf("\tTopic: %s\n", topic);
 	read_e(db_fd, &qos, sizeof(uint8_t));
 	printf("\tQoS: %d\n", qos);
 	free(client_id);

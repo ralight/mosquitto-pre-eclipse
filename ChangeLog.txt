@@ -11,6 +11,9 @@ Tests:
 Build scripts:
 - Install pskfile.example in CMake. Fixes bug #1037504.
 
+Other:
+- Fix db_dump parameter printing message store and sub chunks.
+
 1.0.1 - 20120815
 ================
 
