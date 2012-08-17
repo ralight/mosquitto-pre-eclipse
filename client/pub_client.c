@@ -202,7 +202,11 @@ int load_file(const char *filename)
 
 void print_usage(void)
 {
-	printf("mosquitto_pub is a simple mqtt client that will publish a message on a single topic and exit.\n\n");
+	int major, minor, revision;
+
+	mosquitto_lib_version(&major, &minor, &revision);
+	printf("mosquitto_pub is a simple mqtt client that will publish a message on a single topic and exit.\n");
+	printf("mosquitto_pub version %s running on libmosquitto %d.%d.%d.\n\n", VERSION, major, minor, revision);
 	printf("Usage: mosquitto_pub [-h host] [-p port] [-q qos] [-r] {-f file | -l | -n | -m message} -t topic\n");
 	printf("                     [-i id] [-I id_prefix]\n");
 	printf("                     [-d] [--quiet]\n");
