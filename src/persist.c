@@ -158,6 +158,7 @@ static int mqtt3_db_message_store_write(mosquitto_db *db, FILE *db_fptr)
 	uint16_t i16temp, slen;
 	uint8_t i8temp;
 	struct mosquitto_msg_store *stored;
+	bool force_no_retain;
 
 	assert(db);
 	assert(db_fptr);
@@ -165,9 +166,13 @@ static int mqtt3_db_message_store_write(mosquitto_db *db, FILE *db_fptr)
 	stored = db->msg_store;
 	while(stored){
 		if(!strncmp(stored->msg.topic, "$SYS", 4)){
-			/* Don't save $SYS messages. */
-			stored = stored->next;
-			continue;
+			/* Don't save $SYS messages as retained otherwise they can give
+			 * misleading information when reloaded. They should still be saved
+			 * because a disconnected durable client may have them in their
+			 * queue. */
+			force_no_retain = true;
+		}else{
+			force_no_retain = false;
 		}
 		length = htonl(sizeof(dbid_t) + 2+strlen(stored->source_id) +
 				sizeof(uint16_t) + sizeof(uint16_t) +
@@ -202,7 +207,11 @@ static int mqtt3_db_message_store_write(mosquitto_db *db, FILE *db_fptr)
 		i8temp = (uint8_t )stored->msg.qos;
 		write_e(db_fptr, &i8temp, sizeof(uint8_t));
 
-		i8temp = (uint8_t )stored->msg.retain;
+		if(force_no_retain == false){
+			i8temp = (uint8_t )stored->msg.retain;
+		}else{
+			i8temp = 0;
+		}
 		write_e(db_fptr, &i8temp, sizeof(uint8_t));
 
 		i32temp = htonl(stored->msg.payloadlen);
