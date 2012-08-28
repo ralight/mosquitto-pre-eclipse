@@ -98,6 +98,11 @@ void _mosquitto_net_init(void)
 
 void _mosquitto_net_cleanup(void)
 {
+#ifdef WITH_TLS
+	ERR_free_strings();
+	EVP_cleanup();
+#endif
+
 #ifdef WIN32
 	WSACleanup();
 #endif

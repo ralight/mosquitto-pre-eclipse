@@ -1,6 +1,9 @@
 1.1 - 201xxxxx
 ==============
 
+Client library:
+- Free memory used by OpenSSL in mosquitto_lib_cleanup() where possible.
+
 Clients:
 - Clients now display their own version number and library version number in
   their help messages.
