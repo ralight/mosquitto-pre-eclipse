@@ -8,6 +8,10 @@ Clients:
 - Clients now display their own version number and library version number in
   their help messages.
 
+Other:
+- mosquitto_passwd can now convert password files with plain text files to
+  hashed versions.
+
 xxxxxxxxxxxxxxxx
 ================
 
