@@ -64,7 +64,7 @@ static int tls_ex_index_context = -1;
 static int tls_ex_index_listener = -1;
 #endif
 
-int mqtt3_socket_accept(struct _mosquitto_db *db, int listensock)
+int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 {
 	int i;
 	int j;
@@ -199,7 +199,7 @@ static int client_certificate_verify(int preverify_ok, X509_STORE_CTX *ctx)
 #if defined(WITH_TLS) && defined(WITH_TLS_PSK)
 static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned char *psk, unsigned int max_psk_len)
 {
-	struct _mosquitto_db *db;
+	struct mosquitto_db *db;
 	struct mosquitto *context;
 	struct _mqtt3_listener *listener;
 	char *psk_key = NULL;

@@ -144,7 +144,7 @@ int _mosquitto_handle_pubrec(struct mosquitto *mosq)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int _mosquitto_handle_pubrel(struct _mosquitto_db *db, struct mosquitto *mosq)
+int _mosquitto_handle_pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 {
 	uint16_t mid;
 #ifndef WITH_BROKER

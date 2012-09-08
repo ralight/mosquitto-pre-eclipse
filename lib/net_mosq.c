@@ -695,7 +695,7 @@ int _mosquitto_packet_write(struct mosquitto *mosq)
 }
 
 #ifdef WITH_BROKER
-int _mosquitto_packet_read(mosquitto_db *db, struct mosquitto *mosq)
+int _mosquitto_packet_read(struct mosquitto_db *db, struct mosquitto *mosq)
 #else
 int _mosquitto_packet_read(struct mosquitto *mosq)
 #endif

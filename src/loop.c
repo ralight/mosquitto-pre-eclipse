@@ -60,10 +60,10 @@ extern bool flag_db_backup;
 extern bool flag_tree_print;
 extern int run;
 
-static void loop_handle_errors(mosquitto_db *db, struct pollfd *pollfds);
-static void loop_handle_reads_writes(mosquitto_db *db, struct pollfd *pollfds);
+static void loop_handle_errors(struct mosquitto_db *db, struct pollfd *pollfds);
+static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pollfds);
 
-int mosquitto_main_loop(mosquitto_db *db, int *listensock, int listensock_count, int listener_max)
+int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock_count, int listener_max)
 {
 	time_t start_time = time(NULL);
 	time_t last_backup = time(NULL);
@@ -251,7 +251,7 @@ int mosquitto_main_loop(mosquitto_db *db, int *listensock, int listensock_count,
 	return MOSQ_ERR_SUCCESS;
 }
 
-static void do_disconnect(mosquitto_db *db, int context_index)
+static void do_disconnect(struct mosquitto_db *db, int context_index)
 {
 	if(db->config->connection_messages == true){
 		if(db->contexts[context_index]->state != mosq_cs_disconnecting){
@@ -266,7 +266,7 @@ static void do_disconnect(mosquitto_db *db, int context_index)
 /* Error ocurred, probably an fd has been closed. 
  * Loop through and check them all.
  */
-static void loop_handle_errors(mosquitto_db *db, struct pollfd *pollfds)
+static void loop_handle_errors(struct mosquitto_db *db, struct pollfd *pollfds)
 {
 	int i;
 
@@ -279,7 +279,7 @@ static void loop_handle_errors(mosquitto_db *db, struct pollfd *pollfds)
 	}
 }
 
-static void loop_handle_reads_writes(mosquitto_db *db, struct pollfd *pollfds)
+static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pollfds)
 {
 	int i;
 

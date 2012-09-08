@@ -59,9 +59,9 @@ extern SERVICE_STATUS_HANDLE service_handle;
 static int _conf_parse_bool(char **token, const char *name, bool *value, char *saveptr);
 static int _conf_parse_int(char **token, const char *name, int *value, char *saveptr);
 static int _conf_parse_string(char **token, const char *name, char **value, char *saveptr);
-static int _config_read_file(mqtt3_config *config, bool reload, const char *file, struct config_recurse *config_tmp, int level);
+static int _config_read_file(struct mqtt3_config *config, bool reload, const char *file, struct config_recurse *config_tmp, int level);
 
-static void _config_init_reload(mqtt3_config *config)
+static void _config_init_reload(struct mqtt3_config *config)
 {
 	int i;
 	/* Set defaults */
@@ -112,9 +112,9 @@ static void _config_init_reload(mqtt3_config *config)
 	}
 }
 
-void mqtt3_config_init(mqtt3_config *config)
+void mqtt3_config_init(struct mqtt3_config *config)
 {
-	memset(config, 0, sizeof(mqtt3_config));
+	memset(config, 0, sizeof(struct mqtt3_config));
 	_config_init_reload(config);
 	config->config_file = NULL;
 	config->daemon = false;
@@ -147,7 +147,7 @@ void mqtt3_config_init(mqtt3_config *config)
 	config->auth_plugin = NULL;
 }
 
-void mqtt3_config_cleanup(mqtt3_config *config)
+void mqtt3_config_cleanup(struct mqtt3_config *config)
 {
 	int i, j;
 
@@ -227,7 +227,7 @@ static void print_usage(void)
 	printf("\nSee http://mosquitto.org/ for more information.\n\n");
 }
 
-int mqtt3_config_parse_args(mqtt3_config *config, int argc, char *argv[])
+int mqtt3_config_parse_args(struct mqtt3_config *config, int argc, char *argv[])
 {
 	int i;
 	int port_tmp;
@@ -327,7 +327,7 @@ int mqtt3_config_parse_args(mqtt3_config *config, int argc, char *argv[])
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mqtt3_config_read(mqtt3_config *config, bool reload)
+int mqtt3_config_read(struct mqtt3_config *config, bool reload)
 {
 	int rc = MOSQ_ERR_SUCCESS;
 	int max_inflight_messages = 20;
@@ -397,7 +397,7 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int _config_read_file(mqtt3_config *config, bool reload, const char *file, struct config_recurse *cr, int level)
+int _config_read_file(struct mqtt3_config *config, bool reload, const char *file, struct config_recurse *cr, int level)
 {
 	int rc;
 	FILE *fptr = NULL;
