@@ -1,6 +1,9 @@
 1.1 - 201xxxxx
 ==============
 
+Broker:
+- Documentation on password file format has been fixed.
+
 Client library:
 - Free memory used by OpenSSL in mosquitto_lib_cleanup() where possible.
 
