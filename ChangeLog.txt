@@ -15,8 +15,14 @@ Other:
 - mosquitto_passwd can now convert password files with plain text files to
   hashed versions.
 
-xxxxxxxxxxxxxxxx
+1.0.2 - 20120919
 ================
+
+Broker:
+- If the broker was configured for persistence, a durable client had a
+  subscription to topics in $SYS/# and had messages in its queue when the
+  broker restarted, then the persistent database would have messages missing
+  and so the broker would not restart properly. This has been fixed.
 
 Library:
 - Fix threading problem on some systems.
@@ -27,6 +33,9 @@ Tests:
 
 Build scripts:
 - Install pskfile.example in CMake. Fixes bug #1037504.
+
+Other:
+- Fix db_dump parameter printing message store and sub chunks.
 
 1.0.1 - 20120815
 ================
