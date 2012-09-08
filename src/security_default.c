@@ -35,17 +35,17 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <mosquitto_broker.h>
 #include <memory_mosq.h>
 
-static int _aclfile_parse(struct _mosquitto_db *db);
-static int _unpwd_file_parse(struct _mosquitto_db *db);
-static int _acl_cleanup(struct _mosquitto_db *db, bool reload);
+static int _aclfile_parse(struct mosquitto_db *db);
+static int _unpwd_file_parse(struct mosquitto_db *db);
+static int _acl_cleanup(struct mosquitto_db *db, bool reload);
 static int _unpwd_cleanup(struct _mosquitto_unpwd **unpwd, bool reload);
-static int _psk_file_parse(struct _mosquitto_db *db);
+static int _psk_file_parse(struct mosquitto_db *db);
 #ifdef WITH_TLS
 static int _pw_digest(const char *password, const unsigned char *salt, unsigned int salt_len, unsigned char *hash, unsigned int *hash_len);
 static int _base64_decode(char *in, unsigned char **decoded, unsigned int *decoded_len);
 #endif
 
-int mosquitto_security_init_default(mosquitto_db *db, bool reload)
+int mosquitto_security_init_default(struct mosquitto_db *db, bool reload)
 {
 	int rc;
 
@@ -79,7 +79,7 @@ int mosquitto_security_init_default(mosquitto_db *db, bool reload)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto_security_cleanup_default(mosquitto_db *db, bool reload)
+int mosquitto_security_cleanup_default(struct mosquitto_db *db, bool reload)
 {
 	int rc;
 	rc = _acl_cleanup(db, reload);
@@ -90,7 +90,7 @@ int mosquitto_security_cleanup_default(mosquitto_db *db, bool reload)
 }
 
 
-int _add_acl(struct _mosquitto_db *db, const char *user, const char *topic, int access)
+int _add_acl(struct mosquitto_db *db, const char *user, const char *topic, int access)
 {
 	struct _mosquitto_acl_user *acl_user=NULL, *user_tail;
 	struct _mosquitto_acl *acl, *acl_root=NULL, *acl_tail=NULL;
@@ -214,7 +214,7 @@ int _add_acl(struct _mosquitto_db *db, const char *user, const char *topic, int 
 	return MOSQ_ERR_SUCCESS;
 }
 
-int _add_acl_pattern(struct _mosquitto_db *db, const char *topic, int access)
+int _add_acl_pattern(struct mosquitto_db *db, const char *topic, int access)
 {
 	struct _mosquitto_acl *acl, *acl_root=NULL, *acl_tail=NULL;
 	char *local_topic;
@@ -287,7 +287,7 @@ int _add_acl_pattern(struct _mosquitto_db *db, const char *topic, int access)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto_acl_check_default(struct _mosquitto_db *db, struct mosquitto *context, const char *topic, int access)
+int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int access)
 {
 	char *local_topic;
 	char *token;
@@ -447,7 +447,7 @@ int mosquitto_acl_check_default(struct _mosquitto_db *db, struct mosquitto *cont
 	return MOSQ_ERR_ACL_DENIED;
 }
 
-static int _aclfile_parse(struct _mosquitto_db *db)
+static int _aclfile_parse(struct mosquitto_db *db)
 {
 	FILE *aclfile;
 	char buf[1024];
@@ -560,7 +560,7 @@ static void _free_acl(struct _mosquitto_acl *acl)
 	_mosquitto_free(acl);
 }
 
-static int _acl_cleanup(struct _mosquitto_db *db, bool reload)
+static int _acl_cleanup(struct mosquitto_db *db, bool reload)
 {
 	int i;
 	struct _mosquitto_acl_user *user_tail;
@@ -652,7 +652,7 @@ static int _pwfile_parse(const char *file, struct _mosquitto_unpwd **root)
 	return MOSQ_ERR_SUCCESS;
 }
 
-static int _unpwd_file_parse(struct _mosquitto_db *db)
+static int _unpwd_file_parse(struct mosquitto_db *db)
 {
 	int rc;
 #ifdef WITH_TLS
@@ -714,7 +714,7 @@ static int _unpwd_file_parse(struct _mosquitto_db *db)
 	return rc;
 }
 
-static int _psk_file_parse(struct _mosquitto_db *db)
+static int _psk_file_parse(struct mosquitto_db *db)
 {
 	int rc;
 	struct _mosquitto_unpwd *u, *tmp;
@@ -741,7 +741,7 @@ static int _psk_file_parse(struct _mosquitto_db *db)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto_unpwd_check_default(struct _mosquitto_db *db, const char *username, const char *password)
+int mosquitto_unpwd_check_default(struct mosquitto_db *db, const char *username, const char *password)
 {
 	struct _mosquitto_unpwd *u, *tmp;
 #ifdef WITH_TLS
@@ -812,7 +812,7 @@ static int _unpwd_cleanup(struct _mosquitto_unpwd **root, bool reload)
  * - Disconnecting users with invalid passwords
  * - Reapplying ACLs
  */
-int mosquitto_security_apply_default(struct _mosquitto_db *db)
+int mosquitto_security_apply_default(struct mosquitto_db *db)
 {
 	struct _mosquitto_acl_user *acl_user_tail;
 	struct _mosquitto_unpwd *u, *tmp;
@@ -888,7 +888,7 @@ int mosquitto_security_apply_default(struct _mosquitto_db *db)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto_psk_key_get_default(struct _mosquitto_db *db, const char *hint, const char *identity, char *key, int max_key_len)
+int mosquitto_psk_key_get_default(struct mosquitto_db *db, const char *hint, const char *identity, char *key, int max_key_len)
 {
 	struct _mosquitto_unpwd *u, *tmp;
 

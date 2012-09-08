@@ -42,7 +42,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 extern uint64_t g_pub_bytes_received;
 
-int mqtt3_packet_handle(mosquitto_db *db, struct mosquitto *context)
+int mqtt3_packet_handle(struct mosquitto_db *db, struct mosquitto *context)
 {
 	if(!context) return MOSQ_ERR_INVAL;
 
@@ -83,7 +83,7 @@ int mqtt3_packet_handle(mosquitto_db *db, struct mosquitto *context)
 	}
 }
 
-int mqtt3_handle_publish(mosquitto_db *db, struct mosquitto *context)
+int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 {
 	char *topic;
 	char *topic_temp;

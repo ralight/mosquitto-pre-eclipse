@@ -40,7 +40,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <mosquitto_broker.h>
 #include <memory_mosq.h>
 
-extern mosquitto_db int_db;
+extern struct mosquitto_db int_db;
 
 #ifdef WIN32
 HANDLE syslog_h;

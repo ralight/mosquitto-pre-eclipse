@@ -95,7 +95,7 @@ struct _mqtt3_listener {
 #endif
 };
 
-typedef struct {
+struct mqtt3_config {
 	char *config_file;
 	char *acl_file;
 	bool allow_anonymous;
@@ -130,7 +130,7 @@ typedef struct {
 	char *auth_plugin;
 	struct mosquitto_auth_opt *auth_options;
 	int auth_option_count;
-} mqtt3_config;
+};
 
 struct _mosquitto_subleaf {
 	struct _mosquitto_subleaf *prev;
@@ -158,8 +158,8 @@ struct mosquitto_msg_store{
 	struct mosquitto_message msg;
 };
 
-typedef struct _mosquitto_client_msg{
-	struct _mosquitto_client_msg *next;
+struct mosquitto_client_msg{
+	struct mosquitto_client_msg *next;
 	struct mosquitto_msg_store *store;
 	uint16_t mid;
 	int qos;
@@ -168,7 +168,7 @@ typedef struct _mosquitto_client_msg{
 	enum mosquitto_msg_direction direction;
 	enum mqtt3_msg_state state;
 	bool dup;
-} mosquitto_client_msg;
+};
 
 struct _mosquitto_unpwd{
 	char *username;
@@ -194,8 +194,6 @@ struct _mosquitto_acl_user{
 	struct _mosquitto_acl *acl;
 };
 
-struct _mosquitto_db;
-
 struct _mosquitto_auth_plugin{
 	void *lib;
 	void *user_data;
@@ -209,7 +207,7 @@ struct _mosquitto_auth_plugin{
 	int (*psk_key_get)(void *user_data, const char *hint, const char *identity, char *key, int max_key_len);
 };
 
-typedef struct _mosquitto_db{
+struct mosquitto_db{
 	dbid_t last_db_id;
 	struct _mosquitto_subhier subs;
 	struct _mosquitto_unpwd *unpwd;
@@ -220,12 +218,12 @@ typedef struct _mosquitto_db{
 	int context_count;
 	struct mosquitto_msg_store *msg_store;
 	int msg_store_count;
-	mqtt3_config *config;
+	struct mqtt3_config *config;
 	int persistence_changes;
 	struct _mosquitto_auth_plugin auth_plugin;
 	int subscription_count;
 	int retained_count;
-} mosquitto_db;
+};
 
 enum mqtt3_bridge_direction{
 	bd_out = 0,
@@ -288,23 +286,23 @@ struct _mqtt3_bridge{
 /* ============================================================
  * Main functions
  * ============================================================ */
-int mosquitto_main_loop(mosquitto_db *db, int *listensock, int listensock_count, int listener_max);
-struct _mosquitto_db *_mosquitto_get_db(void);
+int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock_count, int listener_max);
+struct mosquitto_db *_mosquitto_get_db(void);
 
 /* ============================================================
  * Config functions
  * ============================================================ */
 /* Initialise config struct to default values. */
-void mqtt3_config_init(mqtt3_config *config);
+void mqtt3_config_init(struct mqtt3_config *config);
 /* Parse command line options into config. */
-int mqtt3_config_parse_args(mqtt3_config *config, int argc, char *argv[]);
+int mqtt3_config_parse_args(struct mqtt3_config *config, int argc, char *argv[]);
 /* Read configuration data from config->config_file into config.
  * If reload is true, don't process config options that shouldn't be reloaded (listeners etc)
  * Returns 0 on success, 1 if there is a configuration error or if a file cannot be opened.
  */
-int mqtt3_config_read(mqtt3_config *config, bool reload);
+int mqtt3_config_read(struct mqtt3_config *config, bool reload);
 /* Free all config data. */
-void mqtt3_config_cleanup(mqtt3_config *config);
+void mqtt3_config_cleanup(struct mqtt3_config *config);
 
 /* ============================================================
  * Server send functions
@@ -315,66 +313,66 @@ int _mosquitto_send_suback(struct mosquitto *context, uint16_t mid, uint32_t pay
 /* ============================================================
  * Network functions
  * ============================================================ */
-int mqtt3_socket_accept(struct _mosquitto_db *db, int listensock);
+int mqtt3_socket_accept(struct mosquitto_db *db, int listensock);
 int mqtt3_socket_listen(struct _mqtt3_listener *listener);
 
 /* ============================================================
  * Read handling functions
  * ============================================================ */
-int mqtt3_packet_handle(mosquitto_db *db, struct mosquitto *context);
-int mqtt3_handle_connack(mosquitto_db *db, struct mosquitto *context);
-int mqtt3_handle_connect(mosquitto_db *db, struct mosquitto *context);
-int mqtt3_handle_disconnect(mosquitto_db *db, struct mosquitto *context);
-int mqtt3_handle_publish(mosquitto_db *db, struct mosquitto *context);
-int mqtt3_handle_subscribe(mosquitto_db *db, struct mosquitto *context);
-int mqtt3_handle_unsubscribe(mosquitto_db *db, struct mosquitto *context);
+int mqtt3_packet_handle(struct mosquitto_db *db, struct mosquitto *context);
+int mqtt3_handle_connack(struct mosquitto_db *db, struct mosquitto *context);
+int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context);
+int mqtt3_handle_disconnect(struct mosquitto_db *db, struct mosquitto *context);
+int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context);
+int mqtt3_handle_subscribe(struct mosquitto_db *db, struct mosquitto *context);
+int mqtt3_handle_unsubscribe(struct mosquitto_db *db, struct mosquitto *context);
 
 /* ============================================================
  * Database handling
  * ============================================================ */
-int mqtt3_db_open(mqtt3_config *config, mosquitto_db *db);
-int mqtt3_db_close(mosquitto_db *db);
+int mqtt3_db_open(struct mqtt3_config *config, struct mosquitto_db *db);
+int mqtt3_db_close(struct mosquitto_db *db);
 #ifdef WITH_PERSISTENCE
-int mqtt3_db_backup(mosquitto_db *db, bool cleanup, bool shutdown);
-int mqtt3_db_restore(mosquitto_db *db);
+int mqtt3_db_backup(struct mosquitto_db *db, bool cleanup, bool shutdown);
+int mqtt3_db_restore(struct mosquitto_db *db);
 #endif
-int mqtt3_db_client_count(mosquitto_db *db, int *count, int *inactive_count);
+int mqtt3_db_client_count(struct mosquitto_db *db, int *count, int *inactive_count);
 void mqtt3_db_limits_set(int inflight, int queued);
 /* Return the number of in-flight messages in count. */
 int mqtt3_db_message_count(int *count);
 int mqtt3_db_message_delete(struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir);
-int mqtt3_db_message_insert(mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, int qos, bool retain, struct mosquitto_msg_store *stored);
-int mqtt3_db_message_release(mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir);
+int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, int qos, bool retain, struct mosquitto_msg_store *stored);
+int mqtt3_db_message_release(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir);
 int mqtt3_db_message_update(struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, enum mqtt3_msg_state state);
 int mqtt3_db_message_write(struct mosquitto *context);
 int mqtt3_db_messages_delete(struct mosquitto *context);
-int mqtt3_db_messages_easy_queue(mosquitto_db *db, struct mosquitto *context, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain);
-int mqtt3_db_messages_queue(mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored);
-int mqtt3_db_message_store(mosquitto_db *db, const char *source, uint16_t source_mid, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain, struct mosquitto_msg_store **stored, dbid_t store_id);
+int mqtt3_db_messages_easy_queue(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain);
+int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored);
+int mqtt3_db_message_store(struct mosquitto_db *db, const char *source, uint16_t source_mid, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain, struct mosquitto_msg_store **stored, dbid_t store_id);
 int mqtt3_db_message_store_find(struct mosquitto *context, uint16_t mid, struct mosquitto_msg_store **stored);
 /* Check all messages waiting on a client reply and resend if timeout has been exceeded. */
-int mqtt3_db_message_timeout_check(mosquitto_db *db, unsigned int timeout);
+int mqtt3_db_message_timeout_check(struct mosquitto_db *db, unsigned int timeout);
 int mqtt3_db_message_reconnect_reset(struct mosquitto *context);
-int mqtt3_retain_queue(mosquitto_db *db, struct mosquitto *context, const char *sub, int sub_qos);
-void mqtt3_db_store_clean(mosquitto_db *db);
-void mqtt3_db_sys_update(mosquitto_db *db, int interval, time_t start_time);
+int mqtt3_retain_queue(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int sub_qos);
+void mqtt3_db_store_clean(struct mosquitto_db *db);
+void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_time);
 void mqtt3_db_vacuum(void);
 
 /* ============================================================
  * Subscription functions
  * ============================================================ */
-int mqtt3_sub_add(mosquitto_db *db, struct mosquitto *context, const char *sub, int qos, struct _mosquitto_subhier *root);
-int mqtt3_sub_remove(mosquitto_db *db, struct mosquitto *context, const char *sub, struct _mosquitto_subhier *root);
-int mqtt3_sub_search(struct _mosquitto_db *db, struct _mosquitto_subhier *root, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored);
+int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int qos, struct _mosquitto_subhier *root);
+int mqtt3_sub_remove(struct mosquitto_db *db, struct mosquitto *context, const char *sub, struct _mosquitto_subhier *root);
+int mqtt3_sub_search(struct mosquitto_db *db, struct _mosquitto_subhier *root, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored);
 void mqtt3_sub_tree_print(struct _mosquitto_subhier *root, int level);
-int mqtt3_subs_clean_session(mosquitto_db *db, struct mosquitto *context, struct _mosquitto_subhier *root);
+int mqtt3_subs_clean_session(struct mosquitto_db *db, struct mosquitto *context, struct _mosquitto_subhier *root);
 
 /* ============================================================
  * Context functions
  * ============================================================ */
 struct mosquitto *mqtt3_context_init(int sock);
-void mqtt3_context_cleanup(mosquitto_db *db, struct mosquitto *context, bool do_free);
-void mqtt3_context_disconnect(mosquitto_db *db, struct mosquitto *context);
+void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, bool do_free);
+void mqtt3_context_disconnect(struct mosquitto_db *db, struct mosquitto *context);
 
 /* ============================================================
  * Logging functions
@@ -387,30 +385,30 @@ int _mosquitto_log_printf(struct mosquitto *mosq, int level, const char *fmt, ..
  * Bridge functions
  * ============================================================ */
 #ifdef WITH_BRIDGE
-int mqtt3_bridge_new(mosquitto_db *db, struct _mqtt3_bridge *bridge);
-int mqtt3_bridge_connect(mosquitto_db *db, struct mosquitto *context);
+int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge);
+int mqtt3_bridge_connect(struct mosquitto_db *db, struct mosquitto *context);
 void mqtt3_bridge_packet_cleanup(struct mosquitto *context);
 #endif
 
 /* ============================================================
  * Security related functions
  * ============================================================ */
-int mosquitto_security_module_init(mosquitto_db *db);
-int mosquitto_security_module_cleanup(struct _mosquitto_db *db);
+int mosquitto_security_module_init(struct mosquitto_db *db);
+int mosquitto_security_module_cleanup(struct mosquitto_db *db);
 
-int mosquitto_security_init(mosquitto_db *db, bool reload);
-int mosquitto_security_apply(struct _mosquitto_db *db);
-int mosquitto_security_cleanup(mosquitto_db *db, bool reload);
-int mosquitto_acl_check(struct _mosquitto_db *db, struct mosquitto *context, const char *topic, int access);
-int mosquitto_unpwd_check(struct _mosquitto_db *db, const char *username, const char *password);
-int mosquitto_psk_key_get(struct _mosquitto_db *db, const char *hint, const char *identity, char *key, int max_key_len);
+int mosquitto_security_init(struct mosquitto_db *db, bool reload);
+int mosquitto_security_apply(struct mosquitto_db *db);
+int mosquitto_security_cleanup(struct mosquitto_db *db, bool reload);
+int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int access);
+int mosquitto_unpwd_check(struct mosquitto_db *db, const char *username, const char *password);
+int mosquitto_psk_key_get(struct mosquitto_db *db, const char *hint, const char *identity, char *key, int max_key_len);
 
-int mosquitto_security_init_default(mosquitto_db *db, bool reload);
-int mosquitto_security_apply_default(struct _mosquitto_db *db);
-int mosquitto_security_cleanup_default(mosquitto_db *db, bool reload);
-int mosquitto_acl_check_default(struct _mosquitto_db *db, struct mosquitto *context, const char *topic, int access);
-int mosquitto_unpwd_check_default(struct _mosquitto_db *db, const char *username, const char *password);
-int mosquitto_psk_key_get_default(struct _mosquitto_db *db, const char *hint, const char *identity, char *key, int max_key_len);
+int mosquitto_security_init_default(struct mosquitto_db *db, bool reload);
+int mosquitto_security_apply_default(struct mosquitto_db *db);
+int mosquitto_security_cleanup_default(struct mosquitto_db *db, bool reload);
+int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int access);
+int mosquitto_unpwd_check_default(struct mosquitto_db *db, const char *username, const char *password);
+int mosquitto_psk_key_get_default(struct mosquitto_db *db, const char *hint, const char *identity, char *key, int max_key_len);
 
 /* ============================================================
  * Window service related functions
