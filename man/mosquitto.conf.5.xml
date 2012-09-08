@@ -291,9 +291,13 @@
 				<listitem>
 					<para>Set the path to a password file. If defined, the
 					contents of the file are used to control client access to
-					the broker. Each line should be in the format
-					"username:password", where the colon and password are
-					optional but recommended. If allow_anonymous is set to
+					the broker. The file can be created using the
+					<citerefentry><refentrytitle>mosquitto_passwd</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+					utility. If mosquitto is compiled without TLS support (it
+					is recommended that TLS support is included), then the
+					password file should be a text file with each line in the
+					format "username:password", where the colon and password
+					are optional but recommended. If allow_anonymous is set to
 					false, only users defined in this file will be able to
 					connect. Setting allow_anonymous to true when password_file
 					is defined is valid and could be used with acl_file to have
