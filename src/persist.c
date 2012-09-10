@@ -208,7 +208,7 @@ static int mqtt3_db_message_store_write(struct mosquitto_db *db, FILE *db_fptr)
 		i32temp = htonl(stored->msg.payloadlen);
 		write_e(db_fptr, &i32temp, sizeof(uint32_t));
 		if(stored->msg.payloadlen){
-			write_e(db_fptr, stored->msg.payload, stored->msg.payloadlen);
+			write_e(db_fptr, stored->msg.payload, (unsigned int)stored->msg.payloadlen);
 		}
 
 		stored = stored->next;
@@ -265,7 +265,7 @@ static int _db_subs_retain_write(struct mosquitto_db *db, FILE *db_fptr, struct 
 	uint32_t length;
 	uint16_t i16temp;
 	dbid_t i64temp;
-	int slen;
+	size_t slen;
 
 	slen = strlen(topic) + strlen(node->topic) + 2;
 	thistopic = _mosquitto_malloc(sizeof(char)*slen);

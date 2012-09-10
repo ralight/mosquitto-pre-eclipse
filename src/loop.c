@@ -75,7 +75,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 #endif
 	int i;
 	struct pollfd *pollfds = NULL;
-	unsigned int pollfd_count = 0;
+	int pollfd_count = 0;
 	int pollfd_index;
 
 #ifndef WIN32

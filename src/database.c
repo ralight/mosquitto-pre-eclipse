@@ -152,7 +152,7 @@ int mqtt3_db_close(struct mosquitto_db *db)
  * Returns 1 on failure (count is NULL)
  * Returns 0 on success.
  */
-int mqtt3_db_client_count(struct mosquitto_db *db, int *count, int *inactive_count)
+int mqtt3_db_client_count(struct mosquitto_db *db, unsigned int *count, unsigned int *inactive_count)
 {
 	int i;
 
@@ -840,18 +840,18 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 	time_t now = time(NULL);
 	time_t uptime;
 	char buf[100];
-	int value;
-	int inactive;
-	int active;
+	unsigned int value;
+	unsigned int inactive;
+	unsigned int active;
 #ifndef WIN32
 	unsigned long value_ul;
 #endif
 
 	static int msg_store_count = -1;
-	static int client_count = -1;
-	static int client_max = -1;
-	static int inactive_count = -1;
-	static int active_count = -1;
+	static unsigned int client_count = -1;
+	static unsigned int client_max = -1;
+	static unsigned int inactive_count = -1;
+	static unsigned int active_count = -1;
 #ifdef REAL_WITH_MEMORY_TRACKING
 	static unsigned long current_heap = -1;
 	static unsigned long max_heap = -1;
