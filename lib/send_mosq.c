@@ -94,7 +94,7 @@ int _mosquitto_send_pubcomp(struct mosquitto *mosq, uint16_t mid)
 int _mosquitto_send_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain, bool dup)
 {
 #ifdef WITH_BROKER
-	int len;
+	size_t len;
 #ifdef WITH_BRIDGE
 	int i;
 	struct _mqtt3_bridge_topic *cur_topic;
