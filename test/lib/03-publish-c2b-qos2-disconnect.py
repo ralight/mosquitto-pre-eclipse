@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Test whether a client sends a correct PUBLISH to a topic with QoS 1 and responds to a disconnect.
+# Test whether a client sends a correct PUBLISH to a topic with QoS 2 and responds to a disconnect.
 
 import inspect
 import os
