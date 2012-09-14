@@ -565,7 +565,8 @@ static int _acl_cleanup(struct _mosquitto_db *db, bool reload)
 	int i;
 	struct _mosquitto_acl_user *user_tail;
 
-	if(!db || !db->acl_list) return MOSQ_ERR_INVAL;
+	if(!db) return MOSQ_ERR_INVAL;
+	if(!db->acl_list) return MOSQ_ERR_SUCCESS;
 
 	/* As we're freeing ACLs, we must clear context->acl_list to ensure no
 	 * invalid memory accesses take place later.
