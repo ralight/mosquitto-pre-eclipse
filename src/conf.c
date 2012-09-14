@@ -1173,7 +1173,6 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 					config->default_listener.port = port_tmp;
 				}else if(!strcmp(token, "psk_file")){
 #if defined(WITH_TLS) && defined(WITH_TLS_PSK)
-					if(reload) continue; // Listeners not valid for reloading.
 					if(reload){
 						if(config->psk_file){
 							_mosquitto_free(config->psk_file);
