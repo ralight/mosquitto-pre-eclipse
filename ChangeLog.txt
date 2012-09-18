@@ -9,6 +9,8 @@ Broker:
 Library:
 - Fix possible AttributeError when self._sock == None in Python module.
 - Fix reconnecting after a timeout in Python module.
+- Fix reconnecting when there were outgoing packets in the queue in the Python
+  module.
 
 1.0.2 - 20120919
 ================
