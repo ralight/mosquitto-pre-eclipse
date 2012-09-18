@@ -617,10 +617,10 @@ class Mosquitto:
                 if self._ssl:
                     self._ssl.close()
                     self._ssl = None
-                else:
+                elif self._sock:
                     self._sock.close()
+                    self._sock = None
 
-                self._sock = None
                 self._state_mutex.acquire()
                 if self._state == mosq_cs_disconnecting:
                     rc = MOSQ_ERR_SUCCESS
@@ -642,8 +642,8 @@ class Mosquitto:
                     self._ssl = None
                 else:
                     self._sock.close()
+                    self._sock = None
 
-                self._sock = None
                 self._state_mutex.acquire()
                 if self._state == mosq_cs_disconnecting:
                     rc = MOSQ_ERR_SUCCESS
@@ -877,9 +877,10 @@ class Mosquitto:
             if self._ssl:
                 self._ssl.close()
                 self._ssl = None
-            else:
+            elif self._sock:
                 self._sock.close()
-            self._sock = None
+                self._sock = None
+
             self._callback_mutex.acquire()
             if self._state == mosq_cs_disconnecting:
                 rc = MOSQ_ERR_SUCCESS
@@ -1141,9 +1142,10 @@ class Mosquitto:
                 if self._ssl:
                     self._ssl.close()
                     self._ssl = None
-                else:
+                elif self._sock:
                     self._sock.close()
-                self._sock = None
+                    self._sock = None
+
                 if self._state == mosq_cs_disconnecting:
                     rc = MOSQ_ERR_SUCCESS
                 else:

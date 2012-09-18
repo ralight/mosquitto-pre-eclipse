@@ -6,6 +6,8 @@ Broker:
 - Don't return an error when reloading config if an ACL file isn't defined.
   This was preventing psk files being reloaded.
 
+Library:
+- Fix possible AttributeError when self._sock == None in Python module.
 
 1.0.2 - 20120919
 ================
