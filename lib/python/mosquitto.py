@@ -540,6 +540,11 @@ class Mosquitto:
         if self._port <= 0:
             raise ValueError('Invalid port number.')
 
+        self._msgtime_mutex.acquire()
+        self._last_msg_in = time.time()
+        self._last_msg_out = time.time()
+        self._msgtime_mutex.release()
+        self._ping_t = 0
         self._state_mutex.acquire()
         self._state = mosq_cs_new
         self._state_mutex.release()
