@@ -11,6 +11,8 @@ Library:
 - Fix reconnecting after a timeout in Python module.
 - Fix reconnecting when there were outgoing packets in the queue in the Python
   module.
+- Fix problem with mutex initialisation causing crashes on some Windows
+  installations.
 
 1.0.2 - 20120919
 ================
