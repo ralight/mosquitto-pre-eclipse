@@ -136,8 +136,9 @@
 			<varlistentry>
 				<term><option>$SYS/broker/clients/total</option></term>
 				<listitem>
-					<para>The total number of active clients currently
-					connected to the broker.</para>
+					<para>The total number of active and inactive clients
+						currently connected and registered on the
+						broker.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
