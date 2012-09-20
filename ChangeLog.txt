@@ -5,6 +5,7 @@ Broker:
 - Fix loading of psk files.
 - Don't return an error when reloading config if an ACL file isn't defined.
   This was preventing psk files being reloaded.
+- Clarify meaning of $SYS/broker/clients/total in mosquitto(8) man page.
 
 Library:
 - Fix possible AttributeError when self._sock == None in Python module.
