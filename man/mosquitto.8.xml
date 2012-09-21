@@ -203,7 +203,9 @@
 			<varlistentry>
 				<term><option>$SYS/broker/messages/stored</option></term>
 				<listitem>
-					<para>The number of messages currently held in the message store.</para>
+					<para>The number of messages currently held in the message
+						store. This includes retained messages and messages
+						queued for durable clients.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
