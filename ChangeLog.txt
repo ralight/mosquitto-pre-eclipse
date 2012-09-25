@@ -8,6 +8,8 @@ Broker:
 - Clarify meaning of $SYS/broker/clients/total in mosquitto(8) man page.
 - Clarify meaning of $SYS/broker/messages/stored in mosquitto(8) man page.
 - Fix non-retained message delivery when subscribing to #.
+- Fix retained message delivery for subs to foo/# with retained messages at
+  foo.
 
 Library:
 - Fix possible AttributeError when self._sock == None in Python module.
