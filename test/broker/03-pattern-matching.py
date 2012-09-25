@@ -79,6 +79,8 @@ pattern_test("#", "/test/topic")
 pattern_test("foo/#", "foo/bar/baz")
 pattern_test("foo/+/baz", "foo/bar/baz")
 pattern_test("foo/#", "foo")
+pattern_test("/#", "/foo")
+pattern_test("+/+/+/+/+/+/+/+/+/+/test", "one/two/three/four/five/six/seven/eight/nine/ten/test")
 
 exit(0)
 
