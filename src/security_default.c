@@ -53,7 +53,7 @@ int mosquitto_security_init_default(mosquitto_db *db, bool reload)
 	if(db->config->password_file){
 		rc = _unpwd_file_parse(db);
 		if(rc){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error opening password file.");
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error opening password file \"%s\".", db->config->password_file);
 			return rc;
 		}
 	}
@@ -62,7 +62,7 @@ int mosquitto_security_init_default(mosquitto_db *db, bool reload)
 	if(db->config->acl_file){
 		rc = _aclfile_parse(db);
 		if(rc){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error opening acl file.");
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error opening acl file \"%s\".", db->config->acl_file);
 			return rc;
 		}
 	}

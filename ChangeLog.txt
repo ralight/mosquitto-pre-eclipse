@@ -10,6 +10,7 @@ Broker:
 - Fix non-retained message delivery when subscribing to #.
 - Fix retained message delivery for subs to foo/# with retained messages at
   foo.
+- Include the filename in password/acl file loading errors.
 
 Library:
 - Fix possible AttributeError when self._sock == None in Python module.
