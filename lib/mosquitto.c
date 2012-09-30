@@ -255,6 +255,18 @@ void _mosquitto_destroy(struct mosquitto *mosq)
 		pthread_cancel(mosq->thread_id);
 		pthread_join(mosq->thread_id, NULL);
 	}
+
+	if(mosq->id){
+		/* If mosq->id is not NULL then the client has already been initialised
+		 * and so the mutexes need destroying. If mosq->id is NULL, the mutexes
+		 * haven't been initialised. */
+		pthread_mutex_destroy(&mosq->callback_mutex);
+		pthread_mutex_destroy(&mosq->log_callback_mutex);
+		pthread_mutex_destroy(&mosq->state_mutex);
+		pthread_mutex_destroy(&mosq->out_packet_mutex);
+		pthread_mutex_destroy(&mosq->current_out_packet_mutex);
+		pthread_mutex_destroy(&mosq->msgtime_mutex);
+	}
 #endif
 	if(mosq->sock != INVALID_SOCKET){
 		_mosquitto_socket_close(mosq);
@@ -303,15 +315,6 @@ void _mosquitto_destroy(struct mosquitto *mosq)
 	}
 
 	_mosquitto_packet_cleanup(&mosq->in_packet);
-
-#ifdef WITH_THREADING
-	pthread_mutex_destroy(&mosq->callback_mutex);
-	pthread_mutex_destroy(&mosq->log_callback_mutex);
-	pthread_mutex_destroy(&mosq->state_mutex);
-	pthread_mutex_destroy(&mosq->out_packet_mutex);
-	pthread_mutex_destroy(&mosq->current_out_packet_mutex);
-	pthread_mutex_destroy(&mosq->msgtime_mutex);
-#endif
 }
 
 void mosquitto_destroy(struct mosquitto *mosq)

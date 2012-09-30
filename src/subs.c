@@ -331,7 +331,7 @@ static int _sub_search(struct _mosquitto_db *db, struct _mosquitto_subhier *subh
 			if(!tokens->next){
 				_subs_process(db, branch, source_id, topic, qos, retain, stored);
 			}
-		}else if(!strcmp(branch->topic, "#") && !branch->children && (!tokens || strcmp(tokens->topic, "/"))){
+		}else if(!strcmp(branch->topic, "#") && !branch->children){
 			/* The topic matches due to a # wildcard - process the
 			 * subscriptions but *don't* return. Although this branch has ended
 			 * there may still be other subscriptions to deal with.
@@ -614,20 +614,21 @@ static int _retain_search(struct _mosquitto_db *db, struct _mosquitto_subhier *s
 	while(branch){
 		/* Subscriptions with wildcards in aren't really valid topics to publish to
 		 * so they can't have retained messages.
+		 * Don't use _mosquitto_topic_wildcard_len_check(branch->topic) here
+		 * though because it prevents matching of a subscription of foo/# with
+		 * a retained message at foo.
 		 */
-		if(_mosquitto_topic_wildcard_len_check(branch->topic) == MOSQ_ERR_SUCCESS){
-			if(!strcmp(tokens->topic, "#") && !tokens->next){
+		if(!strcmp(tokens->topic, "#") && !tokens->next){
+			if(branch->retained){
+				_retain_process(db, branch->retained, context, sub, sub_qos);
+			}
+			_retain_search(db, branch, tokens, context, sub, sub_qos);
+		}else if(!strcmp(branch->topic, tokens->topic) || !strcmp(tokens->topic, "+")){
+			if(tokens->next){
+				_retain_search(db, branch, tokens->next, context, sub, sub_qos);
+			}else{
 				if(branch->retained){
 					_retain_process(db, branch->retained, context, sub, sub_qos);
-				}
-				_retain_search(db, branch, tokens, context, sub, sub_qos);
-			}else if(!strcmp(branch->topic, tokens->topic) || !strcmp(tokens->topic, "+")){
-				if(tokens->next){
-					_retain_search(db, branch, tokens->next, context, sub, sub_qos);
-				}else{
-					if(branch->retained){
-						_retain_process(db, branch->retained, context, sub, sub_qos);
-					}
 				}
 			}
 		}
