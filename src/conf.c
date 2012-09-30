@@ -1173,11 +1173,6 @@ int _config_read_file(mqtt3_config *config, bool reload, const char *file, struc
 					config->default_listener.port = port_tmp;
 				}else if(!strcmp(token, "psk_file")){
 #if defined(WITH_TLS) && defined(WITH_TLS_PSK)
-					if(reload) continue; // Listeners not valid for reloading.
-					if(cur_listener->cafile || config->default_listener.capath){
-						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single listener.");
-						return MOSQ_ERR_INVAL;
-					}
 					if(reload){
 						if(config->psk_file){
 							_mosquitto_free(config->psk_file);

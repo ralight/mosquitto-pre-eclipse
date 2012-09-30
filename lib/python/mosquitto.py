@@ -540,6 +540,17 @@ class Mosquitto:
         if self._port <= 0:
             raise ValueError('Invalid port number.')
 
+        self._in_packet.cleanup()
+        self._out_packet_mutex.acquire()
+        self._out_packet = []
+        self._out_packet_mutex.release()
+
+        self._msgtime_mutex.acquire()
+        self._last_msg_in = time.time()
+        self._last_msg_out = time.time()
+        self._msgtime_mutex.release()
+
+        self._ping_t = 0
         self._state_mutex.acquire()
         self._state = mosq_cs_new
         self._state_mutex.release()
@@ -617,10 +628,10 @@ class Mosquitto:
                 if self._ssl:
                     self._ssl.close()
                     self._ssl = None
-                else:
+                elif self._sock:
                     self._sock.close()
+                    self._sock = None
 
-                self._sock = None
                 self._state_mutex.acquire()
                 if self._state == mosq_cs_disconnecting:
                     rc = MOSQ_ERR_SUCCESS
@@ -642,8 +653,8 @@ class Mosquitto:
                     self._ssl = None
                 else:
                     self._sock.close()
+                    self._sock = None
 
-                self._sock = None
                 self._state_mutex.acquire()
                 if self._state == mosq_cs_disconnecting:
                     rc = MOSQ_ERR_SUCCESS
@@ -877,9 +888,10 @@ class Mosquitto:
             if self._ssl:
                 self._ssl.close()
                 self._ssl = None
-            else:
+            elif self._sock:
                 self._sock.close()
-            self._sock = None
+                self._sock = None
+
             self._callback_mutex.acquire()
             if self._state == mosq_cs_disconnecting:
                 rc = MOSQ_ERR_SUCCESS
@@ -1141,9 +1153,10 @@ class Mosquitto:
                 if self._ssl:
                     self._ssl.close()
                     self._ssl = None
-                else:
+                elif self._sock:
                     self._sock.close()
-                self._sock = None
+                    self._sock = None
+
                 if self._state == mosq_cs_disconnecting:
                     rc = MOSQ_ERR_SUCCESS
                 else:
