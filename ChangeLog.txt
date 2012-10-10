@@ -3,6 +3,8 @@
 
 Library:
 - Fix memory leak with messages of QoS=2. Fixes bug #1064981.
+- Fix potential thread synchronisation problem with outgoing packets in the
+  Python module. Fixes bug #1064977.
 
 1.0.3 - 20120927
 ================

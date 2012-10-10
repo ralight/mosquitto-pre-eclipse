@@ -610,10 +610,12 @@ class Mosquitto:
         if max_packets < 1:
             raise ValueError('Invalid max_packets.')
 
+        self._out_packet_mutex.acquire()
         if len(self._out_packet) > 0:
             wlist = [self.socket()]
         else:
             wlist = []
+        self._out_packet_mutex.release()
 
         rlist = [self.socket()]
         try:
@@ -1102,6 +1104,11 @@ class Mosquitto:
         return rc
 
     def _packet_write(self):
+        if self._out_packet_mutex.acquire(False) == False:
+            # We haven't acquired the lock, return immediately because the
+            # other thread is processing this code.
+            return MOSQ_ERR_SUCCESS
+
         while len(self._out_packet) > 0:
             packet = self._out_packet[0]
 
@@ -1109,6 +1116,7 @@ class Mosquitto:
                 try:
                     write_length = self._ssl.write(packet.packet[packet.pos:])
                 except AttributeError:
+                    self._out_packet_mutex.release()
                     return MOSQ_ERR_SUCCESS
             else:
                 write_length = self._sock.send(packet.packet[packet.pos:])
@@ -1130,6 +1138,8 @@ class Mosquitto:
             else:
                 pass # FIXME
         
+        self._out_packet_mutex.release()
+
         self._msgtime_mutex.acquire()
         self._last_msg_out = time.time()
         self._msgtime_mutex.release()
