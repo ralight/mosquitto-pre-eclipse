@@ -178,9 +178,8 @@ int _mosquitto_handle_pubrel(struct _mosquitto_db *db, struct mosquitto *mosq)
 			mosq->in_callback = true;
 			mosq->on_message(mosq, mosq->obj, &message->msg);
 			mosq->in_callback = false;
-		}else{
-			_mosquitto_message_cleanup(&message);
 		}
+		_mosquitto_message_cleanup(&message);
 		pthread_mutex_unlock(&mosq->callback_mutex);
 	}
 #endif
