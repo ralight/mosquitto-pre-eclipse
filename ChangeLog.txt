@@ -1,3 +1,9 @@
+1.0.4 - 201210xx
+================
+
+Library:
+- Fix memory leak with messages of QoS=2. Fixes bug #1064981.
+
 1.0.3 - 20120927
 ================
 
