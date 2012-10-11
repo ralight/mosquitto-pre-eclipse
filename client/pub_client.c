@@ -52,6 +52,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define STATUS_CONNECTING 0
 #define STATUS_CONNACK_RECVD 1
+#define STATUS_DISCONNECTING 2
 
 /* Global variables for use in callbacks. See sub_client.c for an example of
  * using a struct to hold variables for use in callbacks. */
@@ -661,20 +662,27 @@ int main(int argc, char *argv[])
 	}
 
 	do{
-		if(mode == MSGMODE_STDIN_LINE && status == STATUS_CONNACK_RECVD){
-			if(fgets(buf, 1024, stdin)){
-				buf[strlen(buf)-1] = '\0';
-				rc2 = mosquitto_publish(mosq, &mid_sent, topic, strlen(buf), buf, qos, retain);
-				if(rc2){
-					if(!quiet) fprintf(stderr, "Error: Publish returned %d, disconnecting.\n", rc2);
+		if(mode == MSGMODE_STDIN_LINE){
+			if(status == STATUS_CONNACK_RECVD){
+				if(fgets(buf, 1024, stdin)){
+					buf[strlen(buf)-1] = '\0';
+					rc2 = mosquitto_publish(mosq, &mid_sent, topic, strlen(buf), buf, qos, retain);
+					if(rc2){
+						if(!quiet) fprintf(stderr, "Error: Publish returned %d, disconnecting.\n", rc2);
+						mosquitto_disconnect(mosq);
+					}
+					rc = mosquitto_loop(mosq, 0, 1);
+				}else if(feof(stdin) && disconnect_sent == false){
 					mosquitto_disconnect(mosq);
+					disconnect_sent = true;
+					status = STATUS_DISCONNECTING;
 				}
-			}else if(feof(stdin) && disconnect_sent == false){
-				mosquitto_disconnect(mosq);
-				disconnect_sent = true;
+			}else{
+				rc = mosquitto_loop(mosq, -1, 1);
 			}
+		}else{
+			rc = mosquitto_loop(mosq, -1, 1);
 		}
-		rc = mosquitto_loop(mosq, -1, 1);
 	}while(rc == MOSQ_ERR_SUCCESS && connected);
 
 	if(message && mode == MSGMODE_FILE){
