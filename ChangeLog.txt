@@ -10,6 +10,9 @@ Library:
 - Fix potential thread synchronisation problem with outgoing packets in the
   Python module. Fixes bug #1064977.
 
+Clients:
+- Fix "mosquitto_sub -l" incorrectly only sending one message per second.
+
 1.0.3 - 20120927
 ================
 
