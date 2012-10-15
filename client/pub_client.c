@@ -263,9 +263,6 @@ int main(int argc, char *argv[])
 	char *host = "localhost";
 	int port = 1883;
 	int keepalive = 60;
-#ifndef WIN32
-	int opt;
-#endif
 	char buf[1024];
 	bool debug = false;
 	struct mosquitto *mosq = NULL;
@@ -402,13 +399,6 @@ int main(int argc, char *argv[])
 				return 1;
 			}else{
 				mode = MSGMODE_STDIN_LINE;
-#ifndef WIN32
-				opt = fcntl(fileno(stdin), F_GETFL, 0);
-				if(opt == -1 || fcntl(fileno(stdin), F_SETFL, opt | O_NONBLOCK) == -1){
-					fprintf(stderr, "Error: Unable to set stdin to non-blocking.\n");
-					return 1;
-				}
-#endif
 			}
 		}else if(!strcmp(argv[i], "-m") || !strcmp(argv[i], "--message")){
 			if(mode != MSGMODE_NONE){
@@ -661,6 +651,10 @@ int main(int argc, char *argv[])
 		return rc;
 	}
 
+	if(mode == MSGMODE_STDIN_LINE){
+		mosquitto_loop_start(mosq);
+	}
+
 	do{
 		if(mode == MSGMODE_STDIN_LINE){
 			if(status == STATUS_CONNACK_RECVD){
@@ -671,19 +665,21 @@ int main(int argc, char *argv[])
 						if(!quiet) fprintf(stderr, "Error: Publish returned %d, disconnecting.\n", rc2);
 						mosquitto_disconnect(mosq);
 					}
-					rc = mosquitto_loop(mosq, 0, 1);
 				}else if(feof(stdin) && disconnect_sent == false){
 					mosquitto_disconnect(mosq);
 					disconnect_sent = true;
 					status = STATUS_DISCONNECTING;
 				}
-			}else{
-				rc = mosquitto_loop(mosq, -1, 1);
 			}
+			rc = MOSQ_ERR_SUCCESS;
 		}else{
 			rc = mosquitto_loop(mosq, -1, 1);
 		}
 	}while(rc == MOSQ_ERR_SUCCESS && connected);
+
+	if(mode == MSGMODE_STDIN_LINE){
+		mosquitto_loop_stop(mosq, false);
+	}
 
 	if(message && mode == MSGMODE_FILE){
 		free(message);
