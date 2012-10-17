@@ -285,11 +285,6 @@ static void loop_handle_reads_writes(mosquitto_db *db, struct pollfd *pollfds)
 
 	for(i=0; i<db->context_count; i++){
 		if(db->contexts[i] && db->contexts[i]->sock != INVALID_SOCKET){
-			if(pollfds[db->contexts[i]->pollfd_index].revents & (POLLHUP | POLLRDHUP | POLLERR | POLLNVAL)){
-				do_disconnect(db, i);
-			}
-		}
-		if(db->contexts[i] && db->contexts[i]->sock != INVALID_SOCKET){
 			assert(pollfds[db->contexts[i]->pollfd_index].fd == db->contexts[i]->sock);
 #ifdef WITH_TLS
 			if(pollfds[db->contexts[i]->pollfd_index].revents & POLLOUT ||
@@ -331,6 +326,11 @@ static void loop_handle_reads_writes(mosquitto_db *db, struct pollfd *pollfds)
 					/* Read error or other that means we should disconnect */
 					mqtt3_context_disconnect(db, db->contexts[i]);
 				}
+			}
+		}
+		if(db->contexts[i] && db->contexts[i]->sock != INVALID_SOCKET){
+			if(pollfds[db->contexts[i]->pollfd_index].revents & (POLLHUP | POLLRDHUP | POLLERR | POLLNVAL)){
+				do_disconnect(db, i);
 			}
 		}
 	}
