@@ -220,7 +220,19 @@ int mqtt3_handle_connect(mosquitto_db *db, struct mosquitto *context)
 		}else{
 #endif /* WITH_TLS_PSK */
 			client_cert = SSL_get_peer_certificate(context->ssl);
+			if(!client_cert){
+				_mosquitto_send_connack(context, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
+				mqtt3_context_disconnect(db, context);
+				_mosquitto_free(client_id);
+				return MOSQ_ERR_SUCCESS;
+			}
 			name = X509_get_subject_name(client_cert);
+			if(!name){
+				_mosquitto_send_connack(context, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
+				mqtt3_context_disconnect(db, context);
+				_mosquitto_free(client_id);
+				return MOSQ_ERR_SUCCESS;
+			}
 
 			i = X509_NAME_get_index_by_NID(name, NID_commonName, -1);
 			if(i == -1){
