@@ -4,6 +4,7 @@
 Broker:
 - Fix crash when the broker has use_identity_as_username set to true but a
   client connects without a certificate.
+- mosquitto_passwd should only be installed if WITH_TLS=yes.
 
 Other:
 - Build script fixes for FreeBSD.
