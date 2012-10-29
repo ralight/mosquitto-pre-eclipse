@@ -47,6 +47,11 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <tcpd.h>
 #endif
 
+#ifdef __FreeBSD__
+#  include <netinet/in.h>
+#  include <sys/socket.h>
+#endif
+
 #ifdef __QNX__
 #include <netinet/in.h>
 #include <net/netbyte.h>
@@ -60,6 +65,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <util_mosq.h>
 
 #ifdef WITH_TLS
+#include <openssl/ssl.h>
 static int tls_ex_index_context = -1;
 static int tls_ex_index_listener = -1;
 #endif
