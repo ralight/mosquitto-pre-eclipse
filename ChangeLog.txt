@@ -5,6 +5,9 @@ Broker:
 - Fix crash when the broker has use_identity_as_username set to true but a
   client connects without a certificate.
 
+Other:
+- Build script fixes for FreeBSD.
+
 1.0.4 - 20121017
 ================
 
