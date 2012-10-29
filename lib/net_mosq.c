@@ -42,7 +42,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #ifdef __SYMBIAN32__
-#include <netinet.in.h>
+#include <netinet/in.h>
 #endif
 
 #ifdef __QNX__
