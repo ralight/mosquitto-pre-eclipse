@@ -706,6 +706,35 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 	return mosquitto_loop_misc(mosq);
 }
 
+int mosquitto_loop_forever(struct mosquitto *mosq)
+{
+	int run = 1;
+	int rc;
+
+	if(!mosq) return MOSQ_ERR_INVAL;
+
+	if(mosq->state == mosq_cs_connect_async){
+		mosquitto_reconnect(mosq);
+	}
+
+	while(run){
+		do{
+			rc = mosquitto_loop(mosq, -1, 1);
+		}while(rc == MOSQ_ERR_SUCCESS);
+		if(mosq->state == mosq_cs_disconnecting){
+			run = 0;
+		}else{
+#ifdef WIN32
+			Sleep(1000);
+#else
+			sleep(1);
+#endif
+			mosquitto_reconnect(mosq);
+		}
+	}
+	return rc;
+}
+
 int mosquitto_loop_misc(struct mosquitto *mosq)
 {
 	time_t now = time(NULL);

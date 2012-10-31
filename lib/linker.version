@@ -50,3 +50,7 @@ MOSQ_1.0 {
 	local: *;
 };
 
+MOSQ_1.1 {
+	global:
+		mosquitto_loop_forever;
+} MOSQ_1.0;

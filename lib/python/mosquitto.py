@@ -285,6 +285,8 @@ class Mosquitto:
     * Use connect()/connect_async() to connect to a broker
     * Call loop() frequently to maintain network traffic flow with the broker
     * Or use loop_start() to set a thread running to call loop() for you.
+    * Or use loop_forever() to handle calling loop() for you in a blocking
+    * function.
     * Use subscribe() to subscribe to a topic and receive messages
     * Use publish() to send messages
     * Use disconnect() to disconnect from the broker
@@ -958,6 +960,30 @@ class Mosquitto:
             return self._ssl
         else:
             return self._sock
+
+    def loop_forever(self):
+        """This function call loop() for you in an infinite blocking loop. It
+        is useful for the case where you only want to run the MQTT client loop
+        in your program.
+
+        loop_forever() will handle reconnecting for you. If you call
+        disconnect() in a callback it will return."""
+
+        run = True
+        if self._state == mosq_cs_connect_async:
+            self.reconnect()
+
+        while run == True:
+            rc = MOSQ_ERR_SUCCESS
+            while rc == MOSQ_ERR_SUCCESS:
+                rc = self.loop()
+
+            if self._state == mosq_cs_disconnecting:
+                run = False
+            else:
+                time.sleep(1)
+                self.reconnect()
+        return rc
 
     def loop_start(self):
         """This is part of the threaded client interface. Call this once to
