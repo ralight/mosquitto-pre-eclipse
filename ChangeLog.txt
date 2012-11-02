@@ -6,6 +6,10 @@ Broker:
   client connects without a certificate.
 - mosquitto_passwd should only be installed if WITH_TLS=yes.
 
+Library:
+- Use symbolic errno values rather than numbers in Python module to avoid
+  cross platform issues (incorrect errno on Mac OS).
+
 Other:
 - Build script fixes for FreeBSD.
 

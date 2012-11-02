@@ -29,6 +29,7 @@
 This is an MQTT v3.1 client module. MQTT is a lightweight pub/sub messaging
 protocol that is easy to implement and suitable for low powered devices.
 """
+import errno
 import random
 import select
 import socket
@@ -587,7 +588,7 @@ class Mosquitto:
             self.socket().connect((self._host, self._port))
         except socket.error as err:
             (msg) = err
-            if msg.errno != 115:
+            if msg.errno != errno.EINPROGRESS:
                 print(msg)
                 return 1
 
@@ -1037,7 +1038,7 @@ class Mosquitto:
                 (msg) = err
                 if self._ssl and (msg.errno == ssl.SSL_ERROR_WANT_READ or msg.errno == ssl.SSL_ERROR_WANT_WRITE):
                     return MOSQ_ERR_AGAIN
-                if msg.errno == 11:
+                if msg.errno == errno.EAGAIN:
                     return MOSQ_ERR_AGAIN
                 print(msg)
                 return 1
@@ -1061,7 +1062,7 @@ class Mosquitto:
                     (msg) = err
                     if self._ssl and (msg.errno == ssl.SSL_ERROR_WANT_READ or msg.errno == ssl.SSL_ERROR_WANT_WRITE):
                         return MOSQ_ERR_AGAIN
-                    if msg.errno == 11:
+                    if msg.errno == errno.EAGAIN:
                         return MOSQ_ERR_AGAIN
                     print(msg)
                     return 1
@@ -1093,7 +1094,7 @@ class Mosquitto:
                 (msg) = err
                 if self._ssl and (msg.errno == ssl.SSL_ERROR_WANT_READ or msg.errno == ssl.SSL_ERROR_WANT_WRITE):
                     return MOSQ_ERR_AGAIN
-                if msg.errno == 11:
+                if msg.errno == errno.EAGAIN:
                     return MOSQ_ERR_AGAIN
                 print(msg)
                 return 1
