@@ -1,3 +1,9 @@
+1.0.6 - 201212xx
+================
+
+Broker:
+- Fix max_inflight_messages and max_queued_messages not being applied.
+
 1.0.5 - 20121103
 ================
 
