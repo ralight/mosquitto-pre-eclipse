@@ -330,8 +330,6 @@ int mqtt3_config_parse_args(mqtt3_config *config, int argc, char *argv[])
 int mqtt3_config_read(mqtt3_config *config, bool reload)
 {
 	int rc = MOSQ_ERR_SUCCESS;
-	int max_inflight_messages = 20;
-	int max_queued_messages = 100;
 	struct config_recurse cr;
 	int i;
 
@@ -377,7 +375,7 @@ int mqtt3_config_read(mqtt3_config *config, bool reload)
 		config->user = "mosquitto";
 	}
 
-	mqtt3_db_limits_set(max_inflight_messages, max_queued_messages);
+	mqtt3_db_limits_set(cr.max_inflight_messages, cr.max_queued_messages);
 
 #ifdef WITH_BRIDGE
 	for(i=0; i<config->bridge_count; i++){
