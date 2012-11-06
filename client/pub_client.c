@@ -30,6 +30,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -52,7 +53,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define STATUS_CONNECTING 0
 #define STATUS_CONNACK_RECVD 1
-#define STATUS_DISCONNECTING 2
+#define STATUS_WAITING 2
 
 /* Global variables for use in callbacks. See sub_client.c for an example of
  * using a struct to hold variables for use in callbacks. */
@@ -64,6 +65,7 @@ static int retain = 0;
 static int mode = MSGMODE_NONE;
 static int status = STATUS_CONNECTING;
 static int mid_sent = 0;
+static int last_mid = -1;
 static bool connected = true;
 static char *username = NULL;
 static char *password = NULL;
@@ -124,7 +126,12 @@ void my_disconnect_callback(struct mosquitto *mosq, void *obj, int rc)
 
 void my_publish_callback(struct mosquitto *mosq, void *obj, int mid)
 {
-	if(mode != MSGMODE_STDIN_LINE && disconnect_sent == false){
+	if(mode == MSGMODE_STDIN_LINE){
+		if(mid == last_mid){
+			mosquitto_disconnect(mosq);
+			disconnect_sent = true;
+		}
+	}else if(disconnect_sent == false){
 		mosquitto_disconnect(mosq);
 		disconnect_sent = true;
 	}
@@ -285,6 +292,10 @@ int main(int argc, char *argv[])
 
 	char *psk = NULL;
 	char *psk_identity = NULL;
+
+#ifndef WIN32
+	signal(SIGPIPE, SIG_IGN);
+#endif
 
 	for(i=1; i<argc; i++){
 		if(!strcmp(argv[i], "-p") || !strcmp(argv[i], "--port")){
@@ -665,11 +676,16 @@ int main(int argc, char *argv[])
 						if(!quiet) fprintf(stderr, "Error: Publish returned %d, disconnecting.\n", rc2);
 						mosquitto_disconnect(mosq);
 					}
-				}else if(feof(stdin) && disconnect_sent == false){
-					mosquitto_disconnect(mosq);
-					disconnect_sent = true;
-					status = STATUS_DISCONNECTING;
+				}else if(feof(stdin)){
+					last_mid = mid_sent;
+					status = STATUS_WAITING;
 				}
+			}else if(status == STATUS_WAITING){
+#ifdef WIN32
+				sleep(1000);
+#else
+				usleep(1000000);
+#endif
 			}
 			rc = MOSQ_ERR_SUCCESS;
 		}else{
