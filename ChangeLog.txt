@@ -5,6 +5,10 @@ Broker:
 - Fix max_inflight_messages and max_queued_messages not being applied.
 - Fix documentation error in mosquitto.conf.
 
+Client:
+- Fix "mosquitto_pub -l -q 2" disconnecting before all messages were
+  transmitted.
+
 1.0.5 - 20121103
 ================
 
