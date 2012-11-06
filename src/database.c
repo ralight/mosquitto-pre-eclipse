@@ -53,6 +53,7 @@ unsigned long g_msgs_received = 0;
 unsigned long g_msgs_sent = 0;
 unsigned long g_pub_msgs_received = 0;
 unsigned long g_pub_msgs_sent = 0;
+static unsigned long g_msgs_dropped = 0;
 
 int mqtt3_db_open(struct mqtt3_config *config, struct mosquitto_db *db)
 {
@@ -308,10 +309,12 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 		}else{
 			/* Dropping message due to full queue.
 		 	* FIXME - should this be logged? */
+			g_msgs_dropped++;
 			return 2;
 		}
 	}else{
 		if(msg_count >= max_queued){
+			g_msgs_dropped++;
 			return 2;
 		}else{
 			state = ms_queued;
@@ -858,6 +861,7 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 #endif
 	static unsigned long msgs_received = -1;
 	static unsigned long msgs_sent = -1;
+	static unsigned long msgs_dropped = -1;
 	static unsigned long pub_msgs_received = -1;
 	static unsigned long pub_msgs_sent = -1;
 	static unsigned int msgsps_received = -1;
@@ -943,6 +947,12 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 			msgs_sent = g_msgs_sent;
 			snprintf(buf, 100, "%lu", msgs_sent);
 			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/messages/sent", 2, strlen(buf), buf, 1);
+		}
+
+		if(msgs_dropped != g_msgs_dropped){
+			msgs_dropped = g_msgs_dropped;
+			snprintf(buf, 100, "%lu", msgs_dropped);
+			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/messages/dropped", 2, strlen(buf), buf, 1);
 		}
 
 		if(pub_msgs_received != g_pub_msgs_received){

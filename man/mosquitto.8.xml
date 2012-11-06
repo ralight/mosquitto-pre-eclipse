@@ -169,6 +169,16 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>$SYS/broker/messages/dropped</option></term>
+				<listitem>
+					<para>The total number of messages that have been dropped
+						due to inflight/queuing limits. See the
+						max_inflight_messages and max_queued_messages options in
+						<citerefentry><refentrytitle>mosquitto.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+						for more information.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>$SYS/broker/messages/inflight</option></term>
 				<listitem>
 					<para>The number of messages with QoS>0 that are awaiting
