@@ -4,6 +4,7 @@
 Broker:
 - Fix max_inflight_messages and max_queued_messages not being applied.
 - Fix documentation error in mosquitto.conf.
+- Ensure that QoS 2 queued messages are sent out in a timely manner.
 
 Client:
 - Fix "mosquitto_pub -l -q 2" disconnecting before all messages were

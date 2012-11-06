@@ -682,6 +682,7 @@ int mqtt3_db_message_write(struct mosquitto *context)
 	int qos;
 	uint32_t payloadlen;
 	const void *payload;
+	int msg_count = 0;
 
 	if(!context || context->sock == -1
 			|| (context->state == mosq_cs_connected && !context->id)){
@@ -690,6 +691,9 @@ int mqtt3_db_message_write(struct mosquitto *context)
 
 	tail = context->msgs;
 	while(tail){
+		if(tail->direction == mosq_md_in){
+			msg_count++;
+		}
 		if(tail->state != ms_queued){
 			mid = tail->mid;
 			retries = tail->dup;
@@ -784,8 +788,15 @@ int mqtt3_db_message_write(struct mosquitto *context)
 					break;
 			}
 		}else{
-			last = tail;
-			tail = tail->next;
+			/* state == ms_queued */
+			if(tail->direction == mosq_md_in && (max_inflight == 0 || msg_count < max_inflight)){
+				if(tail->qos == 2){
+					tail->state = ms_send_pubrec;
+				}
+			}else{
+				last = tail;
+				tail = tail->next;
+			}
 		}
 	}
 
