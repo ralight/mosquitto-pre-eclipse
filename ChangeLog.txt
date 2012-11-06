@@ -2,6 +2,7 @@
 ==============
 
 Broker:
+- Add $SYS/broker/messages/dropped
 - Documentation on password file format has been fixed.
 
 Client library:
