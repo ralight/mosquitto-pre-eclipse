@@ -6,6 +6,8 @@ Broker:
 - Fix documentation error in mosquitto.conf.
 - Ensure that QoS 2 queued messages are sent out in a timely manner.
 - Local bridges now act on clean_session correctly.
+- Local bridges with clean_session==false now remove unused subscriptions on
+  broker restart.
 
 Library:
 - Don't produce return error from mosquitto_loop() if a system call is
