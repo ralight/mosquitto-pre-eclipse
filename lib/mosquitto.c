@@ -29,6 +29,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <assert.h>
 #include <errno.h>
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #ifndef WIN32
@@ -99,6 +100,10 @@ struct mosquitto *mosquitto_new(const char *id, bool clean_session, void *obj)
 		errno = EINVAL;
 		return NULL;
 	}
+
+#ifndef WIN32
+	signal(SIGPIPE, SIG_IGN);
+#endif
 
 	mosq = (struct mosquitto *)_mosquitto_calloc(1, sizeof(struct mosquitto));
 	if(mosq){
