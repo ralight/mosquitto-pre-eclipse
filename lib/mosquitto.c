@@ -665,7 +665,11 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 #ifdef WIN32
 		errno = WSAGetLastError();
 #endif
-		return MOSQ_ERR_ERRNO;
+		if(errno == EINTR){
+			return MOSQ_ERR_SUCCESS;
+		}else{
+			return MOSQ_ERR_ERRNO;
+		}
 	}else{
 		if(FD_ISSET(mosq->sock, &readfds)){
 			rc = mosquitto_loop_read(mosq, max_packets);
