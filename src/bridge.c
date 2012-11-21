@@ -156,6 +156,11 @@ int mqtt3_bridge_connect(mosquitto_db *db, struct mosquitto *context)
 	mqtt3_bridge_packet_cleanup(context);
 	mqtt3_db_message_reconnect_reset(context);
 
+	if(context->clean_session){
+		mqtt3_subs_clean_session(db, context, &db->subs);
+		mqtt3_db_messages_delete(context);
+	}
+
 	for(i=0; i<context->bridge->topic_count; i++){
 		if(context->bridge->topics[i].direction == bd_out || context->bridge->topics[i].direction == bd_both){
 			_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Bridge %s doing local SUBSCRIBE on topic %s", context->id, context->bridge->topics[i].local_topic);
