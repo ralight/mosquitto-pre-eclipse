@@ -13,6 +13,7 @@ Library:
 - Don't produce return error from mosquitto_loop() if a system call is
   interrupted. This prevents disconnects/reconnects in threaded mode and
   simplifies non-threaded client handling.
+- Ignore SIGPIPE to prevent unnecessary client quits in threaded mode.
 
 Client:
 - Fix "mosquitto_pub -l -q 2" disconnecting before all messages were

@@ -30,7 +30,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <errno.h>
 #include <fcntl.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -292,10 +291,6 @@ int main(int argc, char *argv[])
 
 	char *psk = NULL;
 	char *psk_identity = NULL;
-
-#ifndef WIN32
-	signal(SIGPIPE, SIG_IGN);
-#endif
 
 	for(i=1; i<argc; i++){
 		if(!strcmp(argv[i], "-p") || !strcmp(argv[i], "--port")){
