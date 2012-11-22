@@ -14,6 +14,7 @@ Library:
   interrupted. This prevents disconnects/reconnects in threaded mode and
   simplifies non-threaded client handling.
 - Ignore SIGPIPE to prevent unnecessary client quits in threaded mode.
+- Fix document error for mosquitto_message_retry_set().
 
 Client:
 - Fix "mosquitto_pub -l -q 2" disconnecting before all messages were
