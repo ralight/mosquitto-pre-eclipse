@@ -990,7 +990,7 @@ libmosq_EXPORT void mosquitto_log_callback_set(struct mosquitto *mosq, void (*on
  * Parameters:
  *  mosq -          a valid mosquitto instance.
  *  message_retry - the number of seconds to wait for a response before
- *                  retrying. Defaults to 60.
+ *                  retrying. Defaults to 20.
  */
 libmosq_EXPORT void mosquitto_message_retry_set(struct mosquitto *mosq, unsigned int message_retry);
 
