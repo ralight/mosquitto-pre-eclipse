@@ -9,6 +9,7 @@ Broker:
 - Enable SSL_MODE_RELEASE_BUFFERS mode to reduce SSL memory usage further.
 - Add allow_duplicate_messages option.
 - ACL files can now have comment lines with # as the first character.
+- Display message on startup about which config is being loaded.
 
 Client library:
 - Free memory used by OpenSSL in mosquitto_lib_cleanup() where possible.
