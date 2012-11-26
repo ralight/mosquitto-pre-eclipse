@@ -316,6 +316,10 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 		/* Disable compression */
 		SSL_CTX_set_options(mosq->ssl_ctx, SSL_OP_NO_COMPRESSION);
 #endif
+#ifdef SSL_MODE_RELEASE_BUFFERS
+			/* Use even less memory per SSL connection. */
+			SSL_CTX_set_mode(mosq->ssl_ctx, SSL_MODE_RELEASE_BUFFERS);
+#endif
 
 		if(mosq->tls_ciphers){
 			ret = SSL_CTX_set_cipher_list(mosq->ssl_ctx, mosq->tls_ciphers);

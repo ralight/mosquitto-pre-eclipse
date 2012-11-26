@@ -6,6 +6,7 @@ Broker:
 - Documentation on password file format has been fixed.
 - Disable SSL compression. This reduces memory usage significantly and removes
   the possibility of CRIME type attacks.
+- Enable SSL_MODE_RELEASE_BUFFERS mode to reduce SSL memory usage further.
 
 Client library:
 - Free memory used by OpenSSL in mosquitto_lib_cleanup() where possible.
@@ -15,6 +16,7 @@ Client library:
   clients easier.
 - Disable SSL compression. This reduces memory usage significantly and removes
   the possibility of CRIME type attacks.
+- Enable SSL_MODE_RELEASE_BUFFERS mode to reduce SSL memory usage further.
 
 Clients:
 - Clients now display their own version number and library version number in

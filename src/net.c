@@ -351,6 +351,10 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 			/* Disable compression */
 			SSL_CTX_set_options(listener->ssl_ctx, SSL_OP_NO_COMPRESSION);
 #endif
+#ifdef SSL_MODE_RELEASE_BUFFERS
+			/* Use even less memory per SSL connection. */
+			SSL_CTX_set_mode(listener->ssl_ctx, SSL_MODE_RELEASE_BUFFERS);
+#endif
 			if(listener->ciphers){
 				rc = SSL_CTX_set_cipher_list(listener->ssl_ctx, listener->ciphers);
 				if(rc == 0){
