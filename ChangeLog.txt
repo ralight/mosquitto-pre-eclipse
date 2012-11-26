@@ -4,6 +4,8 @@
 Broker:
 - Add $SYS/broker/messages/dropped
 - Documentation on password file format has been fixed.
+- Disable SSL compression. This reduces memory usage significantly and removes
+  the possibility of CRIME type attacks.
 
 Client library:
 - Free memory used by OpenSSL in mosquitto_lib_cleanup() where possible.
@@ -11,6 +13,8 @@ Client library:
   and for compatibility with other implementations.
 - Add mosquitto_loop_forever() / loop_forever() function call to make simple
   clients easier.
+- Disable SSL compression. This reduces memory usage significantly and removes
+  the possibility of CRIME type attacks.
 
 Clients:
 - Clients now display their own version number and library version number in

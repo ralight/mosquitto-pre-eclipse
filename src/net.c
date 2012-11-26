@@ -347,6 +347,10 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 				COMPAT_CLOSE(sock);
 				return 1;
 			}
+#if OPENSSL_VERSION_NUMBER >= 0x10000000
+			/* Disable compression */
+			SSL_CTX_set_options(listener->ssl_ctx, SSL_OP_NO_COMPRESSION);
+#endif
 			if(listener->ciphers){
 				rc = SSL_CTX_set_cipher_list(listener->ssl_ctx, listener->ciphers);
 				if(rc == 0){

@@ -312,6 +312,11 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 			return MOSQ_ERR_INVAL;
 		}
 
+#if OPENSSL_VERSION_NUMBER >= 0x10000000
+		/* Disable compression */
+		SSL_CTX_set_options(mosq->ssl_ctx, SSL_OP_NO_COMPRESSION);
+#endif
+
 		if(mosq->tls_ciphers){
 			ret = SSL_CTX_set_cipher_list(mosq->ssl_ctx, mosq->tls_ciphers);
 			if(ret == 0){
