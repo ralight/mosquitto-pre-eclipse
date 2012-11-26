@@ -251,7 +251,9 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 	 * multiple times for overlapping subscriptions, although this is only the
 	 * case for SUBSCRIPTION with multiple subs in so is a minor concern.
 	 */
-	if(dir == mosq_md_out && retain == false && stored->dest_ids){
+	if(db->config->allow_duplicate_messages == false
+			&& dir == mosq_md_out && retain == false && stored->dest_ids){
+
 		for(i=0; i<stored->dest_id_count; i++){
 			if(!strcmp(stored->dest_ids[i], context->id)){
 				/* We have already sent this message to this client. */
@@ -346,7 +348,7 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 		context->msgs = msg;
 	}
 
-	if(dir == mosq_md_out && retain == false){
+	if(db->config->allow_duplicate_messages == false && dir == mosq_md_out && retain == false){
 		/* Record which client ids this message has been sent to so we can avoid duplicates.
 		 * Outgoing messages only.
 		 * If retain==true then this is a stale retained message and so should be

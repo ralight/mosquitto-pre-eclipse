@@ -68,6 +68,7 @@ static void _config_init_reload(struct mqtt3_config *config)
 	if(config->acl_file) _mosquitto_free(config->acl_file);
 	config->acl_file = NULL;
 	config->allow_anonymous = true;
+	config->allow_duplicate_messages = false;
 	config->autosave_interval = 1800;
 	config->autosave_on_changes = false;
 	if(config->clientid_prefixes) _mosquitto_free(config->clientid_prefixes);
@@ -478,6 +479,8 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 #endif
 				}else if(!strcmp(token, "allow_anonymous")){
 					if(_conf_parse_bool(&token, "allow_anonymous", &config->allow_anonymous, saveptr)) return MOSQ_ERR_INVAL;
+				}else if(!strcmp(token, "allow_duplicate_messages")){
+					if(_conf_parse_bool(&token, "allow_duplicate_messages", &config->allow_duplicate_messages, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strncmp(token, "auth_opt_", 9)){
 					if(strlen(token) < 12){
 						/* auth_opt_ == 9, + one digit key == 10, + one space == 11, + one value == 12 */

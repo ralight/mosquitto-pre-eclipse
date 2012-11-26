@@ -150,6 +150,30 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>allow_duplicate_messages</option> [ true | false ]</term>
+				<listitem>
+					<para>If a client is subscribed to multiple subscriptions
+						that overlap, e.g. foo/# and foo/+/baz , then MQTT
+						expects that when the broker receives a message on a
+						topic that matches both subscriptions, such as
+						foo/bar/baz, then the client should only receive the
+						message once.</para>
+					<para>Mosquitto keeps track of which clients a message has
+						been sent to in order to meet this requirement. This
+						option allows this behaviour to be disabled, which may
+						be useful if you have a large number of clients
+						subscribed to the same set of topics and want to
+						minimise memory usage.</para>
+					<para>It can be safely set to true if you know in advance
+						that your clients will never have overlapping
+						subscriptions, otherwise your clients must be able to
+						correctly deal with duplicate messages even when then
+						have QoS=2.</para>
+					<para>Defaults to true.</para>
+					<para>Reloaded on reload signal.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>auth_opt_*</option> <replaceable>value</replaceable></term>
 				<listitem>
 					<para>Options to be passed to the auth plugin. See the
