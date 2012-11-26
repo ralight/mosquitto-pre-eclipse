@@ -19,6 +19,8 @@ Library:
 Client:
 - Fix "mosquitto_pub -l -q 2" disconnecting before all messages were
   transmitted.
+- Fix potential out-of-bounds array access with client ids. Fixes bug
+  #1083182.
 
 1.0.5 - 20121103
 ================

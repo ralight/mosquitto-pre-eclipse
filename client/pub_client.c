@@ -596,7 +596,10 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 		snprintf(id, len, "mosqpub/%d-%s", getpid(), hostname);
-		id[MOSQ_MQTT_ID_MAX_LENGTH] = '\0';
+		if(strlen(id) > MOSQ_MQTT_ID_MAX_LENGTH){
+			/* Enforce maximum client id length of 23 characters */
+			id[MOSQ_MQTT_ID_MAX_LENGTH] = '\0';
+		}
 	}
 
 	mosq = mosquitto_new(id, true, NULL);
