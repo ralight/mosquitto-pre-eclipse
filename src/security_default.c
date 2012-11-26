@@ -476,6 +476,9 @@ static int _aclfile_parse(struct mosquitto_db *db)
 			buf[slen-1] = '\0';
 			slen = strlen(buf);
 		}
+		if(buf[0] == '#'){
+			continue;
+		}
 		token = strtok_r(buf, " ", &saveptr);
 		if(token){
 			if(!strcmp(token, "topic") || !strcmp(token, "pattern")){
