@@ -217,6 +217,11 @@ int main(int argc, char *argv[])
 	 * logging to topics */
 	mqtt3_log_init(config.log_type, config.log_dest);
 	_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s (build date %s) starting", VERSION, TIMESTAMP);
+	if(config.config_file){
+		_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Config loaded from %s.", config.config_file);
+	}else{
+		_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Using default config.");
+	}
 
 	rc = mosquitto_security_module_init(&int_db);
 	if(rc) return rc;
