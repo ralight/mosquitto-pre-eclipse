@@ -54,6 +54,7 @@ unsigned long g_msgs_sent = 0;
 unsigned long g_pub_msgs_received = 0;
 unsigned long g_pub_msgs_sent = 0;
 static unsigned long g_msgs_dropped = 0;
+int g_clients_expired = 0;
 
 int mqtt3_db_open(struct mqtt3_config *config, struct mosquitto_db *db)
 {
@@ -854,6 +855,7 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 
 	static int msg_store_count = -1;
 	static unsigned int client_count = -1;
+	static int clients_expired = -1;
 	static unsigned int client_max = -1;
 	static unsigned int inactive_count = -1;
 	static unsigned int active_count = -1;
@@ -917,11 +919,16 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 				snprintf(buf, 100, "%d", active_count);
 				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/active", 2, strlen(buf), buf, 1);
 			}
-			if(value > client_max){
+			if(value != client_max){
 				client_max = value;
 				snprintf(buf, 100, "%d", client_max);
 				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/maximum", 2, strlen(buf), buf, 1);
 			}
+		}
+		if(g_clients_expired != clients_expired){
+			clients_expired = g_clients_expired;
+			snprintf(buf, 100, "%d", clients_expired);
+			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/expired", 2, strlen(buf), buf, 1);
 		}
 
 #ifdef REAL_WITH_MEMORY_TRACKING

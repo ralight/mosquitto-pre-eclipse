@@ -59,6 +59,7 @@ extern bool flag_db_backup;
 #endif
 extern bool flag_tree_print;
 extern int run;
+extern int g_clients_expired;
 
 static void loop_handle_errors(struct mosquitto_db *db, struct pollfd *pollfds);
 static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pollfds);
@@ -174,6 +175,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 							 * expire it and clean up.
 							 */
 							if(time(NULL) > db->contexts[i]->disconnect_t+db->config->persistent_client_expiration){
+								g_clients_expired++;
 								db->contexts[i]->clean_session = true;
 								mqtt3_context_cleanup(db, db->contexts[i], true);
 								db->contexts[i] = NULL;
