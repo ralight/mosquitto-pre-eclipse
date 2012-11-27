@@ -37,6 +37,7 @@ c cpp python python3 : test-compile
 	./04-retain-qos0.py $@/04-retain-qos0.test
 	./08-ssl-connect-no-auth.py $@/08-ssl-connect-no-auth.test
 	./08-ssl-connect-cert-auth.py $@/08-ssl-connect-cert-auth.test
+	./08-ssl-bad-cacert.py $@/08-ssl-bad-cacert.test
 
 clean : 
 	$(MAKE) -C c clean

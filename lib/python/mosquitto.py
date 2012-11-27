@@ -485,6 +485,27 @@ class Mosquitto:
         if ca_certs == None:
             raise ValueError('ca_certs must not be None.')
 
+        try:
+            f = open(ca_certs, "r")
+        except IOError as err:
+            raise IOError(ca_certs+": "+err.strerror)
+        else:
+            f.close()
+        if certfile != None:
+            try:
+                f = open(certfile, "r")
+            except IOError as err:
+                raise IOError(certfile+": "+err.strerror)
+            else:
+                f.close()
+        if keyfile != None:
+            try:
+                f = open(keyfile, "r")
+            except IOError as err:
+                raise IOError(keyfile+": "+err.strerror)
+            else:
+                f.close()
+
         self._tls_ca_certs = ca_certs
         self._tls_certfile = certfile
         self._tls_keyfile = keyfile

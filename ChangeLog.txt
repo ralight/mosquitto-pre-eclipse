@@ -20,6 +20,9 @@ Client library:
 - Disable SSL compression. This reduces memory usage significantly and removes
   the possibility of CRIME type attacks.
 - Enable SSL_MODE_RELEASE_BUFFERS mode to reduce SSL memory usage further.
+- mosquitto_tls_set() will now return an error or raise an exception
+  immediately if the CA certificate or client certificate/key cannot be
+  accessed.
 
 Clients:
 - Clients now display their own version number and library version number in
