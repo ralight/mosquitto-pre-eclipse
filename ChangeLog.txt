@@ -3,6 +3,7 @@
 
 Broker:
 - Add $SYS/broker/messages/dropped
+- Add $SYS/broker/clients/expired
 - Documentation on password file format has been fixed.
 - Disable SSL compression. This reduces memory usage significantly and removes
   the possibility of CRIME type attacks.

@@ -117,6 +117,14 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>$SYS/broker/clients/expired</option></term>
+				<listitem>
+					<para>The number of disconnected persistent clients that
+						have been expired and removed through the
+						persistent_client_expiration option.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>$SYS/broker/clients/inactive</option></term>
 				<listitem>
 					<para>The total number of persistent clients (with clean
