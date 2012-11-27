@@ -731,6 +731,13 @@
 					drops. Note that setting to true may cause a large amount
 					of retained messages to be sent each time the bridge
 					reconnects.</para>
+					<para>If you are using bridges with cleansession set to false
+					(the default), then you may get unexpected behaviour from
+					incoming topics if you change what topics you are
+					subscribing to. This is because the remote broker keeps the
+					subscription for the old topic. If you have this problem,
+					connect your bridge with cleansession set to true, then
+					reconnect with cleansession set to false as normal.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -906,6 +913,9 @@
 					load from a broker, it is possible that you have a loop
 					where each broker is forever forwarding each other the same
 					messages.</para>
+					<para>See also the <option>cleansession</option> option if
+						you have messages arriving on unexpected topics when
+						using incoming topics.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
