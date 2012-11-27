@@ -24,6 +24,7 @@ Client library:
 - mosquitto_tls_set() will now return an error or raise an exception
   immediately if the CA certificate or client certificate/key cannot be
   accessed.
+- Fix potential memory leaks on connection failures.
 
 Clients:
 - Clients now display their own version number and library version number in

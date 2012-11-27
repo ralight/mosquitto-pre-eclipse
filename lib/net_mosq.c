@@ -256,10 +256,10 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 #endif
 		COMPAT_CLOSE(sock);
 	}
+	freeaddrinfo(ainfo);
 	if(!rp){
 		return MOSQ_ERR_ERRNO;
 	}
-	freeaddrinfo(ainfo);
 
 	/* Set non-blocking */
 #ifndef WIN32
