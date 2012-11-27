@@ -175,6 +175,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 							 * expire it and clean up.
 							 */
 							if(time(NULL) > db->contexts[i]->disconnect_t+db->config->persistent_client_expiration){
+								_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Expiring persistent client %s due to timeout.", db->contexts[i]->id);
 								g_clients_expired++;
 								db->contexts[i]->clean_session = true;
 								mqtt3_context_cleanup(db, db->contexts[i], true);
