@@ -30,6 +30,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -868,21 +869,200 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 	static unsigned long msgs_dropped = -1;
 	static unsigned long pub_msgs_received = -1;
 	static unsigned long pub_msgs_sent = -1;
-	static unsigned int msgsps_received = -1;
-	static unsigned int msgsps_sent = -1;
 	static unsigned long long bytes_received = -1;
 	static unsigned long long bytes_sent = -1;
 	static unsigned long long pub_bytes_received = -1;
 	static unsigned long long pub_bytes_sent = -1;
-	static unsigned int bytesps_received = -1;
-	static unsigned int bytesps_sent = -1;
 	static int subscription_count = -1;
 	static int retained_count = -1;
+
+	static double msgs_received_load1 = 0;
+	static double msgs_received_load5 = 0;
+	static double msgs_received_load15 = 0;
+	static double msgs_sent_load1 = 0;
+	static double msgs_sent_load5 = 0;
+	static double msgs_sent_load15 = 0;
+	double new_msgs_received_load1, new_msgs_received_load5, new_msgs_received_load15;
+	double new_msgs_sent_load1, new_msgs_sent_load5, new_msgs_sent_load15;
+	double msgs_received_interval, msgs_sent_interval;
+
+	static double publish_received_load1 = 0;
+	static double publish_received_load5 = 0;
+	static double publish_received_load15 = 0;
+	static double publish_sent_load1 = 0;
+	static double publish_sent_load5 = 0;
+	static double publish_sent_load15 = 0;
+	double new_publish_received_load1, new_publish_received_load5, new_publish_received_load15;
+	double new_publish_sent_load1, new_publish_sent_load5, new_publish_sent_load15;
+	double publish_received_interval, publish_sent_interval;
+
+	static double bytes_received_load1 = 0;
+	static double bytes_received_load5 = 0;
+	static double bytes_received_load15 = 0;
+	static double bytes_sent_load1 = 0;
+	static double bytes_sent_load5 = 0;
+	static double bytes_sent_load15 = 0;
+	double new_bytes_received_load1, new_bytes_received_load5, new_bytes_received_load15;
+	double new_bytes_sent_load1, new_bytes_sent_load5, new_bytes_sent_load15;
+	double bytes_received_interval, bytes_sent_interval;
+
+	double exponent;
 
 	if(interval && now - interval > last_update){
 		uptime = now - start_time;
 		snprintf(buf, 100, "%d seconds", (int)uptime);
 		mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/uptime", 2, strlen(buf), buf, 1);
+
+		if(last_update > 0){
+			msgs_received_interval = g_msgs_received - msgs_received;
+			msgs_sent_interval = g_msgs_sent - msgs_sent;
+
+			publish_received_interval = g_pub_msgs_received - pub_msgs_received;
+			publish_sent_interval = g_pub_msgs_sent - pub_msgs_sent;
+
+			bytes_received_interval = g_bytes_received - bytes_received;
+			bytes_sent_interval = g_bytes_sent - bytes_sent;
+
+			/* 1 minute load */
+			exponent = exp(-1.0*(now-last_update)/60.0);
+
+			new_msgs_received_load1 = msgs_received_interval + exponent*(msgs_received_load1 - msgs_received_interval);
+			if(fabs(new_msgs_received_load1 - msgs_received_load1 >= 0.01)){
+				snprintf(buf, 100, "%.2f", new_msgs_received_load1);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/messages/received/1min", 2, strlen(buf), buf, 1);
+			}
+			msgs_received_load1 = new_msgs_received_load1;
+
+			new_msgs_sent_load1 = msgs_sent_interval + exponent*(msgs_sent_load1 - msgs_sent_interval);
+			if(fabs(new_msgs_sent_load1 - msgs_sent_load1 >= 0.01)){
+				snprintf(buf, 100, "%.2f", new_msgs_sent_load1);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/messages/sent/1min", 2, strlen(buf), buf, 1);
+			}
+			msgs_sent_load1 = new_msgs_sent_load1;
+
+
+			new_publish_received_load1 = publish_received_interval + exponent*(publish_received_load1 - publish_received_interval);
+			if(fabs(new_publish_received_load1 - publish_received_load1 >= 0.01)){
+				snprintf(buf, 100, "%.2f", new_publish_received_load1);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/publish/received/1min", 2, strlen(buf), buf, 1);
+			}
+			publish_received_load1 = new_publish_received_load1;
+
+			new_publish_sent_load1 = publish_sent_interval + exponent*(publish_sent_load1 - publish_sent_interval);
+			if(fabs(new_publish_sent_load1 - publish_sent_load1 >= 0.01)){
+				snprintf(buf, 100, "%.2f", new_publish_sent_load1);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/publish/sent/1min", 2, strlen(buf), buf, 1);
+			}
+			publish_sent_load1 = new_publish_sent_load1;
+
+			new_bytes_received_load1 = bytes_received_interval + exponent*(bytes_received_load1 - bytes_received_interval);
+			if(fabs(new_bytes_received_load1 - bytes_received_load1 >= 0.01)){
+				snprintf(buf, 100, "%.2f", new_bytes_received_load1);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/bytes/received/1min", 2, strlen(buf), buf, 1);
+			}
+			bytes_received_load1 = new_bytes_received_load1;
+
+			new_bytes_sent_load1 = bytes_sent_interval + exponent*(bytes_sent_load1 - bytes_sent_interval);
+			if(fabs(new_bytes_sent_load1 - bytes_sent_load1 >= 0.01)){
+				snprintf(buf, 100, "%.2f", new_bytes_sent_load1);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/bytes/sent/1min", 2, strlen(buf), buf, 1);
+			}
+			bytes_sent_load1 = new_bytes_sent_load1;
+
+			/* 5 minute load */
+			exponent = exp(-1.0*(now-last_update)/300.0);
+
+			new_msgs_received_load5 = msgs_received_interval + exponent*(msgs_received_load5 - msgs_received_interval);
+			if(fabs(new_msgs_received_load5 - msgs_received_load5 >= 0.01)){
+				snprintf(buf, 100, "%.2f", new_msgs_received_load5);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/messages/received/5min", 2, strlen(buf), buf, 1);
+			}
+			msgs_received_load5 = new_msgs_received_load5;
+
+			new_msgs_sent_load5 = msgs_sent_interval + exponent*(msgs_sent_load5 - msgs_sent_interval);
+			if(fabs(new_msgs_sent_load5 - msgs_sent_load5 >= 0.01)){
+				snprintf(buf, 100, "%.2f", new_msgs_sent_load5);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/messages/sent/5min", 2, strlen(buf), buf, 1);
+			}
+			msgs_sent_load5 = new_msgs_sent_load5;
+
+
+			new_publish_received_load5 = publish_received_interval + exponent*(publish_received_load5 - publish_received_interval);
+			if(fabs(new_publish_received_load5 - publish_received_load5 >= 0.01)){
+				snprintf(buf, 100, "%.2f", new_publish_received_load5);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/publish/received/5min", 2, strlen(buf), buf, 1);
+			}
+			publish_received_load5 = new_publish_received_load5;
+
+			new_publish_sent_load5 = publish_sent_interval + exponent*(publish_sent_load5 - publish_sent_interval);
+			if(fabs(new_publish_sent_load5 - publish_sent_load5 >= 0.01)){
+				snprintf(buf, 100, "%.2f", new_publish_sent_load5);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/publish/sent/5min", 2, strlen(buf), buf, 1);
+			}
+			publish_sent_load5 = new_publish_sent_load5;
+
+
+			new_bytes_received_load5 = bytes_received_interval + exponent*(bytes_received_load5 - bytes_received_interval);
+			if(fabs(new_bytes_received_load5 - bytes_received_load5 >= 0.01)){
+				snprintf(buf, 100, "%.2f", new_bytes_received_load5);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/bytes/received/5min", 2, strlen(buf), buf, 1);
+			}
+			bytes_received_load5 = new_bytes_received_load5;
+
+			new_bytes_sent_load5 = bytes_sent_interval + exponent*(bytes_sent_load5 - bytes_sent_interval);
+			if(fabs(new_bytes_sent_load5 - bytes_sent_load5 >= 0.01)){
+				snprintf(buf, 100, "%.2f", new_bytes_sent_load5);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/bytes/sent/5min", 2, strlen(buf), buf, 1);
+			}
+			bytes_sent_load5 = new_bytes_sent_load5;
+
+			/* 15 minute load */
+			exponent = exp(-1.0*(now-last_update)/900.0);
+
+			new_msgs_received_load15 = msgs_received_interval + exponent*(msgs_received_load15 - msgs_received_interval);
+			if(fabs(new_msgs_received_load15 - msgs_received_load15 >= 0.01)){
+				snprintf(buf, 100, "%.2f", new_msgs_received_load15);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/messages/received/15min", 2, strlen(buf), buf, 1);
+			}
+			msgs_received_load15 = new_msgs_received_load15;
+
+			new_msgs_sent_load15 = msgs_sent_interval + exponent*(msgs_sent_load15 - msgs_sent_interval);
+			if(fabs(new_msgs_sent_load15 - msgs_sent_load15 >= 0.01)){
+				snprintf(buf, 100, "%.2f", new_msgs_sent_load15);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/messages/sent/15min", 2, strlen(buf), buf, 1);
+			}
+			msgs_sent_load15 = new_msgs_sent_load15;
+
+
+			new_publish_received_load15 = publish_received_interval + exponent*(publish_received_load15 - publish_received_interval);
+			if(fabs(new_publish_received_load15 - publish_received_load15 >= 0.01)){
+				snprintf(buf, 100, "%.2f", new_publish_received_load15);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/publish/received/15min", 2, strlen(buf), buf, 1);
+			}
+			publish_received_load15 = new_publish_received_load15;
+
+			new_publish_sent_load15 = publish_sent_interval + exponent*(publish_sent_load15 - publish_sent_interval);
+			if(fabs(new_publish_sent_load15 - publish_sent_load15 >= 0.01)){
+				snprintf(buf, 100, "%.2f", new_publish_sent_load15);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/publish/sent/15min", 2, strlen(buf), buf, 1);
+			}
+			publish_sent_load15 = new_publish_sent_load15;
+
+
+			new_bytes_received_load15 = bytes_received_interval + exponent*(bytes_received_load15 - bytes_received_interval);
+			if(fabs(new_bytes_received_load15 - bytes_received_load15 >= 0.01)){
+				snprintf(buf, 100, "%.2f", new_bytes_received_load15);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/bytes/received/15min", 2, strlen(buf), buf, 1);
+			}
+			bytes_received_load15 = new_bytes_received_load15;
+
+			new_bytes_sent_load15 = bytes_sent_interval + exponent*(bytes_sent_load15 - bytes_sent_interval);
+			if(fabs(new_bytes_sent_load15 - bytes_sent_load15 >= 0.01)){
+				snprintf(buf, 100, "%.2f", new_bytes_sent_load15);
+				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/bytes/sent/15min", 2, strlen(buf), buf, 1);
+			}
+			bytes_sent_load15 = new_bytes_sent_load15;
+		}
 
 		if(db->msg_store_count != msg_store_count){
 			msg_store_count = db->msg_store_count;
@@ -998,36 +1178,6 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 			pub_bytes_sent = g_pub_bytes_sent;
 			snprintf(buf, 100, "%llu", pub_bytes_sent);
 			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/publish/bytes/sent", 2, strlen(buf), buf, 1);
-		}
-
-		if(uptime){
-			value = msgs_received/uptime;
-			if(msgsps_received != value){
-				msgsps_received = value;
-				snprintf(buf, 100, "%u", msgsps_received);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/messages/per second/received", 2, strlen(buf), buf, 1);
-			}
-
-			value = msgs_sent/uptime;
-			if(msgsps_sent != value){
-				msgsps_sent = value;
-				snprintf(buf, 100, "%u", msgsps_sent);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/messages/per second/sent", 2, strlen(buf), buf, 1);
-			}
-
-			value = bytes_received/uptime;
-			if(bytesps_received != value){
-				bytesps_received = value;
-				snprintf(buf, 100, "%u", bytesps_received);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/bytes/per second/received", 2, strlen(buf), buf, 1);
-			}
-
-			value = bytes_sent/uptime;
-			if(bytesps_sent != value){
-				bytesps_sent = value;
-				snprintf(buf, 100, "%u", bytesps_sent);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/bytes/per second/sent", 2, strlen(buf), buf, 1);
-			}
 		}
 
 		last_update = time(NULL);
