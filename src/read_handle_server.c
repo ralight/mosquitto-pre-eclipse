@@ -38,6 +38,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <send_mosq.h>
 #include <util_mosq.h>
 
+extern unsigned int g_connection_count;
+
 int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 {
 	char *protocol_name;
@@ -59,6 +61,8 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	X509_NAME *name;
 	X509_NAME_ENTRY *name_entry;
 #endif
+
+	g_connection_count++;
 
 	/* Don't accept multiple CONNECT commands. */
 	if(context->state != mosq_cs_new){

@@ -78,18 +78,6 @@
 		<option>sys_interval</option> is 0, then updates are not sent.</para>
 		<variablelist>
 			<varlistentry>
-				<term><option>$SYS/broker/bytes/per second/received</option></term>
-				<listitem>
-					<para>The average number of bytes received per second since the broker started.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>$SYS/broker/bytes/per second/sent</option></term>
-				<listitem>
-					<para>The average number of bytes sent per second since the broker started.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
 				<term><option>$SYS/broker/bytes/received</option></term>
 				<listitem>
 					<para>The total number of bytes received since the broker
@@ -177,6 +165,86 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>$SYS/broker/load/connections/+</option></term>
+				<listitem>
+					<para>The moving average of the number of CONNECT packets
+						received by the broker over different time intervals.
+						The final "+" of the hierarchy can be 1min, 5min or
+						15min and represents the intervals over which the
+						moving average filter is applied.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>$SYS/broker/load/bytes/received/+</option></term>
+				<listitem>
+					<para>The moving average of the number of bytes received by
+						the broker over different time intervals. The final "+"
+						of the hierarchy can be 1min, 5min or 15min and
+						represents the intervals over which the moving average
+						filter is applied.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>$SYS/broker/load/bytes/sent/+</option></term>
+				<listitem>
+					<para>The moving average of the number of bytes sent by
+						the broker over different time intervals. The final "+"
+						of the hierarchy can be 1min, 5min or 15min and
+						represents the intervals over which the moving average
+						filter is applied.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>$SYS/broker/load/messages/received/+</option></term>
+				<listitem>
+					<para>The moving average of the number of all types MQTT
+						messages received by the broker over different time
+						intervals.  The final "+" of the hierarchy can be 1min,
+						5min or 15min and represents the intervals over which
+						the moving average filter is applied.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>$SYS/broker/load/messages/sent/+</option></term>
+				<listitem>
+					<para>The moving average of the number of all types of MQTT
+						messages sent by the broker over different time
+						intervals. The final "+" of the hierarchy can be 1min,
+						5min or 15min and represent the intervals over which
+						the moving average filter is applied.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>$SYS/broker/load/publish/received/+</option></term>
+				<listitem>
+					<para>The moving average of the number of publish messages
+						received by the broker over different time intervals.
+						The final "+" of the hierarchy can be 1min, 5min or
+						15min and represent the intervals over which the moving
+						average filter is applied.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>$SYS/broker/load/publish/sent/+</option></term>
+				<listitem>
+					<para>The moving average of the number of publish messages
+						sent by the broker over different time intervals. The
+						final "+" of the hierarchy can be 1min, 5min or 15min
+						and represent the intervals over which the moving
+						average filter is applied.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>$SYS/broker/load/sockets/+</option></term>
+				<listitem>
+					<para>The moving average of the number of socket
+						connections opened to the broker over different time
+						intervals. The final "+" of the hierarchy can be 1min,
+						5min or 15min and represent the intervals over which
+						the moving average filter is applied.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>$SYS/broker/messages/dropped</option></term>
 				<listitem>
 					<para>The total number of messages that have been dropped
@@ -191,18 +259,6 @@
 				<listitem>
 					<para>The number of messages with QoS>0 that are awaiting
 					acknowledgments.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>$SYS/broker/messages/per second/received</option></term>
-				<listitem>
-					<para>The average number of messages received per second since the broker started.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>$SYS/broker/messages/per second/sent</option></term>
-				<listitem>
-					<para>The average number of messages sent per second since the broker started.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

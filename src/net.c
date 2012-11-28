@@ -64,6 +64,8 @@ static int tls_ex_index_context = -1;
 static int tls_ex_index_listener = -1;
 #endif
 
+extern unsigned int g_socket_connections;
+
 int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 {
 	int i;
@@ -79,6 +81,8 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 #ifdef WITH_WRAP
 	struct request_info wrap_req;
 #endif
+
+	g_socket_connections++;
 
 	new_sock = accept(listensock, NULL, 0);
 	if(new_sock == INVALID_SOCKET) return -1;
