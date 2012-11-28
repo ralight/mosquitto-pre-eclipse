@@ -6,6 +6,7 @@ Broker:
 - Add $SYS/broker/clients/expired
 - Replace $SYS/broker/+/per second/+ with moving average versions published at
   $SYS/broker/load/#
+- Add $SYS/broker/load/sockets/+ and $SYS/broker/load/connections/+
 - Documentation on password file format has been fixed.
 - Disable SSL compression. This reduces memory usage significantly and removes
   the possibility of CRIME type attacks.
