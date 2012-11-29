@@ -82,10 +82,10 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 	struct request_info wrap_req;
 #endif
 
-	g_socket_connections++;
-
 	new_sock = accept(listensock, NULL, 0);
 	if(new_sock == INVALID_SOCKET) return -1;
+
+	g_socket_connections++;
 
 #ifndef WIN32
 	/* Set non-blocking */
