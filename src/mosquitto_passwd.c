@@ -86,8 +86,10 @@ void print_usage(void)
 {
 	printf("mosquitto_passwd is a tool for managing password files for mosquitto.\n\n");
 	printf("Usage: mosquitto_passwd [-c | -D] passwordfile username\n");
+	printf("       mosquitto_passwd -U passwordfile\n");
 	printf(" -c : create a new password file. This will overwrite existing files.\n");
 	printf(" -D : delete the username rather than adding/updating its password.\n");
+	printf(" -U : update a plain text password file to use hashed passwords.\n");
 	printf("\nSee http://mosquitto.org/ for more information.\n\n");
 }
 
@@ -172,6 +174,27 @@ int delete_pwuser(FILE *fptr, FILE *fnew, const char *username)
 	}
 	if(!found){
 		fprintf(stderr, "Warning: User %s not found in password file.\n", username);
+	}
+	return 0;
+}
+
+int update_file(FILE *fptr, FILE *fnew)
+{
+	char buf[MAX_BUFFER_LEN];
+	char lbuf[MAX_BUFFER_LEN];
+	char *username, *password;
+	int rc;
+
+	while(!feof(fptr) && fgets(buf, MAX_BUFFER_LEN, fptr)){
+		memcpy(lbuf, buf, MAX_BUFFER_LEN);
+		username = strtok(lbuf, ":");
+		password = strtok(NULL, ":");
+		if(password){
+			rc = output_new_password(fnew, username, password);
+			if(rc) return rc;
+		}else{
+			fprintf(fnew, "%s", username);
+		}
 	}
 	return 0;
 }
@@ -305,6 +328,7 @@ int main(int argc, char *argv[])
 	FILE *fptr, *fnew;
 	char password[MAX_BUFFER_LEN];
 	int rc;
+	bool do_update_file = false;
 
 	memset(temp_file, 0, 100);
 	signal(SIGINT, handle_sigint);
@@ -321,8 +345,13 @@ int main(int argc, char *argv[])
 		password_file = argv[2];
 		username = argv[3];
 	}else if(argc == 3){
-		password_file = argv[1];
-		username = argv[2];
+		if(!strcmp(argv[1], "-U")){
+			do_update_file = true;
+			password_file = argv[2];
+		}else{
+			password_file = argv[1];
+			username = argv[2];
+		}
 	}else{
 		print_usage();
 		return 1;
@@ -353,10 +382,12 @@ int main(int argc, char *argv[])
 		}
 		if(delete_user){
 			rc = delete_pwuser(fptr, fnew, username);
+		}else if(do_update_file){
+			rc = update_file(fptr, fnew);
 		}else{
 			rc = get_password(password, 1024);
 			if(rc) return rc;
-			/* Update */
+			/* Update password for individual user */
 			rc = update_pwuser(fptr, fnew, username, password);
 		}
 		fclose(fptr);

@@ -73,7 +73,7 @@ struct _sub_token {
 	char *topic;
 };
 
-static int _subs_process(struct _mosquitto_db *db, struct _mosquitto_subhier *hier, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored)
+static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hier, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored)
 {
 	int rc = 0;
 	int rc2;
@@ -211,7 +211,7 @@ cleanup:
 	return 1;
 }
 
-static int _sub_add(mosquitto_db *db, struct mosquitto *context, int qos, struct _mosquitto_subhier *subhier, struct _sub_token *tokens)
+static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos, struct _mosquitto_subhier *subhier, struct _sub_token *tokens)
 {
 	struct _mosquitto_subhier *branch, *last = NULL;
 	struct _mosquitto_subleaf *leaf, *last_leaf;
@@ -269,7 +269,7 @@ static int _sub_add(mosquitto_db *db, struct mosquitto *context, int qos, struct
 	return _sub_add(db, context, qos, branch, tokens->next);
 }
 
-static int _sub_remove(mosquitto_db *db, struct mosquitto *context, struct _mosquitto_subhier *subhier, struct _sub_token *tokens)
+static int _sub_remove(struct mosquitto_db *db, struct mosquitto *context, struct _mosquitto_subhier *subhier, struct _sub_token *tokens)
 {
 	struct _mosquitto_subhier *branch, *last = NULL;
 	struct _mosquitto_subleaf *leaf;
@@ -316,7 +316,7 @@ static int _sub_remove(mosquitto_db *db, struct mosquitto *context, struct _mosq
 	return MOSQ_ERR_SUCCESS;
 }
 
-static int _sub_search(struct _mosquitto_db *db, struct _mosquitto_subhier *subhier, struct _sub_token *tokens, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored)
+static int _sub_search(struct mosquitto_db *db, struct _mosquitto_subhier *subhier, struct _sub_token *tokens, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored)
 {
 	/* FIXME - need to take into account source_id if the client is a bridge */
 	struct _mosquitto_subhier *branch;
@@ -344,7 +344,7 @@ static int _sub_search(struct _mosquitto_db *db, struct _mosquitto_subhier *subh
 	return flag;
 }
 
-int mqtt3_sub_add(mosquitto_db *db, struct mosquitto *context, const char *sub, int qos, struct _mosquitto_subhier *root)
+int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int qos, struct _mosquitto_subhier *root)
 {
 	int tree;
 	int rc = 0;
@@ -387,7 +387,7 @@ int mqtt3_sub_add(mosquitto_db *db, struct mosquitto *context, const char *sub, 
 	return rc;
 }
 
-int mqtt3_sub_remove(mosquitto_db *db, struct mosquitto *context, const char *sub, struct _mosquitto_subhier *root)
+int mqtt3_sub_remove(struct mosquitto_db *db, struct mosquitto *context, const char *sub, struct _mosquitto_subhier *root)
 {
 	int rc = 0;
 	int tree;
@@ -427,7 +427,7 @@ int mqtt3_sub_remove(mosquitto_db *db, struct mosquitto *context, const char *su
 	return rc;
 }
 
-int mqtt3_db_messages_queue(struct _mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored)
+int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored)
 {
 	int rc = 0;
 	int tree;
@@ -484,7 +484,7 @@ int mqtt3_db_messages_queue(struct _mosquitto_db *db, const char *source_id, con
 	return rc;
 }
 
-static int _subs_clean_session(mosquitto_db *db, struct mosquitto *context, struct _mosquitto_subhier *root)
+static int _subs_clean_session(struct mosquitto_db *db, struct mosquitto *context, struct _mosquitto_subhier *root)
 {
 	int rc = 0;
 	struct _mosquitto_subhier *child, *last = NULL;
@@ -538,7 +538,7 @@ static int _subs_clean_session(mosquitto_db *db, struct mosquitto *context, stru
 
 /* Remove all subscriptions for a client.
  */
-int mqtt3_subs_clean_session(mosquitto_db *db, struct mosquitto *context, struct _mosquitto_subhier *root)
+int mqtt3_subs_clean_session(struct mosquitto_db *db, struct mosquitto *context, struct _mosquitto_subhier *root)
 {
 	struct _mosquitto_subhier *child;
 
@@ -582,7 +582,7 @@ void mqtt3_sub_tree_print(struct _mosquitto_subhier *root, int level)
 	}
 }
 
-static int _retain_process(struct _mosquitto_db *db, struct mosquitto_msg_store *retained, struct mosquitto *context, const char *sub, int sub_qos)
+static int _retain_process(struct mosquitto_db *db, struct mosquitto_msg_store *retained, struct mosquitto *context, const char *sub, int sub_qos)
 {
 	int rc = 0;
 	int qos;
@@ -606,7 +606,7 @@ static int _retain_process(struct _mosquitto_db *db, struct mosquitto_msg_store 
 	return mqtt3_db_message_insert(db, context, mid, mosq_md_out, qos, true, retained);
 }
 
-static int _retain_search(struct _mosquitto_db *db, struct _mosquitto_subhier *subhier, struct _sub_token *tokens, struct mosquitto *context, const char *sub, int sub_qos)
+static int _retain_search(struct mosquitto_db *db, struct _mosquitto_subhier *subhier, struct _sub_token *tokens, struct mosquitto *context, const char *sub, int sub_qos)
 {
 	struct _mosquitto_subhier *branch;
 
@@ -637,7 +637,7 @@ static int _retain_search(struct _mosquitto_db *db, struct _mosquitto_subhier *s
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mqtt3_retain_queue(mosquitto_db *db, struct mosquitto *context, const char *sub, int sub_qos)
+int mqtt3_retain_queue(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int sub_qos)
 {
 	int rc = 0;
 	int tree;

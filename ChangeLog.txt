@@ -1,7 +1,19 @@
-1.0.6 - 201212xx
-================
+1.1 - 201xxxxx
+==============
 
 Broker:
+- Add $SYS/broker/messages/dropped
+- Add $SYS/broker/clients/expired
+- Replace $SYS/broker/+/per second/+ with moving average versions published at
+  $SYS/broker/load/#
+- Add $SYS/broker/load/sockets/+ and $SYS/broker/load/connections/+
+- Documentation on password file format has been fixed.
+- Disable SSL compression. This reduces memory usage significantly and removes
+  the possibility of CRIME type attacks.
+- Enable SSL_MODE_RELEASE_BUFFERS mode to reduce SSL memory usage further.
+- Add allow_duplicate_messages option.
+- ACL files can now have comment lines with # as the first character.
+- Display message on startup about which config is being loaded.
 - Fix max_inflight_messages and max_queued_messages not being applied.
 - Fix documentation error in mosquitto.conf.
 - Ensure that QoS 2 queued messages are sent out in a timely manner.
@@ -9,18 +21,36 @@ Broker:
 - Local bridges with clean_session==false now remove unused subscriptions on
   broker restart.
 
-Library:
+Client library:
+- Free memory used by OpenSSL in mosquitto_lib_cleanup() where possible.
+- Change WebSocket subprotocol name to mqttv3.1 to make future changes easier
+  and for compatibility with other implementations.
+- Add mosquitto_loop_forever() / loop_forever() function call to make simple
+  clients easier.
+- Disable SSL compression. This reduces memory usage significantly and removes
+  the possibility of CRIME type attacks.
+- Enable SSL_MODE_RELEASE_BUFFERS mode to reduce SSL memory usage further.
+- mosquitto_tls_set() will now return an error or raise an exception
+  immediately if the CA certificate or client certificate/key cannot be
+  accessed.
+- Fix potential memory leaks on connection failures.
 - Don't produce return error from mosquitto_loop() if a system call is
   interrupted. This prevents disconnects/reconnects in threaded mode and
   simplifies non-threaded client handling.
 - Ignore SIGPIPE to prevent unnecessary client quits in threaded mode.
 - Fix document error for mosquitto_message_retry_set().
 
-Client:
+Clients:
+- Clients now display their own version number and library version number in
+  their help messages.
 - Fix "mosquitto_pub -l -q 2" disconnecting before all messages were
   transmitted.
 - Fix potential out-of-bounds array access with client ids. Fixes bug
   #1083182.
+
+Other:
+- mosquitto_passwd can now convert password files with plain text files to
+  hashed versions.
 
 1.0.5 - 20121103
 ================

@@ -503,10 +503,19 @@ int mosquitto_unsubscribe(struct mosquitto *mosq, int *mid, const char *sub)
 int mosquitto_tls_set(struct mosquitto *mosq, const char *cafile, const char *capath, const char *certfile, const char *keyfile, int (*pw_callback)(char *buf, int size, int rwflag, void *userdata))
 {
 #ifdef WITH_TLS
+	FILE *fptr;
+
 	if(!mosq || (!cafile && !capath) || (certfile && !keyfile) || (!certfile && keyfile)) return MOSQ_ERR_INVAL;
 
 	if(cafile){
+		fptr = fopen(cafile, "rt");
+		if(fptr){
+			fclose(fptr);
+		}else{
+			return MOSQ_ERR_INVAL;
+		}
 		mosq->tls_cafile = _mosquitto_strdup(cafile);
+
 		if(!mosq->tls_cafile){
 			return MOSQ_ERR_NOMEM;
 		}
@@ -526,6 +535,20 @@ int mosquitto_tls_set(struct mosquitto *mosq, const char *cafile, const char *ca
 	}
 
 	if(certfile){
+		fptr = fopen(certfile, "rt");
+		if(fptr){
+			fclose(fptr);
+		}else{
+			if(mosq->tls_cafile){
+				_mosquitto_free(mosq->tls_cafile);
+				mosq->tls_cafile = NULL;
+			}
+			if(mosq->tls_capath){
+				_mosquitto_free(mosq->tls_capath);
+				mosq->tls_capath = NULL;
+			}
+			return MOSQ_ERR_INVAL;
+		}
 		mosq->tls_certfile = _mosquitto_strdup(certfile);
 		if(!mosq->tls_certfile){
 			return MOSQ_ERR_NOMEM;
@@ -536,6 +559,24 @@ int mosquitto_tls_set(struct mosquitto *mosq, const char *cafile, const char *ca
 	}
 
 	if(keyfile){
+		fptr = fopen(keyfile, "rt");
+		if(fptr){
+			fclose(fptr);
+		}else{
+			if(mosq->tls_cafile){
+				_mosquitto_free(mosq->tls_cafile);
+				mosq->tls_cafile = NULL;
+			}
+			if(mosq->tls_capath){
+				_mosquitto_free(mosq->tls_capath);
+				mosq->tls_capath = NULL;
+			}
+			if(mosq->tls_certfile){
+				_mosquitto_free(mosq->tls_certfile);
+				mosq->tls_capath = NULL;
+			}
+			return MOSQ_ERR_INVAL;
+		}
 		mosq->tls_keyfile = _mosquitto_strdup(keyfile);
 		if(!mosq->tls_keyfile){
 			return MOSQ_ERR_NOMEM;
@@ -716,6 +757,35 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 		}
 	}
 	return mosquitto_loop_misc(mosq);
+}
+
+int mosquitto_loop_forever(struct mosquitto *mosq)
+{
+	int run = 1;
+	int rc;
+
+	if(!mosq) return MOSQ_ERR_INVAL;
+
+	if(mosq->state == mosq_cs_connect_async){
+		mosquitto_reconnect(mosq);
+	}
+
+	while(run){
+		do{
+			rc = mosquitto_loop(mosq, -1, 1);
+		}while(rc == MOSQ_ERR_SUCCESS);
+		if(mosq->state == mosq_cs_disconnecting){
+			run = 0;
+		}else{
+#ifdef WIN32
+			Sleep(1000);
+#else
+			sleep(1);
+#endif
+			mosquitto_reconnect(mosq);
+		}
+	}
+	return rc;
 }
 
 int mosquitto_loop_misc(struct mosquitto *mosq)

@@ -40,7 +40,7 @@ typedef int ssize_t;
 #include <mosquitto.h>
 
 #ifdef WITH_BROKER
-struct _mosquitto_db;
+struct mosquitto_db;
 #endif
 
 #ifdef WIN32
@@ -89,7 +89,7 @@ ssize_t _mosquitto_net_write(struct mosquitto *mosq, void *buf, size_t count);
 
 int _mosquitto_packet_write(struct mosquitto *mosq);
 #ifdef WITH_BROKER
-int _mosquitto_packet_read(struct _mosquitto_db *db, struct mosquitto *mosq);
+int _mosquitto_packet_read(struct mosquitto_db *db, struct mosquitto *mosq);
 #else
 int _mosquitto_packet_read(struct mosquitto *mosq);
 #endif
