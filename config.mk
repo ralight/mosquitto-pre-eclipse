@@ -66,7 +66,7 @@ WITH_MEMORY_TRACKING:=yes
 
 # Also bump lib/mosquitto.h, lib/python/setup.py, CMakeLists.txt,
 # installer/mosquitto.nsi, installer/mosquitto-cygwin.nsi
-VERSION=1.0.5
+VERSION=1.0.90
 TIMESTAMP:=$(shell date "+%F %T%z")
 
 # Client library SO version. Bump if incompatible API/ABI changes are made.
@@ -94,7 +94,7 @@ LIB_CFLAGS:=${CFLAGS} -I. -I.. -I../lib
 LIB_CXXFLAGS:=$(LIB_CFLAGS)
 
 BROKER_CFLAGS:=${LIB_CFLAGS} -DVERSION="\"${VERSION}\"" -DTIMESTAMP="\"${TIMESTAMP}\"" -DWITH_BROKER
-CLIENT_CFLAGS:=${CFLAGS} -I../lib
+CLIENT_CFLAGS:=${CFLAGS} -I../lib -DVERSION="\"${VERSION}\""
 
 ifeq ($(UNAME),FreeBSD)
 	BROKER_LIBS:=
@@ -143,12 +143,12 @@ ifeq ($(WITH_TLS),yes)
 	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_TLS
 	LIB_CFLAGS:=$(LIB_CFLAGS) -DWITH_TLS
 	PASSWD_LIBS:=-lcrypto
-	CLIENT_CFLAGS:=$(LIB_CFLAGS) -DWITH_TLS
+	CLIENT_CFLAGS:=$(CLIENT_CFLAGS) -DWITH_TLS
 
 	ifeq ($(WITH_TLS_PSK),yes)
 		BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_TLS_PSK
 		LIB_CFLAGS:=$(LIB_CFLAGS) -DWITH_TLS_PSK
-		CLIENT_CFLAGS:=$(LIB_CFLAGS) -DWITH_TLS_PSK
+		CLIENT_CFLAGS:=$(CLIENT_CFLAGS) -DWITH_TLS_PSK
 	endif
 endif
 

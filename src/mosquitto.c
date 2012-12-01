@@ -48,7 +48,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <mosquitto_broker.h>
 #include <memory_mosq.h>
 
-mosquitto_db int_db;
+struct mosquitto_db int_db;
 
 bool flag_reload = false;
 #ifdef WITH_PERSISTENCE
@@ -62,12 +62,12 @@ int allow_severity = LOG_INFO;
 int deny_severity = LOG_INFO;
 #endif
 
-int drop_privileges(mqtt3_config *config);
+int drop_privileges(struct mqtt3_config *config);
 void handle_sigint(int signal);
 void handle_sigusr1(int signal);
 void handle_sigusr2(int signal);
 
-struct _mosquitto_db *_mosquitto_get_db(void)
+struct mosquitto_db *_mosquitto_get_db(void)
 {
 	return &int_db;
 }
@@ -80,7 +80,7 @@ struct _mosquitto_db *_mosquitto_get_db(void)
  * Note that setting config->user to "root" does not produce an error, but it
  * strongly discouraged.
  */
-int drop_privileges(mqtt3_config *config)
+int drop_privileges(struct mqtt3_config *config)
 {
 #if !defined(__CYGWIN__) && !defined(WIN32)
 	struct passwd *pwd;
@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
 	int *listensock = NULL;
 	int listensock_count = 0;
 	int listensock_index = 0;
-	mqtt3_config config;
+	struct mqtt3_config config;
 	char buf[1024];
 	int i, j;
 	FILE *pid;
@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
 	}
 #endif
 
-	memset(&int_db, 0, sizeof(mosquitto_db));
+	memset(&int_db, 0, sizeof(struct mosquitto_db));
 
 	_mosquitto_net_init();
 
@@ -217,6 +217,11 @@ int main(int argc, char *argv[])
 	 * logging to topics */
 	mqtt3_log_init(config.log_type, config.log_dest);
 	_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s (build date %s) starting", VERSION, TIMESTAMP);
+	if(config.config_file){
+		_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Config loaded from %s.", config.config_file);
+	}else{
+		_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Using default config.");
+	}
 
 	rc = mosquitto_security_module_init(&int_db);
 	if(rc) return rc;

@@ -63,7 +63,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <mosquitto.h>
 #ifdef WITH_BROKER
-struct _mosquitto_client_msg;
+struct mosquitto_client_msg;
 #endif
 
 enum mosquitto_msg_direction {
@@ -158,7 +158,7 @@ struct mosquitto {
 #ifdef WITH_BROKER
 	bool is_bridge;
 	struct _mqtt3_bridge *bridge;
-	struct _mosquitto_client_msg *msgs;
+	struct mosquitto_client_msg *msgs;
 	struct _mosquitto_acl_user *acl_list;
 	struct _mqtt3_listener *listener;
 	time_t disconnect_t;

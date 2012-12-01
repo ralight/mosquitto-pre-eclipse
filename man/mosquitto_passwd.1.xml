@@ -24,6 +24,11 @@
 			<arg choice='plain'><replaceable>passwordfile</replaceable></arg>
 			<arg choice='plain'><replaceable>username</replaceable></arg>
 		</cmdsynopsis>
+		<cmdsynopsis>
+			<command>mosquitto_passwd</command>
+			<arg choice='plain'><option>-U</option></arg>
+			<arg choice='plain'><replaceable>passwordfile</replaceable></arg>
+		</cmdsynopsis>
 	</refsynopsisdiv>
 
 	<refsect1>
@@ -50,6 +55,19 @@
 				<listitem>
 					<para>Delete the specified user from the password
 						file.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-U</option></term>
+				<listitem>
+					<para>This option can be used to upgrade/convert a password
+						file with plain text passwords into one using hashed
+						passwords. It will modify the specified file. It does
+						not detect whether passwords are already hashed, so
+						using it on a password file that already contains
+						hashed passwords will generate new hashes based on the
+						old hashes and render the password file
+						unusable.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

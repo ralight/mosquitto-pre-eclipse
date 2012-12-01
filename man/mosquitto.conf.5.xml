@@ -133,6 +133,9 @@
 					<para>Example:</para>
 					<para><code>pattern write sensor/%u/data</code></para>
 
+					<para>If the first character of a line of the ACL file is a
+						# it is treated as a comment.</para>
+
 					<para>Reloaded on reload signal. The currently loaded ACLs will be
 					freed and reloaded. Existing subscriptions will be affected
 					after the reload.</para>
@@ -146,6 +149,30 @@
 					connect. If set to false then another means of connection
 					should be created to control authenticated client access.
 					Defaults to true.</para>
+					<para>Reloaded on reload signal.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>allow_duplicate_messages</option> [ true | false ]</term>
+				<listitem>
+					<para>If a client is subscribed to multiple subscriptions
+						that overlap, e.g. foo/# and foo/+/baz , then MQTT
+						expects that when the broker receives a message on a
+						topic that matches both subscriptions, such as
+						foo/bar/baz, then the client should only receive the
+						message once.</para>
+					<para>Mosquitto keeps track of which clients a message has
+						been sent to in order to meet this requirement. This
+						option allows this behaviour to be disabled, which may
+						be useful if you have a large number of clients
+						subscribed to the same set of topics and want to
+						minimise memory usage.</para>
+					<para>It can be safely set to true if you know in advance
+						that your clients will never have overlapping
+						subscriptions, otherwise your clients must be able to
+						correctly deal with duplicate messages even when then
+						have QoS=2.</para>
+					<para>Defaults to true.</para>
 					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
@@ -291,9 +318,13 @@
 				<listitem>
 					<para>Set the path to a password file. If defined, the
 					contents of the file are used to control client access to
-					the broker. Each line should be in the format
-					"username:password", where the colon and password are
-					optional but recommended. If allow_anonymous is set to
+					the broker. The file can be created using the
+					<citerefentry><refentrytitle>mosquitto_passwd</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+					utility. If mosquitto is compiled without TLS support (it
+					is recommended that TLS support is included), then the
+					password file should be a text file with each line in the
+					format "username:password", where the colon and password
+					are optional but recommended. If allow_anonymous is set to
 					false, only users defined in this file will be able to
 					connect. Setting allow_anonymous to true when password_file
 					is defined is valid and could be used with acl_file to have
@@ -700,6 +731,13 @@
 					drops. Note that setting to true may cause a large amount
 					of retained messages to be sent each time the bridge
 					reconnects.</para>
+					<para>If you are using bridges with cleansession set to false
+					(the default), then you may get unexpected behaviour from
+					incoming topics if you change what topics you are
+					subscribing to. This is because the remote broker keeps the
+					subscription for the old topic. If you have this problem,
+					connect your bridge with cleansession set to true, then
+					reconnect with cleansession set to false as normal.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -875,6 +913,9 @@
 					load from a broker, it is possible that you have a loop
 					where each broker is forever forwarding each other the same
 					messages.</para>
+					<para>See also the <option>cleansession</option> option if
+						you have messages arriving on unexpected topics when
+						using incoming topics.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

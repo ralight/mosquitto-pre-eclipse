@@ -44,7 +44,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef WITH_BRIDGE
 
-int mqtt3_bridge_new(mosquitto_db *db, struct _mqtt3_bridge *bridge)
+int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge)
 {
 	int i;
 	struct mosquitto *new_context = NULL;
@@ -135,7 +135,7 @@ int mqtt3_bridge_new(mosquitto_db *db, struct _mqtt3_bridge *bridge)
 	return mqtt3_bridge_connect(db, new_context);
 }
 
-int mqtt3_bridge_connect(mosquitto_db *db, struct mosquitto *context)
+int mqtt3_bridge_connect(struct mosquitto_db *db, struct mosquitto *context)
 {
 	int rc;
 	int i;

@@ -46,7 +46,7 @@ typedef int (*FUNC_auth_plugin_acl_check)(void *, const char *, const char *, in
 typedef int (*FUNC_auth_plugin_unpwd_check)(void *, const char *, const char *);
 typedef int (*FUNC_auth_plugin_psk_key_get)(void *, const char *, const char *, char *, int);
 
-int mosquitto_security_module_init(mosquitto_db *db)
+int mosquitto_security_module_init(struct mosquitto_db *db)
 {
 	void *lib;
 	int (*plugin_version)(void) = NULL;
@@ -142,7 +142,7 @@ int mosquitto_security_module_init(mosquitto_db *db)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto_security_module_cleanup(mosquitto_db *db)
+int mosquitto_security_module_cleanup(struct mosquitto_db *db)
 {
 	if(db->auth_plugin.security_cleanup){
 		db->auth_plugin.security_cleanup(db->auth_plugin.user_data, db->config->auth_options, db->config->auth_option_count, false);
@@ -169,7 +169,7 @@ int mosquitto_security_module_cleanup(mosquitto_db *db)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto_security_init(mosquitto_db *db, bool reload)
+int mosquitto_security_init(struct mosquitto_db *db, bool reload)
 {
 	if(!db->auth_plugin.lib){
 		return mosquitto_security_init_default(db, reload);
@@ -184,7 +184,7 @@ int mosquitto_security_init(mosquitto_db *db, bool reload)
  * - Disconnecting users with invalid passwords
  * - Reapplying ACLs
  */
-int mosquitto_security_apply(struct _mosquitto_db *db)
+int mosquitto_security_apply(struct mosquitto_db *db)
 {
 	if(!db->auth_plugin.lib){
 		return mosquitto_security_apply_default(db);
@@ -192,7 +192,7 @@ int mosquitto_security_apply(struct _mosquitto_db *db)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto_security_cleanup(mosquitto_db *db, bool reload)
+int mosquitto_security_cleanup(struct mosquitto_db *db, bool reload)
 {
 	if(!db->auth_plugin.lib){
 		return mosquitto_security_cleanup_default(db, reload);
@@ -201,7 +201,7 @@ int mosquitto_security_cleanup(mosquitto_db *db, bool reload)
 	}
 }
 
-int mosquitto_acl_check(struct _mosquitto_db *db, struct mosquitto *context, const char *topic, int access)
+int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int access)
 {
 	if(!db->auth_plugin.lib){
 		return mosquitto_acl_check_default(db, context, topic, access);
@@ -210,7 +210,7 @@ int mosquitto_acl_check(struct _mosquitto_db *db, struct mosquitto *context, con
 	}
 }
 
-int mosquitto_unpwd_check(struct _mosquitto_db *db, const char *username, const char *password)
+int mosquitto_unpwd_check(struct mosquitto_db *db, const char *username, const char *password)
 {
 	if(!db->auth_plugin.lib){
 		return mosquitto_unpwd_check_default(db, username, password);
@@ -219,7 +219,7 @@ int mosquitto_unpwd_check(struct _mosquitto_db *db, const char *username, const 
 	}
 }
 
-int mosquitto_psk_key_get(struct _mosquitto_db *db, const char *hint, const char *identity, char *key, int max_key_len)
+int mosquitto_psk_key_get(struct mosquitto_db *db, const char *hint, const char *identity, char *key, int max_key_len)
 {
 	if(!db->auth_plugin.lib){
 		return mosquitto_psk_key_get_default(db, hint, identity, key, max_key_len);

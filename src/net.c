@@ -70,7 +70,9 @@ static int tls_ex_index_context = -1;
 static int tls_ex_index_listener = -1;
 #endif
 
-int mqtt3_socket_accept(struct _mosquitto_db *db, int listensock)
+extern unsigned int g_socket_connections;
+
+int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 {
 	int i;
 	int j;
@@ -88,6 +90,8 @@ int mqtt3_socket_accept(struct _mosquitto_db *db, int listensock)
 
 	new_sock = accept(listensock, NULL, 0);
 	if(new_sock == INVALID_SOCKET) return -1;
+
+	g_socket_connections++;
 
 #ifndef WIN32
 	/* Set non-blocking */
@@ -205,7 +209,7 @@ static int client_certificate_verify(int preverify_ok, X509_STORE_CTX *ctx)
 #if defined(WITH_TLS) && defined(WITH_TLS_PSK)
 static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned char *psk, unsigned int max_psk_len)
 {
-	struct _mosquitto_db *db;
+	struct mosquitto_db *db;
 	struct mosquitto *context;
 	struct _mqtt3_listener *listener;
 	char *psk_key = NULL;
@@ -353,6 +357,14 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 				COMPAT_CLOSE(sock);
 				return 1;
 			}
+#if OPENSSL_VERSION_NUMBER >= 0x10000000
+			/* Disable compression */
+			SSL_CTX_set_options(listener->ssl_ctx, SSL_OP_NO_COMPRESSION);
+#endif
+#ifdef SSL_MODE_RELEASE_BUFFERS
+			/* Use even less memory per SSL connection. */
+			SSL_CTX_set_mode(listener->ssl_ctx, SSL_MODE_RELEASE_BUFFERS);
+#endif
 			if(listener->ciphers){
 				rc = SSL_CTX_set_cipher_list(listener->ssl_ctx, listener->ciphers);
 				if(rc == 0){

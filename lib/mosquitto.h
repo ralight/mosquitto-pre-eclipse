@@ -58,7 +58,7 @@ extern "C" {
 
 #define LIBMOSQUITTO_MAJOR 1
 #define LIBMOSQUITTO_MINOR 0
-#define LIBMOSQUITTO_REVISION 5
+#define LIBMOSQUITTO_REVISION 90
 #define LIBMOSQUITTO_VERSION_NUMBER (LIBMOSQUITTO_MAJOR*1000000+LIBMOSQUITTO_MINOR*1000+LIBMOSQUITTO_REVISION)
 
 /* Log types */
@@ -565,9 +565,40 @@ libmosq_EXPORT void mosquitto_message_free(struct mosquitto_message **message);
  *                       Use strerror_r() where available or FormatMessage() on
  *                       Windows.
  * See Also:
- *	<mosquitto_loop_start>, <mosquitto_loop_stop>
+ *	<mosquitto_loop_forever>, <mosquitto_loop_start>, <mosquitto_loop_stop>
  */
 libmosq_EXPORT int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets);
+
+/*
+ * Function: mosquitto_loop_forever
+ *
+ * This function call loop() for you in an infinite blocking loop. It is useful
+ * for the case where you only want to run the MQTT client loop in your
+ * program.
+ *
+ * It handles reconnecting in case server connection is lost. If you call
+ * mosquitto_disconnect() in a callback it will return.
+ *
+ * Parameters:
+ *  mosq - a valid mosquitto instance.
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS -   on success.
+ * 	MOSQ_ERR_INVAL -     if the input parameters were invalid.
+ * 	MOSQ_ERR_NOMEM -     if an out of memory condition occurred.
+ * 	MOSQ_ERR_NO_CONN -   if the client isn't connected to a broker.
+ *  MOSQ_ERR_CONN_LOST - if the connection to the broker was lost.
+ *	MOSQ_ERR_PROTOCOL -  if there is a protocol error communicating with the
+ *                       broker.
+ * 	MOSQ_ERR_ERRNO -     if a system call returned an error. The variable errno
+ *                       contains the error code, even on Windows.
+ *                       Use strerror_r() where available or FormatMessage() on
+ *                       Windows.
+ *
+ * See Also:
+ *	<mosquitto_loop>, <mosquitto_loop_start>
+ */
+libmosq_EXPORT int mosquitto_loop_forever(struct mosquitto *mosq);
 
 /*
  * Function: mosquitto_loop_start
@@ -585,7 +616,7 @@ libmosq_EXPORT int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_p
  *	MOSQ_ERR_NOT_SUPPORTED - if thread support is not available.
  *
  * See Also:
- *	<mosquitto_connect_async>, <mosquitto_loop>, <mosquitto_loop_stop>
+ *	<mosquitto_connect_async>, <mosquitto_loop>, <mosquitto_loop_forever>, <mosquitto_loop_stop>
  */
 libmosq_EXPORT int mosquitto_loop_start(struct mosquitto *mosq);
 

@@ -59,11 +59,12 @@ extern bool flag_db_backup;
 #endif
 extern bool flag_tree_print;
 extern int run;
+extern int g_clients_expired;
 
-static void loop_handle_errors(mosquitto_db *db, struct pollfd *pollfds);
-static void loop_handle_reads_writes(mosquitto_db *db, struct pollfd *pollfds);
+static void loop_handle_errors(struct mosquitto_db *db, struct pollfd *pollfds);
+static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pollfds);
 
-int mosquitto_main_loop(mosquitto_db *db, int *listensock, int listensock_count, int listener_max)
+int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock_count, int listener_max)
 {
 	time_t start_time = time(NULL);
 	time_t last_backup = time(NULL);
@@ -75,7 +76,7 @@ int mosquitto_main_loop(mosquitto_db *db, int *listensock, int listensock_count,
 #endif
 	int i;
 	struct pollfd *pollfds = NULL;
-	unsigned int pollfd_count = 0;
+	int pollfd_count = 0;
 	int pollfd_index;
 
 #ifndef WIN32
@@ -174,6 +175,8 @@ int mosquitto_main_loop(mosquitto_db *db, int *listensock, int listensock_count,
 							 * expire it and clean up.
 							 */
 							if(time(NULL) > db->contexts[i]->disconnect_t+db->config->persistent_client_expiration){
+								_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Expiring persistent client %s due to timeout.", db->contexts[i]->id);
+								g_clients_expired++;
 								db->contexts[i]->clean_session = true;
 								mqtt3_context_cleanup(db, db->contexts[i], true);
 								db->contexts[i] = NULL;
@@ -251,7 +254,7 @@ int mosquitto_main_loop(mosquitto_db *db, int *listensock, int listensock_count,
 	return MOSQ_ERR_SUCCESS;
 }
 
-static void do_disconnect(mosquitto_db *db, int context_index)
+static void do_disconnect(struct mosquitto_db *db, int context_index)
 {
 	if(db->config->connection_messages == true){
 		if(db->contexts[context_index]->state != mosq_cs_disconnecting){
@@ -266,7 +269,7 @@ static void do_disconnect(mosquitto_db *db, int context_index)
 /* Error ocurred, probably an fd has been closed. 
  * Loop through and check them all.
  */
-static void loop_handle_errors(mosquitto_db *db, struct pollfd *pollfds)
+static void loop_handle_errors(struct mosquitto_db *db, struct pollfd *pollfds)
 {
 	int i;
 
@@ -279,7 +282,7 @@ static void loop_handle_errors(mosquitto_db *db, struct pollfd *pollfds)
 	}
 }
 
-static void loop_handle_reads_writes(mosquitto_db *db, struct pollfd *pollfds)
+static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pollfds)
 {
 	int i;
 
