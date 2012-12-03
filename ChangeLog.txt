@@ -39,6 +39,8 @@ Client library:
   simplifies non-threaded client handling.
 - Ignore SIGPIPE to prevent unnecessary client quits in threaded mode.
 - Fix document error for mosquitto_message_retry_set().
+- Fix mosquitto_topic_matches_sub() for subscriptions with + as the final
+  character. Fixes bug #1085797.
 
 Clients:
 - Clients now display their own version number and library version number in

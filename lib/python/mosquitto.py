@@ -201,6 +201,9 @@ def topic_matches_sub(sub, topic):
                 spos += 1
                 while tpos < tlen and local_topic[tpos] != '/':
                     tpos += 1
+                if tpos == tlen and spos == slen:
+                    result = True
+                    break
 
             elif local_sub[spos] == '#':
                 multilevel_wildcard = True
