@@ -550,7 +550,12 @@ libmosq_EXPORT void mosquitto_message_free(struct mosquitto_message **message);
  *	max_packets - the maximum number of packets to process in this call. Must
  *	              be >0. If set to 1, only a single packet will be processed
  *	              per call. Avoid setting too high if you have a high incoming
- *	              message rate.
+ *	              message rate. If you are publishing using QoS>0 then you
+ *	              should set this parameter to be larger than the number of
+ *	              messages published since the last call to <mosquitto_loop>,
+ *	              otherwise the outgoing message rate may not keep up with the
+ *	              calls to <mosquitto_publish> and a message backlog will
+ *	              occur.
  * 
  * Returns:
  *	MOSQ_ERR_SUCCESS -   on success.
@@ -670,7 +675,12 @@ libmosq_EXPORT int mosquitto_socket(struct mosquitto *mosq);
  *	max_packets - the maximum number of packets to process in this call. Must
  *	              be >0. If set to 1, only a single packet will be processed
  *	              per call. Avoid setting too high if you have a high incoming
- *	              message rate.
+ *	              message rate. If you are publishing using QoS>0 then you
+ *	              should set this parameter to be larger than the number of
+ *	              messages published since the last call to <mosquitto_loop>,
+ *	              otherwise the outgoing message rate may not keep up with the
+ *	              calls to <mosquitto_publish> and a message backlog will
+ *	              occur.
  *
  * Returns:
  *	MOSQ_ERR_SUCCESS -   on success.
@@ -701,7 +711,13 @@ libmosq_EXPORT int mosquitto_loop_read(struct mosquitto *mosq, int max_packets);
  *	mosq -        a valid mosquitto instance.
  *	max_packets - the maximum number of packets to process in this call. Must
  *	              be >0. If set to 1, only a single packet will be processed
- *	              per call.
+ *	              per call. Avoid setting too high if you have a high incoming
+ *	              message rate. If you are publishing using QoS>0 then you
+ *	              should set this parameter to be larger than the number of
+ *	              messages published since the last call to <mosquitto_loop>,
+ *	              otherwise the outgoing message rate may not keep up with the
+ *	              calls to <mosquitto_publish> and a message backlog will
+ *	              occur.
  *
  * Returns:
  *	MOSQ_ERR_SUCCESS -   on success.

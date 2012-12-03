@@ -537,6 +537,7 @@ ssize_t _mosquitto_net_read(struct mosquitto *mosq, void *buf, size_t count)
 	unsigned long e;
 #endif
 	assert(mosq);
+	errno = 0;
 #ifdef WITH_TLS
 	if(mosq->ssl){
 		ret = SSL_read(mosq->ssl, buf, count);
@@ -586,6 +587,7 @@ ssize_t _mosquitto_net_write(struct mosquitto *mosq, void *buf, size_t count)
 #endif
 	assert(mosq);
 
+	errno = 0;
 #ifdef WITH_TLS
 	if(mosq->ssl){
 		ret = SSL_write(mosq->ssl, buf, count);
