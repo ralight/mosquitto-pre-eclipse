@@ -1010,7 +1010,7 @@ class Mosquitto:
         else:
             return self._sock
 
-    def loop_forever(self):
+    def loop_forever(self, timeout=1.0, max_packets=1):
         """This function call loop() for you in an infinite blocking loop. It
         is useful for the case where you only want to run the MQTT client loop
         in your program.
@@ -1025,7 +1025,7 @@ class Mosquitto:
         while run == True:
             rc = MOSQ_ERR_SUCCESS
             while rc == MOSQ_ERR_SUCCESS:
-                rc = self.loop()
+                rc = self.loop(timeout, max_packets)
 
             if self._state == mosq_cs_disconnecting:
                 run = False

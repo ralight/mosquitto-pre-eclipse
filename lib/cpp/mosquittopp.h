@@ -90,7 +90,7 @@ class mosqpp_EXPORT mosquittopp {
 		int loop_misc();
 		int loop_read(int max_packets=1);
 		int loop_write(int max_packets=1);
-		int loop_forever();
+		int loop_forever(int timeout=-1, int max_packets=1);
 		int loop_start();
 		int loop_stop(bool force=false);
 		bool want_write();
