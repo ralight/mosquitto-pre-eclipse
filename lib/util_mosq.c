@@ -262,6 +262,10 @@ int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result
 				while(tpos < tlen && local_topic[tpos] != '/'){
 					tpos++;
 				}
+				if(tpos == tlen && spos == slen){
+					*result = true;
+					break;
+				}
 			}else if(local_sub[spos] == '#'){
 				multilevel_wildcard = true;
 				if(spos+1 != slen){
