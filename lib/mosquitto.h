@@ -586,6 +586,18 @@ libmosq_EXPORT int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_p
  *
  * Parameters:
  *  mosq - a valid mosquitto instance.
+ *	timeout -     Maximum number of milliseconds to wait for network activity
+ *	              in the select() call before timing out. Set to 0 for instant
+ *	              return.  Set negative to use the default of 1000ms.
+ *	max_packets - the maximum number of packets to process in this call. Must
+ *	              be >0. If set to 1, only a single packet will be processed
+ *	              per call. Avoid setting too high if you have a high incoming
+ *	              message rate. If you are publishing using QoS>0 then you
+ *	              should set this parameter to be larger than the number of
+ *	              messages published since the last call to <mosquitto_loop>,
+ *	              otherwise the outgoing message rate may not keep up with the
+ *	              calls to <mosquitto_publish> and a message backlog will
+ *	              occur.
  *
  * Returns:
  *	MOSQ_ERR_SUCCESS -   on success.
@@ -603,7 +615,7 @@ libmosq_EXPORT int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_p
  * See Also:
  *	<mosquitto_loop>, <mosquitto_loop_start>
  */
-libmosq_EXPORT int mosquitto_loop_forever(struct mosquitto *mosq);
+libmosq_EXPORT int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets);
 
 /*
  * Function: mosquitto_loop_start

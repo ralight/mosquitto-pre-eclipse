@@ -759,7 +759,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 	return mosquitto_loop_misc(mosq);
 }
 
-int mosquitto_loop_forever(struct mosquitto *mosq)
+int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 {
 	int run = 1;
 	int rc;
@@ -772,7 +772,7 @@ int mosquitto_loop_forever(struct mosquitto *mosq)
 
 	while(run){
 		do{
-			rc = mosquitto_loop(mosq, -1, 1);
+			rc = mosquitto_loop(mosq, timeout, max_packets);
 		}while(rc == MOSQ_ERR_SUCCESS);
 		if(mosq->state == mosq_cs_disconnecting){
 			run = 0;

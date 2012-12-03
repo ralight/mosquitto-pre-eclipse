@@ -232,9 +232,9 @@ int mosquittopp::loop_write(int max_packets)
 	return mosquitto_loop_write(m_mosq, max_packets);
 }
 
-int mosquittopp::loop_forever()
+int mosquittopp::loop_forever(int timeout, int max_packets)
 {
-	return mosquitto_loop_forever(m_mosq);
+	return mosquitto_loop_forever(m_mosq, timeout, max_packets);
 }
 
 int mosquittopp::loop_start()

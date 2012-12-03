@@ -544,7 +544,7 @@ int main(int argc, char *argv[])
 		mosquitto_lib_cleanup();
 	}
 
-	rc = mosquitto_loop_forever(mosq);
+	rc = mosquitto_loop_forever(mosq, -1, 1);
 
 	mosquitto_destroy(mosq);
 	mosquitto_lib_cleanup();
