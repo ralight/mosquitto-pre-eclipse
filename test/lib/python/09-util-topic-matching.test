@@ -31,25 +31,32 @@ import mosquitto
 import sys
 
 if mosquitto.topic_matches_sub("foo/bar", "foo/bar") == False:
+    print("ERROR: foo/bar : foo/bar")
     sys.exit(1)
 if mosquitto.topic_matches_sub("foo/+", "foo/bar") == False:
+    print("ERROR: foo/+ : foo/bar")
     sys.exit(1)
 if mosquitto.topic_matches_sub("foo/+/baz", "foo/bar/baz") == False:
+    print("ERROR: foo/+/baz : foo/bar/baz")
     sys.exit(1)
-
-if mosquitto.topic_matches_sub("foo/+/#", "foo/bar/baz") == True:
+if mosquitto.topic_matches_sub("foo/+/#", "foo/bar/baz") == False:
+    print("ERROR: foo/+/# : foo/bar/baz")
     sys.exit(1)
-if mosquitto.topic_matches_sub("#", "foo/bar/baz") == True:
+if mosquitto.topic_matches_sub("#", "foo/bar/baz") == False:
+    print("ERROR: # : foo/bar/baz")
     sys.exit(1)
 
 if mosquitto.topic_matches_sub("foo/bar", "foo") == True:
+    print("ERROR: foo/bar : foo")
     sys.exit(1)
 if mosquitto.topic_matches_sub("foo/+", "foo/bar/baz") == True:
+    print("ERROR: foo/+ : foo/bar/baz")
     sys.exit(1)
 if mosquitto.topic_matches_sub("foo/+/baz", "foo/bar/bar") == True:
+    print("ERROR: foo/+/baz : foo/bar/bar")
     sys.exit(1)
-
 if mosquitto.topic_matches_sub("foo/+/#", "fo2/bar/baz") == True:
+    print("ERROR: foo/+/# : foo/bar/baz")
     sys.exit(1)
 
 sys.exit(0)
