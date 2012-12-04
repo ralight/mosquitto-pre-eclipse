@@ -55,7 +55,7 @@ int _mosquitto_handle_connack(struct mosquitto *mosq)
 	pthread_mutex_lock(&mosq->callback_mutex);
 	if(mosq->on_connect){
 		mosq->in_callback = true;
-		mosq->on_connect(mosq, mosq->obj, result);
+		mosq->on_connect(mosq, mosq->userdata, result);
 		mosq->in_callback = false;
 	}
 	pthread_mutex_unlock(&mosq->callback_mutex);

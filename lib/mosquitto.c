@@ -91,7 +91,7 @@ int mosquitto_lib_cleanup(void)
 	return MOSQ_ERR_SUCCESS;
 }
 
-struct mosquitto *mosquitto_new(const char *id, bool clean_session, void *obj)
+struct mosquitto *mosquitto_new(const char *id, bool clean_session, void *userdata)
 {
 	struct mosquitto *mosq = NULL;
 	int rc;
@@ -111,7 +111,7 @@ struct mosquitto *mosquitto_new(const char *id, bool clean_session, void *obj)
 #ifdef WITH_THREADING
 		mosq->thread_id = pthread_self();
 #endif
-		rc = mosquitto_reinitialise(mosq, id, clean_session, obj);
+		rc = mosquitto_reinitialise(mosq, id, clean_session, userdata);
 		if(rc){
 			mosquitto_destroy(mosq);
 			if(rc == MOSQ_ERR_INVAL){
@@ -127,7 +127,7 @@ struct mosquitto *mosquitto_new(const char *id, bool clean_session, void *obj)
 	return mosq;
 }
 
-int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_session, void *obj)
+int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_session, void *userdata)
 {
 	int i;
 
@@ -140,10 +140,10 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 	_mosquitto_destroy(mosq);
 	memset(mosq, 0, sizeof(struct mosquitto));
 
-	if(obj){
-		mosq->obj = obj;
+	if(userdata){
+		mosq->userdata = userdata;
 	}else{
-		mosq->obj = mosq;
+		mosq->userdata = mosq;
 	}
 	mosq->sock = INVALID_SOCKET;
 	mosq->keepalive = 60;
@@ -729,7 +729,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 				pthread_mutex_lock(&mosq->callback_mutex);
 				if(mosq->on_disconnect){
 					mosq->in_callback = true;
-					mosq->on_disconnect(mosq, mosq->obj, rc);
+					mosq->on_disconnect(mosq, mosq->userdata, rc);
 					mosq->in_callback = false;
 				}
 				pthread_mutex_unlock(&mosq->callback_mutex);
@@ -748,7 +748,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 				pthread_mutex_lock(&mosq->callback_mutex);
 				if(mosq->on_disconnect){
 					mosq->in_callback = true;
-					mosq->on_disconnect(mosq, mosq->obj, rc);
+					mosq->on_disconnect(mosq, mosq->userdata, rc);
 					mosq->in_callback = false;
 				}
 				pthread_mutex_unlock(&mosq->callback_mutex);
@@ -816,7 +816,7 @@ int mosquitto_loop_misc(struct mosquitto *mosq)
 		pthread_mutex_lock(&mosq->callback_mutex);
 		if(mosq->on_disconnect){
 			mosq->in_callback = true;
-			mosq->on_disconnect(mosq, mosq->obj, rc);
+			mosq->on_disconnect(mosq, mosq->userdata, rc);
 			mosq->in_callback = false;
 		}
 		pthread_mutex_unlock(&mosq->callback_mutex);
@@ -913,10 +913,10 @@ void mosquitto_log_callback_set(struct mosquitto *mosq, void (*on_log)(struct mo
 	pthread_mutex_unlock(&mosq->log_callback_mutex);
 }
 
-void mosquitto_user_data_set(struct mosquitto *mosq, void *obj)
+void mosquitto_user_data_set(struct mosquitto *mosq, void *userdata)
 {
 	if(mosq){
-		mosq->obj = obj;
+		mosq->userdata = userdata;
 	}
 }
 

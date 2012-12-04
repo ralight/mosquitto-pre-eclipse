@@ -305,19 +305,19 @@ class Mosquitto:
     broker. To use a callback, define a function and then assign it to the
     client:
     
-    def on_connect(mosq, obj, rc):
+    def on_connect(mosq, userdata, rc):
         print("Connection returned " + str(rc))
 
     client.on_connect = on_connect
 
-    All of the callbacks as described below have a "mosq" and an "obj"
+    All of the callbacks as described below have a "mosq" and an "userdata"
     argument. "mosq" is the Mosquitto instance that is calling the callback.
-    "obj" is user data of any type and can be set when creating a new client
-    instance or with user_data_set(obj).
+    "userdata" is user data of any type and can be set when creating a new client
+    instance or with user_data_set(userdata).
     
     The callbacks:
 
-    on_connect(mosq, obj, rc): called when the broker responds to our connection
+    on_connect(mosq, userdata, rc): called when the broker responds to our connection
       request. The value of rc determines success or not:
       0: Connection successful
       1: Connection refused - incorrect protocol version
@@ -327,17 +327,17 @@ class Mosquitto:
       5: Connection refused - not authorised
       6-255: Currently unused.
 
-    on_disconnect(mosq, obj, rc): called when the client disconnects from the broker.
+    on_disconnect(mosq, userdata, rc): called when the client disconnects from the broker.
       The rc parameter indicates the disconnection state. If MOSQ_ERR_SUCCESS
       (0), the callback was called in response to a disconnect() call. If any
       other value the disconnection was unexpected, such as might be caused by
       a network error.
 
-    on_message(mosq, obj, message): called when a message has been received on a
+    on_message(mosq, userdata, message): called when a message has been received on a
       topic that the client subscribes to. The message variable is a
       MosquittoMessage that describes all of the message parameters.
 
-    on_publish(mosq, obj, mid): called when a message that was to be sent using the
+    on_publish(mosq, userdata, mid): called when a message that was to be sent using the
       publish() call has completed transmission to the broker. For messages
       with QoS levels 1 and 2, this means that the appropriate handshakes have
       completed. For QoS 0, this simply means that the message has left the
@@ -346,23 +346,23 @@ class Mosquitto:
       This callback is important because even if the publish() call returns
       success, it does not always mean that the message has been sent.
 
-    on_subscribe(mosq, obj, mid, granted_qos): called when the broker responds to a
+    on_subscribe(mosq, userdata, mid, granted_qos): called when the broker responds to a
       subscribe request. The mid variable matches the mid variable returned
       from the corresponding subscribe() call. The granted_qos variable is a
       list of integers that give the QoS level the broker has granted for each
       of the different subscription requests.
 
-    on_unsubscribe(mosq, obj, mid): called when the broker responds to an unsubscribe
+    on_unsubscribe(mosq, userdata, mid): called when the broker responds to an unsubscribe
       request. The mid variable matches the mid variable returned from the
       corresponding unsubscribe() call.
 
-    on_log(mosq, obj, level, buf): called when the client has log information. Define
+    on_log(mosq, userdata, level, buf): called when the client has log information. Define
       to allow debugging. The level variable gives the severity of the message
       and will be one of MOSQ_LOG_INFO, MOSQ_LOG_NOTICE, MOSQ_LOG_WARNING,
       MOSQ_LOG_ERR, and MOSQ_LOG_DEBUG. The message itself is in buf.
 
     """
-    def __init__(self, client_id="", clean_session=True, obj=None):
+    def __init__(self, client_id="", clean_session=True, userdata=None):
         """client_id is the unique client id string used when connecting to the
         broker. If client_id is zero length or None, then one will be randomly
         generated. In this case, clean_session must be True. If this is not the
@@ -377,14 +377,14 @@ class Mosquitto:
         disconnect. Calling connect() or reconnect() will cause the messages to
         be resent.  Use reinitialise() to reset a client to its original state.
 
-        obj is user defined data of any type that is passed as the "obj"
+        userdata is user defined data of any type that is passed as the "userdata"
         parameter to callbacks. It may be updated at a later point with the
         user_data_set() function.
         """
         if clean_session == False and (client_id == "" or client_id == None):
             raise ValueError('A client id must be provided if clean session is False.')
 
-        self._obj = obj
+        self._userdata = userdata
         self._sock = None
         self._keepalive = 60
         self._message_retry = 20
@@ -439,7 +439,7 @@ class Mosquitto:
     def __del__(self):
         pass
 
-    def reinitialise(self, client_id="", clean_session=True, obj=None):
+    def reinitialise(self, client_id="", clean_session=True, userdata=None):
         if self._ssl:
             self._ssl.close()
             self._ssl = None
@@ -447,7 +447,7 @@ class Mosquitto:
         elif self._sock:
             self._sock.close()
             self._sock = None
-        self.__init__(client_id, clean_session, obj)
+        self.__init__(client_id, clean_session, userdata)
 
     def tls_set(self, ca_certs, certfile=None, keyfile=None, cert_reqs=ssl.CERT_REQUIRED, tls_version=ssl.PROTOCOL_TLSv1, ciphers=None):
         """Configure network encryption and authentication options. Enables SSL/TLS support.
@@ -678,7 +678,7 @@ class Mosquitto:
                 self._callback_mutex.acquire()
                 if self.on_disconnect:
                     self._in_callback = True
-                    self.on_disconnect(self, self._obj, rc)
+                    self.on_disconnect(self, self._userdata, rc)
                     self._in_callback = False
 
                 self._callback_mutex.release()
@@ -701,7 +701,7 @@ class Mosquitto:
                 self._callback_mutex.acquire()
                 if self.on_disconnect:
                     self._in_callback = True
-                    self.on_disconnect(self, self._obj, rc)
+                    self.on_disconnect(self, self._userdata, rc)
                     self._in_callback = False
                 self._callback_mutex.release()
                 return rc
@@ -938,7 +938,7 @@ class Mosquitto:
                 rc = 1
             if self.on_disconnect:
                 self._in_callback = True
-                self.on_disconnect(self, self._obj, rc)
+                self.on_disconnect(self, self._userdata, rc)
                 self._in_callback = False
             self._callback_mutex.release()
             return MOSQ_ERR_CONN_LOST
@@ -953,9 +953,9 @@ class Mosquitto:
 
         self._message_retry = retry
 
-    def user_data_set(self, obj):
+    def user_data_set(self, userdata):
         """Set the user data variable passed to callbacks. May be any data type."""
-        self._obj = obj
+        self._userdata = userdata
 
     def will_set(self, topic, payload=None, qos=0, retain=False):
         """Set a Will to be sent by the broker in case the client disconnects unexpectedly.
@@ -1187,7 +1187,7 @@ class Mosquitto:
                         self._callback_mutex.acquire()
                         if self.on_publish:
                             self._in_callback = True
-                            self.on_publish(self, self._obj, packet.mid)
+                            self.on_publish(self, self._userdata, packet.mid)
                             self._in_callback = False
 
                         self._callback_mutex.release()
@@ -1211,7 +1211,7 @@ class Mosquitto:
 
     def _easy_log(self, level, buf):
         if self.on_log:
-            self.on_log(self, self._obj, level, buf)
+            self.on_log(self, self._userdata, level, buf)
 
     def _check_keepalive(self):
         now = time.time()
@@ -1237,7 +1237,7 @@ class Mosquitto:
                 self._callback_mutex.acquire()
                 if self.on_disconnect:
                     self._in_callback = True
-                    self.on_disconnect(self, self._obj, rc)
+                    self.on_disconnect(self, self._userdata, rc)
                     self._in_callback = False
                 self._callback_mutex.release()
 
@@ -1563,7 +1563,7 @@ class Mosquitto:
         self._callback_mutex.acquire()
         if self.on_connect:
             self._in_callback = True
-            self.on_connect(self, self._obj, result)
+            self.on_connect(self, self._userdata, result)
             self._in_callback = False
         self._callback_mutex.release()
         if result == 0:
@@ -1584,7 +1584,7 @@ class Mosquitto:
         self._callback_mutex.acquire()
         if self.on_subscribe:
             self._in_callback = True
-            self.on_subscribe(self, self._obj, mid, granted_qos)
+            self.on_subscribe(self, self._userdata, mid, granted_qos)
             self._in_callback = False
         self._callback_mutex.release()
 
@@ -1628,7 +1628,7 @@ class Mosquitto:
             self._callback_mutex.acquire()
             if self.on_message:
                 self._in_callback = True
-                self.on_message(self, self._obj, message)
+                self.on_message(self, self._userdata, message)
                 self._in_callback = False
 
             self._callback_mutex.release()
@@ -1638,7 +1638,7 @@ class Mosquitto:
             self._callback_mutex.acquire()
             if self.on_message:
                 self._in_callback = True
-                self.on_message(self, self._obj, message)
+                self.on_message(self, self._userdata, message)
                 self._in_callback = False
 
             self._callback_mutex.release()
@@ -1671,7 +1671,7 @@ class Mosquitto:
                 self._callback_mutex.acquire()
                 if self.on_message:
                     self._in_callback = True
-                    self.on_message(self, self._obj, self._messages[i])
+                    self.on_message(self, self._userdata, self._messages[i])
                     self._in_callback = False
                 self._callback_mutex.release()
                 self._messages.pop(i)
@@ -1708,7 +1708,7 @@ class Mosquitto:
         self._callback_mutex.acquire()
         if self.on_unsubscribe:
             self._in_callback = True
-            self.on_unsubscribe(self, self._obj, mid)
+            self.on_unsubscribe(self, self._userdata, mid)
             self._in_callback = False
         self._callback_mutex.release()
         return MOSQ_ERR_SUCCESS
@@ -1729,7 +1729,7 @@ class Mosquitto:
                     self._callback_mutex.acquire()
                     if self.on_publish:
                         self._in_callback = True
-                        self.on_publish(self, self._obj, mid)
+                        self.on_publish(self, self._userdata, mid)
                         self._in_callback = False
 
                     self._callback_mutex.release()

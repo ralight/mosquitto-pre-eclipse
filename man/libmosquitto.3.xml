@@ -70,7 +70,7 @@
 			<funcsynopsis><funcprototype><funcdef>struct mosquitto *<function>mosquitto_new</function></funcdef>
 					<paramdef>const char *<parameter>id</parameter></paramdef>
 					<paramdef>bool <parameter>clean_session</parameter></paramdef>
-					<paramdef>void *<parameter>obj</parameter></paramdef>
+					<paramdef>void *<parameter>userdata</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 			<para>Create a new mosquitto client instance.</para>
 
@@ -83,7 +83,7 @@
 					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
 					<paramdef>const char *<parameter>id</parameter></paramdef>
 					<paramdef>bool <parameter>clean_session</parameter></paramdef>
-					<paramdef>void *<parameter>obj</parameter></paramdef>
+					<paramdef>void *<parameter>userdata</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 		</refsect2>
 
@@ -218,6 +218,12 @@
 					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
+			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_loop_forever</function></funcdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>int <parameter>timeout</parameter></paramdef>
+					<paramdef>int <parameter>max_packets</parameter></paramdef>
+			</funcprototype></funcsynopsis>
+
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_socket</function></funcdef>
 					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
 			</funcprototype></funcsynopsis>
@@ -250,7 +256,7 @@
 
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_user_data_set</function></funcdef>
 					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
-					<paramdef>void *<parameter>obj</parameter></paramdef>
+					<paramdef>void *<parameter>userdata</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 		</refsect2>
 
@@ -338,7 +344,7 @@
 #include &lt;stdio.h&gt;
 #include &lt;mosquitto.h&gt;
 
-void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
+void my_message_callback(struct mosquitto *mosq, void *userdata, const struct mosquitto_message *message)
 {
 	if(message->payloadlen){
 		printf("%s %s\n", message->topic, message->payload);
@@ -348,7 +354,7 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 	fflush(stdout);
 }
 
-void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
+void my_connect_callback(struct mosquitto *mosq, void *userdata, int result)
 {
 	int i;
 	if(!result){
@@ -359,7 +365,7 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 	}
 }
 
-void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos)
+void my_subscribe_callback(struct mosquitto *mosq, void *userdata, int mid, int qos_count, const int *granted_qos)
 {
 	int i;
 
@@ -370,7 +376,7 @@ void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_c
 	printf("\n");
 }
 
-void my_log_callback(struct mosquitto *mosq, void *obj, int level, const char *str)
+void my_log_callback(struct mosquitto *mosq, void *userdata, int level, const char *str)
 {
 	/* Pring all log messages regardless of level. */
 	printf("%s\n", str);

@@ -41,6 +41,8 @@ Client library:
 - Fix document error for mosquitto_message_retry_set().
 - Fix mosquitto_topic_matches_sub() for subscriptions with + as the final
   character. Fixes bug #1085797.
+- Rename all "obj" parameters to "userdata" for consistency with other
+  libraries.
 
 Clients:
 - Clients now display their own version number and library version number in
