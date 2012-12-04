@@ -105,7 +105,7 @@ int _mosquitto_handle_pubackcomp(struct mosquitto *mosq, const char *type)
 		pthread_mutex_lock(&mosq->callback_mutex);
 		if(mosq->on_publish){
 			mosq->in_callback = true;
-			mosq->on_publish(mosq, mosq->obj, mid);
+			mosq->on_publish(mosq, mosq->userdata, mid);
 			mosq->in_callback = false;
 		}
 		pthread_mutex_unlock(&mosq->callback_mutex);
@@ -176,7 +176,7 @@ int _mosquitto_handle_pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 		pthread_mutex_lock(&mosq->callback_mutex);
 		if(mosq->on_message){
 			mosq->in_callback = true;
-			mosq->on_message(mosq, mosq->obj, &message->msg);
+			mosq->on_message(mosq, mosq->userdata, &message->msg);
 			mosq->in_callback = false;
 		}
 		pthread_mutex_unlock(&mosq->callback_mutex);
@@ -223,7 +223,7 @@ int _mosquitto_handle_suback(struct mosquitto *mosq)
 	pthread_mutex_lock(&mosq->callback_mutex);
 	if(mosq->on_subscribe){
 		mosq->in_callback = true;
-		mosq->on_subscribe(mosq, mosq->obj, mid, qos_count, granted_qos);
+		mosq->on_subscribe(mosq, mosq->userdata, mid, qos_count, granted_qos);
 		mosq->in_callback = false;
 	}
 	pthread_mutex_unlock(&mosq->callback_mutex);
@@ -255,7 +255,7 @@ int _mosquitto_handle_unsuback(struct mosquitto *mosq)
 	pthread_mutex_lock(&mosq->callback_mutex);
 	if(mosq->on_unsubscribe){
 		mosq->in_callback = true;
-	   	mosq->on_unsubscribe(mosq, mosq->obj, mid);
+	   	mosq->on_unsubscribe(mosq, mosq->userdata, mid);
 		mosq->in_callback = false;
 	}
 	pthread_mutex_unlock(&mosq->callback_mutex);

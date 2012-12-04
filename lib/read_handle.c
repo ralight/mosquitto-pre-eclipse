@@ -137,7 +137,7 @@ int _mosquitto_handle_publish(struct mosquitto *mosq)
 			pthread_mutex_lock(&mosq->callback_mutex);
 			if(mosq->on_message){
 				mosq->in_callback = true;
-				mosq->on_message(mosq, mosq->obj, &message->msg);
+				mosq->on_message(mosq, mosq->userdata, &message->msg);
 				mosq->in_callback = false;
 			}
 			pthread_mutex_unlock(&mosq->callback_mutex);
@@ -148,7 +148,7 @@ int _mosquitto_handle_publish(struct mosquitto *mosq)
 			pthread_mutex_lock(&mosq->callback_mutex);
 			if(mosq->on_message){
 				mosq->in_callback = true;
-				mosq->on_message(mosq, mosq->obj, &message->msg);
+				mosq->on_message(mosq, mosq->userdata, &message->msg);
 				mosq->in_callback = false;
 			}
 			pthread_mutex_unlock(&mosq->callback_mutex);

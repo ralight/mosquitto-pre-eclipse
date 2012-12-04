@@ -683,7 +683,7 @@ int _mosquitto_packet_write(struct mosquitto *mosq)
 			if(mosq->on_publish){
 				/* This is a QoS=0 message */
 				mosq->in_callback = true;
-				mosq->on_publish(mosq, mosq->obj, packet->mid);
+				mosq->on_publish(mosq, mosq->userdata, packet->mid);
 				mosq->in_callback = false;
 			}
 			pthread_mutex_unlock(&mosq->callback_mutex);

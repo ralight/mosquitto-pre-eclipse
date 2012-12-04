@@ -58,7 +58,7 @@ int _mosquitto_log_printf(struct mosquitto *mosq, int priority, const char *fmt,
 		va_end(va);
 		s[len-1] = '\0'; /* Ensure string is null terminated. */
 
-		mosq->on_log(mosq, mosq->obj, priority, s);
+		mosq->on_log(mosq, mosq->userdata, priority, s);
 
 		_mosquitto_free(s);
 	}

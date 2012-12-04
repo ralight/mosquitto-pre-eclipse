@@ -139,7 +139,7 @@ void _mosquitto_check_keepalive(struct mosquitto *mosq)
 			pthread_mutex_lock(&mosq->callback_mutex);
 			if(mosq->on_disconnect){
 				mosq->in_callback = true;
-				mosq->on_disconnect(mosq, mosq->obj, rc);
+				mosq->on_disconnect(mosq, mosq->userdata, rc);
 				mosq->in_callback = false;
 			}
 			pthread_mutex_unlock(&mosq->callback_mutex);

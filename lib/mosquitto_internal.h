@@ -164,18 +164,18 @@ struct mosquitto {
 	time_t disconnect_t;
 	int pollfd_index;
 #else
-	void *obj;
+	void *userdata;
 	bool in_callback;
 	unsigned int message_retry;
 	time_t last_retry_check;
 	struct mosquitto_message_all *messages;
-	void (*on_connect)(struct mosquitto *, void *obj, int rc);
-	void (*on_disconnect)(struct mosquitto *, void *obj, int rc);
-	void (*on_publish)(struct mosquitto *, void *obj, int mid);
-	void (*on_message)(struct mosquitto *, void *obj, const struct mosquitto_message *message);
-	void (*on_subscribe)(struct mosquitto *, void *obj, int mid, int qos_count, const int *granted_qos);
-	void (*on_unsubscribe)(struct mosquitto *, void *obj, int mid);
-	void (*on_log)(struct mosquitto *, void *obj, int level, const char *str);
+	void (*on_connect)(struct mosquitto *, void *userdata, int rc);
+	void (*on_disconnect)(struct mosquitto *, void *userdata, int rc);
+	void (*on_publish)(struct mosquitto *, void *userdata, int mid);
+	void (*on_message)(struct mosquitto *, void *userdata, const struct mosquitto_message *message);
+	void (*on_subscribe)(struct mosquitto *, void *userdata, int mid, int qos_count, const int *granted_qos);
+	void (*on_unsubscribe)(struct mosquitto *, void *userdata, int mid);
+	void (*on_log)(struct mosquitto *, void *userdata, int level, const char *str);
 	//void (*on_error)();
 	char *host;
 	int port;

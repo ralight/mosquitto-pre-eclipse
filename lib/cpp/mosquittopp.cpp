@@ -33,46 +33,46 @@ POSSIBILITY OF SUCH DAMAGE.
 
 namespace mosqpp {
 
-static void on_connect_wrapper(struct mosquitto *mosq, void *obj, int rc)
+static void on_connect_wrapper(struct mosquitto *mosq, void *userdata, int rc)
 {
-	class mosquittopp *m = (class mosquittopp *)obj;
+	class mosquittopp *m = (class mosquittopp *)userdata;
 	m->on_connect(rc);
 }
 
-static void on_disconnect_wrapper(struct mosquitto *mosq, void *obj, int rc)
+static void on_disconnect_wrapper(struct mosquitto *mosq, void *userdata, int rc)
 {
-	class mosquittopp *m = (class mosquittopp *)obj;
+	class mosquittopp *m = (class mosquittopp *)userdata;
 	m->on_disconnect(rc);
 }
 
-static void on_publish_wrapper(struct mosquitto *mosq, void *obj, int mid)
+static void on_publish_wrapper(struct mosquitto *mosq, void *userdata, int mid)
 {
-	class mosquittopp *m = (class mosquittopp *)obj;
+	class mosquittopp *m = (class mosquittopp *)userdata;
 	m->on_publish(mid);
 }
 
-static void on_message_wrapper(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
+static void on_message_wrapper(struct mosquitto *mosq, void *userdata, const struct mosquitto_message *message)
 {
-	class mosquittopp *m = (class mosquittopp *)obj;
+	class mosquittopp *m = (class mosquittopp *)userdata;
 	m->on_message(message);
 }
 
-static void on_subscribe_wrapper(struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos)
+static void on_subscribe_wrapper(struct mosquitto *mosq, void *userdata, int mid, int qos_count, const int *granted_qos)
 {
-	class mosquittopp *m = (class mosquittopp *)obj;
+	class mosquittopp *m = (class mosquittopp *)userdata;
 	m->on_subscribe(mid, qos_count, granted_qos);
 }
 
-static void on_unsubscribe_wrapper(struct mosquitto *mosq, void *obj, int mid)
+static void on_unsubscribe_wrapper(struct mosquitto *mosq, void *userdata, int mid)
 {
-	class mosquittopp *m = (class mosquittopp *)obj;
+	class mosquittopp *m = (class mosquittopp *)userdata;
 	m->on_unsubscribe(mid);
 }
 
 
-static void on_log_wrapper(struct mosquitto *mosq, void *obj, int level, const char *str)
+static void on_log_wrapper(struct mosquitto *mosq, void *userdata, int level, const char *str)
 {
-	class mosquittopp *m = (class mosquittopp *)obj;
+	class mosquittopp *m = (class mosquittopp *)userdata;
 	m->on_log(level, str);
 }
 
@@ -252,9 +252,9 @@ bool mosquittopp::want_write()
 	return mosquitto_want_write(m_mosq);
 }
 
-void mosquittopp::user_data_set(void *obj)
+void mosquittopp::user_data_set(void *userdata)
 {
-	mosquitto_user_data_set(m_mosq, obj);
+	mosquitto_user_data_set(m_mosq, userdata);
 }
 
 int mosquittopp::tls_set(const char *cafile, const char *capath, const char *certfile, const char *keyfile, int (*pw_callback)(char *buf, int size, int rwflag, void *userdata))
