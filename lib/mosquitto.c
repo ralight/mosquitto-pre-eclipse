@@ -189,6 +189,7 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 	mosq->host = NULL;
 	mosq->port = 1883;
 	mosq->in_callback = false;
+	mosq->queue_len = 0;
 #ifdef WITH_TLS
 	mosq->ssl = NULL;
 #endif
@@ -831,6 +832,11 @@ int mosquitto_loop_read(struct mosquitto *mosq, int max_packets)
 	int i;
 	if(max_packets < 1) return MOSQ_ERR_INVAL;
 
+	max_packets = mosq->queue_len;
+	if(max_packets < 1) max_packets = 1;
+	/* Queue len here tells us how many messages are awaiting processing and
+	 * have QoS > 0. We should try to deal with that many in this loop in order
+	 * to keep up. */
 	for(i=0; i<max_packets; i++){
 		rc = _mosquitto_packet_read(mosq);
 		if(rc || errno == EAGAIN || errno == COMPAT_EWOULDBLOCK){
@@ -846,6 +852,11 @@ int mosquitto_loop_write(struct mosquitto *mosq, int max_packets)
 	int i;
 	if(max_packets < 1) return MOSQ_ERR_INVAL;
 
+	max_packets = mosq->queue_len;
+	if(max_packets < 1) max_packets = 1;
+	/* Queue len here tells us how many messages are awaiting processing and
+	 * have QoS > 0. We should try to deal with that many in this loop in order
+	 * to keep up. */
 	for(i=0; i<max_packets; i++){
 		rc = _mosquitto_packet_write(mosq);
 		if(rc || errno == EAGAIN || errno == COMPAT_EWOULDBLOCK){

@@ -179,6 +179,7 @@ struct mosquitto {
 	//void (*on_error)();
 	char *host;
 	int port;
+	int queue_len;
 #endif
 };
 

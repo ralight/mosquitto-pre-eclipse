@@ -120,6 +120,7 @@ void _mosquitto_message_queue(struct mosquitto *mosq, struct mosquitto_message_a
 	assert(mosq);
 	assert(message);
 
+	mosq->queue_len++;
 	message->next = NULL;
 	if(mosq->messages){
 		tail = mosq->messages;
@@ -138,6 +139,7 @@ void _mosquitto_messages_reconnect_reset(struct mosquitto *mosq)
 	struct mosquitto_message_all *prev = NULL;
 	assert(mosq);
 
+	mosq->queue_len = 0;
 	message = mosq->messages;
 	while(message){
 		message->timestamp = 0;
@@ -147,6 +149,7 @@ void _mosquitto_messages_reconnect_reset(struct mosquitto *mosq)
 			}else if(message->msg.qos == 2){
 				message->state = mosq_ms_wait_pubrec;
 			}
+			mosq->queue_len++;
 		}else{
 			if(prev){
 				prev->next = message->next;
@@ -178,6 +181,7 @@ int _mosquitto_message_remove(struct mosquitto *mosq, uint16_t mid, enum mosquit
 				mosq->messages = cur->next;
 			}
 			*message = cur;
+			mosq->queue_len--;
 			return MOSQ_ERR_SUCCESS;
 		}
 		prev = cur;

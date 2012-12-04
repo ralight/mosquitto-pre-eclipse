@@ -547,15 +547,7 @@ libmosq_EXPORT void mosquitto_message_free(struct mosquitto_message **message);
  *	timeout -     Maximum number of milliseconds to wait for network activity
  *	              in the select() call before timing out. Set to 0 for instant
  *	              return.  Set negative to use the default of 1000ms.
- *	max_packets - the maximum number of packets to process in this call. Must
- *	              be >0. If set to 1, only a single packet will be processed
- *	              per call. Avoid setting too high if you have a high incoming
- *	              message rate. If you are publishing using QoS>0 then you
- *	              should set this parameter to be larger than the number of
- *	              messages published since the last call to <mosquitto_loop>,
- *	              otherwise the outgoing message rate may not keep up with the
- *	              calls to <mosquitto_publish> and a message backlog will
- *	              occur.
+ *	max_packets - this parameter is currently unused.
  * 
  * Returns:
  *	MOSQ_ERR_SUCCESS -   on success.
@@ -589,15 +581,7 @@ libmosq_EXPORT int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_p
  *	timeout -     Maximum number of milliseconds to wait for network activity
  *	              in the select() call before timing out. Set to 0 for instant
  *	              return.  Set negative to use the default of 1000ms.
- *	max_packets - the maximum number of packets to process in this call. Must
- *	              be >0. If set to 1, only a single packet will be processed
- *	              per call. Avoid setting too high if you have a high incoming
- *	              message rate. If you are publishing using QoS>0 then you
- *	              should set this parameter to be larger than the number of
- *	              messages published since the last call to <mosquitto_loop>,
- *	              otherwise the outgoing message rate may not keep up with the
- *	              calls to <mosquitto_publish> and a message backlog will
- *	              occur.
+ *	max_packets - this parameter is currently unused.
  *
  * Returns:
  *	MOSQ_ERR_SUCCESS -   on success.
@@ -684,15 +668,7 @@ libmosq_EXPORT int mosquitto_socket(struct mosquitto *mosq);
  *
  * Parameters:
  *	mosq -        a valid mosquitto instance.
- *	max_packets - the maximum number of packets to process in this call. Must
- *	              be >0. If set to 1, only a single packet will be processed
- *	              per call. Avoid setting too high if you have a high incoming
- *	              message rate. If you are publishing using QoS>0 then you
- *	              should set this parameter to be larger than the number of
- *	              messages published since the last call to <mosquitto_loop>,
- *	              otherwise the outgoing message rate may not keep up with the
- *	              calls to <mosquitto_publish> and a message backlog will
- *	              occur.
+ *	max_packets - this parameter is currently unused.
  *
  * Returns:
  *	MOSQ_ERR_SUCCESS -   on success.
@@ -721,15 +697,7 @@ libmosq_EXPORT int mosquitto_loop_read(struct mosquitto *mosq, int max_packets);
  *
  * Parameters:
  *	mosq -        a valid mosquitto instance.
- *	max_packets - the maximum number of packets to process in this call. Must
- *	              be >0. If set to 1, only a single packet will be processed
- *	              per call. Avoid setting too high if you have a high incoming
- *	              message rate. If you are publishing using QoS>0 then you
- *	              should set this parameter to be larger than the number of
- *	              messages published since the last call to <mosquitto_loop>,
- *	              otherwise the outgoing message rate may not keep up with the
- *	              calls to <mosquitto_publish> and a message backlog will
- *	              occur.
+ *	max_packets - this parameter is currently unused.
  *
  * Returns:
  *	MOSQ_ERR_SUCCESS -   on success.
