@@ -865,6 +865,10 @@ class Mosquitto:
         if max_packets < 1:
             raise ValueError('Invalid max_packets.')
 
+        max_packets = len(self._messages)
+        if max_packets < 1:
+            max_packets = 1
+
         for i in range(0, max_packets):
             rc = self._packet_read()
             if rc > 0:
@@ -888,6 +892,10 @@ class Mosquitto:
 
         if max_packets < 1:
             raise ValueError('Invalid max_packets.')
+
+        max_packets = len(self._messages)
+        if max_packets < 1:
+            max_packets = 1
 
         for i in range(0, max_packets):
             rc = self._packet_write()

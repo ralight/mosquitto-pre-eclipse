@@ -43,6 +43,11 @@ Client library:
   character. Fixes bug #1085797.
 - Rename all "obj" parameters to "userdata" for consistency with other
   libraries.
+- Reset errno before network read/write to ensure EAGAIN isn't mistakenly
+  returned.
+- The message queue length is now tracked and used to determine the maximum
+  number of packets to process at once. This removes the need for the
+  max_packets parameter which is now unused.
 
 Clients:
 - Clients now display their own version number and library version number in
