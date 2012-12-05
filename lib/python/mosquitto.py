@@ -123,7 +123,7 @@ def _fix_sub_topic(subtopic):
 
 def error_string(mosq_errno):
     """Return the error string associated with a mosquitto error number."""
-    if mosq_errno == MOSQ_ERR_SUCESS:
+    if mosq_errno == MOSQ_ERR_SUCCESS:
         return "No error."
     elif mosq_errno == MOSQ_ERR_NOMEM:
         return "Out of memory."

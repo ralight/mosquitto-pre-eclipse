@@ -48,6 +48,8 @@ Client library:
 - The message queue length is now tracked and used to determine the maximum
   number of packets to process at once. This removes the need for the
   max_packets parameter which is now unused.
+- Fix incorrect error value in Python error_string() function. Fixes bug
+  #1086777.
 
 Clients:
 - Clients now display their own version number and library version number in
