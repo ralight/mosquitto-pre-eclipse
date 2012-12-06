@@ -50,6 +50,8 @@ Client library:
   max_packets parameter which is now unused.
 - Fix incorrect error value in Python error_string() function. Fixes bug
   #1086777.
+- Reset last message in/out timer in Python module when we send a PINGREQ.
+  Fixes too-early disconnects.
 
 Clients:
 - Clients now display their own version number and library version number in
