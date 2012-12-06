@@ -1189,11 +1189,12 @@ class Mosquitto:
             except socket.error as err:
                 self._current_out_packet_mutex.release()
                 (msg) = err
+                if self._ssl and (msg.errno == ssl.SSL_ERROR_WANT_READ or msg.errno == ssl.SSL_ERROR_WANT_WRITE):
+                    return MOSQ_ERR_AGAIN
                 if msg.errno == errno.EAGAIN:
-                    return MOSQ_ERR_SUCCESS
-                else:
-                    print(msg)
-                    return 1
+                    return MOSQ_ERR_AGAIN
+                print(msg)
+                return 1
 
             if write_length > 0:
                 packet.to_process = packet.to_process - write_length
