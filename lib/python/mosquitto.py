@@ -1240,6 +1240,10 @@ class Mosquitto:
         if (self._sock != None or self._ssl != None) and (now - last_msg_out >= self._keepalive or now - last_msg_in >= self._keepalive):
             if self._state == mosq_cs_connected and self._ping_t == 0:
                 self._send_pingreq()
+                self._msgtime_mutex.acquire()
+                self._last_msg_out = now
+                self._last_msg_in = now
+                self._msgtime_mutex.release()
             else:
                 if self._ssl:
                     self._ssl.close()
