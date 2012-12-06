@@ -30,6 +30,7 @@ connect_packet = mosq_test.gen_connect("01-keepalive-pingreq", keepalive=keepali
 connack_packet = mosq_test.gen_connack(rc=0)
 
 pingreq_packet = mosq_test.gen_pingreq()
+pingresp_packet = mosq_test.gen_pingresp()
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -57,7 +58,12 @@ try:
         pingreq_recvd = conn.recv(len(pingreq_packet))
 
         if mosq_test.packet_matches("pingreq", pingreq_recvd, pingreq_packet):
-            rc = 0
+            time.sleep(1.0)
+            conn.send(pingresp_packet)
+            pingreq_recvd = conn.recv(len(pingreq_packet))
+
+            if mosq_test.packet_matches("pingreq", pingreq_recvd, pingreq_packet):
+                rc = 0
 
     conn.close()
 finally:
