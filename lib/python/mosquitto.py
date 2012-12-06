@@ -1178,14 +1178,23 @@ class Mosquitto:
         while self._current_out_packet:
             packet = self._current_out_packet
 
-            if self._ssl:
-                try:
+            try:
+                if self._ssl:
                     write_length = self._ssl.write(packet.packet[packet.pos:])
-                except AttributeError:
-                    self._current_out_packet_mutex.release()
+                else:
+                    write_length = self._sock.send(packet.packet[packet.pos:])
+            except AttributeError:
+                self._current_out_packet_mutex.release()
+                return MOSQ_ERR_SUCCESS
+            except socket.error as err:
+                self._current_out_packet_mutex.release()
+                (msg) = err
+                if msg.errno == errno.EAGAIN:
                     return MOSQ_ERR_SUCCESS
-            else:
-                write_length = self._sock.send(packet.packet[packet.pos:])
+                else:
+                    print(msg)
+                    return 1
+
             if write_length > 0:
                 packet.to_process = packet.to_process - write_length
                 packet.pos = packet.pos + write_length
