@@ -454,24 +454,13 @@ int mqtt3_handle_subscribe(struct mosquitto_db *db, struct mosquitto *context)
 
 			}
 			_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "\t%s (QoS %d)", sub, qos);
-			/* FIXME - need to deny access to retained messages. */
-#if 0
-			/* Check for topic access */
-			rc2 = mqtt3_acl_check(db, context, sub, MOSQ_ACL_READ);
-			if(rc2 == MOSQ_ERR_SUCCESS){
-				mqtt3_sub_add(db, context, sub, qos, &db->subs);
-				if(mqtt3_retain_queue(db, context, sub, qos)) rc = 1;
-			}else if(rc2 != MOSQ_ERR_ACL_DENIED){
-				rc = 1;
-			}
-#else
+
 			rc2 = mqtt3_sub_add(db, context, sub, qos, &db->subs);
 			if(rc2 == MOSQ_ERR_SUCCESS){
 				if(mqtt3_retain_queue(db, context, sub, qos)) rc = 1;
 			}else if(rc2 != -1){
 				rc = rc2;
 			}
-#endif
 			_mosquitto_free(sub);
 
 			tmp_payload = _mosquitto_realloc(payload, payloadlen + 1);
