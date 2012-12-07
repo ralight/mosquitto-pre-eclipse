@@ -6,9 +6,6 @@
 # and client id 01-keepalive-pingreq
 # The client should send a PINGREQ message after the appropriate amount of time
 # (4 seconds after no traffic).
-#
-# FIXME - this test needs improving to ensure the client handles the PINGRESP
-# correctly.
 
 import inspect
 import os
