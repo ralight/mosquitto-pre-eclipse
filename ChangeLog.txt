@@ -20,6 +20,8 @@ Broker:
 - Local bridges now act on clean_session correctly.
 - Local bridges with clean_session==false now remove unused subscriptions on
   broker restart.
+- The $SYS/broker/heap/# messages now no longer include "bytes" as part of the
+  string for ease of use.
 
 Client library:
 - Free memory used by OpenSSL in mosquitto_lib_cleanup() where possible.
