@@ -114,7 +114,7 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 	fromhost(&wrap_req);
 	if(!hosts_access(&wrap_req)){
 		/* Access is denied */
-		_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client connection denied access by tcpd.");
+		_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client connection from %s denied access by tcpd.", context->address);
 		COMPAT_CLOSE(new_sock);
 		return -1;
 	}else{
@@ -138,6 +138,7 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 		}
 
 		if(new_context->listener->max_connections > 0 && new_context->listener->client_count >= new_context->listener->max_connections){
+			_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client connection from %s denied: max_connections exceeded.", new_context->address);
 			COMPAT_CLOSE(new_sock);
 			return -1;
 		}
