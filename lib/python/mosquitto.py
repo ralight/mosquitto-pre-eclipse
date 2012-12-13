@@ -629,18 +629,14 @@ class Mosquitto:
 
         timeout: The time in seconds to wait for incoming/outgoing network
           traffic before timing out and returning. 
-        max_packets: The maximum number of packets to process before returning.
-          Must be >0. If set to 1, only a single packet will be processed per
-          call. Avoid setting too high if you have a high incoming message rate.
+        max_packets: Not currently used.
 
         Returns MOSQ_ERR_SUCCESS on success.
         Returns >0 on error.
 
-        A ValueError will be raised if timeout < 0 or if max_packets < 1"""
+        A ValueError will be raised if timeout < 0"""
         if timeout < 0.0:
             raise ValueError('Invalid timeout.')
-        if max_packets < 1:
-            raise ValueError('Invalid max_packets.')
 
         self._current_out_packet_mutex.acquire()
         self._out_packet_mutex.acquire()
@@ -862,9 +858,6 @@ class Mosquitto:
         if self._sock == None and self._ssl == None:
             return MOSQ_ERR_NO_CONN
 
-        if max_packets < 1:
-            raise ValueError('Invalid max_packets.')
-
         max_packets = len(self._messages)
         if max_packets < 1:
             max_packets = 1
@@ -889,9 +882,6 @@ class Mosquitto:
         Do not use if you are using the threaded interface loop_start()."""
         if self._sock == None and self._ssl == None:
             return MOSQ_ERR_NO_CONN
-
-        if max_packets < 1:
-            raise ValueError('Invalid max_packets.')
 
         max_packets = len(self._messages)
         if max_packets < 1:
