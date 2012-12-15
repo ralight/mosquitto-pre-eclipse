@@ -531,9 +531,15 @@ libmosq_EXPORT void mosquitto_message_free(struct mosquitto_message **message);
  * Function: mosquitto_loop
  *
  * The main network loop for the client. You must call this frequently in order
- * to keep communications between the client and broker working. An alternative
- * approach is to use <mosquitto_loop_start> to run the client loop in its own
- * thread.
+ * to keep communications between the client and broker working. If incoming
+ * data is present it will then be processed. Outgoing commands, from e.g.
+ * <mosquitto_publish>, are normally sent immediately that their function is
+ * called, but this is not always possible. <mosquitto_loop> will also attempt
+ * to send any remaining outgoing messages, which also includes commands that
+ * are part of the flow for messages with QoS>0.
+ *
+ * An alternative approach is to use <mosquitto_loop_start> to run the client
+ * loop in its own thread.
  *
  * This calls select() to monitor the client network socket. If you want to
  * integrate mosquitto client operation with your own select() call, use

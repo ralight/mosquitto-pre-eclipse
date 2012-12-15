@@ -625,7 +625,14 @@ class Mosquitto:
     def loop(self, timeout=1.0, max_packets=1):
         """Process network events.
 
-        This function must be called regularly to ensure communication with the broker is carried out.
+        This function must be called regularly to ensure communication with the
+        broker is carried out. It calls select() on the network socket to wait
+        for network events. If incoming data is present it will then be
+        processed. Outgoing commands, from e.g. publish(), are normally sent
+        immediately that their function is called, but this is not always
+        possible. loop() will also attempt to send any remaining outgoing
+        messages, which also includes commands that are part of the flow for
+        messages with QoS>0.
 
         timeout: The time in seconds to wait for incoming/outgoing network
           traffic before timing out and returning. 
