@@ -1,8 +1,13 @@
 import struct
 
-def check_received_packet(sock, name, expected):
-    received = sock.recv(len(expected))
-    return packet_matches(name, received, expected)
+def expect_packet(sock, name, expected):
+    if len(expected) > 0:
+        rlen = len(expected)
+    else:
+        rlen = 1
+
+    packet_recvd = sock.recv(rlen)
+    return packet_matches(name, packet_recvd, expected)
 
 def packet_matches(name, recvd, expected):
     if recvd != expected:

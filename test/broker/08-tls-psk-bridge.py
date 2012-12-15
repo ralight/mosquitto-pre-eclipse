@@ -55,21 +55,16 @@ try:
     sock.connect(("localhost", 1888))
     sock.send(connect_packet)
 
-    connack_recvd = sock.recv(len(connack_packet))
-    if mosq_test.packet_matches("connack", connack_recvd, connack_packet):
-
+    if mosq_test.expect_packet(sock, "connack", connack_packet):
         sock.send(subscribe_packet)
 
-        suback_recvd = sock.recv(len(suback_packet))
-        if mosq_test.packet_matches("suback", suback_recvd, suback_packet):
-
+        if mosq_test.expect_packet(sock, "suback", suback_packet):
             pub = subprocess.Popen(['./c/08-tls-psk-bridge.test'], env=env, stdout=subprocess.PIPE)
             if pub.wait():
                 raise ValueError
                 exit(1)
 
-            publish_recvd = sock.recv(len(publish_packet))
-            if mosq_test.packet_matches("publish", publish_recvd, publish_packet):
+            if mosq_test.expect_packet(sock, "publish", publish_packet):
                 rc = 0
 
 finally:

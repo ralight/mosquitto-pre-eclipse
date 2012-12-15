@@ -51,12 +51,11 @@ try:
 
     (bridge, address) = ssock.accept()
     bridge.settimeout(10)
-    connect_recvd = bridge.recv(len(connect_packet))
 
-    if mosq_test.packet_matches("connect", connect_recvd, connect_packet):
+    if mosq_test.expect_packet(bridge, "connect", connect_packet):
         bridge.send(connack_packet)
-        subscribe_recvd = bridge.recv(len(subscribe_packet))
-        if mosq_test.packet_matches("subscribe", subscribe_recvd, subscribe_packet):
+
+        if mosq_test.expect_packet(bridge, "subscribe", subscribe_packet):
             bridge.send(suback_packet)
 
             bridge.send(publish_packet)
@@ -66,18 +65,16 @@ try:
 
             (bridge, address) = ssock.accept()
             bridge.settimeout(10)
-            connect_recvd = bridge.recv(len(connect_packet))
 
-            if mosq_test.packet_matches("connect", connect_recvd, connect_packet):
+            if mosq_test.expect_packet(bridge, "connect", connect_packet):
                 bridge.send(connack_packet)
-                subscribe_recvd = bridge.recv(len(subscribe2_packet))
-                if mosq_test.packet_matches("2nd subscribe", subscribe_recvd, subscribe2_packet):
+
+                if mosq_test.expect_packet(bridge, "2nd subscribe", subscribe2_packet):
                     bridge.send(suback2_packet)
 
                     # Send a different publish message to make sure the response isn't to the old one.
                     bridge.send(publish2_packet)
-                    puback_recvd = bridge.recv(len(puback2_packet))
-                    if mosq_test.packet_matches("puback", puback_recvd, puback2_packet):
+                    if mosq_test.expect_packet(bridge, "puback", puback2_packet):
                         rc = 0
 
     bridge.close()

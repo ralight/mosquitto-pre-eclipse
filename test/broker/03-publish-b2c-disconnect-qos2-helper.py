@@ -28,17 +28,14 @@ pubcomp_packet = mosq_test.gen_pubcomp(mid)
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.connect(("localhost", 1888))
 sock.send(connect_packet)
-connack_recvd = sock.recv(len(connack_packet))
 
-if mosq_test.packet_matches("helper connack", connack_recvd, connack_packet):
+if mosq_test.expect_packet(sock, "helper connack", connack_packet):
     sock.send(publish_packet)
-    pubrec_recvd = sock.recv(32)
 
-    if mosq_test.packet_matches("helper pubrec", pubrec_recvd, pubrec_packet):
+    if mosq_test.expect_packet(sock, "helper pubrec", pubrec_packet):
         sock.send(pubrel_packet)
-        pubcomp_recvd = sock.recv(len(pubcomp_packet))
 
-        if mosq_test.packet_matches("helper pubcomp", pubcomp_recvd, pubcomp_packet):
+        if mosq_test.expect_packet(sock, "helper pubcomp", pubcomp_packet):
             rc = 0
 
 sock.close()

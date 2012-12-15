@@ -17,7 +17,6 @@ import mosq_test
 rc = 1
 keepalive = 10
 connect_packet = mosq_test.gen_connect(None, keepalive=keepalive)
-connack_packet = mosq_test.gen_connack(rc=2)
 
 broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'], stderr=subprocess.PIPE)
 
@@ -27,11 +26,10 @@ try:
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect(("localhost", 1888))
     sock.send(connect_packet)
-    connack_recvd = sock.recv(len(connack_packet))
-    sock.close()
-    if len(connack_recvd) == 0:
+    if mosq_test.expect_packet(sock, "connack", ""):
         rc = 0
 
+    sock.close()
 finally:
     broker.terminate()
     broker.wait()

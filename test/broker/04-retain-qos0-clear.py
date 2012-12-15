@@ -39,33 +39,27 @@ try:
     sock.settimeout(4) # Reduce timeout for when we don't expect incoming data.
     sock.connect(("localhost", 1888))
     sock.send(connect_packet)
-    connack_recvd = sock.recv(len(connack_packet))
 
-    if mosq_test.packet_matches("connack", connack_recvd, connack_packet):
+    if mosq_test.expect_packet(sock, "connack", connack_packet):
         # Send retained message
         sock.send(publish_packet)
         # Subscribe to topic, we should get the retained message back.
         sock.send(subscribe_packet)
-        suback_recvd = sock.recv(len(suback_packet))
 
-        if mosq_test.packet_matches("suback", suback_recvd, suback_packet):
-            publish_recvd = sock.recv(len(publish_packet))
-
-            if mosq_test.packet_matches("publish", publish_recvd, publish_packet):
+        if mosq_test.expect_packet(sock, "suback", suback_packet):
+            if mosq_test.expect_packet(sock, "publish", publish_packet):
                 # Now unsubscribe from the topic before we clear the retained
                 # message.
                 sock.send(unsubscribe_packet)
-                unsuback_recvd = sock.recv(len(unsuback_packet))
 
-                if mosq_test.packet_matches("unsuback", unsuback_recvd, unsuback_packet):
+                if mosq_test.expect_packet(sock, "unsuback", unsuback_packet):
                     # Now clear the retained message.
                     sock.send(retain_clear_packet)
 
                     # Subscribe to topic, we shouldn't get anything back apart
                     # from the SUBACK.
                     sock.send(subscribe_packet)
-                    suback_recvd = sock.recv(len(suback_packet))
-                    if mosq_test.packet_matches("suback", suback_recvd, suback_packet):
+                    if mosq_test.expect_packet(sock, "suback", suback_packet):
                         try:
                             retain_clear = sock.recv(256)
                         except socket.timeout:

@@ -62,20 +62,17 @@ client = subprocess.Popen(client_args, env=env)
 try:
     (conn, address) = sock.accept()
     conn.settimeout(10)
-    connect_recvd = conn.recv(len(connect_packet))
 
-    if mosq_test.packet_matches("connect", connect_recvd, connect_packet):
+    if mosq_test.expect_packet(conn, "connect", connect_packet):
         conn.send(connack_packet)
         conn.send(publish_packet)
-        pubrec_recvd = conn.recv(len(pubrec_packet))
 
-        if mosq_test.packet_matches("pubrec", pubrec_recvd, pubrec_packet):
+        if mosq_test.expect_packet(conn, "pubrec", pubrec_packet):
             # Should be repeated due to timeout
-            pubrec_recvd = conn.recv(len(pubrec_packet))
-            if mosq_test.packet_matches("pubrec", pubrec_recvd, pubrec_packet):
+            if mosq_test.expect_packet(conn, "pubrec", pubrec_packet):
                 conn.send(pubrel_packet)
-                pubcomp_recvd = conn.recv(len(pubcomp_packet))
-                if mosq_test.packet_matches("pubcomp", pubcomp_recvd, pubcomp_packet):
+
+                if mosq_test.expect_packet(conn, "pubcomp", pubcomp_packet):
                     rc = 0
 
     conn.close()
