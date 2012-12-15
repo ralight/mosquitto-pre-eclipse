@@ -8,7 +8,9 @@ clean :
 test-compile : 
 	$(MAKE) -C c
 
-test : test-compile
+test : test-compile 01 02 03 04 05 06 07 08 09
+
+01 :
 	./01-connect-success.py
 	./01-connect-invalid-protonum.py
 	./01-connect-invalid-id-0.py
@@ -17,6 +19,8 @@ test : test-compile
 	./01-connect-uname-no-password-denied.py
 	./01-connect-uname-password-denied.py
 	./01-connect-uname-password-success.py
+
+02 :
 	./02-subscribe-qos0.py
 	./02-subscribe-qos1.py
 	./02-subscribe-qos2.py
@@ -26,6 +30,8 @@ test : test-compile
 	./02-unsubscribe-qos0.py
 	./02-unsubscribe-qos1.py
 	./02-unsubscribe-qos2.py
+
+03 :
 	./03-publish-qos1.py
 	./03-publish-qos2.py
 	./03-publish-b2c-timeout-qos1.py
@@ -34,19 +40,29 @@ test : test-compile
 	./03-publish-b2c-timeout-qos2.py
 	./03-publish-b2c-disconnect-qos2.py
 	./03-pattern-matching.py
+
+04 :
 	./04-retain-qos0.py
 	./04-retain-qos0-fresh.py
 	./04-retain-qos0-repeated.py
 	./04-retain-qos1-qos0.py
 	./04-retain-qos0-clear.py
+
+05 :
 	./05-clean-session-qos1.py 
+
+06 :
 	./06-bridge-reconnect-local-out.py
 	./06-bridge-br2b-disconnect-qos1.py
 	./06-bridge-br2b-disconnect-qos2.py
 	./06-bridge-b2br-disconnect-qos1.py
 	./06-bridge-b2br-disconnect-qos2.py
+
+07 :
 	./07-will-qos0.py
 	./07-will-null.py
+
+08 :
 	./08-ssl-connect-no-auth.py
 	./08-ssl-connect-no-auth-wrong-ca.py
 	./08-ssl-connect-cert-auth.py
@@ -57,6 +73,8 @@ test : test-compile
 	./08-ssl-connect-no-identity.py
 	./08-tls-psk-pub.py
 	./08-tls-psk-bridge.py
+
+09 :
 	./09-plugin-auth-unpwd-success.py
 
 # Tests for with WITH_STRICT_PROTOCOL defined
