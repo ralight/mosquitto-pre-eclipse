@@ -22,9 +22,7 @@ publish_packet = mosq_test.gen_publish(sys.argv[1], qos=0, retain=True, payload=
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.connect(("localhost", 1888))
 sock.send(connect_packet)
-connack_recvd = sock.recv(len(connack_packet))
-
-if mosq_test.packet_matches("helper connack", connack_recvd, connack_packet):
+if mosq_test.expect_packet(sock, "helper connack", connack_packet):
     sock.send(publish_packet)
     rc = 0
 

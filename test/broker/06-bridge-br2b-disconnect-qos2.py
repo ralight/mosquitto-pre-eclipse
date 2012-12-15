@@ -53,56 +53,48 @@ try:
 
     (bridge, address) = ssock.accept()
     bridge.settimeout(10)
-    connect_recvd = bridge.recv(len(connect_packet))
 
-    if mosq_test.packet_matches("connect", connect_recvd, connect_packet):
+    if mosq_test.expect_packet(bridge, "connect", connect_packet):
         bridge.send(connack_packet)
-        subscribe_recvd = bridge.recv(len(subscribe_packet))
-        if mosq_test.packet_matches("subscribe", subscribe_recvd, subscribe_packet):
+
+        if mosq_test.expect_packet(bridge, "subscribe", subscribe_packet):
             bridge.send(suback_packet)
 
             pub = subprocess.Popen(['./06-bridge-br2b-disconnect-qos2-helper.py'])
             if pub.wait():
                 exit(1)
 
-            publish_recvd = bridge.recv(len(publish_packet))
-            if mosq_test.packet_matches("publish", publish_recvd, publish_packet):
+            if mosq_test.expect_packet(bridge, "publish", publish_packet):
                 bridge.close()
 
                 (bridge, address) = ssock.accept()
                 bridge.settimeout(10)
-                connect_recvd = bridge.recv(len(connect_packet))
 
-                if mosq_test.packet_matches("connect", connect_recvd, connect_packet):
+                if mosq_test.expect_packet(bridge, "connect", connect_packet):
                     bridge.send(connack_packet)
-                    subscribe_recvd = bridge.recv(len(subscribe2_packet))
-                    if mosq_test.packet_matches("2nd subscribe", subscribe_recvd, subscribe2_packet):
+
+                    if mosq_test.expect_packet(bridge, "2nd subscribe", subscribe2_packet):
                         bridge.send(suback2_packet)
 
-                        publish_recvd = bridge.recv(len(publish_dup_packet))
-                        if mosq_test.packet_matches("2nd publish", publish_recvd, publish_dup_packet):
+                        if mosq_test.expect_packet(bridge, "2nd publish", publish_dup_packet):
                             bridge.send(pubrec_packet)
-                            pubrel_recvd = bridge.recv(len(pubrel_packet))
 
-                            if mosq_test.packet_matches("pubrel", pubrel_recvd, pubrel_packet):
+                            if mosq_test.expect_packet(bridge, "pubrel", pubrel_packet):
                                 bridge.close()
 
                                 (bridge, address) = ssock.accept()
                                 bridge.settimeout(10)
-                                connect_recvd = bridge.recv(len(connect_packet))
 
-                                if mosq_test.packet_matches("connect", connect_recvd, connect_packet):
+                                if mosq_test.expect_packet(bridge, "connect", connect_packet):
                                     bridge.send(connack_packet)
-                                    subscribe_recvd = bridge.recv(len(subscribe3_packet))
-                                    if mosq_test.packet_matches("3rd subscribe", subscribe_recvd, subscribe3_packet):
+
+                                    if mosq_test.expect_packet(bridge, "3rd subscribe", subscribe3_packet):
                                         bridge.send(suback3_packet)
 
-                                        publish_recvd = bridge.recv(len(publish_dup_packet))
-                                        if mosq_test.packet_matches("2nd publish", publish_recvd, publish_dup_packet):
+                                        if mosq_test.expect_packet(bridge, "2nd publish", publish_dup_packet):
                                             bridge.send(pubrec_packet)
-                                            pubrel_recvd = bridge.recv(len(pubrel_packet))
 
-                                            if mosq_test.packet_matches("2nd pubrel", pubrel_recvd, pubrel_packet):
+                                            if mosq_test.expect_packet(bridge, "2nd pubrel", pubrel_packet):
                                                 bridge.send(pubcomp_packet)
                                                 rc = 0
 

@@ -35,11 +35,11 @@ try:
     ssock.settimeout(5)
     ssock.connect(("localhost", 1888))
     ssock.send(connect_packet)
-    connack_recvd = ssock.recv(len(connack_packet))
-    ssock.close()
 
-    if mosq_test.packet_matches("connack", connack_recvd, connack_packet):
+    if mosq_test.expect_packet(ssock, "connack", connack_packet):
         rc = 0
+
+    ssock.close()
 finally:
     broker.terminate()
     broker.wait()

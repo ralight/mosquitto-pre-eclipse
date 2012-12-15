@@ -57,13 +57,11 @@ client = subprocess.Popen(client_args, env=env)
 try:
     (conn, address) = ssock.accept()
     conn.settimeout(10)
-    connect_recvd = conn.recv(len(connect_packet))
 
-    if mosq_test.packet_matches("connect", connect_recvd, connect_packet):
+    if mosq_test.expect_packet(conn, "connect", connect_packet):
         conn.send(connack_packet)
-        disconnect_recvd = conn.recv(len(disconnect_packet))
 
-        if mosq_test.packet_matches("disconnect", disconnect_recvd, disconnect_packet):
+        if mosq_test.expect_packet(conn, "disconnect", disconnect_packet):
             rc = 0
 
     conn.close()

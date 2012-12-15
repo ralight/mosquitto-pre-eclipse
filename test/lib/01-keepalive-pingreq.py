@@ -48,18 +48,15 @@ client = subprocess.Popen(client_args, env=env)
 try:
     (conn, address) = sock.accept()
     conn.settimeout(keepalive+10)
-    connect_recvd = conn.recv(len(connect_packet))
 
-    if mosq_test.packet_matches("connect", connect_recvd, connect_packet):
+    if mosq_test.expect_packet(conn, "connect", connect_packet):
         conn.send(connack_packet)
-        pingreq_recvd = conn.recv(len(pingreq_packet))
 
-        if mosq_test.packet_matches("pingreq", pingreq_recvd, pingreq_packet):
+        if mosq_test.expect_packet(conn, "pingreq", pingreq_packet):
             time.sleep(1.0)
             conn.send(pingresp_packet)
-            pingreq_recvd = conn.recv(len(pingreq_packet))
 
-            if mosq_test.packet_matches("pingreq", pingreq_recvd, pingreq_packet):
+            if mosq_test.expect_packet(conn, "pingreq", pingreq_packet):
                 rc = 0
 
     conn.close()

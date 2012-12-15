@@ -47,22 +47,19 @@ try:
     sock.settimeout(60) # 60 seconds timeout is much longer than 5 seconds message retry.
     sock.connect(("localhost", 1888))
     sock.send(connect_packet)
-    connack_recvd = sock.recv(len(connack_packet))
 
-    if mosq_test.packet_matches("connack", connack_recvd, connack_packet):
+    if mosq_test.expect_packet(sock, "connack", connack_packet):
         sock.send(subscribe_packet)
-        suback_recvd = sock.recv(len(suback_packet))
-        if mosq_test.packet_matches("suback", suback_recvd, suback_packet):
-            sock.send(subscribe_packet)
-            suback_recvd = sock.recv(len(suback_packet))
 
-            if mosq_test.packet_matches("suback", suback_recvd, suback_packet):
+        if mosq_test.expect_packet(sock, "suback", suback_packet):
+            sock.send(subscribe_packet)
+
+            if mosq_test.expect_packet(sock, "suback", suback_packet):
                 pub = subprocess.Popen(['./06-bridge-reconnect-local-out-helper.py'], stdout=subprocess.PIPE)
                 pub.wait()
                 # Should have now received a publish command
-                publish_recvd = sock.recv(len(publish_packet))
 
-                if mosq_test.packet_matches("publish", publish_recvd, publish_packet):
+                if mosq_test.expect_packet(sock, "publish", publish_packet):
                     rc = 0
     sock.close()
 finally:

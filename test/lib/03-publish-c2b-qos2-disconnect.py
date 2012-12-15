@@ -50,50 +50,41 @@ client = subprocess.Popen(client_args, env=env)
 try:
     (conn, address) = sock.accept()
     conn.settimeout(5)
-    connect_recvd = conn.recv(len(connect_packet))
 
-    if mosq_test.packet_matches("connect", connect_recvd, connect_packet):
+    if mosq_test.expect_packet(conn, "connect", connect_packet):
         conn.send(connack_packet)
-        publish_recvd = conn.recv(len(publish_packet))
 
-        if mosq_test.packet_matches("publish", publish_recvd, publish_packet):
+        if mosq_test.expect_packet(conn, "publish", publish_packet):
             # Disconnect client. It should reconnect.
             conn.close()
 
             (conn, address) = sock.accept()
             conn.settimeout(15)
-            connect_recvd = conn.recv(len(connect_packet))
 
-            if mosq_test.packet_matches("connect", connect_recvd, connect_packet):
+            if mosq_test.expect_packet(conn, "connect", connect_packet):
                 conn.send(connack_packet)
-                publish_recvd = conn.recv(len(publish_dup_packet))
 
-                if mosq_test.packet_matches("retried publish", publish_recvd, publish_dup_packet):
+                if mosq_test.expect_packet(conn, "retried publish", publish_dup_packet):
                     conn.send(pubrec_packet)
-                    pubrel_recvd = conn.recv(len(pubrel_packet))
 
-                    if mosq_test.packet_matches("pubrel", pubrel_recvd, pubrel_packet):
+                    if mosq_test.expect_packet(conn, "pubrel", pubrel_packet):
                         # Disconnect client. It should reconnect.
                         conn.close()
 
                         (conn, address) = sock.accept()
                         conn.settimeout(15)
-                        connect_recvd = conn.recv(len(connect_packet))
 
                         # Complete connection and message flow.
-                        if mosq_test.packet_matches("connect", connect_recvd, connect_packet):
+                        if mosq_test.expect_packet(conn, "connect", connect_packet):
                             conn.send(connack_packet)
 
-                            publish_recvd = conn.recv(len(publish_dup_packet))
-                            if mosq_test.packet_matches("2nd retried publish", publish_recvd, publish_dup_packet):
+                            if mosq_test.expect_packet(conn, "2nd retried publish", publish_dup_packet):
                                 conn.send(pubrec_packet)
-                                pubrel_recvd = conn.recv(len(pubrel_packet))
 
-                                if mosq_test.packet_matches("pubrel", pubrel_recvd, pubrel_packet):
+                                if mosq_test.expect_packet(conn, "pubrel", pubrel_packet):
                                     conn.send(pubcomp_packet)
-                                    disconnect_recvd = conn.recv(len(disconnect_packet))
 
-                                    if mosq_test.packet_matches("disconnect", disconnect_recvd, disconnect_packet):
+                                    if mosq_test.expect_packet(conn, "disconnect", disconnect_packet):
                                         rc = 0
 
     conn.close()
