@@ -1,4 +1,5 @@
 .PHONY: all clean test
+.NOTPARALLEL:
 
 all :
 
