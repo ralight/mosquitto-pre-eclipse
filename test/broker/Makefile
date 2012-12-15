@@ -12,6 +12,7 @@ test : test-compile
 	./01-connect-success.py
 	./01-connect-invalid-protonum.py
 	./01-connect-invalid-id-0.py
+	./01-connect-invalid-id-missing.py
 	./01-connect-anon-denied.py
 	./01-connect-uname-no-password-denied.py
 	./01-connect-uname-password-denied.py
