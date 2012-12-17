@@ -666,47 +666,12 @@ class Mosquitto:
 
         if self.socket() in socklist[0]:
             rc = self.loop_read(max_packets)
-            if rc != MOSQ_ERR_SUCCESS:
-                if self._ssl:
-                    self._ssl.close()
-                    self._ssl = None
-                elif self._sock:
-                    self._sock.close()
-                    self._sock = None
-
-                self._state_mutex.acquire()
-                if self._state == mosq_cs_disconnecting:
-                    rc = MOSQ_ERR_SUCCESS
-                self._state_mutex.release()
-                self._callback_mutex.acquire()
-                if self.on_disconnect:
-                    self._in_callback = True
-                    self.on_disconnect(self, self._userdata, rc)
-                    self._in_callback = False
-
-                self._callback_mutex.release()
+            if rc or (self._ssl == None and self._sock == None):
                 return rc
 
         if self.socket() in socklist[1]:
             rc = self.loop_write(max_packets)
-            if rc != MOSQ_ERR_SUCCESS:
-                if self._ssl:
-                    self._ssl.close()
-                    self._ssl = None
-                else:
-                    self._sock.close()
-                    self._sock = None
-
-                self._state_mutex.acquire()
-                if self._state == mosq_cs_disconnecting:
-                    rc = MOSQ_ERR_SUCCESS
-                self._state_mutex.release()
-                self._callback_mutex.acquire()
-                if self.on_disconnect:
-                    self._in_callback = True
-                    self.on_disconnect(self, self._userdata, rc)
-                    self._in_callback = False
-                self._callback_mutex.release()
+            if rc or (self._ssl == None and self._sock == None):
                 return rc
 
         return self.loop_misc()
@@ -872,7 +837,7 @@ class Mosquitto:
         for i in range(0, max_packets):
             rc = self._packet_read()
             if rc > 0:
-                return rc
+                return self._loop_rc_handle(rc)
             elif rc == MOSQ_ERR_AGAIN:
                 return MOSQ_ERR_SUCCESS
         return MOSQ_ERR_SUCCESS
@@ -897,7 +862,7 @@ class Mosquitto:
         for i in range(0, max_packets):
             rc = self._packet_write()
             if rc > 0:
-                return rc
+                return self._loop_rc_handle(rc)
             elif rc == MOSQ_ERR_AGAIN:
                 return MOSQ_ERR_SUCCESS
         return MOSQ_ERR_SUCCESS
@@ -1068,6 +1033,28 @@ class Mosquitto:
     # ============================================================
     # Private functions
     # ============================================================
+
+    def _loop_rc_handle(self, rc):
+        if rc:
+            if self._ssl:
+                self._ssl.close()
+                self._ssl = None
+            elif self._sock:
+                self._sock.close()
+                self._sock = None
+
+            self._state_mutex.acquire()
+            if self._state == mosq_cs_disconnecting:
+                rc = MOSQ_ERR_SUCCESS
+            self._state_mutex.release()
+            self._callback_mutex.acquire()
+            if self.on_disconnect:
+                self._in_callback = True
+                self.on_disconnect(self, self._userdata, rc)
+                self._in_callback = False
+
+            self._callback_mutex.release()
+        return rc
 
     def _packet_read(self):
         # This gets called if pselect() indicates that there is network data
