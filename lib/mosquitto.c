@@ -720,39 +720,13 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 	}else{
 		if(FD_ISSET(mosq->sock, &readfds)){
 			rc = mosquitto_loop_read(mosq, max_packets);
-			if(rc){
-				_mosquitto_socket_close(mosq);
-				pthread_mutex_lock(&mosq->state_mutex);
-				if(mosq->state == mosq_cs_disconnecting){
-					rc = MOSQ_ERR_SUCCESS;
-				}
-				pthread_mutex_unlock(&mosq->state_mutex);
-				pthread_mutex_lock(&mosq->callback_mutex);
-				if(mosq->on_disconnect){
-					mosq->in_callback = true;
-					mosq->on_disconnect(mosq, mosq->userdata, rc);
-					mosq->in_callback = false;
-				}
-				pthread_mutex_unlock(&mosq->callback_mutex);
+			if(rc || mosq->sock == INVALID_SOCKET){
 				return rc;
 			}
 		}
 		if(FD_ISSET(mosq->sock, &writefds)){
 			rc = mosquitto_loop_write(mosq, max_packets);
-			if(rc){
-				_mosquitto_socket_close(mosq);
-				pthread_mutex_lock(&mosq->state_mutex);
-				if(mosq->state == mosq_cs_disconnecting){
-					rc = MOSQ_ERR_SUCCESS;
-				}
-				pthread_mutex_unlock(&mosq->state_mutex);
-				pthread_mutex_lock(&mosq->callback_mutex);
-				if(mosq->on_disconnect){
-					mosq->in_callback = true;
-					mosq->on_disconnect(mosq, mosq->userdata, rc);
-					mosq->in_callback = false;
-				}
-				pthread_mutex_unlock(&mosq->callback_mutex);
+			if(rc || mosq->sock == INVALID_SOCKET){
 				return rc;
 			}
 		}
@@ -826,6 +800,27 @@ int mosquitto_loop_misc(struct mosquitto *mosq)
 	return MOSQ_ERR_SUCCESS;
 }
 
+static int _mosquitto_loop_rc_handle(struct mosquitto *mosq, int rc)
+{
+	if(rc){
+		_mosquitto_socket_close(mosq);
+		pthread_mutex_lock(&mosq->state_mutex);
+		if(mosq->state == mosq_cs_disconnecting){
+			rc = MOSQ_ERR_SUCCESS;
+		}
+		pthread_mutex_unlock(&mosq->state_mutex);
+		pthread_mutex_lock(&mosq->callback_mutex);
+		if(mosq->on_disconnect){
+			mosq->in_callback = true;
+			mosq->on_disconnect(mosq, mosq->userdata, rc);
+			mosq->in_callback = false;
+		}
+		pthread_mutex_unlock(&mosq->callback_mutex);
+		return rc;
+	}
+	return rc;
+}
+
 int mosquitto_loop_read(struct mosquitto *mosq, int max_packets)
 {
 	int rc;
@@ -840,7 +835,7 @@ int mosquitto_loop_read(struct mosquitto *mosq, int max_packets)
 	for(i=0; i<max_packets; i++){
 		rc = _mosquitto_packet_read(mosq);
 		if(rc || errno == EAGAIN || errno == COMPAT_EWOULDBLOCK){
-			return rc;
+			return _mosquitto_loop_rc_handle(mosq, rc);
 		}
 	}
 	return rc;
@@ -860,7 +855,7 @@ int mosquitto_loop_write(struct mosquitto *mosq, int max_packets)
 	for(i=0; i<max_packets; i++){
 		rc = _mosquitto_packet_write(mosq);
 		if(rc || errno == EAGAIN || errno == COMPAT_EWOULDBLOCK){
-			return rc;
+			return _mosquitto_loop_rc_handle(mosq, rc);
 		}
 	}
 	return rc;
