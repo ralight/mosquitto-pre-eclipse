@@ -27,6 +27,9 @@ Client library:
 - Free memory used by OpenSSL in mosquitto_lib_cleanup() where possible.
 - Change WebSocket subprotocol name to mqttv3.1 to make future changes easier
   and for compatibility with other implementations.
+- mosquitto_loop_read() and mosquitto_loop_write() now handle errors
+  themselves rather than having mosquitto_loop() handle their errors. This
+  makes using them in a separate event loop more straightforward.
 - Add mosquitto_loop_forever() / loop_forever() function call to make simple
   clients easier.
 - Disable SSL compression. This reduces memory usage significantly and removes
