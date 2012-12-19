@@ -33,6 +33,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef WIN32
 #include <netdb.h>
 #include <unistd.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
 #else
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -86,6 +88,7 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 #endif
 #ifdef WITH_WRAP
 	struct request_info wrap_req;
+	char address[1024];
 #endif
 
 	new_sock = accept(listensock, NULL, 0);
@@ -114,7 +117,9 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 	fromhost(&wrap_req);
 	if(!hosts_access(&wrap_req)){
 		/* Access is denied */
-		_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client connection from %s denied access by tcpd.", context->address);
+		if(!_mosquitto_socket_get_address(new_sock, address, 1024)){
+			_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client connection from %s denied access by tcpd.", address);
+		}
 		COMPAT_CLOSE(new_sock);
 		return -1;
 	}else{
@@ -469,3 +474,22 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 	}
 }
 
+int _mosquitto_socket_get_address(int sock, char *buf, int len)
+{
+	struct sockaddr_storage addr;
+	socklen_t addrlen;
+
+	addrlen = sizeof(addr);
+	if(!getpeername(sock, (struct sockaddr *)&addr, &addrlen)){
+		if(addr.ss_family == AF_INET){
+			if(inet_ntop(AF_INET, &((struct sockaddr_in *)&addr)->sin_addr.s_addr, buf, len)){
+				return 0;
+			}
+		}else if(addr.ss_family == AF_INET6){
+			if(inet_ntop(AF_INET6, &((struct sockaddr_in6 *)&addr)->sin6_addr.s6_addr, buf, len)){
+				return 0;
+			}
+		}
+	}
+	return 1;
+}
