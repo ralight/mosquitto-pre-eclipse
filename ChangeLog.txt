@@ -1,3 +1,9 @@
+1.2 - 2013xxxx
+==============
+
+Client library:
+- Fix building on Android NDK.
+
 1.1 - 20121219
 ==============
 

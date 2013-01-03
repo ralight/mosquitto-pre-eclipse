@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2012 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2013 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,12 @@ POSSIBILITY OF SUCH DAMAGE.
 #else
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#endif
+
+#ifdef ANDROID
+#include <linux/in.h>
+#include <linux/in6.h>
+#include <sys/endian.h>
 #endif
 
 #ifdef __FreeBSD__
