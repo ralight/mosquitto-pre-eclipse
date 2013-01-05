@@ -1,6 +1,9 @@
 1.2 - 2013xxxx
 ==============
 
+Broker:
+- It is now possible to disable $SYS at compile time.
+
 Client library:
 - Fix building on Android NDK.
 
