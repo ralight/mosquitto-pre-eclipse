@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2012 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2013 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -46,6 +46,47 @@ int g_clients_expired = 0;
 unsigned int g_socket_connections = 0;
 unsigned int g_connection_count = 0;
 
+static void _sys_update_clients(struct mosquitto_db *db, char *buf, int len)
+{
+	static unsigned int client_count = -1;
+	static int clients_expired = -1;
+	static unsigned int client_max = -1;
+	static unsigned int inactive_count = -1;
+	static unsigned int active_count = -1;
+	unsigned int value;
+	unsigned int inactive;
+	unsigned int active;
+
+	if(!mqtt3_db_client_count(db, &value, &inactive)){
+		if(client_count != value){
+			client_count = value;
+			snprintf(buf, len, "%d", client_count);
+			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/total", 2, strlen(buf), buf, 1);
+		}
+		if(inactive_count != inactive){
+			inactive_count = inactive;
+			snprintf(buf, len, "%d", inactive_count);
+			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/inactive", 2, strlen(buf), buf, 1);
+		}
+		active = client_count - inactive;
+		if(active_count != active){
+			active_count = active;
+			snprintf(buf, len, "%d", active_count);
+			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/active", 2, strlen(buf), buf, 1);
+		}
+		if(value != client_max){
+			client_max = value;
+			snprintf(buf, len, "%d", client_max);
+			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/maximum", 2, strlen(buf), buf, 1);
+		}
+	}
+	if(g_clients_expired != clients_expired){
+		clients_expired = g_clients_expired;
+		snprintf(buf, len, "%d", clients_expired);
+		mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/expired", 2, strlen(buf), buf, 1);
+	}
+}
+
 /* Send messages for the $SYS hierarchy if the last update is longer than
  * 'interval' seconds ago.
  * 'interval' is the amount of seconds between updates. If 0, then no periodic
@@ -58,19 +99,11 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 	time_t now = time(NULL);
 	time_t uptime;
 	char buf[100];
-	unsigned int value;
-	unsigned int inactive;
-	unsigned int active;
 #ifndef WIN32
 	unsigned long value_ul;
 #endif
 
 	static int msg_store_count = -1;
-	static unsigned int client_count = -1;
-	static int clients_expired = -1;
-	static unsigned int client_max = -1;
-	static unsigned int inactive_count = -1;
-	static unsigned int active_count = -1;
 #ifdef REAL_WITH_MEMORY_TRACKING
 	static unsigned long current_heap = -1;
 	static unsigned long max_heap = -1;
@@ -136,6 +169,7 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 		snprintf(buf, 100, "%d seconds", (int)uptime);
 		mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/uptime", 2, strlen(buf), buf, 1);
 
+		_sys_update_clients(db, buf, 100);
 		if(last_update > 0){
 			msgs_received_interval = g_msgs_received - msgs_received;
 			msgs_sent_interval = g_msgs_sent - msgs_sent;
@@ -350,35 +384,6 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 			retained_count = db->retained_count;
 			snprintf(buf, 100, "%d", retained_count);
 			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/retained messages/count", 2, strlen(buf), buf, 1);
-		}
-
-		if(!mqtt3_db_client_count(db, &value, &inactive)){
-			if(client_count != value){
-				client_count = value;
-				snprintf(buf, 100, "%d", client_count);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/total", 2, strlen(buf), buf, 1);
-			}
-			if(inactive_count != inactive){
-				inactive_count = inactive;
-				snprintf(buf, 100, "%d", inactive_count);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/inactive", 2, strlen(buf), buf, 1);
-			}
-			active = client_count - inactive;
-			if(active_count != active){
-				active_count = active;
-				snprintf(buf, 100, "%d", active_count);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/active", 2, strlen(buf), buf, 1);
-			}
-			if(value != client_max){
-				client_max = value;
-				snprintf(buf, 100, "%d", client_max);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/maximum", 2, strlen(buf), buf, 1);
-			}
-		}
-		if(g_clients_expired != clients_expired){
-			clients_expired = g_clients_expired;
-			snprintf(buf, 100, "%d", clients_expired);
-			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/expired", 2, strlen(buf), buf, 1);
 		}
 
 #ifdef REAL_WITH_MEMORY_TRACKING
