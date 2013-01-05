@@ -27,6 +27,8 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifdef WITH_SYS_TREE
+
 #include <math.h>
 
 #include <config.h>
@@ -122,9 +124,6 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 	time_t now = time(NULL);
 	time_t uptime;
 	char buf[100];
-#ifndef WIN32
-	unsigned long value_ul;
-#endif
 
 	static int msg_store_count = -1;
 	static unsigned long msgs_received = -1;
@@ -467,3 +466,4 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 	}
 }
 
+#endif

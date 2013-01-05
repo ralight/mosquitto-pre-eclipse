@@ -59,6 +59,10 @@ WITH_MEMORY_TRACKING:=yes
 # Not currently supported.
 #WITH_DB_UPGRADE:=yes
 
+# Comment out to remove publishing of the $SYS topic hierarchy containing
+# information about the broker state.
+WITH_SYS_TREE:=yes
+
 # =============================================================================
 # End of user configuration
 # =============================================================================
@@ -179,6 +183,10 @@ endif
 #ifeq ($(WITH_DB_UPGRADE),yes)
 #	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_DB_UPGRADE
 #endif
+
+ifeq ($(WITH_SYS_TREE),yes)
+	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_SYS_TREE
+endif
 
 ifeq ($(UNAME),SunOS)
 	BROKER_LIBS:=$(BROKER_LIBS) -lsocket -lnsl
