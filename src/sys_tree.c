@@ -32,6 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <config.h>
 
 #include <mosquitto_broker.h>
+#include <memory_mosq.h>
 
 uint64_t g_bytes_received = 0;
 uint64_t g_bytes_sent = 0;
@@ -87,6 +88,28 @@ static void _sys_update_clients(struct mosquitto_db *db, char *buf, int len)
 	}
 }
 
+#ifdef WITH_MEMORY_TRACKING
+static void _sys_update_memory(struct mosquitto_db *db, char *buf, int len)
+{
+	static unsigned long current_heap = -1;
+	static unsigned long max_heap = -1;
+	unsigned long value_ul;
+
+	value_ul = _mosquitto_memory_used();
+	if(current_heap != value_ul){
+		current_heap = value_ul;
+		snprintf(buf, len, "%lu", current_heap);
+		mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/heap/current size", 2, strlen(buf), buf, 1);
+	}
+	value_ul =_mosquitto_max_memory_used();
+	if(max_heap != value_ul){
+		max_heap = value_ul;
+		snprintf(buf, len, "%lu", max_heap);
+		mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/heap/maximum size", 2, strlen(buf), buf, 1);
+	}
+}
+#endif
+
 /* Send messages for the $SYS hierarchy if the last update is longer than
  * 'interval' seconds ago.
  * 'interval' is the amount of seconds between updates. If 0, then no periodic
@@ -104,10 +127,6 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 #endif
 
 	static int msg_store_count = -1;
-#ifdef REAL_WITH_MEMORY_TRACKING
-	static unsigned long current_heap = -1;
-	static unsigned long max_heap = -1;
-#endif
 	static unsigned long msgs_received = -1;
 	static unsigned long msgs_sent = -1;
 	static unsigned long msgs_dropped = -1;
@@ -386,19 +405,8 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/retained messages/count", 2, strlen(buf), buf, 1);
 		}
 
-#ifdef REAL_WITH_MEMORY_TRACKING
-		value_ul = _mosquitto_memory_used();
-		if(current_heap != value_ul){
-			current_heap = value_ul;
-			snprintf(buf, 100, "%lu", current_heap);
-			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/heap/current size", 2, strlen(buf), buf, 1);
-		}
-		value_ul =_mosquitto_max_memory_used();
-		if(max_heap != value_ul){
-			max_heap = value_ul;
-			snprintf(buf, 100, "%lu", max_heap);
-			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/heap/maximum size", 2, strlen(buf), buf, 1);
-		}
+#ifdef WITH_MEMORY_TRACKING
+		_sys_update_memory(db, buf, 100);
 #endif
 
 		if(msgs_received != g_msgs_received){
