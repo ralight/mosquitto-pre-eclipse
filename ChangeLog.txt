@@ -1,3 +1,9 @@
+1.1.1 - 2013xxxx
+================
+
+Broker:
+- Fix crash on reload if using acl patterns.
+
 1.1 - 20121219
 ==============
 
