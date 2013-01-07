@@ -599,6 +599,7 @@ static int _acl_cleanup(struct mosquitto_db *db, bool reload)
 
 	if(db->acl_patterns){
 		_free_acl(db->acl_patterns);
+		db->acl_patterns = NULL;
 	}
 	return MOSQ_ERR_SUCCESS;
 }
