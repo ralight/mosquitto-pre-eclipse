@@ -4,6 +4,9 @@
 Broker:
 - Fix crash on reload if using acl patterns.
 
+Client library:
+- Fix static functions not being exported on Windows. Fixes bug #1098256.
+
 1.1 - 20121219
 ==============
 
