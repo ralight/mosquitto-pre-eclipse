@@ -2,6 +2,7 @@
 ==============
 
 Broker:
+- Add support for round_robin bridge option.
 - It is now possible to disable $SYS at compile time.
 
 Client library:

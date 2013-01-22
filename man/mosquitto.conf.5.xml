@@ -815,6 +815,25 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>round_robin</option> [ true | false ]</term>
+				<listitem>
+					<para>If the bridge has more than one address given in the
+						address/addresses configuration, the round_robin option
+						defines the behaviour of the bridge on a failure of the
+						bridge connection. If round_robin is false, the default
+						value, then the first address is treated as the main
+						bridge connection. If the connection fails, the other
+						secondary addresses will be attempted in turn. Whilst
+						connected to a secondary bridge, the bridge will
+						periodically attempt to reconnect to the main bridge
+						until successful.</para>
+					<para>If round_robin is true, then all addresses are
+						treated as equals. If a connection fails, the next
+						address will be tried and if successful will remain
+						connected until it fails.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>start_type</option> [ automatic | lazy | once ]</term>
 				<listitem>
 					<para>Set the start type of the bridge. This controls how
