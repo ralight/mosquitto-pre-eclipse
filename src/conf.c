@@ -798,6 +798,7 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 						cur_bridge = &(config->bridges[config->bridge_count-1]);
 						cur_bridge->name = _mosquitto_strdup(token);
 						cur_bridge->address = NULL;
+						cur_bridge->round_robin = false;
 						cur_bridge->keepalive = 60;
 						cur_bridge->clean_session = false;
 						cur_bridge->clientid = NULL;
@@ -1221,6 +1222,17 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid retry_interval value (%d).", config->retry_interval);
 						return MOSQ_ERR_INVAL;
 					}
+				}else if(!strcmp(token, "round_robin")){
+#ifdef WITH_BRIDGE
+					if(reload) continue; // FIXME
+					if(!cur_bridge){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
+						return MOSQ_ERR_INVAL;
+					}
+					if(_conf_parse_bool(&token, "round_robin", &cur_bridge->round_robin, saveptr)) return MOSQ_ERR_INVAL;
+#else
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+#endif
 				}else if(!strcmp(token, "start_type")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
@@ -1483,7 +1495,6 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 #endif
 				}else if(!strcmp(token, "trace_level")
 						|| !strcmp(token, "addresses")
-						|| !strcmp(token, "round_robin")
 						|| !strcmp(token, "ffdc_output")
 						|| !strcmp(token, "max_log_entries")
 						|| !strcmp(token, "trace_output")){

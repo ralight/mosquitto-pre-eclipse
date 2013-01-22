@@ -252,6 +252,7 @@ struct _mqtt3_bridge_topic{
 struct _mqtt3_bridge{
 	char *name;
 	char *address;
+	bool round_robin;
 	char *clientid;
 	uint16_t port;
 	int keepalive;
