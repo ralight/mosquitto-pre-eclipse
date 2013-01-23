@@ -249,12 +249,18 @@ struct _mqtt3_bridge_topic{
 	char *remote_topic; /* topic prefixed with remote_prefix */
 };
 
+struct bridge_address{
+	char *address;
+	int port;
+};
+
 struct _mqtt3_bridge{
 	char *name;
-	char *address;
+	struct bridge_address *addresses;
+	int cur_address;
+	int address_count;
 	bool round_robin;
 	char *clientid;
-	uint16_t port;
 	int keepalive;
 	bool clean_session;
 	struct _mqtt3_bridge_topic *topics;

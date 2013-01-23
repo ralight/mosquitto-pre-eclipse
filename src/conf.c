@@ -180,7 +180,12 @@ void mqtt3_config_cleanup(struct mqtt3_config *config)
 	if(config->bridges){
 		for(i=0; i<config->bridge_count; i++){
 			if(config->bridges[i].name) _mosquitto_free(config->bridges[i].name);
-			if(config->bridges[i].address) _mosquitto_free(config->bridges[i].address);
+			if(config->bridges[i].addresses){
+				for(j=0; j<config->bridges[i].address_count; j++){
+					_mosquitto_free(config->bridges[i].addresses[j].address);
+				}
+				_mosquitto_free(config->bridges[i].addresses);
+			}
 			if(config->bridges[i].clientid) _mosquitto_free(config->bridges[i].clientid);
 			if(config->bridges[i].username) _mosquitto_free(config->bridges[i].username);
 			if(config->bridges[i].password) _mosquitto_free(config->bridges[i].password);
@@ -380,7 +385,7 @@ int mqtt3_config_read(struct mqtt3_config *config, bool reload)
 
 #ifdef WITH_BRIDGE
 	for(i=0; i<config->bridge_count; i++){
-		if(!config->bridges[i].name || !config->bridges[i].address || !config->bridges[i].port || !config->bridges[i].topic_count){
+		if(!config->bridges[i].name || !config->bridges[i].addresses || !config->bridges[i].topic_count){
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 			return MOSQ_ERR_INVAL;
 		}
@@ -421,6 +426,8 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 #endif
 	int len;
 	struct _mqtt3_listener *cur_listener = &config->default_listener;
+	char *address;
+	int i;
 	
 	fptr = fopen(file, "rt");
 	if(!fptr) return 1;
@@ -443,19 +450,22 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 				}else if(!strcmp(token, "address") || !strcmp(token, "addresses")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
-					if(!cur_bridge || cur_bridge->address){
+					if(!cur_bridge || cur_bridge->addresses){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 						return MOSQ_ERR_INVAL;
 					}
-					token = strtok_r(NULL, " ", &saveptr);
-					if(token){
-						token = strtok_r(token, ":", &saveptr);
-						if(token){
-							cur_bridge->address = _mosquitto_strdup(token);
-							if(!cur_bridge->address){
-								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-								return MOSQ_ERR_NOMEM;
-							}
+					while((token = strtok_r(NULL, " ", &saveptr))){
+						cur_bridge->address_count++;
+						cur_bridge->addresses = _mosquitto_realloc(cur_bridge->addresses, sizeof(struct bridge_address)*cur_bridge->address_count);
+						if(!cur_bridge->addresses){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+							return MOSQ_ERR_NOMEM;
+						}
+						cur_bridge->addresses[cur_bridge->address_count-1].address = token;
+					}
+					for(i=0; i<cur_bridge->address_count; i++){
+						address = strtok_r(cur_bridge->addresses[i].address, ":", &saveptr);
+						if(address){
 							token = strtok_r(NULL, ":", &saveptr);
 							if(token){
 								port_tmp = atoi(token);
@@ -463,12 +473,14 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 									_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid port value (%d).", port_tmp);
 									return MOSQ_ERR_INVAL;
 								}
-								cur_bridge->port = port_tmp;
+								cur_bridge->addresses[i].port = port_tmp;
 							}else{
-								cur_bridge->port = 1883;
+								cur_bridge->addresses[i].port = 1883;
 							}
+							cur_bridge->addresses[i].address = _mosquitto_strdup(address);
 						}
-					}else{
+					}
+					if(cur_bridge->address_count == 0){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty address value in configuration.");
 						return MOSQ_ERR_INVAL;
 					}
@@ -797,12 +809,13 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 						}
 						cur_bridge = &(config->bridges[config->bridge_count-1]);
 						cur_bridge->name = _mosquitto_strdup(token);
-						cur_bridge->address = NULL;
+						cur_bridge->addresses = NULL;
+						cur_bridge->address_count = 0;
+						cur_bridge->cur_address = 0;
 						cur_bridge->round_robin = false;
 						cur_bridge->keepalive = 60;
 						cur_bridge->clean_session = false;
 						cur_bridge->clientid = NULL;
-						cur_bridge->port = 0;
 						cur_bridge->topics = NULL;
 						cur_bridge->topic_count = 0;
 						cur_bridge->topic_remapping = false;
@@ -1495,7 +1508,6 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "trace_level")
-						|| !strcmp(token, "addresses")
 						|| !strcmp(token, "ffdc_output")
 						|| !strcmp(token, "max_log_entries")
 						|| !strcmp(token, "trace_output")){

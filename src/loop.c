@@ -147,6 +147,10 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 						/* Want to try to restart the bridge connection */
 						if(!db->contexts[i]->bridge->restart_t){
 							db->contexts[i]->bridge->restart_t = time(NULL)+db->contexts[i]->bridge->restart_timeout;
+							db->contexts[i]->bridge->cur_address++;
+							if(db->contexts[i]->bridge->cur_address == db->contexts[i]->bridge->address_count){
+								db->contexts[i]->bridge->cur_address = 0;
+							}
 						}else{
 							if(db->contexts[i]->bridge->start_type == bst_automatic && time(NULL) > db->contexts[i]->bridge->restart_t){
 								db->contexts[i]->bridge->restart_t = 0;
