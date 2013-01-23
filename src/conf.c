@@ -823,6 +823,7 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 						cur_bridge->tls_keyfile = NULL;
 #  ifdef WITH_TLS_PSK
 						cur_bridge->tls_psk = NULL;
+						cur_bridge->tls_psk_identity = NULL;
 #  endif
 #endif
 					}else{
