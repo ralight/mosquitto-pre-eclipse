@@ -708,14 +708,17 @@
 		<para>Bridges cannot currently be reloaded on reload signal.</para>
 		<variablelist>
 			<varlistentry>
-				<term><option>address</option> <replaceable>address[:port]</replaceable></term>
-				<term><option>addresses</option> <replaceable>address[:port]</replaceable></term>
+				<term><option>address</option> <replaceable>address[:port]</replaceable> <replaceable>[address[:port]]</replaceable></term>
+				<term><option>addresses</option> <replaceable>address[:port]</replaceable> <replaceable>[address[:port]]</replaceable></term>
 				<listitem>
 					<para>Specify the address and optionally the port of the
 					bridge to connect to. This must be given for each bridge
 					connection. If the port is not specified, the default of
 					1883 is used.</para>
-					<para>Unlike rsmb, it is not currently possible to specify
+					<para>Multiple host addresses can be specified on the
+						address config. See the <option>round_robin</option>
+						option for more details on the behaviour of bridges
+						with multiple addresses.</para>
 					multiple addresses for a single bridge connection
 					here. This is true even if the name "addresses" is used.</para>
 				</listitem>
