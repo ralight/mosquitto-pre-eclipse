@@ -30,7 +30,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef MOSQUITTO_PLUGIN_H
 #define MOSQUITTO_PLUGIN_H
 
-#define MOSQ_AUTH_PLUGIN_VERSION 1
+#define MOSQ_AUTH_PLUGIN_VERSION 2
 
 #define MOSQ_ACL_NONE 0x00
 #define MOSQ_ACL_READ 0x01
@@ -155,7 +155,7 @@ int mosquitto_auth_security_cleanup(void *user_data, struct mosquitto_auth_opt *
  * MOSQ_ERR_SUCCESS if access was granted, MOSQ_ERR_ACL_DENIED if access was
  * not granted, or MOSQ_ERR_UNKNOWN for an application specific error.
  */
-int mosquitto_auth_acl_check(void *user_data, const char *username, const char *topic, int access);
+int mosquitto_auth_acl_check(void *user_data, const char *clientid, const char *username, const char *topic, int access);
 
 /*
  * Function: mosquitto_auth_unpwd_check

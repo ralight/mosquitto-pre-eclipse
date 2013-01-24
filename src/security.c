@@ -42,7 +42,7 @@ typedef int (*FUNC_auth_plugin_init)(void **, struct mosquitto_auth_opt *, int);
 typedef int (*FUNC_auth_plugin_cleanup)(void *, struct mosquitto_auth_opt *, int);
 typedef int (*FUNC_auth_plugin_security_init)(void *, struct mosquitto_auth_opt *, int, bool);
 typedef int (*FUNC_auth_plugin_security_cleanup)(void *, struct mosquitto_auth_opt *, int, bool);
-typedef int (*FUNC_auth_plugin_acl_check)(void *, const char *, const char *, int);
+typedef int (*FUNC_auth_plugin_acl_check)(void *, const char *, const char *, const char *, int);
 typedef int (*FUNC_auth_plugin_unpwd_check)(void *, const char *, const char *);
 typedef int (*FUNC_auth_plugin_psk_key_get)(void *, const char *, const char *, char *, int);
 
@@ -206,7 +206,7 @@ int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, cons
 	if(!db->auth_plugin.lib){
 		return mosquitto_acl_check_default(db, context, topic, access);
 	}else{
-		return db->auth_plugin.acl_check(db->auth_plugin.user_data, context->username, topic, access);
+		return db->auth_plugin.acl_check(db->auth_plugin.user_data, context->id, context->username, topic, access);
 	}
 }
 

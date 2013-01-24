@@ -4,6 +4,8 @@
 Broker:
 - Add support for round_robin bridge option.
 - It is now possible to disable $SYS at compile time.
+- Auth plugin ACL check function now passes the client id as well as username
+  and password.
 
 Client library:
 - Fix building on Android NDK.
