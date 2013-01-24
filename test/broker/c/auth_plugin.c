@@ -28,7 +28,7 @@ int mosquitto_auth_security_cleanup(void *user_data, struct mosquitto_auth_opt *
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto_auth_acl_check(void *user_data, const char *username, const char *topic, int access)
+int mosquitto_auth_acl_check(void *user_data, const char *clientid, const char *username, const char *topic, int access)
 {
 	if(!strcmp(username, "readonly") && access == MOSQ_ACL_READ){
 		return MOSQ_ERR_SUCCESS;
