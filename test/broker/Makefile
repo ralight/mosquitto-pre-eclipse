@@ -77,6 +77,7 @@ test : test-compile 01 02 03 04 05 06 07 08 09
 
 09 :
 	./09-plugin-auth-unpwd-success.py
+	./09-plugin-auth-unpwd-fail.py
 
 # Tests for with WITH_STRICT_PROTOCOL defined
 strict-test : 
