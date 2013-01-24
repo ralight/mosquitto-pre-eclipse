@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2012 Roger Light <roger@atchoo.org>
+Copyright (c) 2012,2013 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -47,20 +47,19 @@ struct mosquitto_auth_opt {
  * shared library. Using gcc this can be achieved as follows:
  *
  * gcc -I<path to mosquitto_plugin.h> -fPIC -shared plugin.c -o plugin.so
- *
- *
+ */
+
+/*
  * Function: mosquitto_auth_plugin_version
- *
- * int mosquitto_auth_plugin_version(void);
  *
  * The broker will call this function immediately after loading the plugin to
  * check it is a supported plugin version. Your code must simply return
  * MOSQ_AUTH_PLUGIN_VERSION.
- *
- *
+ */
+int mosquitto_auth_plugin_version(void);
+
+/*
  * Function: mosquitto_auth_plugin_init
- *
- * int mosquitto_auth_plugin_init(void **user_data, struct mosquitto_auth_opt *auth_opts, int auth_opt_count);
  *
  * Called after the plugin has been loaded and <mosquitto_auth_plugin_version>
  * has been called. This will only ever be called once and can be used to
@@ -77,11 +76,11 @@ struct mosquitto_auth_opt {
  * Return value:
  *	Return 0 on success
  *	Return >0 on failure.
- *
- *
+ */
+int mosquitto_auth_plugin_init(void **user_data, struct mosquitto_auth_opt *auth_opts, int auth_opt_count);
+
+/*
  * Function: mosquitto_auth_plugin_cleanup
- *
- * int mosquitto_auth_plugin_cleanup(void *user_data, struct mosquitto_auth_opt *auth_opts, int auth_opt_count);
  *
  * Called when the broker is shutting down. This will only ever be called once.
  * Note that <mosquitto_auth_security_cleanup> will be called directly before
@@ -97,11 +96,11 @@ struct mosquitto_auth_opt {
  * Return value:
  *	Return 0 on success
  *	Return >0 on failure.
- *
- *
+ */
+int mosquitto_auth_plugin_cleanup(void *user_data, struct mosquitto_auth_opt *auth_opts, int auth_opt_count);
+
+/*
  * Function: mosquitto_auth_security_init
- *
- * int mosquitto_auth_security_init(void *user_data, struct mosquitto_auth_opt *auth_opts, int auth_opt_count, bool reload);
  *
  * Called when the broker initialises the security functions when it starts up.
  * If the broker is requested to reload its configuration whilst running,
@@ -121,11 +120,11 @@ struct mosquitto_auth_opt {
  * Return value:
  *	Return 0 on success
  *	Return >0 on failure.
- *
- * 
+ */
+int mosquitto_auth_security_init(void *user_data, struct mosquitto_auth_opt *auth_opts, int auth_opt_count, bool reload);
+
+/* 
  * Function: mosquitto_auth_security_cleanup
- *
- * int mosquitto_auth_security_cleanup(void *user_data, struct mosquitto_auth_opt *auth_opts, int auth_opt_count, bool reload);
  *
  * Called when the broker cleans up the security functions when it shuts down.
  * If the broker is requested to reload its configuration whilst running,
@@ -145,31 +144,31 @@ struct mosquitto_auth_opt {
  * Return value:
  *	Return 0 on success
  *	Return >0 on failure.
- *
- *
+ */
+int mosquitto_auth_security_cleanup(void *user_data, struct mosquitto_auth_opt *auth_opts, int auth_opt_count, bool reload);
+
+/*
  * Function: mosquitto_auth_acl_check
- *
- * int mosquitto_auth_acl_check(void *user_data, const char *username, const char *topic, int access);
  *
  * Called by the broker when topic access must be checked. access will be one
  * of MOSQ_ACL_READ (for subscriptions) or MOSQ_ACL_WRITE (for publish). Return
  * MOSQ_ERR_SUCCESS if access was granted, MOSQ_ERR_ACL_DENIED if access was
  * not granted, or MOSQ_ERR_UNKNOWN for an application specific error.
- *
- *
+ */
+int mosquitto_auth_acl_check(void *user_data, const char *username, const char *topic, int access);
+
+/*
  * Function: mosquitto_auth_unpwd_check
- *
- * int mosquitto_auth_unpwd_check(void *user_data, const char *username, const char *password);
  *
  * Called by the broker when a username/password must be checked. Return
  * MOSQ_ERR_SUCCESS if the user is authenticated, MOSQ_ERR_AUTH if
  * authentication failed, or MOSQ_ERR_UNKNOWN for an application specific
  * error.
- *
- *
+ */
+int mosquitto_auth_unpwd_check(void *user_data, const char *username, const char *password);
+
+/*
  * Function: mosquitto_psk_key_get
- *
- * int mosquitto_auth_psk_key_get(void *user_data, const char *hint, const char *identity, char *key, int max_key_len);
  *
  * Called by the broker when a client connects to a listener using TLS/PSK.
  * This is used to retrieve the pre-shared-key associated with a client
@@ -190,5 +189,6 @@ struct mosquitto_auth_opt {
  *	Return >0 on failure.
  *	Return >0 if this function is not required.
  */
+int mosquitto_auth_psk_key_get(void *user_data, const char *hint, const char *identity, char *key, int max_key_len);
 
 #endif
