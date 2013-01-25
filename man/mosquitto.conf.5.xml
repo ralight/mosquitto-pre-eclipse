@@ -719,8 +719,6 @@
 						address config. See the <option>round_robin</option>
 						option for more details on the behaviour of bridges
 						with multiple addresses.</para>
-					multiple addresses for a single bridge connection
-					here. This is true even if the name "addresses" is used.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
