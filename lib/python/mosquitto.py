@@ -614,6 +614,8 @@ class Mosquitto:
             self.socket().connect((self._host, self._port))
         except socket.error as err:
             (msg) = err
+            if msg.errno == 1 and "ssl" in msg.strerror:
+                raise
             if msg.errno != errno.EINPROGRESS:
                 print(msg)
                 return 1
