@@ -1,3 +1,11 @@
+1.1.2 - 20130130
+================
+
+Client library:
+- Fix tls_cert_reqs not being set to SSL_VERIFY_PEER by default. This meant
+  that clients were not verifying the server certificate when connecting over
+  TLS. This affects the C, C++ and Python libraries.
+
 1.1.1 - 20130116
 ================
 

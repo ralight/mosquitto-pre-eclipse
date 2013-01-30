@@ -192,6 +192,7 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 	mosq->queue_len = 0;
 #ifdef WITH_TLS
 	mosq->ssl = NULL;
+	mosq->tls_cert_reqs = SSL_VERIFY_PEER;
 #endif
 #ifdef WITH_THREADING
 	pthread_mutex_init(&mosq->callback_mutex, NULL);
@@ -749,6 +750,9 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 		do{
 			rc = mosquitto_loop(mosq, timeout, max_packets);
 		}while(rc == MOSQ_ERR_SUCCESS);
+		if(errno == EPROTO){
+			return rc;
+		}
 		if(mosq->state == mosq_cs_disconnecting){
 			run = 0;
 		}else{
