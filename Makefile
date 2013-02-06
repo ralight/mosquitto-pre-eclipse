@@ -9,21 +9,21 @@ DISTDIRS=man
 all : mosquitto docs
 
 docs :
-	for d in ${DOCDIRS}; do $(MAKE) -C $${d}; done
+	set -e; for d in ${DOCDIRS}; do $(MAKE) -C $${d}; done
 
 binary : mosquitto
 
 mosquitto :
-	for d in ${DIRS}; do $(MAKE) -C $${d}; done
+	set -e; for d in ${DIRS}; do $(MAKE) -C $${d}; done
 
 clean :
-	for d in ${DIRS}; do $(MAKE) -C $${d} clean; done
-	for d in ${DOCDIRS}; do $(MAKE) -C $${d} clean; done
+	set -e; for d in ${DIRS}; do $(MAKE) -C $${d} clean; done
+	set -e; for d in ${DOCDIRS}; do $(MAKE) -C $${d} clean; done
 	$(MAKE) -C test clean
 
 reallyclean : 
-	for d in ${DIRS}; do $(MAKE) -C $${d} reallyclean; done
-	for d in ${DOCDIRS}; do $(MAKE) -C $${d} reallyclean; done
+	set -e; for d in ${DIRS}; do $(MAKE) -C $${d} reallyclean; done
+	set -e; for d in ${DOCDIRS}; do $(MAKE) -C $${d} reallyclean; done
 	$(MAKE) -C test reallyclean
 	-rm -f *.orig
 
@@ -31,8 +31,8 @@ test : mosquitto
 	$(MAKE) -C test test
 
 install : mosquitto
-	@for d in ${DIRS}; do $(MAKE) -C $${d} install; done
-	@for d in ${DOCDIRS}; do $(MAKE) -C $${d} install; done
+	set -e; for d in ${DIRS}; do $(MAKE) -C $${d} install; done
+	set -e; for d in ${DOCDIRS}; do $(MAKE) -C $${d} install; done
 	$(INSTALL) -d ${DESTDIR}/etc/mosquitto
 	$(INSTALL) -m 644 mosquitto.conf ${DESTDIR}/etc/mosquitto/mosquitto.conf
 	$(INSTALL) -m 644 aclfile.example ${DESTDIR}/etc/mosquitto/aclfile.example
@@ -40,19 +40,19 @@ install : mosquitto
 	$(INSTALL) -m 644 pskfile.example ${DESTDIR}/etc/mosquitto/pskfile.example
 
 uninstall :
-	@for d in ${DIRS}; do $(MAKE) -C $${d} uninstall; done
+	set -e; for d in ${DIRS}; do $(MAKE) -C $${d} uninstall; done
 	rm -f ${DESTDIR}/etc/mosquitto/mosquitto.conf
 	rm -f ${DESTDIR}/etc/mosquitto/aclfile.example
 	rm -f ${DESTDIR}/etc/mosquitto/pwfile.example
 	rm -f ${DESTDIR}/etc/mosquitto/pskfile.example
 
 dist : reallyclean
-	@for d in ${DISTDIRS}; do $(MAKE) -C $${d} dist; done
+	set -e; for d in ${DISTDIRS}; do $(MAKE) -C $${d} dist; done
 	
 	mkdir -p dist/mosquitto-${VERSION}
 	cp -r client examples installer lib logo man misc security service src test ChangeLog.txt CMakeLists.txt LICENSE.txt LICENSE-3rd-party.txt Makefile compiling.txt config.h config.mk readme.txt readme-windows.txt mosquitto.conf aclfile.example pskfile.example pwfile.example dist/mosquitto-${VERSION}/
 	cd dist; tar -zcf mosquitto-${VERSION}.tar.gz mosquitto-${VERSION}/
-	for m in man/*.xml; \
+	set -e; for m in man/*.xml; \
 		do \
 		hfile=$$(echo $${m} | sed -e 's#man/\(.*\)\.xml#\1#' | sed -e 's/\./-/g'); \
 		$(XSLTPROC) $(DB_HTML_XSL) $${m} > dist/$${hfile}.html; \
