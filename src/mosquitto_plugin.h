@@ -69,7 +69,7 @@ int mosquitto_auth_plugin_version(void);
  *
  *	user_data :      The pointer set here will be passed to the other plugin
  *	                 functions. Use to hold connection information for example.
- *	auth_opts :      Pointer to an array of struct_mosquitto_auth_opt, which
+ *	auth_opts :      Pointer to an array of struct mosquitto_auth_opt, which
  *	                 provides the plugin options defined in the configuration file.
  *	auth_opt_count : The number of elements in the auth_opts array.
  *
@@ -89,7 +89,7 @@ int mosquitto_auth_plugin_init(void **user_data, struct mosquitto_auth_opt *auth
  * Parameters:
  *
  *	user_data :      The pointer provided in <mosquitto_auth_plugin_init>.
- *	auth_opts :      Pointer to an array of struct_mosquitto_auth_opt, which
+ *	auth_opts :      Pointer to an array of struct mosquitto_auth_opt, which
  *	                 provides the plugin options defined in the configuration file.
  *	auth_opt_count : The number of elements in the auth_opts array.
  *
@@ -110,7 +110,7 @@ int mosquitto_auth_plugin_cleanup(void *user_data, struct mosquitto_auth_opt *au
  * Parameters:
  *
  *	user_data :      The pointer provided in <mosquitto_auth_plugin_init>.
- *	auth_opts :      Pointer to an array of struct_mosquitto_auth_opt, which
+ *	auth_opts :      Pointer to an array of struct mosquitto_auth_opt, which
  *	                 provides the plugin options defined in the configuration file.
  *	auth_opt_count : The number of elements in the auth_opts array.
  *	reload :         If set to false, this is the first time the function has
@@ -134,7 +134,7 @@ int mosquitto_auth_security_init(void *user_data, struct mosquitto_auth_opt *aut
  * Parameters:
  *
  *	user_data :      The pointer provided in <mosquitto_auth_plugin_init>.
- *	auth_opts :      Pointer to an array of struct_mosquitto_auth_opt, which
+ *	auth_opts :      Pointer to an array of struct mosquitto_auth_opt, which
  *	                 provides the plugin options defined in the configuration file.
  *	auth_opt_count : The number of elements in the auth_opts array.
  *	reload :         If set to false, this is the first time the function has
