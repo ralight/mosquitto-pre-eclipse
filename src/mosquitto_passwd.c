@@ -415,8 +415,8 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 
-		backup_file = malloc(strlen(password_file)+2);
-		snprintf(backup_file, strlen(password_file)+2, "%s~", password_file);
+		backup_file = malloc(strlen(password_file)+5);
+		snprintf(backup_file, strlen(password_file)+5, "%s.tmp", password_file);
 
 		if(create_backup(backup_file, fptr)){
 			fclose(fptr);
