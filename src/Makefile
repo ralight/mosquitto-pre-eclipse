@@ -87,7 +87,7 @@ mosquitto_passwd : mosquitto_passwd.o
 	${CC} $^ -o $@ ${LDFLAGS} $(PASSWD_LIBS)
 
 mosquitto_passwd.o : mosquitto_passwd.c
-	${CC} $(CFLAGS) -c $< -o $@
+	${CC} $(CFLAGS) ${CPPFLAGS} -c $< -o $@
 
 install : all
 	$(INSTALL) -d ${DESTDIR}$(prefix)/sbin
