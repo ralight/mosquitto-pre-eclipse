@@ -6,6 +6,8 @@ Broker:
 - It is now possible to disable $SYS at compile time.
 - Auth plugin ACL check function now passes the client id as well as username
   and password.
+- The queue_qos0_messages option wasn't working correctly, this has now been
+  fixed. Closes bug #1125200.
 
 Client library:
 - Fix building on Android NDK.

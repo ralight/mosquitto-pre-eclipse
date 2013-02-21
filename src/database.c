@@ -248,7 +248,7 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 	}
 	if(context->sock == INVALID_SOCKET){
 		/* Client is not connected only queue messages with QoS>0. */
-		if(qos == 0){
+		if(qos == 0 && !db->config->queue_qos0_messages){
 			if(!context->bridge){
 				return 2;
 			}else{
@@ -270,7 +270,7 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 	}
 
 	if(context->sock != INVALID_SOCKET){
-		if( (qos == 0 && !db->config->queue_qos0_messages) || max_inflight == 0 || msg_count < max_inflight){
+		if(qos == 0 || max_inflight == 0 || msg_count < max_inflight){
 			if(dir == mosq_md_out){
 				switch(qos){
 					case 0:
@@ -518,6 +518,7 @@ int mqtt3_db_message_reconnect_reset(struct mosquitto *context)
 {
 	struct mosquitto_client_msg *msg;
 	struct mosquitto_client_msg *prev = NULL;
+	int count;
 
 	msg = context->msgs;
 	while(msg){
@@ -561,18 +562,24 @@ int mqtt3_db_message_reconnect_reset(struct mosquitto *context)
 	 * queued up for sending.
 	 */
 	if(context->msgs){
-		if(context->msgs->state == ms_queued){
-			switch(context->msgs->qos){
-				case 0:
-					context->msgs->state = ms_publish_qos0;
-					break;
-				case 1:
-					context->msgs->state = ms_publish_qos1;
-					break;
-				case 2:
-					context->msgs->state = ms_publish_qos2;
-					break;
+		count = 0;
+		msg = context->msgs;
+		while(msg && (max_queued == 0 || count < max_queued)){
+			if(msg->state == ms_queued){
+				switch(msg->qos){
+					case 0:
+						msg->state = ms_publish_qos0;
+						break;
+					case 1:
+						msg->state = ms_publish_qos1;
+						break;
+					case 2:
+						msg->state = ms_publish_qos2;
+						break;
+				}
 			}
+			msg = msg->next;
+			count++;
 		}
 	}
 
