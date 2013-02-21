@@ -300,7 +300,7 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 			return 2;
 		}
 	}else{
-		if(msg_count >= max_queued){
+		if(max_queued > 0 && msg_count >= max_queued){
 			g_msgs_dropped++;
 			return 2;
 		}else{
