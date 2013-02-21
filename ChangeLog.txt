@@ -8,6 +8,8 @@ Broker:
   and password.
 - The queue_qos0_messages option wasn't working correctly, this has now been
   fixed. Closes bug #1125200.
+- Don't drop all messages for disconnected durable clients when
+  max_queued_messages=0.
 
 Client library:
 - Fix building on Android NDK.
