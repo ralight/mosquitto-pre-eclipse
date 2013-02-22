@@ -20,26 +20,24 @@ import mosq_test
 
 rc = 1
 keepalive = 10
-connect_packet = mosq_test.gen_connect("connect-revoked-test", keepalive=keepalive)
+connect_packet = mosq_test.gen_connect("connect-success-test", keepalive=keepalive)
 connack_packet = mosq_test.gen_connack(rc=0)
 
-broker = subprocess.Popen(['../../src/mosquitto', '-c', '08-ssl-connect-cert-auth-revoked.conf'], stderr=subprocess.PIPE)
+broker = subprocess.Popen(['../../src/mosquitto', '-c', '08-ssl-connect-cert-auth-crl.conf'], stderr=subprocess.PIPE)
 
 try:
     time.sleep(0.5)
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    ssock = ssl.wrap_socket(sock, ca_certs="../ssl/test-ca.crt", certfile="../ssl/client-revoked.crt", keyfile="../ssl/client-revoked.key", cert_reqs=ssl.CERT_REQUIRED)
+    ssock = ssl.wrap_socket(sock, ca_certs="../ssl/test-ca.crt", certfile="../ssl/client.crt", keyfile="../ssl/client.key", cert_reqs=ssl.CERT_REQUIRED)
     ssock.settimeout(10)
-    try:
-        ssock.connect(("localhost", 1888))
-    except ssl.SSLError as err:
-        if err.errno == 1 and "certificate revoked" in err.strerror:
-            rc = 0
-        else:
-            broker.terminate()
-            raise ValueError(err.errno)
+    ssock.connect(("localhost", 1888))
+    ssock.send(connect_packet)
 
+    if mosq_test.expect_packet(ssock, "connack", connack_packet):
+        rc = 0
+
+    ssock.close()
 finally:
     broker.terminate()
     broker.wait()
