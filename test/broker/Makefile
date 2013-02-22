@@ -70,6 +70,7 @@ test : test-compile 01 02 03 04 05 06 07 08 09
 	./08-ssl-connect-cert-auth-without.py
 	./08-ssl-connect-cert-auth-expired.py
 	./08-ssl-connect-cert-auth-revoked.py
+	./08-ssl-connect-cert-auth-crl.py
 	./08-ssl-connect-identity.py
 	./08-ssl-connect-no-identity.py
 	./08-tls-psk-pub.py
