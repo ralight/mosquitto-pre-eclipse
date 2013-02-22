@@ -37,7 +37,7 @@ try:
     try:
         ssock.connect(("localhost", 1888))
     except ssl.SSLError as err:
-        if err.errno == 1:
+        if err.errno == 1 and "certificate revoked" in err.strerror:
             rc = 0
         else:
             broker.terminate()
