@@ -615,8 +615,7 @@ class Mosquitto:
         except socket.error as err:
             (msg) = err
             if msg.errno != errno.EINPROGRESS:
-                print(msg)
-                return 1
+                raise
 
         self._sock.setblocking(0)
 
@@ -1082,8 +1081,7 @@ class Mosquitto:
                     return MOSQ_ERR_AGAIN
                 if msg.errno == errno.EAGAIN:
                     return MOSQ_ERR_AGAIN
-                print(msg)
-                return 1
+                raise
             else:
                 if len(command) == 0:
                     return 1
@@ -1106,8 +1104,7 @@ class Mosquitto:
                         return MOSQ_ERR_AGAIN
                     if msg.errno == errno.EAGAIN:
                         return MOSQ_ERR_AGAIN
-                    print(msg)
-                    return 1
+                    raise
                 else:
                     byte = struct.unpack("!B", byte)
                     byte = byte[0]
@@ -1138,8 +1135,7 @@ class Mosquitto:
                     return MOSQ_ERR_AGAIN
                 if msg.errno == errno.EAGAIN:
                     return MOSQ_ERR_AGAIN
-                print(msg)
-                return 1
+                raise
             else:
                 self._in_packet.to_process = self._in_packet.to_process - len(data)
                 self._in_packet.packet = self._in_packet.packet + data
@@ -1177,8 +1173,7 @@ class Mosquitto:
                     return MOSQ_ERR_AGAIN
                 if msg.errno == errno.EAGAIN:
                     return MOSQ_ERR_AGAIN
-                print(msg)
-                return 1
+                raise
 
             if write_length > 0:
                 packet.to_process = packet.to_process - write_length

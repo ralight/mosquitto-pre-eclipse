@@ -13,6 +13,8 @@ Broker:
 
 Client library:
 - Fix building on Android NDK.
+- Re-raise unhandled errors in Python so as not to provide confusing error
+  messages later on.
 
 1.1 - 20121219
 ==============
