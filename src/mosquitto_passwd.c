@@ -43,6 +43,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #		define false 0
 #	endif
 #   define snprintf sprintf_s
+#	include <io.h>
 #else
 #  include <stdbool.h>
 #  include <unistd.h>
@@ -51,8 +52,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define MAX_BUFFER_LEN 1024
 #define SALT_LEN 12
-
-static char temp_file[100];
 
 int base64_encode(unsigned char *in, unsigned int in_len, char **encoded)
 {
@@ -157,7 +156,7 @@ int output_new_password(FILE *fptr, const char *username, const char *password)
 	return 0;
 }
 
-int delete_pwuser(FILE *fptr, FILE *fnew, const char *username)
+int delete_pwuser(FILE *fptr, FILE *ftmp, const char *username)
 {
 	char buf[MAX_BUFFER_LEN];
 	char lbuf[MAX_BUFFER_LEN], *token;
@@ -167,7 +166,7 @@ int delete_pwuser(FILE *fptr, FILE *fnew, const char *username)
 		memcpy(lbuf, buf, MAX_BUFFER_LEN);
 		token = strtok(lbuf, ":");
 		if(strcmp(username, token)){
-			fprintf(fnew, "%s", buf);
+			fprintf(ftmp, "%s", buf);
 		}else{
 			found = true;
 		}
@@ -178,7 +177,7 @@ int delete_pwuser(FILE *fptr, FILE *fnew, const char *username)
 	return 0;
 }
 
-int update_file(FILE *fptr, FILE *fnew)
+int update_file(FILE *fptr, FILE *ftmp)
 {
 	char buf[MAX_BUFFER_LEN];
 	char lbuf[MAX_BUFFER_LEN];
@@ -190,16 +189,16 @@ int update_file(FILE *fptr, FILE *fnew)
 		username = strtok(lbuf, ":");
 		password = strtok(NULL, ":");
 		if(password){
-			rc = output_new_password(fnew, username, password);
+			rc = output_new_password(ftmp, username, password);
 			if(rc) return rc;
 		}else{
-			fprintf(fnew, "%s", username);
+			fprintf(ftmp, "%s", username);
 		}
 	}
 	return 0;
 }
 
-int update_pwuser(FILE *fptr, FILE *fnew, const char *username, const char *password)
+int update_pwuser(FILE *fptr, FILE *ftmp, const char *username, const char *password)
 {
 	char buf[MAX_BUFFER_LEN];
 	char lbuf[MAX_BUFFER_LEN], *token;
@@ -210,16 +209,16 @@ int update_pwuser(FILE *fptr, FILE *fnew, const char *username, const char *pass
 		memcpy(lbuf, buf, MAX_BUFFER_LEN);
 		token = strtok(lbuf, ":");
 		if(strcmp(username, token)){
-			fprintf(fnew, "%s", buf);
+			fprintf(ftmp, "%s", buf);
 		}else{
-			rc = output_new_password(fnew, username, password);
+			rc = output_new_password(ftmp, username, password);
 			found = true;
 		}
 	}
 	if(found){
 		return rc;
 	}else{
-		return output_new_password(fnew, username, password);
+		return output_new_password(ftmp, username, password);
 	}
 }
 
@@ -303,6 +302,51 @@ int get_password(char *password, int len)
 	return 0;
 }
 
+int copy_contents(FILE *src, FILE *dest)
+{
+	char buf[MAX_BUFFER_LEN];
+	int len;
+
+	rewind(src);
+	rewind(dest);
+	
+#ifdef WIN32
+	_chsize(fileno(dest), 0);
+#else
+	if(ftruncate(fileno(dest), 0)) return 1;
+#endif
+
+	while(!feof(src)){
+		len = fread(buf, 1, MAX_BUFFER_LEN, src);
+		if(len > 0){
+			if(fwrite(buf, 1, len, dest) != len){
+				return 1;
+			}
+		}else{
+			return !feof(src);
+		}
+	}
+	return 0;
+}
+
+int create_backup(const char *backup_file, FILE *fptr)
+{
+	FILE *fbackup;
+
+	fbackup = fopen(backup_file, "wt");
+	if(!fbackup){
+		fprintf(stderr, "Error creating backup password file \"%s\", not continuing.\n", backup_file);
+		return 1;
+	}
+	if(copy_contents(fptr, fbackup)){
+		fprintf(stderr, "Error copying data to backup password file \"%s\", not continuing.\n", backup_file);
+		fclose(fbackup);
+		return 1;
+	}
+	fclose(fbackup);
+	rewind(fptr);
+	return 0;
+}
 void handle_sigint(int signal)
 {
 #ifndef WIN32
@@ -312,10 +356,6 @@ void handle_sigint(int signal)
 	ts.c_lflag |= ECHO | ICANON;
 	tcsetattr(0, TCSANOW, &ts);
 #endif
-	if(temp_file[0] != '\0'){
-		/* Temp file may have been created, so delete it. */
-		unlink(temp_file);
-	}
 	exit(0);
 }
 
@@ -325,12 +365,12 @@ int main(int argc, char *argv[])
 	char *username = NULL;
 	bool create_new = false;
 	bool delete_user = false;
-	FILE *fptr, *fnew;
+	FILE *fptr, *ftmp;
 	char password[MAX_BUFFER_LEN];
 	int rc;
 	bool do_update_file = false;
+	char *backup_file;
 
-	memset(temp_file, 0, 100);
 	signal(SIGINT, handle_sigint);
 	signal(SIGTERM, handle_sigint);
 
@@ -367,36 +407,69 @@ int main(int argc, char *argv[])
 		}
 		rc = output_new_password(fptr, username, password);
 		fclose(fptr);
+		return rc;
 	}else{
-		snprintf(temp_file, 100, "mosquitto_passwd_tmp.%d", getpid());
-		fptr = fopen(password_file, "rt");
+		fptr = fopen(password_file, "r+t");
 		if(!fptr){
-			fprintf(stderr, "Error: Unable to open file %s for reading.\n", password_file);
+			fprintf(stderr, "Error: Unable to open password file %s.\n", password_file);
 			return 1;
 		}
-		fnew = fopen(temp_file, "wt");
-		if(!fnew){
-			fprintf(stderr, "Error: Unable to open file %s for writing.\n", temp_file);
+
+		backup_file = malloc(strlen(password_file)+5);
+		snprintf(backup_file, strlen(password_file)+5, "%s.tmp", password_file);
+
+		if(create_backup(backup_file, fptr)){
 			fclose(fptr);
+			free(backup_file);
+			return 1;
+		}
+
+		ftmp = tmpfile();
+		if(!ftmp){
+			fprintf(stderr, "Error: Unable to open temporary file.\n");
+			fclose(fptr);
+			free(backup_file);
 			return 1;
 		}
 		if(delete_user){
-			rc = delete_pwuser(fptr, fnew, username);
+			rc = delete_pwuser(fptr, ftmp, username);
 		}else if(do_update_file){
-			rc = update_file(fptr, fnew);
+			rc = update_file(fptr, ftmp);
 		}else{
 			rc = get_password(password, 1024);
-			if(rc) return rc;
+			if(rc){
+				fclose(fptr);
+				fclose(ftmp);
+				unlink(backup_file);
+				free(backup_file);
+				return rc;
+			}
 			/* Update password for individual user */
-			rc = update_pwuser(fptr, fnew, username, password);
+			rc = update_pwuser(fptr, ftmp, username, password);
+		}
+		if(rc){
+			fclose(fptr);
+			fclose(ftmp);
+			unlink(backup_file);
+			free(backup_file);
+			return rc;
+		}
+
+		if(copy_contents(ftmp, fptr)){
+			fclose(fptr);
+			fclose(ftmp);
+			fprintf(stderr, "Error occurred updating password file.\n");
+			fprintf(stderr, "Password file may be corrupt, check the backup file: %s.\n", backup_file);
+			free(backup_file);
+			return 1;
 		}
 		fclose(fptr);
-		fclose(fnew);
-		if(!rc){
-			rename(temp_file, password_file);
-		}else{
-			fprintf(stderr, "Error occurred, not updating password file.\n");
-		}
+		fclose(ftmp);
+
+		/* Everything was ok so backup no longer needed. May contain old
+		 * passwords so shouldn't be kept around. */
+		unlink(backup_file);
+		free(backup_file);
 	}
 
 	return 0;
