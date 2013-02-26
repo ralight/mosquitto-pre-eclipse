@@ -10,6 +10,7 @@ Broker:
   fixed. Closes bug #1125200.
 - Don't drop all messages for disconnected durable clients when
   max_queued_messages=0.
+- mosquitto_passwd utility now reports errors more clearly.
 
 Client library:
 - Fix building on Android NDK.
