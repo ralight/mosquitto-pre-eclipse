@@ -29,6 +29,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <config.h>
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1041,6 +1042,8 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 							cr->log_type |= MOSQ_LOG_ERR;
 						}else if(!strcmp(token, "debug")){
 							cr->log_type |= MOSQ_LOG_DEBUG;
+						}else if(!strcmp(token, "all")){
+							cr->log_type = INT_MAX;
 						}else{
 							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid log_type value (%s).", token);
 							return MOSQ_ERR_INVAL;

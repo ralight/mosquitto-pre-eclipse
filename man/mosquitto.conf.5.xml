@@ -283,11 +283,11 @@
 				<term><option>log_type</option> <replaceable>types</replaceable></term>
 				<listitem>
 					<para>Choose types of messages to log. Possible types are:
-					debug, error, warning, notice, information, none. Defaults
-					to error, warning, notice and information. This option may
-					be specified multiple times. Note that the debug type (used
-					for decoding incoming/outgoing network packets) is never
-					logged in topics.</para>
+					debug, error, warning, notice, information, none, all.
+					Defaults to error, warning, notice and information. This
+					option may be specified multiple times. Note that the debug
+					type (used for decoding incoming/outgoing network packets)
+					is never logged in topics.</para>
 					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
