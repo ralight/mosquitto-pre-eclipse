@@ -351,7 +351,7 @@ int mqtt3_db_backup(struct mosquitto_db *db, bool cleanup, bool shutdown)
 {
 	int rc = 0;
 	FILE *db_fptr = NULL;
-	uint32_t db_version = htonl(MOSQ_DB_VERSION);
+	uint32_t db_version_w = htonl(MOSQ_DB_VERSION);
 	uint32_t crc = htonl(0);
 	dbid_t i64temp;
 	uint32_t i32temp;
@@ -373,7 +373,7 @@ int mqtt3_db_backup(struct mosquitto_db *db, bool cleanup, bool shutdown)
 	/* Header */
 	write_e(db_fptr, magic, 15);
 	write_e(db_fptr, &crc, sizeof(uint32_t));
-	write_e(db_fptr, &db_version, sizeof(uint32_t));
+	write_e(db_fptr, &db_version_w, sizeof(uint32_t));
 
 	/* DB config */
 	i16temp = htons(DB_CHUNK_CFG);
