@@ -936,6 +936,21 @@
 					<para>See also the <option>cleansession</option> option if
 						you have messages arriving on unexpected topics when
 						using incoming topics.</para>
+
+					<example title="Bridge Topic Remapping" label="Bridge Topic Remapping">
+						<para>The configuration below connects a bridge to the
+							broker at <option>test.mosquitto.org</option>. It
+							subscribes to the remote topic
+							<option>$SYS/broker/clients/total</option> and
+							republishes the messages received to the local topic
+							<option>test/mosquitto/org/clients/total</option></para>
+						<programlisting language="config">
+connection test-mosquitto-org
+address test.mosquitto.org
+cleansession true
+topic clients/total in 0 test/mosquitto/org $SYS/broker/
+</programlisting></example>
+
 				</listitem>
 			</varlistentry>
 			<varlistentry>
