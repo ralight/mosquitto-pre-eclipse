@@ -59,6 +59,12 @@ if (${WITH_PERSISTENCE} STREQUAL ON)
 	add_definitions("-DWITH_PERSISTENCE")
 endif (${WITH_PERSISTENCE} STREQUAL ON)
 
+option(WITH_SYS_TREE
+	"Include $SYS tree support?" ON)
+if (${WITH_SYS_TREE} STREQUAL ON)
+	add_definitions("-DWITH_SYS_TREE")
+endif (${WITH_SYS_TREE} STREQUAL ON)
+
 if (WIN32 OR CYGWIN)
 	set (MOSQ_SRCS ${MOSQ_SRCS} service.c)
 endif (WIN32 OR CYGWIN)
