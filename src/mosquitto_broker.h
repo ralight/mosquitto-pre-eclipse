@@ -117,13 +117,14 @@ struct mqtt3_config {
 	char *persistence_file;
 	char *persistence_filepath;
 	time_t persistent_client_expiration;
+	char *pid_file;
 	char *psk_file;
 	bool queue_qos0_messages;
 	int retry_interval;
 	int store_clean_interval;
 	int sys_interval;
-	char *pid_file;
 	char *user;
+	bool verbose;
 #ifdef WITH_BRIDGE
 	struct _mqtt3_bridge *bridges;
 	int bridge_count;

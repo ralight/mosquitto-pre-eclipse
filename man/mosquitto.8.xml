@@ -23,6 +23,7 @@
 				<arg choice='plain'>--daemon</arg>
 			</group>
 			<arg>-p <replaceable>port number</replaceable></arg>
+			<arg>-v</arg>
 		</cmdsynopsis>
 	</refsynopsisdiv>
 
@@ -53,6 +54,16 @@
 				<term><option>--port</option></term>
 				<listitem>
 					<para>Listen on the port specified instead of the default 1883. This acts in addition to the port setting in the config file. May be specified multiple times to open multiple sockets listening on different ports. This socket will be bound to all network interfaces.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-v</option></term>
+				<term><option>--verbose</option></term>
+				<listitem>
+					<para>Use verbose logging. This is equivalent to setting
+						<option>log_type</option> to <option>all</option> in
+						the configuration file. This overrides and logging
+						options given in the configuration file.</para>
 				</listitem>
 			</varlistentry>
 		</variablelist>

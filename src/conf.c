@@ -86,7 +86,11 @@ static void _config_init_reload(struct mqtt3_config *config)
 	}
 #else
 	config->log_dest = MQTT3_LOG_STDERR;
-	config->log_type = MOSQ_LOG_ERR | MOSQ_LOG_WARNING | MOSQ_LOG_NOTICE | MOSQ_LOG_INFO;
+	if(config->verbose){
+		config->log_type = MOSQ_LOG_DEBUG | MOSQ_LOG_ERR | MOSQ_LOG_WARNING | MOSQ_LOG_NOTICE | MOSQ_LOG_INFO;
+	}else{
+		config->log_type = MOSQ_LOG_ERR | MOSQ_LOG_WARNING | MOSQ_LOG_NOTICE | MOSQ_LOG_INFO;
+	}
 #endif
 	config->log_timestamp = true;
 	if(config->password_file) _mosquitto_free(config->password_file);
@@ -147,6 +151,7 @@ void mqtt3_config_init(struct mqtt3_config *config)
 	config->bridge_count = 0;
 #endif
 	config->auth_plugin = NULL;
+	config->verbose = false;
 }
 
 void mqtt3_config_cleanup(struct mqtt3_config *config)
@@ -231,6 +236,8 @@ static void print_usage(void)
 	printf(" -h : display this help.\n");
 	printf(" -p : start the broker listening on the specified port.\n");
 	printf("      Not recommended in conjunction with the -c option.\n");
+	printf(" -v : verbose mode - enable all logging types. This overrides\n");
+	printf("      any logging options given in the config file.\n");
 	printf("\nSee http://mosquitto.org/ for more information.\n\n");
 }
 
@@ -279,6 +286,8 @@ int mqtt3_config_parse_args(struct mqtt3_config *config, int argc, char *argv[])
 				return MOSQ_ERR_INVAL;
 			}
 			i++;
+		}else if(!strcmp(argv[i], "-v") || !strcmp(argv[i], "--verbose")){
+			config->verbose = true;
 		}else{
 			fprintf(stderr, "Error: Unknown option '%s'.\n",argv[i]);
 			print_usage();
@@ -330,6 +339,9 @@ int mqtt3_config_parse_args(struct mqtt3_config *config, int argc, char *argv[])
 	/* Default to drop to mosquitto user if we are privileged and no user specified. */
 	if(!config->user){
 		config->user = "mosquitto";
+	}
+	if(config->verbose){
+		config->log_type = MOSQ_LOG_DEBUG | MOSQ_LOG_ERR | MOSQ_LOG_WARNING | MOSQ_LOG_NOTICE | MOSQ_LOG_INFO;
 	}
 	return MOSQ_ERR_SUCCESS;
 }
@@ -396,7 +408,9 @@ int mqtt3_config_read(struct mqtt3_config *config, bool reload)
 	if(cr.log_dest_set){
 		config->log_dest = cr.log_dest;
 	}
-	if(cr.log_type_set){
+	if(config->verbose){
+		config->log_type = MOSQ_LOG_DEBUG | MOSQ_LOG_ERR | MOSQ_LOG_WARNING | MOSQ_LOG_NOTICE | MOSQ_LOG_INFO;
+	}else if(cr.log_type_set){
 		config->log_type = cr.log_type;
 	}
 	return MOSQ_ERR_SUCCESS;
