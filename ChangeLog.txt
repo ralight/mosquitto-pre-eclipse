@@ -11,6 +11,8 @@ Broker:
 - Don't drop all messages for disconnected durable clients when
   max_queued_messages=0.
 - Add support for "log_type all".
+- Add support for "-v" option on the command line to provide the equivalent of
+  "log_type all" without needing a config file.
 - mosquitto_passwd utility now reports errors more clearly.
 - Fix retained messages incorrectly being set on wildcard topics, leading to
   duplicate retained messages being sent on subscription. Closes bug #1116233.
