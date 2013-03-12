@@ -55,6 +55,8 @@ int mqtt3_db_open(struct mqtt3_config *config, struct mosquitto_db *db)
 	db->contexts = _mosquitto_malloc(sizeof(struct mosquitto*)*db->context_count);
 	if(!db->contexts) return MOSQ_ERR_NOMEM;
 	db->contexts[0] = NULL;
+	// Initialize the hashtable
+	db->clientid_index_hash = NULL;
 
 	db->subs.next = NULL;
 	db->subs.subs = NULL;

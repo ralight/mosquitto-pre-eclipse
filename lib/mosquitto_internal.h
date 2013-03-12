@@ -163,6 +163,7 @@ struct mosquitto {
 	struct _mqtt3_listener *listener;
 	time_t disconnect_t;
 	int pollfd_index;
+	int db_index;
 #else
 	void *userdata;
 	bool in_callback;

@@ -163,11 +163,14 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 			if(tmp_contexts){
 				db->context_count++;
 				db->contexts = tmp_contexts;
-				db->contexts[db->context_count-1] = new_context;
+				db->contexts[i] = new_context;
 			}else{
+				// Out of memory
 				mqtt3_context_cleanup(NULL, new_context, true);
 			}
 		}
+		// If we got here then the context's DB index is "i" regardless of how we got here
+		new_context->db_index = i;
 		new_context->listener->client_count++;
 
 #ifdef WITH_TLS
