@@ -34,6 +34,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <mosquitto_broker.h>
 #include <memory_mosq.h>
 
+#include "uthash.h"
+
 struct mosquitto *mqtt3_context_init(int sock)
 {
 	struct mosquitto *context;
@@ -121,6 +123,16 @@ void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, b
 		context->address = NULL;
 	}
 	if(context->id){
+		// Remove the context's ID from the DB hash
+		struct _clientid_index_hash *find_cih;
+		HASH_FIND_STR(db->clientid_index_hash, context->id, find_cih);
+		if(find_cih){
+			_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Found id for client \"%s\", their index was %d.", context->id, find_cih->db_context_index);
+			HASH_DEL(db->clientid_index_hash, find_cih);
+			_mosquitto_free(find_cih);
+		}else{
+			_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Unable to find id for client \"%s\".", context->id);
+		}
 		_mosquitto_free(context->id);
 		context->id = NULL;
 	}
