@@ -615,23 +615,32 @@ static int _retain_process(struct mosquitto_db *db, struct mosquitto_msg_store *
 static int _retain_search(struct mosquitto_db *db, struct _mosquitto_subhier *subhier, struct _sub_token *tokens, struct mosquitto *context, const char *sub, int sub_qos)
 {
 	struct _mosquitto_subhier *branch;
+	int flag = 0;
 
 	branch = subhier->children;
 	while(branch){
 		/* Subscriptions with wildcards in aren't really valid topics to publish to
 		 * so they can't have retained messages.
-		 * Don't use _mosquitto_topic_wildcard_len_check(branch->topic) here
-		 * though because it prevents matching of a subscription of foo/# with
-		 * a retained message at foo.
 		 */
 		if(!strcmp(tokens->topic, "#") && !tokens->next){
+			/* Set flag to indicate that we should check for retained messages
+			 * on "foo" when we are subscribing to e.g. "foo/#" and then exit
+			 * this function and return to an earlier _retain_search().
+			 */
+			flag = -1;
 			if(branch->retained){
 				_retain_process(db, branch->retained, context, sub, sub_qos);
 			}
-			_retain_search(db, branch, tokens, context, sub, sub_qos);
+			if(branch->children){
+				_retain_search(db, branch, tokens, context, sub, sub_qos);
+			}
 		}else if(!strcmp(branch->topic, tokens->topic) || !strcmp(tokens->topic, "+")){
 			if(tokens->next){
-				_retain_search(db, branch, tokens->next, context, sub, sub_qos);
+				if(_retain_search(db, branch, tokens->next, context, sub, sub_qos) == -1){
+					if(branch->retained){
+						_retain_process(db, branch->retained, context, sub, sub_qos);
+					}
+				}
 			}else{
 				if(branch->retained){
 					_retain_process(db, branch->retained, context, sub, sub_qos);
@@ -640,12 +649,11 @@ static int _retain_search(struct mosquitto_db *db, struct _mosquitto_subhier *su
 		}
 		branch = branch->next;
 	}
-	return MOSQ_ERR_SUCCESS;
+	return flag;
 }
 
 int mqtt3_retain_queue(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int sub_qos)
 {
-	int rc = 0;
 	int tree;
 	struct _mosquitto_subhier *subhier;
 	struct _sub_token *tokens = NULL, *tail;
@@ -665,10 +673,10 @@ int mqtt3_retain_queue(struct mosquitto_db *db, struct mosquitto *context, const
 	subhier = db->subs.children;
 	while(subhier){
 		if(!strcmp(subhier->topic, "") && tree == 0){
-			rc = _retain_search(db, subhier, tokens, context, sub, sub_qos);
+			_retain_search(db, subhier, tokens, context, sub, sub_qos);
 			break;
 		}else if(!strcmp(subhier->topic, "$SYS") && tree == 2){
-			rc = _retain_search(db, subhier, tokens, context, sub, sub_qos);
+			_retain_search(db, subhier, tokens, context, sub, sub_qos);
 			break;
 		}
 		subhier = subhier->next;
@@ -680,6 +688,6 @@ int mqtt3_retain_queue(struct mosquitto_db *db, struct mosquitto *context, const
 		tokens = tail;
 	}
 
-	return rc;
+	return MOSQ_ERR_SUCCESS;
 }
 
