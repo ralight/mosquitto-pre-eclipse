@@ -40,7 +40,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <send_mosq.h>
 #include <util_mosq.h>
 
+#ifdef WITH_SYS_TREE
 extern uint64_t g_pub_bytes_received;
+#endif
 
 int mqtt3_packet_handle(struct mosquitto_db *db, struct mosquitto *context)
 {
@@ -183,7 +185,9 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	payloadlen = context->in_packet.remaining_length - context->in_packet.pos;
+#ifdef WITH_SYS_TREE
 	g_pub_bytes_received += payloadlen;
+#endif
 	if(context->listener && context->listener->mount_point){
 		len = strlen(context->listener->mount_point) + strlen(topic) + 1;
 		topic_mount = _mosquitto_calloc(len, sizeof(char));
