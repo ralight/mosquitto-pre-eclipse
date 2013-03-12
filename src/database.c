@@ -38,7 +38,9 @@ POSSIBILITY OF SUCH DAMAGE.
 
 static int max_inflight = 20;
 static int max_queued = 100;
+#ifdef WITH_SYS_TREE
 extern unsigned long g_msgs_dropped;
+#endif
 
 int mqtt3_db_open(struct mqtt3_config *config, struct mosquitto_db *db)
 {
@@ -296,12 +298,16 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 		}else{
 			/* Dropping message due to full queue.
 		 	* FIXME - should this be logged? */
+#ifdef WITH_SYS_TREE
 			g_msgs_dropped++;
+#endif
 			return 2;
 		}
 	}else{
 		if(max_queued > 0 && msg_count >= max_queued){
+#ifdef WITH_SYS_TREE
 			g_msgs_dropped++;
+#endif
 			return 2;
 		}else{
 			state = ms_queued;

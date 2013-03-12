@@ -72,7 +72,9 @@ static int tls_ex_index_context = -1;
 static int tls_ex_index_listener = -1;
 #endif
 
+#ifdef WITH_SYS_TREE
 extern unsigned int g_socket_connections;
+#endif
 
 int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 {
@@ -94,7 +96,9 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 	new_sock = accept(listensock, NULL, 0);
 	if(new_sock == INVALID_SOCKET) return -1;
 
+#ifdef WITH_SYS_TREE
 	g_socket_connections++;
+#endif
 
 #ifndef WIN32
 	/* Set non-blocking */

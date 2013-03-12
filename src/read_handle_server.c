@@ -38,7 +38,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <send_mosq.h>
 #include <util_mosq.h>
 
+#ifdef WITH_SYS_TREE
 extern unsigned int g_connection_count;
+#endif
 
 int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 {
@@ -62,7 +64,9 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	X509_NAME_ENTRY *name_entry;
 #endif
 
+#ifdef WITH_SYS_TREE
 	g_connection_count++;
+#endif
 
 	/* Don't accept multiple CONNECT commands. */
 	if(context->state != mosq_cs_new){
