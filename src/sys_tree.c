@@ -30,6 +30,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifdef WITH_SYS_TREE
 
 #include <math.h>
+#include <stdio.h>
 
 #include <config.h>
 
