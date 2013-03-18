@@ -597,9 +597,12 @@ class Mosquitto:
         # Put messages in progress in a valid state.
         self._messages_reconnect_reset()
 
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # FIXME use create_connection here
-
+        try:
+            self._sock = socket.create_connection((self._host, self._port))
+        except socket.error as err:
+            (msg) = err
+            if msg.errno != errno.EINPROGRESS:
+                raise
 
         if self._tls_ca_certs != None:
             self._ssl = ssl.wrap_socket(self._sock,
@@ -609,15 +612,6 @@ class Mosquitto:
                     cert_reqs=self._tls_cert_reqs,
                     ssl_version=self._tls_version,
                     ciphers=self._tls_ciphers)
-
-        try:
-            self.socket().connect((self._host, self._port))
-        except socket.error as err:
-            (msg) = err
-            if msg.errno == 1 and "ssl" in msg.strerror:
-                raise
-            if msg.errno != errno.EINPROGRESS:
-                raise
 
         self._sock.setblocking(0)
 

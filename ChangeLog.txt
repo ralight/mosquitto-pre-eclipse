@@ -22,6 +22,7 @@ Client library:
 - Fix building on Android NDK.
 - Re-raise unhandled errors in Python so as not to provide confusing error
   messages later on.
+- Python module supports IPv6 connections.
 
 1.1.3 - 20130211
 ================
