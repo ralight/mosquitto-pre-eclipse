@@ -20,6 +20,8 @@ Broker:
 - mosquitto_passwd utility now reports errors more clearly.
 - Fix retained messages incorrectly being set on wildcard topics, leading to
   duplicate retained messages being sent on subscription. Closes bug #1116233.
+- Don't discard listener values when no "port" option given. Closes bug
+  #1131406.
 
 Client library:
 - Fix building on Android NDK.
