@@ -465,7 +465,10 @@ static int _aclfile_parse(struct mosquitto_db *db)
 	if(!db->config->acl_file) return MOSQ_ERR_SUCCESS;
 
 	aclfile = fopen(db->config->acl_file, "rt");
-	if(!aclfile) return 1;
+	if(!aclfile){
+		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open acl_file \"%s\".", db->config->acl_file);
+		return 1;
+	}
 
 	// topic [read|write] <topic> 
 	// user <user>
@@ -614,7 +617,10 @@ static int _pwfile_parse(const char *file, struct _mosquitto_unpwd **root)
 	char *saveptr = NULL;
 
 	pwfile = fopen(file, "rt");
-	if(!pwfile) return 1;
+	if(!pwfile){
+		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open pwfile \"%s\".", file);
+		return 1;
+	}
 
 	while(!feof(pwfile)){
 		if(fgets(buf, 256, pwfile)){
