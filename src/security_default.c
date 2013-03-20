@@ -322,6 +322,14 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 
 		token = strtok_r(local_topic, "/", &saveptr);
 		/* Loop through the topic looking for matches to this ACL. */
+
+		/* If subscription starts with $SYS, acl_tail->topic must also start with $SYS. */
+		if(!strcmp(token, "$SYS") && strcmp(acl_tail->topic, "$SYS")){
+			_mosquitto_free(local_topic);
+
+			acl_root = acl_root->next;
+			continue;
+		}
 		while(token){
 			if(acl_tail){
 				if(!strcmp(acl_tail->topic, "#") && acl_tail->child == NULL){
