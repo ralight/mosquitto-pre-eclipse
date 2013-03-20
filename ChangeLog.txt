@@ -15,6 +15,7 @@ Broker:
 - Add support for "log_type all".
 - Add support for "-v" option on the command line to provide the equivalent of
   "log_type all" without needing a config file.
+- mosquitto.conf is now installed as mosquitto.conf.example
 - mosquitto_passwd utility now reports errors more clearly.
 - Fix retained messages incorrectly being set on wildcard topics, leading to
   duplicate retained messages being sent on subscription. Closes bug #1116233.
