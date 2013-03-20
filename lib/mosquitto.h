@@ -68,7 +68,9 @@ extern "C" {
 #define MOSQ_LOG_WARNING 0x04
 #define MOSQ_LOG_ERR 0x08
 #define MOSQ_LOG_DEBUG 0x10
-#define MOSQ_LOG_ALL 0xFF
+#define MOSQ_LOG_SUBSCRIBE 0x20
+#define MOSQ_LOG_UNSUBSCRIBE 0x40
+#define MOSQ_LOG_ALL 0xFFFF
 
 /* Error values */
 enum mosq_err_t {

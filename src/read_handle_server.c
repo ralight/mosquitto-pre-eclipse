@@ -478,6 +478,7 @@ int mqtt3_handle_subscribe(struct mosquitto_db *db, struct mosquitto *context)
 			}else if(rc2 != -1){
 				rc = rc2;
 			}
+			_mosquitto_log_printf(NULL, MOSQ_LOG_SUBSCRIBE, "%s %d %s", context->id, qos, sub);
 			_mosquitto_free(sub);
 
 			tmp_payload = _mosquitto_realloc(payload, payloadlen + 1);
@@ -522,6 +523,7 @@ int mqtt3_handle_unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 		if(sub){
 			_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "\t%s", sub);
 			mqtt3_sub_remove(db, context, sub, &db->subs);
+			_mosquitto_log_printf(NULL, MOSQ_LOG_UNSUBSCRIBE, "%s %s", context->id, sub);
 			_mosquitto_free(sub);
 		}
 	}
