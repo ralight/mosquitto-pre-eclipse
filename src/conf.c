@@ -87,7 +87,7 @@ static void _config_init_reload(struct mqtt3_config *config)
 #else
 	config->log_dest = MQTT3_LOG_STDERR;
 	if(config->verbose){
-		config->log_type = MOSQ_LOG_DEBUG | MOSQ_LOG_ERR | MOSQ_LOG_WARNING | MOSQ_LOG_NOTICE | MOSQ_LOG_INFO;
+		config->log_type = INT_MAX;
 	}else{
 		config->log_type = MOSQ_LOG_ERR | MOSQ_LOG_WARNING | MOSQ_LOG_NOTICE | MOSQ_LOG_INFO;
 	}
@@ -341,7 +341,7 @@ int mqtt3_config_parse_args(struct mqtt3_config *config, int argc, char *argv[])
 		config->user = "mosquitto";
 	}
 	if(config->verbose){
-		config->log_type = MOSQ_LOG_DEBUG | MOSQ_LOG_ERR | MOSQ_LOG_WARNING | MOSQ_LOG_NOTICE | MOSQ_LOG_INFO;
+		config->log_type = INT_MAX;
 	}
 	return MOSQ_ERR_SUCCESS;
 }
