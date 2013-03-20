@@ -295,7 +295,23 @@ int mqtt3_config_parse_args(struct mqtt3_config *config, int argc, char *argv[])
 		}
 	}
 
-	if(config->listener_count == 0 || config->default_listener.host || config->default_listener.port){
+	if(config->listener_count == 0
+#ifdef WITH_TLS
+			|| config->default_listener.cafile
+			|| config->default_listener.capath
+			|| config->default_listener.certfile
+			|| config->default_listener.keyfile
+			|| config->default_listener.ciphers
+			|| config->default_listener.psk_hint
+			|| config->default_listener.require_certificate
+			|| config->default_listener.crlfile
+			|| config->default_listener.use_identity_as_username
+#endif
+			|| config->default_listener.host
+			|| config->default_listener.port
+			|| config->default_listener.max_connections != -1
+			|| config->default_listener.mount_point){
+
 		config->listener_count++;
 		config->listeners = _mosquitto_realloc(config->listeners, sizeof(struct _mqtt3_listener)*config->listener_count);
 		if(!config->listeners){
