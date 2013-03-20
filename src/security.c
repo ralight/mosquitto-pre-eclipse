@@ -144,9 +144,7 @@ int mosquitto_security_module_init(struct mosquitto_db *db)
 
 int mosquitto_security_module_cleanup(struct mosquitto_db *db)
 {
-	if(db->auth_plugin.security_cleanup){
-		db->auth_plugin.security_cleanup(db->auth_plugin.user_data, db->config->auth_options, db->config->auth_option_count, false);
-	}
+	mosquitto_security_cleanup(db, false);
 
 	if(db->auth_plugin.plugin_cleanup){
 		db->auth_plugin.plugin_cleanup(db->auth_plugin.user_data, db->config->auth_options, db->config->auth_option_count);
