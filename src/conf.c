@@ -1056,6 +1056,10 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 							cr->log_type |= MOSQ_LOG_ERR;
 						}else if(!strcmp(token, "debug")){
 							cr->log_type |= MOSQ_LOG_DEBUG;
+						}else if(!strcmp(token, "subscribe")){
+							cr->log_type |= MOSQ_LOG_SUBSCRIBE;
+						}else if(!strcmp(token, "unsubscribe")){
+							cr->log_type |= MOSQ_LOG_UNSUBSCRIBE;
 						}else if(!strcmp(token, "all")){
 							cr->log_type = INT_MAX;
 						}else{

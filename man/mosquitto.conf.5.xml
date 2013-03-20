@@ -261,8 +261,12 @@
 					syslog uses the userspace syslog facility which usually
 					ends up in /var/log/messages or similar and topic logs to the
 					broker topic '$SYS/broker/log/&lt;severity&gt;', where severity
-					is one of D, E, W, N, I which are debug, error, warning,
-					notice and information. Use "log_dest none" if you wish to
+					is one of D, E, W, N, I, M which are debug, error, warning,
+					notice, information and message. Message type severity is
+					used by the subscribe and unsubscribe log_type options and
+					publishes log messages at $SYS/broker/log/M/subscribe and
+					$SYS/broker/log/M/unsubscribe.</para>
+					<par>Use "log_dest none" if you wish to
 					disable logging. Defaults to stderr. This option
 					may be specified multiple times.</para>
 					<para>Note that if the broker is running as a Windows
