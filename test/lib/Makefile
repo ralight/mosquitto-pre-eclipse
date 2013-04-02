@@ -40,6 +40,7 @@ c cpp python python3 : test-compile
 	./08-ssl-bad-cacert.py $@/08-ssl-bad-cacert.test
 	./08-ssl-fake-cacert.py $@/08-ssl-fake-cacert.test
 	./09-util-topic-matching.py $@/09-util-topic-matching.test
+	./09-util-topic-tokenise.py $@/09-util-topic-tokenise.test
 
 clean : 
 	$(MAKE) -C c clean

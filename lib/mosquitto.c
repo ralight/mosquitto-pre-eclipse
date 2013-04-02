@@ -1007,7 +1007,7 @@ int mosquitto_sub_topic_tokenise(const char *subtopic, char ***topics, int *coun
 				/* Ignore duplicate separators. */
 				i++;
 			}
-			if(i >= len-1){
+			if(i > len-1){
 				/* Separator at end of line */
 			}else{
 				hier_count++;
