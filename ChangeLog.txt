@@ -28,6 +28,9 @@ Client library:
 - Re-raise unhandled errors in Python so as not to provide confusing error
   messages later on.
 - Python module supports IPv6 connections.
+- mosquitto_sub_topic_tokenise() was behaving incorrectly if the last topic
+  hierarchy had only a single character. This has been fixed. Closes bug
+  #1163348.
 
 1.1.3 - 20130211
 ================
