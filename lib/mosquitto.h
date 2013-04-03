@@ -1017,6 +1017,20 @@ libmosq_EXPORT void mosquitto_unsubscribe_callback_set(struct mosquitto *mosq, v
 libmosq_EXPORT void mosquitto_log_callback_set(struct mosquitto *mosq, void (*on_log)(struct mosquitto *, void *, int, const char *));
 
 /*
+ * Function: mosquitto_reconnect_delay_set
+ *
+ * Set the number of seconds to wait before retrying messages. This applies to
+ * publish messages with QoS>0. May be called at any time.
+ * 
+ * Parameters:
+ *  mosq -          a valid mosquitto instance.
+ *  reconnect_delay - the number of seconds to wait between reconnects. Defaults to 1.
+ *  reconnect_delay_max - the maximum number of seconds to wait between reconnects. Defaults to 1.
+ *  reconnect_backoff_multiplier - The Exponential backoff be used between reconnect attempts. Set to 1 to enable exponential backoff. Defaults to 0.
+ */
+libmosq_EXPORT int mosquitto_reconnect_delay_set(struct mosquitto *mosq, unsigned int reconnect_delay, unsigned int reconnect_delay_max, bool reconnect_exponential_backoff);
+
+/*
  * Function: mosquitto_message_retry_set
  *
  * Set the number of seconds to wait before retrying messages. This applies to
