@@ -190,6 +190,9 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 	mosq->port = 1883;
 	mosq->in_callback = false;
 	mosq->queue_len = 0;
+	mosq->reconnect_delay = 1;
+	mosq->reconnect_delay_max = 1;
+	mosq->reconnect_exponential_backoff = false;
 #ifdef WITH_TLS
 	mosq->ssl = NULL;
 	mosq->tls_cert_reqs = SSL_VERIFY_PEER;
@@ -251,6 +254,17 @@ int mosquitto_username_pw_set(struct mosquitto *mosq, const char *username, cons
 	return MOSQ_ERR_SUCCESS;
 }
 
+int mosquitto_reconnect_delay_set(struct mosquitto *mosq, unsigned int reconnect_delay, unsigned int reconnect_delay_max, bool reconnect_exponential_backoff)
+{
+	if(!mosq) return MOSQ_ERR_INVAL;
+	
+	mosq->reconnect_delay = reconnect_delay;
+	mosq->reconnect_delay_max = reconnect_delay_max;
+	mosq->reconnect_backoff_multiplier = reconnect_backoff_multiplier;
+	
+	return MOSQ_ERR_SUCCESS;
+	
+}
 
 void _mosquitto_destroy(struct mosquitto *mosq)
 {
@@ -739,6 +753,8 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 {
 	int run = 1;
 	int rc;
+	unsigned int reconnects;
+	unsigned long reconnect_delay;
 
 	if(!mosq) return MOSQ_ERR_INVAL;
 
@@ -749,6 +765,8 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 	while(run){
 		do{
 			rc = mosquitto_loop(mosq, timeout, max_packets);
+			if (reconnects !=0 && rc == MOSQ_ERR_SUCCESS)
+				reconnects = 0;
 		}while(rc == MOSQ_ERR_SUCCESS);
 		if(errno == EPROTO){
 			return rc;
@@ -756,10 +774,19 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 		if(mosq->state == mosq_cs_disconnecting){
 			run = 0;
 		}else{
+			reconnect_delay = mosq->reconnect_delay;
+			if (reconnect_delay > 0 && most->reconnect_exponential_backoff)
+				reconnect_delay *= mosq->reconnect_delay*reconnect*reconnect;
+
+			if (reconnect_delay > mosq->reconnect_delay_max)
+				reconnect_delay = mosq->reconnect_delay_max;
+			else
+				reconnects++;
+				
 #ifdef WIN32
-			Sleep(1000);
+			Sleep(reconnect_delay*1000);
 #else
-			sleep(1);
+			sleep(reconnect_delay);
 #endif
 			mosquitto_reconnect(mosq);
 		}
