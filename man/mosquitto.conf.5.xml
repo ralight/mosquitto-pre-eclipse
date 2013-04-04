@@ -266,7 +266,7 @@
 					used by the subscribe and unsubscribe log_type options and
 					publishes log messages at $SYS/broker/log/M/subscribe and
 					$SYS/broker/log/M/unsubscribe.</para>
-					<par>Use "log_dest none" if you wish to
+					<para>Use "log_dest none" if you wish to
 					disable logging. Defaults to stderr. This option
 					may be specified multiple times.</para>
 					<para>Note that if the broker is running as a Windows
