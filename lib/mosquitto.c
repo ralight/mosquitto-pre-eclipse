@@ -260,7 +260,7 @@ int mosquitto_reconnect_delay_set(struct mosquitto *mosq, unsigned int reconnect
 	
 	mosq->reconnect_delay = reconnect_delay;
 	mosq->reconnect_delay_max = reconnect_delay_max;
-	mosq->reconnect_backoff_multiplier = reconnect_backoff_multiplier;
+	mosq->reconnect_exponential_backoff = reconnect_exponential_backoff;
 	
 	return MOSQ_ERR_SUCCESS;
 	
@@ -753,7 +753,7 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 {
 	int run = 1;
 	int rc;
-	unsigned int reconnects;
+	unsigned int reconnects = 0;
 	unsigned long reconnect_delay;
 
 	if(!mosq) return MOSQ_ERR_INVAL;
@@ -775,8 +775,8 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 			run = 0;
 		}else{
 			reconnect_delay = mosq->reconnect_delay;
-			if (reconnect_delay > 0 && most->reconnect_exponential_backoff)
-				reconnect_delay *= mosq->reconnect_delay*reconnect*reconnect;
+			if (reconnect_delay > 0 && mosq->reconnect_exponential_backoff)
+				reconnect_delay *= mosq->reconnect_delay*reconnects*reconnects;
 
 			if (reconnect_delay > mosq->reconnect_delay_max)
 				reconnect_delay = mosq->reconnect_delay_max;

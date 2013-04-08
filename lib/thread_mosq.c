@@ -37,7 +37,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 void *_mosquitto_thread_main(void *obj);
 
-int mosquitto_loop_start(struct mosquitto *mosq, int reconnectdelay, int reconnectbackoffmultiplier)
+int mosquitto_loop_start(struct mosquitto *mosq)
 {
 #ifdef WITH_THREADING
 	if(!mosq) return MOSQ_ERR_INVAL;
@@ -72,7 +72,7 @@ void *_mosquitto_thread_main(void *obj)
 	struct mosquitto *mosq = obj;
 	int run = 1;
 	int rc;
-	unsigned int reconnects;
+	unsigned int reconnects = 0;
 	unsigned long reconnect_delay;
 
 	if(!mosq) return NULL;
@@ -99,8 +99,8 @@ void *_mosquitto_thread_main(void *obj)
 			pthread_mutex_unlock(&mosq->state_mutex);
 
 			reconnect_delay = mosq->reconnect_delay;
-			if (reconnect_delay > 0 && most->reconnect_exponential_backoff)
-				reconnect_delay *= mosq->reconnect_delay*reconnect*reconnect;
+			if (reconnect_delay > 0 && mosq->reconnect_exponential_backoff)
+				reconnect_delay *= mosq->reconnect_delay*reconnects*reconnects;
 
 			if (reconnect_delay > mosq->reconnect_delay_max)
 				reconnect_delay = mosq->reconnect_delay_max;
