@@ -80,6 +80,7 @@ class mosqpp_EXPORT mosquittopp {
 		int publish(int *mid, const char *topic, int payloadlen=0, const void *payload=NULL, int qos=0, bool retain=false);
 		int subscribe(int *mid, const char *sub, int qos=0);
 		int unsubscribe(int *mid, const char *sub);
+		void reconnect_delay_set(unsigned int reconnect_delay, unsigned int reconnect_delay_max, bool reconnect_exponential_backoff);
 		void message_retry_set(unsigned int message_retry);
 		void user_data_set(void *userdata);
 		int tls_set(const char *cafile, const char *capath=NULL, const char *certfile=NULL, const char *keyfile=NULL, int (*pw_callback)(char *buf, int size, int rwflag, void *userdata)=NULL);

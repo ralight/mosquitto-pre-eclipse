@@ -197,6 +197,11 @@ int mosquittopp::publish(int *mid, const char *topic, int payloadlen, const void
 	return mosquitto_publish(m_mosq, mid, topic, payloadlen, payload, qos, retain);
 }
 
+void mosquittopp::reconnect_delay_set(unsigned int reconnect_delay, unsigned int reconnect_delay_max, bool reconnect_exponential_backoff)
+{
+	mosquitto_reconnect_delay_set(m_mosq, reconnect_delay, reconnect_delay_max, reconnect_exponential_backoff);
+}
+
 void mosquittopp::message_retry_set(unsigned int message_retry)
 {
 	mosquitto_message_retry_set(m_mosq, message_retry);
