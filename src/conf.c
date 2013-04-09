@@ -75,6 +75,14 @@ static void _config_init_reload(struct mqtt3_config *config)
 	if(config->clientid_prefixes) _mosquitto_free(config->clientid_prefixes);
 	config->connection_messages = true;
 	config->clientid_prefixes = NULL;
+	if(config->log_fptr){
+		fclose(config->log_fptr);
+		config->log_fptr = NULL;
+	}
+	if(config->log_file){
+		_mosquitto_free(config->log_file);
+		config->log_file = NULL;
+	}
 #if defined(WIN32) || defined(__CYGWIN__)
 	if(service_handle){
 		/* This is running as a Windows service. Default to no logging. Using
@@ -223,6 +231,14 @@ void mqtt3_config_cleanup(struct mqtt3_config *config)
 		_mosquitto_free(config->auth_options);
 		config->auth_options = NULL;
 		config->auth_option_count = 0;
+	}
+	if(config->log_fptr){
+		fclose(config->log_fptr);
+		config->log_fptr = NULL;
+	}
+	if(config->log_file){
+		_mosquitto_free(config->log_file);
+		config->log_file = NULL;
 	}
 }
 
@@ -1038,6 +1054,32 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 							cr->log_dest |= MQTT3_LOG_STDERR;
 						}else if(!strcmp(token, "topic")){
 							cr->log_dest |= MQTT3_LOG_TOPIC;
+						}else if(!strcmp(token, "file")){
+							cr->log_dest |= MQTT3_LOG_FILE;
+							if(config->log_fptr || config->log_file){
+								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate \"log_dest file\" value.");
+								return MOSQ_ERR_INVAL;
+							}
+							/* Get remaining string. */
+							token = &token[strlen(token)+1];
+							while(token[0] == ' '){
+								token++;
+							}
+							if(token){
+								config->log_file = _mosquitto_strdup(token);
+								if(!config->log_file){
+									_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+									return MOSQ_ERR_NOMEM;
+								}
+								config->log_fptr = fopen(config->log_file, "at");
+								if(!config->log_fptr){
+									_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open log file %s for writing.", config->log_file);
+									return MOSQ_ERR_INVAL;
+								}
+							}else{
+								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty \"log_dest file\" value in configuration.");
+								return MOSQ_ERR_INVAL;
+							}
 						}else{
 							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid log_dest value (%s).", token);
 							return MOSQ_ERR_INVAL;

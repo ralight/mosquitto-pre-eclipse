@@ -111,6 +111,8 @@ struct mqtt3_config {
 	int log_dest;
 	int log_type;
 	bool log_timestamp;
+	char *log_file;
+	FILE *log_fptr;
 	char *password_file;
 	bool persistence;
 	char *persistence_location;
