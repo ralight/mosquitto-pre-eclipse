@@ -54,3 +54,8 @@ MOSQ_1.1 {
 	global:
 		mosquitto_loop_forever;
 } MOSQ_1.0;
+
+MOSQ_1.2 {
+	global:
+		mosquitto_reconnect_delay_set;
+} MOSQ_1.1;
