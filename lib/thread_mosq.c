@@ -70,10 +70,6 @@ int mosquitto_loop_stop(struct mosquitto *mosq, bool force)
 void *_mosquitto_thread_main(void *obj)
 {
 	struct mosquitto *mosq = obj;
-	int run = 1;
-	int rc;
-	unsigned int reconnects = 0;
-	unsigned long reconnect_delay;
 
 	if(!mosq) return NULL;
 
@@ -85,36 +81,8 @@ void *_mosquitto_thread_main(void *obj)
 		pthread_mutex_unlock(&mosq->state_mutex);
 	}
 
-	while(run){
-		do{
-			rc = mosquitto_loop(mosq, -1, 1);
-			if (reconnects !=0 && rc == MOSQ_ERR_SUCCESS)
-				reconnects = 0;
-		}while(rc == MOSQ_ERR_SUCCESS);
-		pthread_mutex_lock(&mosq->state_mutex);
-		if(mosq->state == mosq_cs_disconnecting){
-			run = 0;
-			pthread_mutex_unlock(&mosq->state_mutex);
-		}else{
-			pthread_mutex_unlock(&mosq->state_mutex);
+	mosquitto_loop_forever(mosq, -1, 1);
 
-			reconnect_delay = mosq->reconnect_delay;
-			if (reconnect_delay > 0 && mosq->reconnect_exponential_backoff)
-				reconnect_delay *= mosq->reconnect_delay*reconnects*reconnects;
-
-			if (reconnect_delay > mosq->reconnect_delay_max)
-				reconnect_delay = mosq->reconnect_delay_max;
-			else
-				reconnects++;
-
-#ifdef WIN32
-			Sleep(reconnect_delay*1000);
-#else
-			sleep(reconnect_delay);
-#endif
-			mosquitto_reconnect(mosq);
-		}
-	}
 	return obj;
 }
 #endif
