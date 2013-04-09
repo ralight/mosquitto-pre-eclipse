@@ -1,4 +1,4 @@
-# Copyright (c) 2012 Roger Light <roger@atchoo.org>
+# Copyright (c) 2012,2013 Roger Light <roger@atchoo.org>
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -435,6 +435,9 @@ class Mosquitto:
         self._tls_ca_certs = None
         self._tls_cert_reqs = None
         self._tls_ciphers = None
+        self._reconnect_delay = 1
+        self._reconnect_delay_max = 1
+        self._reconnect_exponential_backoff = False
 
     def __del__(self):
         pass
@@ -918,6 +921,18 @@ class Mosquitto:
 
         self._message_retry = retry
 
+    def reconnect_delay_set(self, delay, delay_max, exponential_backoff):
+        if isinstance(delay, int) == False or delay <= 0:
+            ValueError("delay must be a positive integer.")
+        if isinstance(delay_max, int) == False or delay_max < delay:
+            ValueError("delay_max must be a integer and greater than delay.")
+        if isinstance(exponential_backoff, bool) == False:
+            ValueError("exponential_backoff must be a bool.")
+
+        self._reconnect_delay = delay
+        self._reconnect_delay_max = delay_max
+        self._reconnect_exponential_backoff = exponential_backoff
+
     def user_data_set(self, userdata):
         """Set the user data variable passed to callbacks. May be any data type."""
         self._userdata = userdata
@@ -983,6 +998,7 @@ class Mosquitto:
         loop_forever() will handle reconnecting for you. If you call
         disconnect() in a callback it will return."""
 
+        reconnects = 0
         run = True
         if self._state == mosq_cs_connect_async:
             self.reconnect()
@@ -991,11 +1007,22 @@ class Mosquitto:
             rc = MOSQ_ERR_SUCCESS
             while rc == MOSQ_ERR_SUCCESS:
                 rc = self.loop(timeout, max_packets)
+                if rc == MOSQ_ERR_SUCCESS:
+                    reconnects = 0
 
             if self._state == mosq_cs_disconnecting:
                 run = False
             else:
-                time.sleep(1)
+                reconnect_delay = self._reconnect_delay
+                if reconnect_delay > 0 and self._reconnect_exponential_backoff:
+                    reconnect_delay = reconnect_delay * self._reconnect_delay*reconnects*reconnects
+
+                if reconnect_delay > self._reconnect_delay_max:
+                    reconnect_delay = self._reconnect_delay_max
+                else:
+                    reconnects = reconnects + 1
+
+                time.sleep(reconnect_delay)
                 self.reconnect()
         return rc
 
