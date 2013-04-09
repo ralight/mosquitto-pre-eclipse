@@ -258,7 +258,7 @@
 					<para>Send log messages to a particular destination.
 						Possible destinations are: <option>stdout</option>
 						<option>stderr</option> <option>syslog</option>
-						<option>topic</option>.</par>
+						<option>topic</option>.</para>
 					<para><option>stdout</option> and
 						<option>stderr</option> log to the console on the
 						named output.</para>
