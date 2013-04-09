@@ -358,6 +358,8 @@ int mqtt3_db_backup(struct mosquitto_db *db, bool cleanup, bool shutdown)
 	uint16_t i16temp;
 	uint8_t i8temp;
 	char err[256];
+	char *outfile = NULL;
+	int len;
 
 	if(!db || !db->config || !db->config->persistence_filepath) return MOSQ_ERR_INVAL;
 	_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Saving in-memory database to %s.", db->config->persistence_filepath);
@@ -365,8 +367,16 @@ int mqtt3_db_backup(struct mosquitto_db *db, bool cleanup, bool shutdown)
 		mqtt3_db_store_clean(db);
 	}
 
-	db_fptr = fopen(db->config->persistence_filepath, "wb");
+	len = strlen(db->config->persistence_filepath)+5;
+	outfile = _mosquitto_calloc(len+1, 1);
+	if(!outfile){
+		_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Error saving in-memory database, out of memory.");
+		return MOSQ_ERR_NOMEM;
+	}
+	snprintf(outfile, len, "%s.new", db->config->persistence_filepath);
+	db_fptr = fopen(outfile, "wb");
 	if(db_fptr == NULL){
+		_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Error saving in-memory database, unable to open %s for writing.", outfile);
 		goto error;
 	}
 
@@ -398,8 +408,15 @@ int mqtt3_db_backup(struct mosquitto_db *db, bool cleanup, bool shutdown)
 	mqtt3_db_subs_retain_write(db, db_fptr);
 
 	fclose(db_fptr);
+
+	if(rename(outfile, db->config->persistence_filepath) != 0){
+		goto error;
+	}
+	_mosquitto_free(outfile);
+	outfile = NULL;
 	return rc;
 error:
+	if(outfile) _mosquitto_free(outfile);
 	strerror_r(errno, err, 256);
 	_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
 	if(db_fptr) fclose(db_fptr);
