@@ -254,6 +254,13 @@
 					<paramdef>unsigned int <parameter>message_retry</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
+			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_reconnect_delay_set</function></funcdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>unsigned int <parameter>reconnect_delay</parameter></paramdef>
+					<paramdef>unsigned int <parameter>reconnect_delay_max</parameter></paramdef>
+					<paramdef>bool <parameter>reconnect_exponential_backoff</parameter></paramdef>
+			</funcprototype></funcsynopsis>
+
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_user_data_set</function></funcdef>
 					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
 					<paramdef>void *<parameter>userdata</parameter></paramdef>
