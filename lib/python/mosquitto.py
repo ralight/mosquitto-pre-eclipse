@@ -1007,12 +1007,18 @@ class Mosquitto:
             rc = MOSQ_ERR_SUCCESS
             while rc == MOSQ_ERR_SUCCESS:
                 rc = self.loop(timeout, max_packets)
+                if self._thread_terminate == True:
+                    rc = 1
+                    run = False
                 if rc == MOSQ_ERR_SUCCESS:
                     reconnects = 0
 
+            self._state_mutex.acquire()
             if self._state == mosq_cs_disconnecting:
                 run = False
+                self._state_mutex.release()
             else:
+                self._state_mutex.release()
                 reconnect_delay = self._reconnect_delay
                 if reconnect_delay > 0 and self._reconnect_exponential_backoff:
                     reconnect_delay = reconnect_delay * self._reconnect_delay*reconnects*reconnects
@@ -1775,20 +1781,5 @@ class Mosquitto:
         else:
             self._state_mutex.release()
 
-        while run == True:
-            rc = MOSQ_ERR_SUCCESS
-            while rc == MOSQ_ERR_SUCCESS:
-                rc = self.loop()
-                if self._thread_terminate == True:
-                    rc = 1
-                    run = False
-
-            self._state_mutex.acquire()
-            if self._state == mosq_cs_disconnecting:
-                run = False
-                self._state_mutex.release()
-            else:
-                self._state_mutex.release()
-                time.sleep(1)
-                self.reconnect()
+        self.loop_forever()
 
