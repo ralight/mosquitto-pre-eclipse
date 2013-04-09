@@ -197,6 +197,13 @@ int _mosquitto_log_printf(struct mosquitto *mosq, int priority, const char *fmt,
 			}
 			fflush(stderr);
 		}
+		if(log_destinations & MQTT3_LOG_FILE && int_db.config->log_fptr){
+			if(int_db.config && int_db.config->log_timestamp){
+				fprintf(int_db.config->log_fptr, "%d: %s\n", (int)now, s);
+			}else{
+				fprintf(int_db.config->log_fptr, "%s\n", s);
+			}
+		}
 		if(log_destinations & MQTT3_LOG_SYSLOG){
 #ifndef WIN32
 			syslog(syslog_priority, "%s", s);
