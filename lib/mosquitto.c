@@ -765,8 +765,9 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 	while(run){
 		do{
 			rc = mosquitto_loop(mosq, timeout, max_packets);
-			if (reconnects !=0 && rc == MOSQ_ERR_SUCCESS)
+			if (reconnects !=0 && rc == MOSQ_ERR_SUCCESS){
 				reconnects = 0;
+			}
 		}while(rc == MOSQ_ERR_SUCCESS);
 		if(errno == EPROTO){
 			return rc;
@@ -775,13 +776,15 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 			run = 0;
 		}else{
 			reconnect_delay = mosq->reconnect_delay;
-			if (reconnect_delay > 0 && mosq->reconnect_exponential_backoff)
+			if(reconnect_delay > 0 && mosq->reconnect_exponential_backoff){
 				reconnect_delay *= mosq->reconnect_delay*reconnects*reconnects;
+			}
 
-			if (reconnect_delay > mosq->reconnect_delay_max)
+			if(reconnect_delay > mosq->reconnect_delay_max){
 				reconnect_delay = mosq->reconnect_delay_max;
-			else
+			}else{
 				reconnects++;
+			}
 				
 #ifdef WIN32
 			Sleep(reconnect_delay*1000);
