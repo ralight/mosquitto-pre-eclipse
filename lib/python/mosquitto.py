@@ -225,7 +225,7 @@ def topic_matches_sub(sub, topic):
                 multilevel_wildcard = True
                 break
 
-    if multilevel_wildcard == False and (tpos < tlen or spos < slen):
+    if not multilevel_wildcard and (tpos < tlen or spos < slen):
         result = False
 
     return result
@@ -381,7 +381,7 @@ class Mosquitto:
         parameter to callbacks. It may be updated at a later point with the
         user_data_set() function.
         """
-        if clean_session == False and (client_id == "" or client_id == None):
+        if not clean_session and (client_id == "" or client_id == None):
             raise ValueError('A client id must be provided if clean session is False.')
 
         self._userdata = userdata
@@ -703,9 +703,9 @@ class Mosquitto:
             raise ValueError('Invalid topic.')
         if qos<0 or qos>2:
             raise ValueError('Invalid QoS level.')
-        if isinstance(payload, str) == True or isinstance(payload, bytearray) == True:
+        if isinstance(payload, str) or isinstance(payload, bytearray):
             local_payload = payload
-        elif isinstance(payload, int) == True or isinstance(payload, float) == True:
+        elif isinstance(payload, int) or isinstance(payload, float):
             local_payload = str(payload)
         elif payload == None:
             local_payload = None
@@ -922,11 +922,11 @@ class Mosquitto:
         self._message_retry = retry
 
     def reconnect_delay_set(self, delay, delay_max, exponential_backoff):
-        if isinstance(delay, int) == False or delay <= 0:
+        if not isinstance(delay, int) or delay <= 0:
             ValueError("delay must be a positive integer.")
-        if isinstance(delay_max, int) == False or delay_max < delay:
+        if not isinstance(delay_max, int) or delay_max < delay:
             ValueError("delay_max must be a integer and greater than delay.")
-        if isinstance(exponential_backoff, bool) == False:
+        if not isinstance(exponential_backoff, bool):
             ValueError("exponential_backoff must be a bool.")
 
         self._reconnect_delay = delay
@@ -959,9 +959,9 @@ class Mosquitto:
             raise ValueError('Invalid topic.')
         if qos<0 or qos>2:
             raise ValueError('Invalid QoS level.')
-        if isinstance(payload, str) == True or isinstance(payload, bytearray) == True:
+        if isinstance(payload, str) or isinstance(payload, bytearray):
             self._will_payload = payload
-        elif isinstance(payload, int) == True or isinstance(payload, float) == True:
+        elif isinstance(payload, int) or isinstance(payload, float):
             self._will_payload = str(payload)
         elif payload == None:
             self._will_payload = None
@@ -1003,11 +1003,11 @@ class Mosquitto:
         if self._state == mosq_cs_connect_async:
             self.reconnect()
 
-        while run == True:
+        while run:
             rc = MOSQ_ERR_SUCCESS
             while rc == MOSQ_ERR_SUCCESS:
                 rc = self.loop(timeout, max_packets)
-                if self._thread_terminate == True:
+                if self._thread_terminate:
                     rc = 1
                     run = False
                 if rc == MOSQ_ERR_SUCCESS:
@@ -1464,7 +1464,6 @@ class Mosquitto:
         packet.extend(struct.pack("!B", command))
         self._pack_remaining_length(packet, remaining_length)
         local_mid = self._mid_generate()
-        pack_format = "!HH" + str(len(topic)) + "sB"
         packet.extend(struct.pack("!H", local_mid))
         self._pack_str16(packet, topic)
         packet.extend(struct.pack("B", topic_qos))
@@ -1477,7 +1476,6 @@ class Mosquitto:
         packet.extend(struct.pack("!B", command))
         self._pack_remaining_length(packet, remaining_length)
         local_mid = self._mid_generate()
-        pack_format = "!HH" + str(len(topic)) + "sB"
         packet.extend(struct.pack("!H", local_mid))
         self._pack_str16(packet, topic)
         return (self._packet_queue(command, packet, local_mid, 1), local_mid)
@@ -1524,13 +1522,13 @@ class Mosquitto:
 
         self._out_packet_mutex.acquire()
         self._out_packet.append(mpkt)
-        if self._current_out_packet_mutex.acquire(False) == True:
+        if self._current_out_packet_mutex.acquire(False):
             if self._current_out_packet == None and len(self._out_packet) > 0:
                 self._current_out_packet = self._out_packet.pop(0)
             self._current_out_packet_mutex.release()
         self._out_packet_mutex.release()
 
-        if self._in_callback == False:
+        if not self._in_callback:
             return self.loop_write()
         else:
             return MOSQ_ERR_SUCCESS
@@ -1772,7 +1770,6 @@ class Mosquitto:
         return MOSQ_ERR_SUCCESS
 
     def _thread_main(self):
-        run = True
         self._thread_terminate = False
         self._state_mutex.acquire()
         if self._state == mosq_cs_connect_async:
