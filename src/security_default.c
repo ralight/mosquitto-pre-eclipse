@@ -837,7 +837,6 @@ int mosquitto_security_apply_default(struct mosquitto_db *db)
 	struct _mosquitto_unpwd *u, *tmp;
 	bool allow_anonymous;
 	int i;
-	bool unpwd_ok;
 
 	if(!db) return MOSQ_ERR_INVAL;
 
@@ -853,33 +852,10 @@ int mosquitto_security_apply_default(struct mosquitto_db *db)
 					continue;
 				}
 				/* Check for connected clients that are no longer authorised */
-				if(db->unpwd && db->contexts[i]->username){
-					unpwd_ok = false;
-					HASH_ITER(hh, db->unpwd, u, tmp){
-						if(!strcmp(db->contexts[i]->username, u->username)){
-							if(u->password){
-								if(!db->contexts[i]->password 
-										|| strcmp(db->contexts[i]->password, u->password)){
-
-									/* Non matching password to username. */
-									db->contexts[i]->state = mosq_cs_disconnecting;
-									_mosquitto_socket_close(db->contexts[i]);
-									continue;
-								}else{
-									/* Username matches, password matches. */
-									unpwd_ok = true;
-								}
-							}else{
-								/* Username matches, password not in password file. */
-								unpwd_ok = true;
-							}
-						}
-					}
-					if(!unpwd_ok){
-						db->contexts[i]->state = mosq_cs_disconnecting;
-						_mosquitto_socket_close(db->contexts[i]);
-						continue;
-					}
+				if(mosquitto_unpwd_check_default(db, db->contexts[i]->username, db->contexts[i]->password) != MOSQ_ERR_SUCCESS){
+					db->contexts[i]->state = mosq_cs_disconnecting;
+					_mosquitto_socket_close(db->contexts[i]);
+					continue;
 				}
 				/* Check for ACLs and apply to user. */
 				if(db->acl_list){
