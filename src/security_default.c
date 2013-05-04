@@ -834,7 +834,6 @@ static int _unpwd_cleanup(struct _mosquitto_unpwd **root, bool reload)
 int mosquitto_security_apply_default(struct mosquitto_db *db)
 {
 	struct _mosquitto_acl_user *acl_user_tail;
-	struct _mosquitto_unpwd *u, *tmp;
 	bool allow_anonymous;
 	int i;
 
