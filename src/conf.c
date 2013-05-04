@@ -164,7 +164,10 @@ void mqtt3_config_init(struct mqtt3_config *config)
 
 void mqtt3_config_cleanup(struct mqtt3_config *config)
 {
-	int i, j;
+	int i;
+#ifdef WITH_BRIDGE
+	int j;
+#endif
 
 	if(config->acl_file) _mosquitto_free(config->acl_file);
 	if(config->clientid_prefixes) _mosquitto_free(config->clientid_prefixes);
@@ -382,7 +385,9 @@ int mqtt3_config_read(struct mqtt3_config *config, bool reload)
 {
 	int rc = MOSQ_ERR_SUCCESS;
 	struct config_recurse cr;
+#ifdef WITH_BRIDGE
 	int i;
+#endif
 
 	cr.log_dest = MQTT3_LOG_NONE;
 	cr.log_dest_set = 0;
@@ -473,8 +478,10 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 #endif
 	int len;
 	struct _mqtt3_listener *cur_listener = &config->default_listener;
+#ifdef WITH_BRIDGE
 	char *address;
 	int i;
+#endif
 	
 	fptr = fopen(file, "rt");
 	if(!fptr) return 1;
