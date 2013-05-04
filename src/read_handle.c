@@ -88,7 +88,6 @@ int mqtt3_packet_handle(struct mosquitto_db *db, struct mosquitto *context)
 int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 {
 	char *topic;
-	char *topic_temp;
 	void *payload = NULL;
 	uint32_t payloadlen;
 	uint8_t dup, qos, retain;
@@ -99,9 +98,12 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 	struct mosquitto_msg_store *stored = NULL;
 	int len;
 	char *topic_mount;
+#ifdef WITH_BRIDGE
+	char *topic_temp;
 	int i;
 	struct _mqtt3_bridge_topic *cur_topic;
 	bool match;
+#endif
 
 	dup = (header & 0x08)>>3;
 	qos = (header & 0x06)>>1;
