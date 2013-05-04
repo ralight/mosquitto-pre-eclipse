@@ -29,6 +29,7 @@ Broker:
 - Client password check was always failing when security was being reapplied
   after a config reload. This meant that all clients were being disconnected.
   This has been fixed.
+- Fix build when WITH_TLS=no. Closes bug #1174971.
 
 Client library:
 - Allow control of reconnection timeouts in mosquitto_loop_forever() and after
