@@ -30,6 +30,8 @@ Broker:
   after a config reload. This meant that all clients were being disconnected.
   This has been fixed.
 - Fix build when WITH_TLS=no. Closes bug #1174971.
+- Fix single outgoing packets not being sent in a timely fashion if they were
+  not sent in one call to write(). Closes bug #1176796.
 
 Client library:
 - Allow control of reconnection timeouts in mosquitto_loop_forever() and after
