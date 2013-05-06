@@ -128,7 +128,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 							pollfds[pollfd_index].fd = db->contexts[i]->sock;
 							pollfds[pollfd_index].events = POLLIN | POLLRDHUP;
 							pollfds[pollfd_index].revents = 0;
-							if(db->contexts[i]->out_packet){
+							if(db->contexts[i]->current_out_packet){
 								pollfds[pollfd_index].events |= POLLOUT;
 							}
 							db->contexts[i]->pollfd_index = pollfd_index;
@@ -160,7 +160,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 									pollfds[pollfd_index].fd = db->contexts[i]->sock;
 									pollfds[pollfd_index].events = POLLIN | POLLRDHUP;
 									pollfds[pollfd_index].revents = 0;
-									if(db->contexts[i]->out_packet){
+									if(db->contexts[i]->current_out_packet){
 										pollfds[pollfd_index].events |= POLLOUT;
 									}
 									db->contexts[i]->pollfd_index = pollfd_index;
