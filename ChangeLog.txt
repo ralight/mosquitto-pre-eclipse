@@ -43,6 +43,8 @@ Client library:
 - mosquitto_sub_topic_tokenise() was behaving incorrectly if the last topic
   hierarchy had only a single character. This has been fixed. Closes bug
   #1163348.
+- Fix possible crash after disconnects when using the threaded interface with
+  TLS.
 
 1.1.3 - 20130211
 ================

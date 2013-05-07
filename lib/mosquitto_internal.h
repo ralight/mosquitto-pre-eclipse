@@ -184,6 +184,7 @@ struct mosquitto {
 	unsigned int reconnect_delay;
 	unsigned int reconnect_delay_max;
 	bool reconnect_exponential_backoff;
+	bool threaded;
 #endif
 };
 

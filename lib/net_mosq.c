@@ -162,7 +162,7 @@ int _mosquitto_packet_queue(struct mosquitto *mosq, struct _mosquitto_packet *pa
 #ifdef WITH_BROKER
 	return _mosquitto_packet_write(mosq);
 #else
-	if(mosq->in_callback == false){
+	if(mosq->in_callback == false && mosq->threaded == false){
 		return _mosquitto_packet_write(mosq);
 	}else{
 		return MOSQ_ERR_SUCCESS;

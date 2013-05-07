@@ -73,6 +73,7 @@ void *_mosquitto_thread_main(void *obj)
 
 	if(!mosq) return NULL;
 
+	mosq->threaded = true;
 	pthread_mutex_lock(&mosq->state_mutex);
 	if(mosq->state == mosq_cs_connect_async){
 		pthread_mutex_unlock(&mosq->state_mutex);
@@ -83,6 +84,7 @@ void *_mosquitto_thread_main(void *obj)
 
 	mosquitto_loop_forever(mosq, -1, 1);
 
+	mosq->threaded = false;
 	return obj;
 }
 #endif
