@@ -63,6 +63,10 @@ WITH_MEMORY_TRACKING:=yes
 # information about the broker state.
 WITH_SYS_TREE:=yes
 
+# Build with Python module. Comment out if Python is not installed, or required
+# Python modules are not available.
+WITH_PYTHON:=yes
+
 # =============================================================================
 # End of user configuration
 # =============================================================================
