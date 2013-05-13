@@ -131,7 +131,7 @@ int _mosquitto_handle_publish(struct mosquitto *mosq)
 			message->msg.mid, message->msg.topic,
 			(long)message->msg.payloadlen);
 
-	message->timestamp = time(NULL);
+	message->timestamp_s = time(NULL);
 	switch(message->msg.qos){
 		case 0:
 			pthread_mutex_lock(&mosq->callback_mutex);

@@ -174,7 +174,7 @@ int mqtt3_db_message_delete(struct mosquitto *context, uint16_t mid, enum mosqui
 	while(tail){
 		msg_index++;
 		if(tail->state == ms_queued && msg_index <= max_inflight){
-			tail->timestamp = time(NULL);
+			tail->timestamp_s = time(NULL);
 			if(tail->direction == mosq_md_out){
 				switch(tail->qos){
 					case 0:
@@ -329,7 +329,7 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 	msg->store = stored;
 	msg->store->ref_count++;
 	msg->mid = mid;
-	msg->timestamp = time(NULL);
+	msg->timestamp_s = time(NULL);
 	msg->direction = dir;
 	msg->state = state;
 	msg->dup = false;
@@ -383,7 +383,7 @@ int mqtt3_db_message_update(struct mosquitto *context, uint16_t mid, enum mosqui
 	while(tail){
 		if(tail->mid == mid && tail->direction == dir){
 			tail->state = state;
-			tail->timestamp = time(NULL);
+			tail->timestamp_s = time(NULL);
 			return MOSQ_ERR_SUCCESS;
 		}
 		tail = tail->next;
@@ -609,7 +609,7 @@ int mqtt3_db_message_timeout_check(struct mosquitto_db *db, unsigned int timeout
 
 		msg = context->msgs;
 		while(msg){
-			if(msg->timestamp < threshold && msg->state != ms_queued){
+			if(msg->timestamp_s < threshold && msg->state != ms_queued){
 				switch(msg->state){
 					case ms_wait_for_puback:
 						new_state = ms_publish_qos1;
@@ -627,7 +627,7 @@ int mqtt3_db_message_timeout_check(struct mosquitto_db *db, unsigned int timeout
 						break;
 				}
 				if(new_state != ms_invalid){
-					msg->timestamp = time(NULL);
+					msg->timestamp_s = time(NULL);
 					msg->state = new_state;
 					msg->dup = true;
 				}
@@ -655,7 +655,7 @@ int mqtt3_db_message_release(struct mosquitto_db *db, struct mosquitto *context,
 	while(tail){
 		msg_index++;
 		if(tail->state == ms_queued && msg_index <= max_inflight){
-			tail->timestamp = time(NULL);
+			tail->timestamp_s = time(NULL);
 			if(tail->direction == mosq_md_out){
 				switch(tail->qos){
 					case 0:
@@ -768,7 +768,7 @@ int mqtt3_db_message_write(struct mosquitto *context)
 				case ms_publish_qos1:
 					rc = _mosquitto_send_publish(context, mid, topic, payloadlen, payload, qos, retain, retries);
 					if(!rc){
-						tail->timestamp = time(NULL);
+						tail->timestamp_s = time(NULL);
 						tail->dup = 1; /* Any retry attempts are a duplicate. */
 						tail->state = ms_wait_for_puback;
 					}else{
@@ -781,7 +781,7 @@ int mqtt3_db_message_write(struct mosquitto *context)
 				case ms_publish_qos2:
 					rc = _mosquitto_send_publish(context, mid, topic, payloadlen, payload, qos, retain, retries);
 					if(!rc){
-						tail->timestamp = time(NULL);
+						tail->timestamp_s = time(NULL);
 						tail->dup = 1; /* Any retry attempts are a duplicate. */
 						tail->state = ms_wait_for_pubrec;
 					}else{
