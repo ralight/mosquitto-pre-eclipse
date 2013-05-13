@@ -147,12 +147,12 @@ int mqtt3_bridge_connect(struct mosquitto_db *db, struct mosquitto *context)
 
 	context->state = mosq_cs_new;
 	context->sock = -1;
-	context->last_msg_in = time(NULL);
-	context->last_msg_out = time(NULL);
-	context->keepalive = context->bridge->keepalive;
+	context->last_msg_in_ms = time(NULL)*1000;
+	context->last_msg_out_ms = time(NULL)*1000;
+	context->keepalive_ms = context->bridge->keepalive_ms;
 	context->clean_session = context->bridge->clean_session;
 	context->in_packet.payload = NULL;
-	context->ping_t = 0;
+	context->ping_t_ms = 0;
 	mqtt3_bridge_packet_cleanup(context);
 	mqtt3_db_message_reconnect_reset(context);
 
@@ -205,7 +205,7 @@ int mqtt3_bridge_connect(struct mosquitto_db *db, struct mosquitto *context)
 		}
 	}
 
-	return _mosquitto_send_connect(context, context->keepalive, context->clean_session);
+	return _mosquitto_send_connect(context, context->keepalive_ms/1000, context->clean_session);
 }
 
 void mqtt3_bridge_packet_cleanup(struct mosquitto *context)

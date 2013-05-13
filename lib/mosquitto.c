@@ -146,8 +146,8 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 		mosq->userdata = mosq;
 	}
 	mosq->sock = INVALID_SOCKET;
-	mosq->keepalive = 60;
-	mosq->message_retry = 20;
+	mosq->keepalive_ms = 60000;
+	mosq->message_retry_s = 20;
 	mosq->last_retry_check = 0;
 	mosq->clean_session = clean_session;
 	if(id){
@@ -174,9 +174,9 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 	_mosquitto_packet_cleanup(&mosq->in_packet);
 	mosq->out_packet = NULL;
 	mosq->current_out_packet = NULL;
-	mosq->last_msg_in = time(NULL);
-	mosq->last_msg_out = time(NULL);
-	mosq->ping_t = 0;
+	mosq->last_msg_in_ms = time(NULL)*1000;
+	mosq->last_msg_out_ms = time(NULL)*1000;
+	mosq->ping_t_ms = 0;
 	mosq->last_mid = 0;
 	mosq->state = mosq_cs_new;
 	mosq->messages = NULL;
@@ -190,7 +190,7 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 	mosq->port = 1883;
 	mosq->in_callback = false;
 	mosq->queue_len = 0;
-	mosq->reconnect_delay = 1;
+	mosq->reconnect_delay_s = 1;
 	mosq->reconnect_delay_max = 1;
 	mosq->reconnect_exponential_backoff = false;
 	mosq->threaded = false;
@@ -259,7 +259,7 @@ int mosquitto_reconnect_delay_set(struct mosquitto *mosq, unsigned int reconnect
 {
 	if(!mosq) return MOSQ_ERR_INVAL;
 	
-	mosq->reconnect_delay = reconnect_delay;
+	mosq->reconnect_delay_s = reconnect_delay;
 	mosq->reconnect_delay_max = reconnect_delay_max;
 	mosq->reconnect_exponential_backoff = reconnect_exponential_backoff;
 	
@@ -370,7 +370,7 @@ int mosquitto_connect_async(struct mosquitto *mosq, const char *host, int port, 
 	if(!mosq->host) return MOSQ_ERR_NOMEM;
 	mosq->port = port;
 
-	mosq->keepalive = keepalive;
+	mosq->keepalive_ms = keepalive*1000;
 	pthread_mutex_lock(&mosq->state_mutex);
 	mosq->state = mosq_cs_connect_async;
 	pthread_mutex_unlock(&mosq->state_mutex);
@@ -390,11 +390,11 @@ int mosquitto_reconnect(struct mosquitto *mosq)
 	pthread_mutex_unlock(&mosq->state_mutex);
 
 	pthread_mutex_lock(&mosq->msgtime_mutex);
-	mosq->last_msg_in = time(NULL);
-	mosq->last_msg_out = time(NULL);
+	mosq->last_msg_in_ms = time(NULL)*1000;
+	mosq->last_msg_out_ms = time(NULL)*1000;
 	pthread_mutex_unlock(&mosq->msgtime_mutex);
 
-	mosq->ping_t = 0;
+	mosq->ping_t_ms = 0;
 
 	_mosquitto_packet_cleanup(&mosq->in_packet);
 		
@@ -427,7 +427,7 @@ int mosquitto_reconnect(struct mosquitto *mosq)
 		return rc;
 	}
 
-	return _mosquitto_send_connect(mosq, mosq->keepalive, mosq->clean_session);
+	return _mosquitto_send_connect(mosq, mosq->keepalive_ms/1000, mosq->clean_session);
 }
 
 int mosquitto_disconnect(struct mosquitto *mosq)
@@ -467,7 +467,7 @@ int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int p
 		if(!message) return MOSQ_ERR_NOMEM;
 
 		message->next = NULL;
-		message->timestamp = time(NULL);
+		message->timestamp_s = time(NULL);
 		message->direction = mosq_md_out;
 		if(qos == 1){
 			message->state = mosq_ms_wait_puback;
@@ -780,9 +780,9 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 		}else{
 			pthread_mutex_unlock(&mosq->state_mutex);
 
-			reconnect_delay = mosq->reconnect_delay;
+			reconnect_delay = mosq->reconnect_delay_s;
 			if(reconnect_delay > 0 && mosq->reconnect_exponential_backoff){
-				reconnect_delay *= mosq->reconnect_delay*reconnects*reconnects;
+				reconnect_delay *= mosq->reconnect_delay_s*reconnects*reconnects;
 			}
 
 			if(reconnect_delay > mosq->reconnect_delay_max){
@@ -815,8 +815,8 @@ int mosquitto_loop_misc(struct mosquitto *mosq)
 		_mosquitto_message_retry_check(mosq);
 		mosq->last_retry_check = now;
 	}
-	if(mosq->ping_t && now - mosq->ping_t >= mosq->keepalive){
-		/* mosq->ping_t != 0 means we are waiting for a pingresp.
+	if(mosq->ping_t_ms && now - mosq->ping_t_ms >= mosq->keepalive_ms){
+		/* mosq->ping_t_ms != 0 means we are waiting for a pingresp.
 		 * This hasn't happened in the keepalive time so we should disconnect.
 		 */
 		_mosquitto_socket_close(mosq);

@@ -102,7 +102,7 @@ struct _mosquitto_packet{
 
 struct mosquitto_message_all{
 	struct mosquitto_message_all *next;
-	time_t timestamp;
+	time_t timestamp_s;
 	enum mosquitto_msg_direction direction;
 	enum mosquitto_msg_state state;
 	bool dup;
@@ -119,12 +119,12 @@ struct mosquitto {
 	char *id;
 	char *username;
 	char *password;
-	uint16_t keepalive;
+	uint16_t keepalive_ms;
 	bool clean_session;
 	enum mosquitto_client_state state;
-	time_t last_msg_in;
-	time_t last_msg_out;
-	time_t ping_t;
+	time_t last_msg_in_ms;
+	time_t last_msg_out_ms;
+	time_t ping_t_ms;
 	uint16_t last_mid;
 	struct _mosquitto_packet in_packet;
 	struct _mosquitto_packet *current_out_packet;
@@ -161,13 +161,13 @@ struct mosquitto {
 	struct mosquitto_client_msg *msgs;
 	struct _mosquitto_acl_user *acl_list;
 	struct _mqtt3_listener *listener;
-	time_t disconnect_t;
+	time_t disconnect_t_s;
 	int pollfd_index;
 	int db_index;
 #else
 	void *userdata;
 	bool in_callback;
-	unsigned int message_retry;
+	unsigned int message_retry_s;
 	time_t last_retry_check;
 	struct mosquitto_message_all *messages;
 	void (*on_connect)(struct mosquitto *, void *userdata, int rc);
@@ -181,7 +181,7 @@ struct mosquitto {
 	char *host;
 	int port;
 	int queue_len;
-	unsigned int reconnect_delay;
+	unsigned int reconnect_delay_s;
 	unsigned int reconnect_delay_max;
 	bool reconnect_exponential_backoff;
 	bool threaded;
