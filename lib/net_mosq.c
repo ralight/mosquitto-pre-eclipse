@@ -139,8 +139,6 @@ void _mosquitto_packet_cleanup(struct _mosquitto_packet *packet)
 
 int _mosquitto_packet_queue(struct mosquitto *mosq, struct _mosquitto_packet *packet)
 {
-	struct _mosquitto_packet *tail;
-
 	assert(mosq);
 	assert(packet);
 
@@ -150,13 +148,13 @@ int _mosquitto_packet_queue(struct mosquitto *mosq, struct _mosquitto_packet *pa
 	packet->next = NULL;
 	pthread_mutex_lock(&mosq->out_packet_mutex);
 	if(mosq->out_packet){
-		tail = mosq->out_packet;
-		while(tail->next){
-			tail = tail->next;
+		if(mosq->out_packet->last){
+			mosq->out_packet->last->next = packet;
 		}
-		tail->next = packet;
+		mosq->out_packet->last = packet;
 	}else{
 		mosq->out_packet = packet;
+		mosq->out_packet->last = packet;
 	}
 	pthread_mutex_unlock(&mosq->out_packet_mutex);
 #ifdef WITH_BROKER
@@ -648,6 +646,13 @@ int _mosquitto_packet_write(struct mosquitto *mosq)
 	if(mosq->out_packet && !mosq->current_out_packet){
 		mosq->current_out_packet = mosq->out_packet;
 		mosq->out_packet = mosq->out_packet->next;
+		if(mosq->out_packet){
+			if(mosq->current_out_packet){
+				mosq->out_packet->last = mosq->current_out_packet->last;
+			}else{
+				mosq->out_packet->last = NULL;
+			}
+		}
 	}
 	pthread_mutex_unlock(&mosq->out_packet_mutex);
 

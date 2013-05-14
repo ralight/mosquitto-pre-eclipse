@@ -98,6 +98,7 @@ struct _mosquitto_packet{
 	uint32_t pos;
 	uint8_t *payload;
 	struct _mosquitto_packet *next;
+	struct _mosquitto_packet *last;
 };
 
 struct mosquitto_message_all{
