@@ -154,6 +154,9 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 								db->contexts[i]->bridge->cur_address = 0;
 							}
 						}else{
+							if(db->contexts[i]->bridge->start_type == bst_lazy && db->contexts[i]->bridge->lazy_reconnect){
+								mqtt3_bridge_connect(db, db->contexts[i]);
+							}
 							if(db->contexts[i]->bridge->start_type == bst_automatic && time(NULL) > db->contexts[i]->bridge->restart_t){
 								db->contexts[i]->bridge->restart_t = 0;
 								if(mqtt3_bridge_connect(db, db->contexts[i]) == MOSQ_ERR_SUCCESS){

@@ -367,8 +367,7 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 			&& context->sock == INVALID_SOCKET
 			&& msg_count >= context->bridge->threshold){
 
-		context->state = mosq_cs_new;
-		mqtt3_bridge_connect(db, context);
+		context->bridge->lazy_reconnect = true;
 	}
 #endif
 
