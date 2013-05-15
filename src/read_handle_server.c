@@ -36,6 +36,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <mqtt3_protocol.h>
 #include <memory_mosq.h>
 #include <send_mosq.h>
+#include <time_mosq.h>
 #include <util_mosq.h>
 
 #ifdef WITH_SYS_TREE
@@ -125,6 +126,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		mqtt3_context_disconnect(db, context);
 		return 1;
 	}
+	context->keepalive_ms *= 1000;
 
 	if(_mosquitto_read_string(&context->in_packet, &client_id)){
 		mqtt3_context_disconnect(db, context);
@@ -306,8 +308,8 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		db->contexts[i]->address = _mosquitto_strdup(context->address);
 		db->contexts[i]->sock = context->sock;
 		db->contexts[i]->listener = context->listener;
-		db->contexts[i]->last_msg_in_ms = time(NULL)*1000;
-		db->contexts[i]->last_msg_out_ms = time(NULL)*1000;
+		db->contexts[i]->last_msg_in_ms = mosquitto_time_ms();
+		db->contexts[i]->last_msg_out_ms = mosquitto_time_ms();
 		db->contexts[i]->keepalive_ms = context->keepalive_ms;
 		db->contexts[i]->pollfd_index = context->pollfd_index;
 #ifdef WITH_TLS

@@ -36,6 +36,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <mosquitto_broker.h>
 #include <memory_mosq.h>
+#include <time_mosq.h>
 
 uint64_t g_bytes_received = 0;
 uint64_t g_bytes_sent = 0;
@@ -122,7 +123,7 @@ static void _sys_update_memory(struct mosquitto_db *db, char *buf, int len)
 void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_time)
 {
 	static time_t last_update = 0;
-	time_t now = time(NULL);
+	time_t now = mosquitto_time_s();
 	time_t uptime;
 	char buf[100];
 
@@ -463,7 +464,7 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/publish/bytes/sent", 2, strlen(buf), buf, 1);
 		}
 
-		last_update = time(NULL);
+		last_update = mosquitto_time_s();
 	}
 }
 

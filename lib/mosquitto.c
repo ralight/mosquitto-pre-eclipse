@@ -51,6 +51,7 @@ typedef int ssize_t;
 #include <net_mosq.h>
 #include <read_handle.h>
 #include <send_mosq.h>
+#include <time_mosq.h>
 #include <util_mosq.h>
 #include <will_mosq.h>
 
@@ -174,8 +175,8 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 	_mosquitto_packet_cleanup(&mosq->in_packet);
 	mosq->out_packet = NULL;
 	mosq->current_out_packet = NULL;
-	mosq->last_msg_in_ms = time(NULL)*1000;
-	mosq->last_msg_out_ms = time(NULL)*1000;
+	mosq->last_msg_in_ms = mosquitto_time_ms();
+	mosq->last_msg_out_ms = mosquitto_time_ms();
 	mosq->ping_t_ms = 0;
 	mosq->last_mid = 0;
 	mosq->state = mosq_cs_new;
@@ -390,8 +391,8 @@ int mosquitto_reconnect(struct mosquitto *mosq)
 	pthread_mutex_unlock(&mosq->state_mutex);
 
 	pthread_mutex_lock(&mosq->msgtime_mutex);
-	mosq->last_msg_in_ms = time(NULL)*1000;
-	mosq->last_msg_out_ms = time(NULL)*1000;
+	mosq->last_msg_in_ms = mosquitto_time_ms();
+	mosq->last_msg_out_ms = mosquitto_time_ms();
 	pthread_mutex_unlock(&mosq->msgtime_mutex);
 
 	mosq->ping_t_ms = 0;
@@ -467,7 +468,7 @@ int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int p
 		if(!message) return MOSQ_ERR_NOMEM;
 
 		message->next = NULL;
-		message->timestamp_s = time(NULL);
+		message->timestamp_s = mosquitto_time_s();
 		message->direction = mosq_md_out;
 		if(qos == 1){
 			message->state = mosq_ms_wait_puback;
@@ -804,7 +805,7 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 
 int mosquitto_loop_misc(struct mosquitto *mosq)
 {
-	time_t now = time(NULL);
+	time_t now = mosquitto_time_s();
 	int rc;
 
 	if(!mosq) return MOSQ_ERR_INVAL;

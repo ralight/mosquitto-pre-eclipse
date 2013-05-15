@@ -40,7 +40,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <openssl/ssl.h>
 #endif
 #include <stdlib.h>
-#include <time.h>
 
 #if defined(WITH_THREADING) && !defined(WITH_BROKER)
 #  include <pthread.h>

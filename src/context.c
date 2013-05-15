@@ -33,6 +33,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <mosquitto_broker.h>
 #include <memory_mosq.h>
+#include <time_mosq.h>
 
 #include "uthash.h"
 
@@ -46,8 +47,8 @@ struct mosquitto *mqtt3_context_init(int sock)
 	
 	context->state = mosq_cs_new;
 	context->sock = sock;
-	context->last_msg_in_ms = time(NULL)*1000;
-	context->last_msg_out_ms = time(NULL)*1000;
+	context->last_msg_in_ms = mosquitto_time_ms();
+	context->last_msg_out_ms = mosquitto_time_ms();
 	context->keepalive_ms = 60000; /* Default to 60s */
 	context->clean_session = true;
 	context->disconnect_t_s = 0;
@@ -175,7 +176,7 @@ void mqtt3_context_disconnect(struct mosquitto_db *db, struct mosquitto *ctxt)
 		assert(ctxt->listener->client_count >= 0);
 		ctxt->listener = NULL;
 	}
-	ctxt->disconnect_t_s = time(NULL);
+	ctxt->disconnect_t_s = mosquitto_time_s();
 	_mosquitto_socket_close(ctxt);
 }
 

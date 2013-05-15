@@ -44,6 +44,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <mosquitto_broker.h>
 #include <memory_mosq.h>
 #include <persist.h>
+#include <time_mosq.h>
 
 static uint32_t db_version;
 
@@ -504,7 +505,7 @@ static int _db_client_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	last_mid = ntohs(i16temp);
 
 	if(db_version == 2){
-		disconnect_t = time(NULL);
+		disconnect_t = mosquitto_time_s();
 	}else{
 		read_e(db_fptr, &disconnect_t, sizeof(time_t));
 	}
