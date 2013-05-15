@@ -20,6 +20,7 @@ Broker:
   renamed on completion, so a crash during writing will not produce a corrupt
   file.
 - mosquitto.conf is now installed as mosquitto.conf.example
+- Fix problem with out of order calls to free() when restarting a lazy bridge.
 - Fix an ACL with topic "#" incorrectly granting access to $SYS.
 - mosquitto_passwd utility now reports errors more clearly.
 - Fix retained messages incorrectly being set on wildcard topics, leading to

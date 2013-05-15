@@ -288,6 +288,7 @@ struct _mqtt3_bridge{
 	int idle_timeout;
 	int restart_timeout;
 	int threshold;
+	bool lazy_reconnect;
 	bool try_private;
 	bool try_private_accepted;
 #ifdef WITH_TLS
