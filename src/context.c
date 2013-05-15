@@ -106,6 +106,16 @@ void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, b
 		_mosquitto_free(context->password);
 		context->password = NULL;
 	}
+#ifdef WITH_BRIDGE
+	if(context->bridge){
+		if(context->bridge->username){
+			context->bridge->username = NULL;
+		}
+		if(context->bridge->password){
+			context->bridge->password = NULL;
+		}
+	}
+#endif
 	if(context->sock != -1){
 		if(context->listener){
 			context->listener->client_count--;
