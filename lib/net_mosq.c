@@ -85,6 +85,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <memory_mosq.h>
 #include <mqtt3_protocol.h>
 #include <net_mosq.h>
+#include <time_mosq.h>
 #include <util_mosq.h>
 
 #ifdef WITH_TLS
@@ -713,7 +714,7 @@ int _mosquitto_packet_write(struct mosquitto *mosq)
 		_mosquitto_free(packet);
 
 		pthread_mutex_lock(&mosq->msgtime_mutex);
-		mosq->last_msg_out_ms = time(NULL)*1000;
+		mosq->last_msg_out_ms = mosquitto_time_ms();
 		pthread_mutex_unlock(&mosq->msgtime_mutex);
 	}
 	pthread_mutex_unlock(&mosq->current_out_packet_mutex);
@@ -861,7 +862,7 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 	_mosquitto_packet_cleanup(&mosq->in_packet);
 
 	pthread_mutex_lock(&mosq->msgtime_mutex);
-	mosq->last_msg_in_ms = time(NULL)*1000;
+	mosq->last_msg_in_ms = mosquitto_time_ms();
 	pthread_mutex_unlock(&mosq->msgtime_mutex);
 	return rc;
 }

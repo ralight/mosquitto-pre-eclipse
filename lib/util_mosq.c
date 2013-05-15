@@ -29,7 +29,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <assert.h>
 #include <string.h>
-#include <time.h>
 
 #ifdef WIN32
 #include <winsock2.h>
@@ -43,6 +42,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <memory_mosq.h>
 #include <net_mosq.h>
 #include <send_mosq.h>
+#include <time_mosq.h>
 #include <util_mosq.h>
 
 #ifdef WITH_BROKER
@@ -88,7 +88,7 @@ void _mosquitto_check_keepalive(struct mosquitto *mosq)
 {
 	time_t last_msg_out;
 	time_t last_msg_in;
-	time_t now = time(NULL)*1000;
+	time_t now = mosquitto_time_ms();
 #ifndef WITH_BROKER
 	int rc;
 #endif

@@ -36,6 +36,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <memory_mosq.h>
 #include <messages_mosq.h>
 #include <send_mosq.h>
+#include <time_mosq.h>
 
 void _mosquitto_message_cleanup(struct mosquitto_message_all **message)
 {
@@ -193,7 +194,7 @@ int _mosquitto_message_remove(struct mosquitto *mosq, uint16_t mid, enum mosquit
 void _mosquitto_message_retry_check(struct mosquitto *mosq)
 {
 	struct mosquitto_message_all *message;
-	time_t now = time(NULL);
+	time_t now = mosquitto_time_s();
 	assert(mosq);
 
 	message = mosq->messages;
@@ -239,7 +240,7 @@ int _mosquitto_message_update(struct mosquitto *mosq, uint16_t mid, enum mosquit
 	while(message){
 		if(message->msg.mid == mid && message->direction == dir){
 			message->state = state;
-			message->timestamp_s = time(NULL);
+			message->timestamp_s = mosquitto_time_s();
 			return MOSQ_ERR_SUCCESS;
 		}
 		message = message->next;

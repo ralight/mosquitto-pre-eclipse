@@ -39,6 +39,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <net_mosq.h>
 #include <read_handle.h>
 #include <send_mosq.h>
+#include <time_mosq.h>
 #include <util_mosq.h>
 
 int _mosquitto_packet_handle(struct mosquitto *mosq)
@@ -131,7 +132,7 @@ int _mosquitto_handle_publish(struct mosquitto *mosq)
 			message->msg.mid, message->msg.topic,
 			(long)message->msg.payloadlen);
 
-	message->timestamp_s = time(NULL);
+	message->timestamp_s = mosquitto_time_s();
 	switch(message->msg.qos){
 		case 0:
 			pthread_mutex_lock(&mosq->callback_mutex);

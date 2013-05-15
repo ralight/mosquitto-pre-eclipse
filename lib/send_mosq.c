@@ -38,6 +38,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <memory_mosq.h>
 #include <net_mosq.h>
 #include <send_mosq.h>
+#include <time_mosq.h>
 #include <util_mosq.h>
 
 #ifdef WITH_BROKER
@@ -58,7 +59,7 @@ int _mosquitto_send_pingreq(struct mosquitto *mosq)
 #endif
 	rc = _mosquitto_send_simple_command(mosq, PINGREQ);
 	if(rc == MOSQ_ERR_SUCCESS){
-		mosq->ping_t_ms = time(NULL)*1000;
+		mosq->ping_t_ms = mosquitto_time_ms();
 	}
 	return rc;
 }

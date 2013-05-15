@@ -20,6 +20,8 @@ Broker:
   renamed on completion, so a crash during writing will not produce a corrupt
   file.
 - mosquitto.conf is now installed as mosquitto.conf.example
+- The broker now uses a monotonic clock if available, to avoid changes in time
+  causing client disconnections or message retries.
 - Fix an ACL with topic "#" incorrectly granting access to $SYS.
 - mosquitto_passwd utility now reports errors more clearly.
 - Fix retained messages incorrectly being set on wildcard topics, leading to

@@ -41,7 +41,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifdef WITH_TLS
 #  include <openssl/ssl.h>
 #endif
-#include <time.h>
 
 #ifndef __GNUC__
 #define __attribute__(attrib)
