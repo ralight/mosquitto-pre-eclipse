@@ -27,6 +27,11 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifdef __APPLE__
+#include <mach/mach.h>
+#include <mach/mach_time.h>
+#endif
+
 #ifdef WIN32
 #  define _WIN32_WINNT _WIN32_WINNT_VISTA
 #  include <windows.h>
@@ -67,7 +72,20 @@ time_t mosquitto_time_ms(void)
 
 	clock_gettime(CLOCK_MONOTONIC, &tp);
 	return tp.tv_sec*1000 + tp.tv_nsec/100000;
-//#elif defined(__APPLE__)
+#elif defined(__APPLE__)
+	static mach_timebase_info_data_t tb;
+    	uint64_t ticks;
+	uint64_t milli;
+
+	ticks = mach_absolute_time();
+
+	if(tb.denom == 0){
+		mach_timebase_info(&tb);
+	}
+
+	milli = ticks/1000000/tb.denom * tb.numer;
+
+	return (time_t)milli;
 #else
 	return time(NULL)*1000;
 #endif
