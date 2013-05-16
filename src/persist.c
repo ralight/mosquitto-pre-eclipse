@@ -44,6 +44,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <mosquitto_broker.h>
 #include <memory_mosq.h>
 #include <persist.h>
+#include <time_mosq.h>
 
 static uint32_t db_version;
 
@@ -254,7 +255,7 @@ static int mqtt3_db_client_write(struct mosquitto_db *db, FILE *db_fptr)
 			write_e(db_fptr, context->id, slen);
 			i16temp = htons(context->last_mid);
 			write_e(db_fptr, &i16temp, sizeof(uint16_t));
-			write_e(db_fptr, &(context->disconnect_t), sizeof(time_t));
+			write_e(db_fptr, &(context->disconnect_t_s), sizeof(time_t));
 
 			if(mqtt3_db_client_messages_write(db, db_fptr, context)) return 1;
 		}
@@ -504,7 +505,7 @@ static int _db_client_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	last_mid = ntohs(i16temp);
 
 	if(db_version == 2){
-		disconnect_t = time(NULL);
+		disconnect_t = mosquitto_time_s();
 	}else{
 		read_e(db_fptr, &disconnect_t, sizeof(time_t));
 	}
@@ -512,7 +513,7 @@ static int _db_client_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	context = _db_find_or_add_context(db, client_id, last_mid);
 	if(!context) rc = 1;
 
-	context->disconnect_t = disconnect_t;
+	context->disconnect_t_s = disconnect_t;
 
 	_mosquitto_free(client_id);
 

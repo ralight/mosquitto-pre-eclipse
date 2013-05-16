@@ -114,7 +114,7 @@ int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 		}
 	}
 
-	mosq->keepalive = keepalive;
+	mosq->keepalive_ms = keepalive*1000;
 #ifdef WITH_BROKER
 # ifdef WITH_BRIDGE
 	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Bridge %s sending CONNECT", mosq->id);

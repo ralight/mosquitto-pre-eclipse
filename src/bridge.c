@@ -39,6 +39,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <net_mosq.h>
 #include <memory_mosq.h>
 #include <send_mosq.h>
+#include <time_mosq.h>
 #include <util_mosq.h>
 #include <will_mosq.h>
 
@@ -147,9 +148,9 @@ int mqtt3_bridge_connect(struct mosquitto_db *db, struct mosquitto *context)
 
 	context->state = mosq_cs_new;
 	context->sock = -1;
-	context->last_msg_in = time(NULL);
-	context->last_msg_out = time(NULL);
-	context->keepalive = context->bridge->keepalive;
+	context->last_msg_in_ms = mosquitto_time_ms();
+	context->last_msg_out_ms = mosquitto_time_ms();
+	context->keepalive_ms = context->bridge->keepalive_ms;
 	context->clean_session = context->bridge->clean_session;
 	context->in_packet.payload = NULL;
 	context->ping_t = 0;
@@ -206,7 +207,7 @@ int mqtt3_bridge_connect(struct mosquitto_db *db, struct mosquitto *context)
 		}
 	}
 
-	return _mosquitto_send_connect(context, context->keepalive, context->clean_session);
+	return _mosquitto_send_connect(context, context->keepalive_ms/1000, context->clean_session);
 }
 
 void mqtt3_bridge_packet_cleanup(struct mosquitto *context)

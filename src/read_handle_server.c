@@ -36,6 +36,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <mqtt3_protocol.h>
 #include <memory_mosq.h>
 #include <send_mosq.h>
+#include <time_mosq.h>
 #include <util_mosq.h>
 
 #ifdef WITH_SYS_TREE
@@ -121,10 +122,11 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	password_flag = connect_flags & 0x40;
 	username_flag = connect_flags & 0x80;
 
-	if(_mosquitto_read_uint16(&context->in_packet, &(context->keepalive))){
+	if(_mosquitto_read_uint16(&context->in_packet, &(context->keepalive_ms))){
 		mqtt3_context_disconnect(db, context);
 		return 1;
 	}
+	context->keepalive_ms *= 1000;
 
 	if(_mosquitto_read_string(&context->in_packet, &client_id)){
 		mqtt3_context_disconnect(db, context);
@@ -306,9 +308,9 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		db->contexts[i]->address = _mosquitto_strdup(context->address);
 		db->contexts[i]->sock = context->sock;
 		db->contexts[i]->listener = context->listener;
-		db->contexts[i]->last_msg_in = time(NULL);
-		db->contexts[i]->last_msg_out = time(NULL);
-		db->contexts[i]->keepalive = context->keepalive;
+		db->contexts[i]->last_msg_in_ms = mosquitto_time_ms();
+		db->contexts[i]->last_msg_out_ms = mosquitto_time_ms();
+		db->contexts[i]->keepalive_ms = context->keepalive_ms;
 		db->contexts[i]->pollfd_index = context->pollfd_index;
 #ifdef WITH_TLS
 		db->contexts[i]->ssl = context->ssl;
@@ -329,7 +331,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 
 	context->id = client_id;
 	context->clean_session = clean_session;
-	context->ping_t = 0;
+	context->ping_t_ms = 0;
 
 	// Add the client ID to the DB hash table here
 	struct _clientid_index_hash *new_cih;
