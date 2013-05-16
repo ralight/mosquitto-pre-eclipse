@@ -62,10 +62,9 @@ time_t mosquitto_time_ms(void)
 	}else{
 		return GetTickCount(); /* FIXME - need to deal with overflow. */
 	}
-#elif _POSIX_TIMERS>0 && defined(_POSIX_MONOTONIC_CLOCK) && 0
+#elif _POSIX_TIMERS>0 && defined(_POSIX_MONOTONIC_CLOCK)
 	struct timespec tp;
 
-#error bob
 	clock_gettime(CLOCK_MONOTONIC, &tp);
 	return tp.tv_sec*1000 + tp.tv_nsec/100000;
 //#elif defined(__APPLE__)
