@@ -113,8 +113,8 @@ int _mosquitto_send_publish(struct mosquitto *mosq, uint16_t mid, const char *to
 #ifdef WITH_BROKER
 	if(mosq->listener && mosq->listener->mount_point){
 		len = strlen(mosq->listener->mount_point);
-		if(len > strlen(topic)){
-			topic += strlen(mosq->listener->mount_point);
+		if(len < strlen(topic)){
+			topic += len;
 		}else{
 			/* Invalid topic string. Should never happen, but silently swallow the message anyway. */
 			return MOSQ_ERR_SUCCESS;
