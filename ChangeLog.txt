@@ -33,6 +33,8 @@ Broker:
 - Fix build when WITH_TLS=no. Closes bug #1174971.
 - Fix single outgoing packets not being sent in a timely fashion if they were
   not sent in one call to write(). Closes bug #1176796.
+- Fix remapping of messages for clients connected to a listener with
+  mount_point set. Closes bug #1180765.
 
 Client library:
 - Allow control of reconnection timeouts in mosquitto_loop_forever() and after

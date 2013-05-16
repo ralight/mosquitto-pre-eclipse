@@ -9,7 +9,7 @@ clean :
 test-compile : 
 	$(MAKE) -C c
 
-test : test-compile 01 02 03 04 05 06 07 08 09
+test : test-compile 01 02 03 04 05 06 07 08 09 10
 
 01 :
 	./01-connect-success.py
@@ -79,6 +79,9 @@ test : test-compile 01 02 03 04 05 06 07 08 09
 09 :
 	./09-plugin-auth-unpwd-success.py
 	./09-plugin-auth-unpwd-fail.py
+
+10 :
+	./10-listener-mount-point.py
 
 # Tests for with WITH_STRICT_PROTOCOL defined
 strict-test : 
