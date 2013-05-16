@@ -36,6 +36,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <memory_mosq.h>
 #include <messages_mosq.h>
 #include <send_mosq.h>
+#include <time_mosq.h>
 
 void _mosquitto_message_cleanup(struct mosquitto_message_all **message)
 {
@@ -142,7 +143,7 @@ void _mosquitto_messages_reconnect_reset(struct mosquitto *mosq)
 	mosq->queue_len = 0;
 	message = mosq->messages;
 	while(message){
-		message->timestamp = 0;
+		message->timestamp_s = 0;
 		if(message->direction == mosq_md_out){
 			if(message->msg.qos == 1){
 				message->state = mosq_ms_wait_puback;
@@ -193,26 +194,26 @@ int _mosquitto_message_remove(struct mosquitto *mosq, uint16_t mid, enum mosquit
 void _mosquitto_message_retry_check(struct mosquitto *mosq)
 {
 	struct mosquitto_message_all *message;
-	time_t now = time(NULL);
+	time_t now = mosquitto_time_s();
 	assert(mosq);
 
 	message = mosq->messages;
 	while(message){
-		if(message->timestamp + mosq->message_retry < now){
+		if(message->timestamp_s + mosq->message_retry_s < now){
 			switch(message->state){
 				case mosq_ms_wait_puback:
 				case mosq_ms_wait_pubrec:
-					message->timestamp = now;
+					message->timestamp_s = now;
 					message->dup = true;
 					_mosquitto_send_publish(mosq, message->msg.mid, message->msg.topic, message->msg.payloadlen, message->msg.payload, message->msg.qos, message->msg.retain, message->dup);
 					break;
 				case mosq_ms_wait_pubrel:
-					message->timestamp = now;
+					message->timestamp_s = now;
 					message->dup = true;
 					_mosquitto_send_pubrec(mosq, message->msg.mid);
 					break;
 				case mosq_ms_wait_pubcomp:
-					message->timestamp = now;
+					message->timestamp_s = now;
 					message->dup = true;
 					_mosquitto_send_pubrel(mosq, message->msg.mid, true);
 					break;
@@ -227,7 +228,7 @@ void _mosquitto_message_retry_check(struct mosquitto *mosq)
 void mosquitto_message_retry_set(struct mosquitto *mosq, unsigned int message_retry)
 {
 	assert(mosq);
-	if(mosq) mosq->message_retry = message_retry;
+	if(mosq) mosq->message_retry_s = message_retry;
 }
 
 int _mosquitto_message_update(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_direction dir, enum mosquitto_msg_state state)
@@ -239,7 +240,7 @@ int _mosquitto_message_update(struct mosquitto *mosq, uint16_t mid, enum mosquit
 	while(message){
 		if(message->msg.mid == mid && message->direction == dir){
 			message->state = state;
-			message->timestamp = time(NULL);
+			message->timestamp_s = mosquitto_time_s();
 			return MOSQ_ERR_SUCCESS;
 		}
 		message = message->next;
