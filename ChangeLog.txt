@@ -37,6 +37,7 @@ Broker:
   not sent in one call to write(). Closes bug #1176796.
 - Fix remapping of messages for clients connected to a listener with
   mount_point set. Closes bug #1180765.
+- Fix duplicate retained messages being sent for some wildcard patterns.
 
 Client library:
 - Allow control of reconnection timeouts in mosquitto_loop_forever() and after
