@@ -113,6 +113,11 @@ endif
 LIB_LIBS:=
 PASSWD_LIBS:=
 
+ifeq ($(UNAME),Linux)
+	BROKER_LIBS:=$(BROKER_LIBS) -lrt
+	LIB_LIBS:=$(LIB_LIBS) -lrt
+endif
+
 CLIENT_LDFLAGS:=$(LDFLAGS) -L../lib ../lib/libmosquitto.so.${SOVERSION}
 
 ifeq ($(UNAME),SunOS)

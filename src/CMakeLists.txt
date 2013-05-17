@@ -23,6 +23,7 @@ set (MOSQ_SRCS
 	../lib/send_mosq.c ../lib/send_mosq.h
 	send_server.c
 	sys_tree.c
+	../lib/time_mosq.c
 	../lib/util_mosq.c ../lib/util_mosq.h
 	../lib/will_mosq.c ../lib/will_mosq.h)
 
