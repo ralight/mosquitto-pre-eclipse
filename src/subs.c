@@ -316,26 +316,29 @@ static int _sub_remove(struct mosquitto_db *db, struct mosquitto *context, struc
 	return MOSQ_ERR_SUCCESS;
 }
 
-static int _sub_search(struct mosquitto_db *db, struct _mosquitto_subhier *subhier, struct _sub_token *tokens, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored)
+static int _sub_search(struct mosquitto_db *db, struct _mosquitto_subhier *subhier, struct _sub_token *tokens, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored, bool set_retain)
 {
 	/* FIXME - need to take into account source_id if the client is a bridge */
 	struct _mosquitto_subhier *branch;
 	int flag = 0;
+	bool sr;
 
 	branch = subhier->children;
 	while(branch){
+		sr = set_retain;
+
 		if(tokens && tokens->topic && (!strcmp(branch->topic, tokens->topic) || !strcmp(branch->topic, "+"))){
 			/* The topic matches this subscription.
 			 * Doesn't include # wildcards */
-			if(_sub_search(db, branch, tokens->next, source_id, topic, qos, retain, stored) == -1){
+			if(!strcmp(branch->topic, "+")){
+				/* Don't set a retained message where + is in the hierarchy. */
+				sr = false;
+			}
+			if(_sub_search(db, branch, tokens->next, source_id, topic, qos, retain, stored, sr) == -1){
 				flag = -1;
 			}
 			if(!tokens->next){
-				if(!strcmp(branch->topic, "+")){
-					_subs_process(db, branch, source_id, topic, qos, retain, stored, false);
-				}else{
-					_subs_process(db, branch, source_id, topic, qos, retain, stored, true);
-				}
+				_subs_process(db, branch, source_id, topic, qos, retain, stored, sr);
 			}
 		}else if(!strcmp(branch->topic, "#") && !branch->children){
 			/* The topic matches due to a # wildcard - process the
@@ -460,7 +463,7 @@ int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, cons
 				 */
 				_sub_add(db, NULL, 0, subhier, tokens);
 			}
-			rc = _sub_search(db, subhier, tokens, source_id, topic, qos, retain, stored);
+			rc = _sub_search(db, subhier, tokens, source_id, topic, qos, retain, stored, true);
 			if(rc == -1){
 				_subs_process(db, subhier, source_id, topic, qos, retain, stored, true);
 				rc = 0;
@@ -472,7 +475,7 @@ int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, cons
 				 */
 				_sub_add(db, NULL, 0, subhier, tokens);
 			}
-			rc = _sub_search(db, subhier, tokens, source_id, topic, qos, retain, stored);
+			rc = _sub_search(db, subhier, tokens, source_id, topic, qos, retain, stored, true);
 			if(rc == -1){
 				_subs_process(db, subhier, source_id, topic, qos, retain, stored, true);
 				rc = 0;
@@ -634,7 +637,7 @@ static int _retain_search(struct mosquitto_db *db, struct _mosquitto_subhier *su
 			if(branch->children){
 				_retain_search(db, branch, tokens, context, sub, sub_qos);
 			}
-		}else if(!strcmp(branch->topic, tokens->topic) || !strcmp(tokens->topic, "+")){
+		}else if(strcmp(branch->topic, "+") && (!strcmp(branch->topic, tokens->topic) || !strcmp(tokens->topic, "+"))){
 			if(tokens->next){
 				if(_retain_search(db, branch, tokens->next, context, sub, sub_qos) == -1){
 					if(branch->retained){
@@ -645,6 +648,11 @@ static int _retain_search(struct mosquitto_db *db, struct _mosquitto_subhier *su
 				if(branch->retained){
 					_retain_process(db, branch->retained, context, sub, sub_qos);
 				}
+			}
+		}
+		if(!branch->next && tokens->next && !strcmp(tokens->next->topic, "#")){
+			if(branch->retained){
+				_retain_process(db, branch->retained, context, sub, sub_qos);
 			}
 		}
 		branch = branch->next;
