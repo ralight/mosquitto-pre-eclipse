@@ -20,6 +20,7 @@ Broker:
   renamed on completion, so a crash during writing will not produce a corrupt
   file.
 - mosquitto.conf is now installed as mosquitto.conf.example
+- Configuration file errors are now reported with filename and line number.
 - The broker now uses a monotonic clock if available, to avoid changes in time
   causing client disconnections or message retries.
 - Fix problem with out of order calls to free() when restarting a lazy bridge.
