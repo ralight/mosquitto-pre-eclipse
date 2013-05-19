@@ -60,7 +60,7 @@ extern SERVICE_STATUS_HANDLE service_handle;
 static int _conf_parse_bool(char **token, const char *name, bool *value, char *saveptr);
 static int _conf_parse_int(char **token, const char *name, int *value, char *saveptr);
 static int _conf_parse_string(char **token, const char *name, char **value, char *saveptr);
-static int _config_read_file(struct mqtt3_config *config, bool reload, const char *file, struct config_recurse *config_tmp, int level);
+static int _config_read_file(struct mqtt3_config *config, bool reload, const char *file, struct config_recurse *config_tmp, int level, int *lineno);
 
 static void _config_init_reload(struct mqtt3_config *config)
 {
@@ -385,6 +385,7 @@ int mqtt3_config_read(struct mqtt3_config *config, bool reload)
 {
 	int rc = MOSQ_ERR_SUCCESS;
 	struct config_recurse cr;
+	int lineno;
 #ifdef WITH_BRIDGE
 	int i;
 #endif
@@ -402,8 +403,11 @@ int mqtt3_config_read(struct mqtt3_config *config, bool reload)
 		/* Re-initialise appropriate config vars to default for reload. */
 		_config_init_reload(config);
 	}
-	rc = _config_read_file(config, reload, config->config_file, &cr, 0);
-	if(rc) return rc;
+	rc = _config_read_file(config, reload, config->config_file, &cr, 0, &lineno);
+	if(rc){
+		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error found at %s:%d.", config->config_file, lineno);
+		return rc;
+	}
 
 #ifdef WITH_PERSISTENCE
 	if(config->persistence){
@@ -453,7 +457,7 @@ int mqtt3_config_read(struct mqtt3_config *config, bool reload)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int _config_read_file(struct mqtt3_config *config, bool reload, const char *file, struct config_recurse *cr, int level)
+int _config_read_file(struct mqtt3_config *config, bool reload, const char *file, struct config_recurse *cr, int level, int *lineno)
 {
 	int rc;
 	FILE *fptr = NULL;
@@ -482,11 +486,15 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 	char *address;
 	int i;
 #endif
+	int lineno_ext;
 	
 	fptr = fopen(file, "rt");
 	if(!fptr) return 1;
 
+	*lineno = 0;
+
 	while(fgets(buf, 1024, fptr)){
+		(*lineno)++;
 		if(buf[0] != '#' && buf[0] != 10 && buf[0] != 13){
 			while(buf[strlen(buf)-1] == 10 || buf[strlen(buf)-1] == 13){
 				buf[strlen(buf)-1] = 0;
@@ -946,12 +954,14 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 							}
 							snprintf(conf_file, len, "%s\\%s", token, find_data.cFileName);
 								
-							rc = _config_read_file(config, reload, conf_file, cr, level+1);
-							_mosquitto_free(conf_file);
+							rc = _config_read_file(config, reload, conf_file, cr, level+1, &lineno_ext);
 							if(rc){
 								FindClose(fh);
+								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error found at %s:%d.", conf_file, lineno_ext);
+								_mosquitto_free(conf_file);
 								return rc;
 							}
+							_mosquitto_free(conf_file);
 						}while(FindNextFile(fh, &find_data));
 
 						FindClose(fh);
@@ -972,12 +982,14 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 									}
 									snprintf(conf_file, len, "%s/%s", token, de->d_name);
 									
-									rc = _config_read_file(config, reload, conf_file, cr, level+1);
-									_mosquitto_free(conf_file);
+									rc = _config_read_file(config, reload, conf_file, cr, level+1, &lineno_ext);
 									if(rc){
 										closedir(dh);
+										_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error found at %s:%d.", conf_file, lineno_ext);
+										_mosquitto_free(conf_file);
 										return rc;
 									}
+									_mosquitto_free(conf_file);
 								}
 							}
 						}
