@@ -27,8 +27,6 @@ set (MOSQ_SRCS
 	../lib/util_mosq.c ../lib/util_mosq.h
 	../lib/will_mosq.c ../lib/will_mosq.h)
 
-set (MOSQ_LIBS ${OPENSSL_LIBRARIES})
-
 option(INC_BRIDGE_SUPPORT
 	"Include bridge support for connecting to other brokers?" ON)
 if (${INC_BRIDGE_SUPPORT} STREQUAL ON)
@@ -74,11 +72,17 @@ add_definitions (-DWITH_BROKER)
 
 add_executable(mosquitto ${MOSQ_SRCS})
 
-if (NOT WIN32)
-	target_link_libraries(mosquitto dl m ${MOSQ_LIBS})
-else (NOT WIN32)
-	target_link_libraries(mosquitto ws2_32 ${MOSQ_LIBS})
-endif (NOT WIN32)
+set (MOSQ_LIBS ${OPENSSL_LIBRARIES})
+
+if (UNIX)
+	set (MOSQ_LIBS ${MOSQ_LIBS} rt dl m)
+endif (UNIX)
+
+if (WIN32)
+	set (MOSQ_LIBS ${MOSQ_LIBS} ws2_32)
+endif (WIN32)
+
+target_link_libraries(mosquitto ${MOSQ_LIBS})
 
 install(TARGETS mosquitto RUNTIME DESTINATION ${SBINDIR} LIBRARY DESTINATION ${LIBDIR})
 install(FILES mosquitto_plugin.h DESTINATION ${INCLUDEDIR})

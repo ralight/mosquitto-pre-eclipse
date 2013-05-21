@@ -38,11 +38,17 @@ add_library(libmosquitto SHARED
 	util_mosq.c util_mosq.h
 	will_mosq.c will_mosq.h)
 
+set (LIBRARIES ${OPENSSL_LIBRARIES} ${PTHREAD_LIBRARIES})
+
+if (UNIX)
+	set (LIBRARIES ${LIBRARIES} rt)
+endif (UNIX)
+
 if (WIN32)
-	target_link_libraries(libmosquitto ws2_32 ${OPENSSL_LIBRARIES} ${PTHREAD_LIBRARIES})
-else (WIN32)
-	target_link_libraries(libmosquitto ${OPENSSL_LIBRARIES} ${PTHREAD_LIBRARIES})
+	set (LIBRARIES ${LIBRARIES} ws2_32)
 endif (WIN32)
+
+target_link_libraries(libmosquitto ${LIBRARIES})
 
 set_target_properties(libmosquitto PROPERTIES
 	OUTPUT_NAME mosquitto
