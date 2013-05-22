@@ -23,6 +23,8 @@ Broker:
 - Configuration file errors are now reported with filename and line number.
 - The broker now uses a monotonic clock if available, to avoid changes in time
   causing client disconnections or message retries.
+- Clean session and keepalive status are now display the log when a client
+  connects.
 - Fix problem with out of order calls to free() when restarting a lazy bridge.
 - Fix an ACL with topic "#" incorrectly granting access to $SYS.
 - mosquitto_passwd utility now reports errors more clearly.
