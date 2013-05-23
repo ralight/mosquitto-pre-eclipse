@@ -5,7 +5,7 @@ Broker:
 - Replace O(n) username lookup on CONNECT with a roughly O(1) hashtable version.
 - Add support for round_robin bridge option.
 - It is now possible to disable $SYS at compile time.
-- Add dropped publish messages to load tree in $SYS.
+- Add dropped publish messages to load tree in $SYS. Closes bug #1183318.
 - Add support for logging SUBSCRIBE/UNSUBSCRIBE events.
 - Add "log_dest file" logging support.
 - Auth plugin ACL check function now passes the client id as well as username
