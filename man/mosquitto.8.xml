@@ -209,7 +209,7 @@
 			<varlistentry>
 				<term><option>$SYS/broker/load/messages/received/+</option></term>
 				<listitem>
-					<para>The moving average of the number of all types MQTT
+					<para>The moving average of the number of all types of MQTT
 						messages received by the broker over different time
 						intervals.  The final "+" of the hierarchy can be 1min,
 						5min or 15min and represents the intervals over which
@@ -224,6 +224,18 @@
 						intervals. The final "+" of the hierarchy can be 1min,
 						5min or 15min and represent the intervals over which
 						the moving average filter is applied.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>$SYS/broker/load/publish/dropped/+</option></term>
+				<listitem>
+					<para>The moving average of the number of publish messages
+						dropped by the broker over different time intervals.
+						This shows the rate at which durable clients that are
+						disconnected are losing messages.
+						The final "+" of the hierarchy can be 1min, 5min or
+						15min and represent the intervals over which the moving
+						average filter is applied.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -257,16 +269,6 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>$SYS/broker/messages/dropped</option></term>
-				<listitem>
-					<para>The total number of messages that have been dropped
-						due to inflight/queuing limits. See the
-						max_inflight_messages and max_queued_messages options in
-						<citerefentry><refentrytitle>mosquitto.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>
-						for more information.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
 				<term><option>$SYS/broker/messages/inflight</option></term>
 				<listitem>
 					<para>The number of messages with QoS>0 that are awaiting
@@ -291,6 +293,17 @@
 					<para>The number of messages currently held in the message
 						store. This includes retained messages and messages
 						queued for durable clients.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>$SYS/broker/publish/messages/dropped</option></term>
+				<listitem>
+					<para>The total number of publish messages that have been
+						dropped due to inflight/queuing limits. See the
+						max_inflight_messages and max_queued_messages options
+						in
+						<citerefentry><refentrytitle>mosquitto.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+						for more information.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

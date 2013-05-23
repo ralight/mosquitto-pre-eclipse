@@ -144,7 +144,7 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 	static int msg_store_count = -1;
 	static unsigned long msgs_received = -1;
 	static unsigned long msgs_sent = -1;
-	static unsigned long msgs_dropped = -1;
+	static unsigned long publish_dropped = -1;
 	static unsigned long pub_msgs_received = -1;
 	static unsigned long pub_msgs_sent = -1;
 	static unsigned long long bytes_received = -1;
@@ -160,7 +160,10 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 	static double msgs_sent_load1 = 0;
 	static double msgs_sent_load5 = 0;
 	static double msgs_sent_load15 = 0;
-	double msgs_received_interval, msgs_sent_interval;
+	static double publish_dropped_load1 = 0;
+	static double publish_dropped_load5 = 0;
+	static double publish_dropped_load15 = 0;
+	double msgs_received_interval, msgs_sent_interval, publish_dropped_interval;
 
 	static double publish_received_load1 = 0;
 	static double publish_received_load5 = 0;
@@ -199,6 +202,7 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 		if(last_update > 0){
 			msgs_received_interval = g_msgs_received - msgs_received;
 			msgs_sent_interval = g_msgs_sent - msgs_sent;
+			publish_dropped_interval = g_msgs_dropped - publish_dropped;
 
 			publish_received_interval = g_pub_msgs_received - pub_msgs_received;
 			publish_sent_interval = g_pub_msgs_sent - pub_msgs_sent;
@@ -216,6 +220,7 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 
 			calc_load(db, buf, "$SYS/broker/load/messages/received/1min", exponent, msgs_received_interval, &msgs_received_load1);
 			calc_load(db, buf, "$SYS/broker/load/messages/sent/1min", exponent, msgs_sent_interval, &msgs_sent_load1);
+			calc_load(db, buf, "$SYS/broker/load/publish/dropped/1min", exponent, publish_dropped_interval, &publish_dropped_load1);
 			calc_load(db, buf, "$SYS/broker/load/publish/received/1min", exponent, publish_received_interval, &publish_received_load1);
 			calc_load(db, buf, "$SYS/broker/load/publish/sent/1min", exponent, publish_sent_interval, &publish_sent_load1);
 			calc_load(db, buf, "$SYS/broker/load/bytes/received/1min", exponent, bytes_received_interval, &bytes_received_load1);
@@ -228,6 +233,7 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 
 			calc_load(db, buf, "$SYS/broker/load/messages/received/5min", exponent, msgs_received_interval, &msgs_received_load5);
 			calc_load(db, buf, "$SYS/broker/load/messages/sent/5min", exponent, msgs_sent_interval, &msgs_sent_load5);
+			calc_load(db, buf, "$SYS/broker/load/publish/dropped/5min", exponent, publish_dropped_interval, &publish_dropped_load5);
 			calc_load(db, buf, "$SYS/broker/load/publish/received/5min", exponent, publish_received_interval, &publish_received_load5);
 			calc_load(db, buf, "$SYS/broker/load/publish/sent/5min", exponent, publish_sent_interval, &publish_sent_load5);
 			calc_load(db, buf, "$SYS/broker/load/bytes/received/5min", exponent, bytes_received_interval, &bytes_received_load5);
@@ -240,6 +246,7 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 
 			calc_load(db, buf, "$SYS/broker/load/messages/received/15min", exponent, msgs_received_interval, &msgs_received_load15);
 			calc_load(db, buf, "$SYS/broker/load/messages/sent/15min", exponent, msgs_sent_interval, &msgs_sent_load15);
+			calc_load(db, buf, "$SYS/broker/load/publish/dropped/15min", exponent, publish_dropped_interval, &publish_dropped_load15);
 			calc_load(db, buf, "$SYS/broker/load/publish/received/15min", exponent, publish_received_interval, &publish_received_load15);
 			calc_load(db, buf, "$SYS/broker/load/publish/sent/15min", exponent, publish_sent_interval, &publish_sent_load15);
 			calc_load(db, buf, "$SYS/broker/load/bytes/received/15min", exponent, bytes_received_interval, &bytes_received_load15);
@@ -282,10 +289,10 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/messages/sent", 2, strlen(buf), buf, 1);
 		}
 
-		if(msgs_dropped != g_msgs_dropped){
-			msgs_dropped = g_msgs_dropped;
-			snprintf(buf, BUFLEN, "%lu", msgs_dropped);
-			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/messages/dropped", 2, strlen(buf), buf, 1);
+		if(publish_dropped != g_msgs_dropped){
+			publish_dropped = g_msgs_dropped;
+			snprintf(buf, BUFLEN, "%lu", publish_dropped);
+			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/publish/messages/dropped", 2, strlen(buf), buf, 1);
 		}
 
 		if(pub_msgs_received != g_pub_msgs_received){
