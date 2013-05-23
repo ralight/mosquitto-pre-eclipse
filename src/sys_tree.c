@@ -114,6 +114,18 @@ static void _sys_update_memory(struct mosquitto_db *db, char *buf, int len)
 }
 #endif
 
+static void calc_load(struct mosquitto_db *db, char *buf, const char *topic, double exponent, double interval, double *current)
+{
+	double new_value;
+
+	new_value = interval + exponent*((*current) - interval);
+	if(fabs(new_value - (*current)) >= 0.01){
+		snprintf(buf, 100, "%.2f", new_value);
+		mqtt3_db_messages_easy_queue(db, NULL, topic, 2, strlen(buf), buf, 1);
+	}
+	(*current) = new_value;
+}
+
 /* Send messages for the $SYS hierarchy if the last update is longer than
  * 'interval' seconds ago.
  * 'interval' is the amount of seconds between updates. If 0, then no periodic
@@ -146,8 +158,6 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 	static double msgs_sent_load1 = 0;
 	static double msgs_sent_load5 = 0;
 	static double msgs_sent_load15 = 0;
-	double new_msgs_received_load1, new_msgs_received_load5, new_msgs_received_load15;
-	double new_msgs_sent_load1, new_msgs_sent_load5, new_msgs_sent_load15;
 	double msgs_received_interval, msgs_sent_interval;
 
 	static double publish_received_load1 = 0;
@@ -156,8 +166,6 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 	static double publish_sent_load1 = 0;
 	static double publish_sent_load5 = 0;
 	static double publish_sent_load15 = 0;
-	double new_publish_received_load1, new_publish_received_load5, new_publish_received_load15;
-	double new_publish_sent_load1, new_publish_sent_load5, new_publish_sent_load15;
 	double publish_received_interval, publish_sent_interval;
 
 	static double bytes_received_load1 = 0;
@@ -166,20 +174,16 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 	static double bytes_sent_load1 = 0;
 	static double bytes_sent_load5 = 0;
 	static double bytes_sent_load15 = 0;
-	double new_bytes_received_load1, new_bytes_received_load5, new_bytes_received_load15;
-	double new_bytes_sent_load1, new_bytes_sent_load5, new_bytes_sent_load15;
 	double bytes_received_interval, bytes_sent_interval;
 
 	static double socket_load1 = 0;
 	static double socket_load5 = 0;
 	static double socket_load15 = 0;
-	double new_socket_load1, new_socket_load5, new_socket_load15;
 	double socket_interval;
 
 	static double connection_load1 = 0;
 	static double connection_load5 = 0;
 	static double connection_load15 = 0;
-	double new_connection_load1, new_connection_load5, new_connection_load15;
 	double connection_interval;
 
 	double exponent;
@@ -208,184 +212,38 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 			/* 1 minute load */
 			exponent = exp(-1.0*(now-last_update)/60.0);
 
-			new_msgs_received_load1 = msgs_received_interval + exponent*(msgs_received_load1 - msgs_received_interval);
-			if(fabs(new_msgs_received_load1 - msgs_received_load1) >= 0.01){
-				snprintf(buf, 100, "%.2f", new_msgs_received_load1);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/messages/received/1min", 2, strlen(buf), buf, 1);
-			}
-			msgs_received_load1 = new_msgs_received_load1;
-
-			new_msgs_sent_load1 = msgs_sent_interval + exponent*(msgs_sent_load1 - msgs_sent_interval);
-			if(fabs(new_msgs_sent_load1 - msgs_sent_load1) >= 0.01){
-				snprintf(buf, 100, "%.2f", new_msgs_sent_load1);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/messages/sent/1min", 2, strlen(buf), buf, 1);
-			}
-			msgs_sent_load1 = new_msgs_sent_load1;
-
-
-			new_publish_received_load1 = publish_received_interval + exponent*(publish_received_load1 - publish_received_interval);
-			if(fabs(new_publish_received_load1 - publish_received_load1) >= 0.01){
-				snprintf(buf, 100, "%.2f", new_publish_received_load1);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/publish/received/1min", 2, strlen(buf), buf, 1);
-			}
-			publish_received_load1 = new_publish_received_load1;
-
-			new_publish_sent_load1 = publish_sent_interval + exponent*(publish_sent_load1 - publish_sent_interval);
-			if(fabs(new_publish_sent_load1 - publish_sent_load1) >= 0.01){
-				snprintf(buf, 100, "%.2f", new_publish_sent_load1);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/publish/sent/1min", 2, strlen(buf), buf, 1);
-			}
-			publish_sent_load1 = new_publish_sent_load1;
-
-			new_bytes_received_load1 = bytes_received_interval + exponent*(bytes_received_load1 - bytes_received_interval);
-			if(fabs(new_bytes_received_load1 - bytes_received_load1) >= 0.01){
-				snprintf(buf, 100, "%.2f", new_bytes_received_load1);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/bytes/received/1min", 2, strlen(buf), buf, 1);
-			}
-			bytes_received_load1 = new_bytes_received_load1;
-
-			new_bytes_sent_load1 = bytes_sent_interval + exponent*(bytes_sent_load1 - bytes_sent_interval);
-			if(fabs(new_bytes_sent_load1 - bytes_sent_load1) >= 0.01){
-				snprintf(buf, 100, "%.2f", new_bytes_sent_load1);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/bytes/sent/1min", 2, strlen(buf), buf, 1);
-			}
-			bytes_sent_load1 = new_bytes_sent_load1;
-
-			new_socket_load1 = socket_interval + exponent*(socket_load1 - socket_interval);
-			if(fabs(new_socket_load1 - socket_load1) >= 0.01){
-				snprintf(buf, 100, "%.2f", new_socket_load1);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/sockets/1min", 2, strlen(buf), buf, 1);
-			}
-			socket_load1 = new_socket_load1;
-
-			new_connection_load1 = connection_interval + exponent*(connection_load1 - connection_interval);
-			if(fabs(new_connection_load1 - connection_load1) >= 0.01){
-				snprintf(buf, 100, "%.2f", new_connection_load1);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/connections/1min", 2, strlen(buf), buf, 1);
-			}
-			connection_load1 = new_connection_load1;
+			calc_load(db, buf, "$SYS/broker/load/messages/received/1min", exponent, msgs_received_interval, &msgs_received_load1);
+			calc_load(db, buf, "$SYS/broker/load/messages/sent/1min", exponent, msgs_sent_interval, &msgs_sent_load1);
+			calc_load(db, buf, "$SYS/broker/load/publish/received/1min", exponent, publish_received_interval, &publish_received_load1);
+			calc_load(db, buf, "$SYS/broker/load/publish/sent/1min", exponent, publish_sent_interval, &publish_sent_load1);
+			calc_load(db, buf, "$SYS/broker/load/bytes/received/1min", exponent, bytes_received_interval, &bytes_received_load1);
+			calc_load(db, buf, "$SYS/broker/load/bytes/sent/1min", exponent, bytes_sent_interval, &bytes_sent_load1);
+			calc_load(db, buf, "$SYS/broker/load/sockets/1min", exponent, socket_interval, &socket_load1);
+			calc_load(db, buf, "$SYS/broker/load/connections/1min", exponent, connection_interval, &connection_load1);
 
 			/* 5 minute load */
 			exponent = exp(-1.0*(now-last_update)/300.0);
 
-			new_msgs_received_load5 = msgs_received_interval + exponent*(msgs_received_load5 - msgs_received_interval);
-			if(fabs(new_msgs_received_load5 - msgs_received_load5) >= 0.01){
-				snprintf(buf, 100, "%.2f", new_msgs_received_load5);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/messages/received/5min", 2, strlen(buf), buf, 1);
-			}
-			msgs_received_load5 = new_msgs_received_load5;
-
-			new_msgs_sent_load5 = msgs_sent_interval + exponent*(msgs_sent_load5 - msgs_sent_interval);
-			if(fabs(new_msgs_sent_load5 - msgs_sent_load5) >= 0.01){
-				snprintf(buf, 100, "%.2f", new_msgs_sent_load5);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/messages/sent/5min", 2, strlen(buf), buf, 1);
-			}
-			msgs_sent_load5 = new_msgs_sent_load5;
-
-
-			new_publish_received_load5 = publish_received_interval + exponent*(publish_received_load5 - publish_received_interval);
-			if(fabs(new_publish_received_load5 - publish_received_load5) >= 0.01){
-				snprintf(buf, 100, "%.2f", new_publish_received_load5);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/publish/received/5min", 2, strlen(buf), buf, 1);
-			}
-			publish_received_load5 = new_publish_received_load5;
-
-			new_publish_sent_load5 = publish_sent_interval + exponent*(publish_sent_load5 - publish_sent_interval);
-			if(fabs(new_publish_sent_load5 - publish_sent_load5) >= 0.01){
-				snprintf(buf, 100, "%.2f", new_publish_sent_load5);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/publish/sent/5min", 2, strlen(buf), buf, 1);
-			}
-			publish_sent_load5 = new_publish_sent_load5;
-
-
-			new_bytes_received_load5 = bytes_received_interval + exponent*(bytes_received_load5 - bytes_received_interval);
-			if(fabs(new_bytes_received_load5 - bytes_received_load5) >= 0.01){
-				snprintf(buf, 100, "%.2f", new_bytes_received_load5);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/bytes/received/5min", 2, strlen(buf), buf, 1);
-			}
-			bytes_received_load5 = new_bytes_received_load5;
-
-			new_bytes_sent_load5 = bytes_sent_interval + exponent*(bytes_sent_load5 - bytes_sent_interval);
-			if(fabs(new_bytes_sent_load5 - bytes_sent_load5) >= 0.01){
-				snprintf(buf, 100, "%.2f", new_bytes_sent_load5);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/bytes/sent/5min", 2, strlen(buf), buf, 1);
-			}
-			bytes_sent_load5 = new_bytes_sent_load5;
-
-			new_socket_load5 = socket_interval + exponent*(socket_load5 - socket_interval);
-			if(fabs(new_socket_load5 - socket_load5) >= 0.01){
-				snprintf(buf, 100, "%.2f", new_socket_load5);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/sockets/5min", 2, strlen(buf), buf, 1);
-			}
-			socket_load5 = new_socket_load5;
-
-			new_connection_load5 = connection_interval + exponent*(connection_load5 - connection_interval);
-			if(fabs(new_connection_load5 - connection_load5) >= 0.01){
-				snprintf(buf, 100, "%.2f", new_connection_load5);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/connections/5min", 2, strlen(buf), buf, 1);
-			}
-			connection_load5 = new_connection_load5;
+			calc_load(db, buf, "$SYS/broker/load/messages/received/5min", exponent, msgs_received_interval, &msgs_received_load5);
+			calc_load(db, buf, "$SYS/broker/load/messages/sent/5min", exponent, msgs_sent_interval, &msgs_sent_load5);
+			calc_load(db, buf, "$SYS/broker/load/publish/received/5min", exponent, publish_received_interval, &publish_received_load5);
+			calc_load(db, buf, "$SYS/broker/load/publish/sent/5min", exponent, publish_sent_interval, &publish_sent_load5);
+			calc_load(db, buf, "$SYS/broker/load/bytes/received/5min", exponent, bytes_received_interval, &bytes_received_load5);
+			calc_load(db, buf, "$SYS/broker/load/bytes/sent/5min", exponent, bytes_sent_interval, &bytes_sent_load5);
+			calc_load(db, buf, "$SYS/broker/load/sockets/5min", exponent, socket_interval, &socket_load5);
+			calc_load(db, buf, "$SYS/broker/load/connections/5min", exponent, connection_interval, &connection_load5);
 
 			/* 15 minute load */
 			exponent = exp(-1.0*(now-last_update)/900.0);
 
-			new_msgs_received_load15 = msgs_received_interval + exponent*(msgs_received_load15 - msgs_received_interval);
-			if(fabs(new_msgs_received_load15 - msgs_received_load15) >= 0.01){
-				snprintf(buf, 100, "%.2f", new_msgs_received_load15);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/messages/received/15min", 2, strlen(buf), buf, 1);
-			}
-			msgs_received_load15 = new_msgs_received_load15;
-
-			new_msgs_sent_load15 = msgs_sent_interval + exponent*(msgs_sent_load15 - msgs_sent_interval);
-			if(fabs(new_msgs_sent_load15 - msgs_sent_load15) >= 0.01){
-				snprintf(buf, 100, "%.2f", new_msgs_sent_load15);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/messages/sent/15min", 2, strlen(buf), buf, 1);
-			}
-			msgs_sent_load15 = new_msgs_sent_load15;
-
-
-			new_publish_received_load15 = publish_received_interval + exponent*(publish_received_load15 - publish_received_interval);
-			if(fabs(new_publish_received_load15 - publish_received_load15) >= 0.01){
-				snprintf(buf, 100, "%.2f", new_publish_received_load15);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/publish/received/15min", 2, strlen(buf), buf, 1);
-			}
-			publish_received_load15 = new_publish_received_load15;
-
-			new_publish_sent_load15 = publish_sent_interval + exponent*(publish_sent_load15 - publish_sent_interval);
-			if(fabs(new_publish_sent_load15 - publish_sent_load15) >= 0.01){
-				snprintf(buf, 100, "%.2f", new_publish_sent_load15);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/publish/sent/15min", 2, strlen(buf), buf, 1);
-			}
-			publish_sent_load15 = new_publish_sent_load15;
-
-
-			new_bytes_received_load15 = bytes_received_interval + exponent*(bytes_received_load15 - bytes_received_interval);
-			if(fabs(new_bytes_received_load15 - bytes_received_load15) >= 0.01){
-				snprintf(buf, 100, "%.2f", new_bytes_received_load15);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/bytes/received/15min", 2, strlen(buf), buf, 1);
-			}
-			bytes_received_load15 = new_bytes_received_load15;
-
-			new_bytes_sent_load15 = bytes_sent_interval + exponent*(bytes_sent_load15 - bytes_sent_interval);
-			if(fabs(new_bytes_sent_load15 - bytes_sent_load15) >= 0.01){
-				snprintf(buf, 100, "%.2f", new_bytes_sent_load15);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/bytes/sent/15min", 2, strlen(buf), buf, 1);
-			}
-			bytes_sent_load15 = new_bytes_sent_load15;
-
-			new_socket_load15 = socket_interval + exponent*(socket_load15 - socket_interval);
-			if(fabs(new_socket_load15 - socket_load15) >= 0.01){
-				snprintf(buf, 100, "%.2f", new_socket_load15);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/sockets/15min", 2, strlen(buf), buf, 1);
-			}
-			socket_load15 = new_socket_load15;
-
-			new_connection_load15 = connection_interval + exponent*(connection_load15 - connection_interval);
-			if(fabs(new_connection_load15 - connection_load15) >= 0.01){
-				snprintf(buf, 100, "%.2f", new_connection_load15);
-				mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/load/connections/15min", 2, strlen(buf), buf, 1);
-			}
-			connection_load15 = new_connection_load15;
+			calc_load(db, buf, "$SYS/broker/load/messages/received/15min", exponent, msgs_received_interval, &msgs_received_load15);
+			calc_load(db, buf, "$SYS/broker/load/messages/sent/15min", exponent, msgs_sent_interval, &msgs_sent_load15);
+			calc_load(db, buf, "$SYS/broker/load/publish/received/15min", exponent, publish_received_interval, &publish_received_load15);
+			calc_load(db, buf, "$SYS/broker/load/publish/sent/15min", exponent, publish_sent_interval, &publish_sent_load15);
+			calc_load(db, buf, "$SYS/broker/load/bytes/received/15min", exponent, bytes_received_interval, &bytes_received_load15);
+			calc_load(db, buf, "$SYS/broker/load/bytes/sent/15min", exponent, bytes_sent_interval, &bytes_sent_load15);
+			calc_load(db, buf, "$SYS/broker/load/sockets/15min", exponent, socket_interval, &socket_load15);
+			calc_load(db, buf, "$SYS/broker/load/connections/15min", exponent, connection_interval, &connection_load15);
 		}
 
 		if(db->msg_store_count != msg_store_count){
