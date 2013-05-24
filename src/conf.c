@@ -489,7 +489,10 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 	int lineno_ext;
 	
 	fptr = fopen(file, "rt");
-	if(!fptr) return 1;
+	if(!fptr){
+		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open config file %s\n", file);
+		return 1;
+	}
 
 	*lineno = 0;
 
@@ -1200,7 +1203,8 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 					}
 					if(_conf_parse_string(&token, "notification_topic", &cur_bridge->notification_topic, saveptr)) return MOSQ_ERR_INVAL;
 					if(_mosquitto_fix_sub_topic(&cur_bridge->notification_topic)){
-						return 1;
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+						return MOSQ_ERR_NOMEM;
 					}
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
@@ -1429,7 +1433,8 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 								return MOSQ_ERR_NOMEM;
 							}
 							if(_mosquitto_fix_sub_topic(&cur_topic->topic)){
-								return 1;
+								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+								return MOSQ_ERR_NOMEM;
 							}
 						}
 						cur_topic->direction = bd_out;
@@ -1527,7 +1532,8 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 					}
 					if(cur_topic->local_topic){
 						if(_mosquitto_fix_sub_topic(&cur_topic->local_topic)){
-							return 1;
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+							return MOSQ_ERR_NOMEM;
 						}
 					}
 
@@ -1536,6 +1542,7 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 							len = strlen(cur_topic->topic) + strlen(cur_topic->remote_prefix)+1;
 							cur_topic->remote_topic = _mosquitto_calloc(len+1, sizeof(char));
 							if(!cur_topic->remote_topic){
+								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
 								return MOSQ_ERR_NOMEM;
 							}
 							snprintf(cur_topic->remote_topic, len, "%s%s", cur_topic->remote_prefix, cur_topic->topic);
@@ -1555,7 +1562,8 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 					}
 					if(cur_topic->remote_topic){
 						if(_mosquitto_fix_sub_topic(&cur_topic->remote_topic)){
-							return 1;
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+							return MOSQ_ERR_NOMEM;
 						}
 					}
 #else

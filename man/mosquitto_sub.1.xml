@@ -25,6 +25,7 @@
 			<arg><option>-k</option> <replaceable>keepalive time</replaceable></arg>
 			<arg><option>-p</option> <replaceable>port number</replaceable></arg>
 			<arg><option>-q</option> <replaceable>message QoS</replaceable></arg>
+			<arg><option>-R</option></arg>
 			<arg><option>--quiet</option></arg>
 			<arg><option>-v</option></arg>
 			<arg>
@@ -228,6 +229,18 @@
 					printed. This excludes any error messages given in case of
 					invalid user input (e.g. using <option>--port</option> without a
 					port).</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-R</option></term>
+				<listitem>
+					<para>If this argument is given, messages that are received
+						that have the retain bit set will not be printed.
+						Messages with retain set are "stale", in that it is not
+						known when they were originally published. When
+						subscribing to a wildcard topic there may be a large
+						number of retained messages. This argument suppresses
+						their display.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
