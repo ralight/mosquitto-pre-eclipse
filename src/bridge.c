@@ -175,13 +175,6 @@ int mqtt3_bridge_connect(struct mosquitto_db *db, struct mosquitto *context)
 		}
 	}
 
-	_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Connecting bridge %s (%s:%d)", context->bridge->name, context->bridge->addresses[context->bridge->cur_address].address, context->bridge->addresses[context->bridge->cur_address].port);
-	rc = _mosquitto_socket_connect(context, context->bridge->addresses[context->bridge->cur_address].address, context->bridge->addresses[context->bridge->cur_address].port);
-	if(rc != MOSQ_ERR_SUCCESS){
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error creating bridge.");
-		return rc;
-	}
-
 	if(context->bridge->notifications){
 		notification_payload[0] = '0';
 		notification_payload[1] = '\0';
@@ -205,6 +198,13 @@ int mqtt3_bridge_connect(struct mosquitto_db *db, struct mosquitto *context)
 			}
 			_mosquitto_free(notification_topic);
 		}
+	}
+
+	_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Connecting bridge %s (%s:%d)", context->bridge->name, context->bridge->addresses[context->bridge->cur_address].address, context->bridge->addresses[context->bridge->cur_address].port);
+	rc = _mosquitto_socket_connect(context, context->bridge->addresses[context->bridge->cur_address].address, context->bridge->addresses[context->bridge->cur_address].port);
+	if(rc != MOSQ_ERR_SUCCESS){
+		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error creating bridge.");
+		return rc;
 	}
 
 	return _mosquitto_send_connect(context, context->keepalive_ms/1000, context->clean_session);
