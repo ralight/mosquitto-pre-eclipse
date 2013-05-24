@@ -42,6 +42,7 @@ Broker:
 - Fix remapping of messages for clients connected to a listener with
   mount_point set. Closes bug #1180765.
 - Fix duplicate retained messages being sent for some wildcard patterns.
+- Report an error if the bind_address config option contains a ":".
 
 Client library:
 - Allow control of reconnection timeouts in mosquitto_loop_forever() and after

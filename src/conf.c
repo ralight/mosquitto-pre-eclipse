@@ -599,6 +599,10 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 				}else if(!strcmp(token, "bind_address")){
 					if(reload) continue; // Listener not valid for reloading.
 					if(_conf_parse_string(&token, "default listener bind_address", &config->default_listener.host, saveptr)) return MOSQ_ERR_INVAL;
+					if(strchr(config->default_listener.host, ':')){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: bind_address must contain only a host name/address.");
+						return MOSQ_ERR_INVAL;
+					}
 				}else if(!strcmp(token, "bridge_cafile")){
 #if defined(WITH_BRIDGE) && defined(WITH_TLS)
 					if(reload) continue; // FIXME
