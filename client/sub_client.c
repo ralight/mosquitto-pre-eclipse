@@ -53,6 +53,7 @@ struct userdata {
 	char *password;
 	int verbose;
 	bool quiet;
+	bool no_retain;
 };
 
 void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
@@ -61,6 +62,8 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 
 	assert(obj);
 	ud = (struct userdata *)obj;
+
+	if(message->retain && ud->no_retain) return;
 
 	if(ud->verbose){
 		if(message->payloadlen){
@@ -123,7 +126,7 @@ void print_usage(void)
 	mosquitto_lib_version(&major, &minor, &revision);
 	printf("mosquitto_sub is a simple mqtt client that will subscribe to a single topic and print all messages it receives.\n");
 	printf("mosquitto_sub version %s running on libmosquitto %d.%d.%d.\n\n", VERSION, major, minor, revision);
-	printf("Usage: mosquitto_sub [-c] [-h host] [-k keepalive] [-p port] [-q qos] [-v] -t topic ...\n");
+	printf("Usage: mosquitto_sub [-c] [-h host] [-k keepalive] [-p port] [-q qos] [-R] [-v] -t topic ...\n");
 	printf("                     [-i id] [-I id_prefix]\n");
 	printf("                     [-d] [--quiet]\n");
 	printf("                     [-u username [-P password]]\n");
@@ -144,6 +147,7 @@ void print_usage(void)
 	printf(" -k : keep alive in seconds for this client. Defaults to 60.\n");
 	printf(" -p : network port to connect to. Defaults to 1883.\n");
 	printf(" -q : quality of service level to use for the subscription. Defaults to 0.\n");
+	printf(" -R : do not print stale messages (those with retain set).\n");
 	printf(" -t : mqtt topic to subscribe to. May be repeated multiple times.\n");
 	printf(" -u : provide a username (requires MQTT 3.1 broker)\n");
 	printf(" -v : print published messages verbosely.\n");
@@ -347,6 +351,8 @@ int main(int argc, char *argv[])
 			i++;
 		}else if(!strcmp(argv[i], "--quiet")){
 			ud.quiet = true;
+		}else if(!strcmp(argv[i], "-R")){
+			ud.no_retain = true;
 		}else if(!strcmp(argv[i], "-t") || !strcmp(argv[i], "--topic")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: -t argument given but no topic specified.\n\n");
