@@ -26,6 +26,8 @@ Broker:
   causing client disconnections or message retries.
 - Clean session and keepalive status are now display the log when a client
   connects.
+- The broker now attempts to resolve bind_address and bridge addresses
+  immediately when parsing the config file in order to detect invalid hosts.
 - Fix problem with out of order calls to free() when restarting a lazy bridge.
 - Fix an ACL with topic "#" incorrectly granting access to $SYS.
 - mosquitto_passwd utility now reports errors more clearly.

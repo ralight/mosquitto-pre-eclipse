@@ -33,10 +33,18 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #ifdef WIN32
 #else
 #  include <dirent.h>
+#endif
+
+#ifndef WIN32
+#  include <netdb.h>
+#else
+#  include <winsock2.h>
+#  include <ws2tcpip.h>
 #endif
 
 #include <mosquitto_broker.h>
@@ -61,6 +69,36 @@ static int _conf_parse_bool(char **token, const char *name, bool *value, char *s
 static int _conf_parse_int(char **token, const char *name, int *value, char *saveptr);
 static int _conf_parse_string(char **token, const char *name, char **value, char *saveptr);
 static int _config_read_file(struct mqtt3_config *config, bool reload, const char *file, struct config_recurse *config_tmp, int level, int *lineno);
+
+static int _conf_attempt_resolve(const char *host, const char *text)
+{
+	struct addrinfo gai_hints;
+	struct addrinfo *gai_res;
+	int rc;
+
+	memset(&gai_hints, 0, sizeof(struct addrinfo));
+	gai_hints.ai_family = PF_UNSPEC;
+	gai_hints.ai_flags = AI_ADDRCONFIG;
+	gai_hints.ai_socktype = SOCK_STREAM;
+	gai_res = NULL;
+	rc = getaddrinfo(host, NULL, &gai_hints, &gai_res);
+	if(gai_res){
+		freeaddrinfo(gai_res);
+	}
+	if(rc != 0){
+		if(rc == EAI_SYSTEM){
+			if(errno == ENOENT){
+				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to resolve %s %s.", text, host);
+			}else{
+				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error resolving %s: %s.", text, strerror(errno));
+			}
+		}else{
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error resolving %s: %s.", text, gai_strerror(rc));
+		}
+		return MOSQ_ERR_INVAL;
+	}
+	return MOSQ_ERR_SUCCESS;
+}
 
 static void _config_init_reload(struct mqtt3_config *config)
 {
@@ -543,6 +581,9 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 								cur_bridge->addresses[i].port = 1883;
 							}
 							cur_bridge->addresses[i].address = _mosquitto_strdup(address);
+							if(_conf_attempt_resolve(address, "bridge address")){
+								return MOSQ_ERR_INVAL;
+							}
 						}
 					}
 					if(cur_bridge->address_count == 0){
@@ -599,8 +640,7 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 				}else if(!strcmp(token, "bind_address")){
 					if(reload) continue; // Listener not valid for reloading.
 					if(_conf_parse_string(&token, "default listener bind_address", &config->default_listener.host, saveptr)) return MOSQ_ERR_INVAL;
-					if(strchr(config->default_listener.host, ':')){
-						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: bind_address must contain only a host name/address.");
+					if(_conf_attempt_resolve(config->default_listener.host, "bind_address")){
 						return MOSQ_ERR_INVAL;
 					}
 				}else if(!strcmp(token, "bridge_cafile")){
