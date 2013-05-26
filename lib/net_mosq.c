@@ -217,6 +217,48 @@ static unsigned int psk_client_callback(SSL *ssl, const char *hint,
 }
 #endif
 
+int _mosquitto_try_connect(const char *host, uint16_t port, int *sock)
+{
+	struct addrinfo hints;
+	struct addrinfo *ainfo, *rp;
+	int s;
+
+	*sock = INVALID_SOCKET;
+	memset(&hints, 0, sizeof(struct addrinfo));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_flags = AI_ADDRCONFIG;
+	hints.ai_socktype = SOCK_STREAM;
+
+	s = getaddrinfo(host, NULL, &hints, &ainfo);
+	if(s) return MOSQ_ERR_UNKNOWN;
+
+	for(rp = ainfo; rp != NULL; rp = rp->ai_next){
+		*sock = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+		if(*sock == INVALID_SOCKET) continue;
+		
+		if(rp->ai_family == PF_INET){
+			((struct sockaddr_in *)rp->ai_addr)->sin_port = htons(port);
+		}else if(rp->ai_family == PF_INET6){
+			((struct sockaddr_in6 *)rp->ai_addr)->sin6_port = htons(port);
+		}else{
+			continue;
+		}
+		if(connect(*sock, rp->ai_addr, rp->ai_addrlen) != -1){
+			break;
+		}
+
+#ifdef WIN32
+		errno = WSAGetLastError();
+#endif
+		COMPAT_CLOSE(*sock);
+	}
+	freeaddrinfo(ainfo);
+	if(!rp){
+		return MOSQ_ERR_ERRNO;
+	}
+	return MOSQ_ERR_SUCCESS;
+}
+
 /* Create a socket and connect it to 'ip' on port 'port'.
  * Returns -1 on failure (ip is NULL, socket creation/connection error)
  * Returns sock number on success.
@@ -227,9 +269,7 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 #ifndef WIN32
 	int opt;
 #endif
-	struct addrinfo hints;
-	struct addrinfo *ainfo, *rp;
-	int s;
+	int rc;
 #ifdef WIN32
 	uint32_t val = 1;
 #endif
@@ -240,38 +280,8 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 
 	if(!mosq || !host || !port) return MOSQ_ERR_INVAL;
 
-	memset(&hints, 0, sizeof(struct addrinfo));
-	hints.ai_family = PF_UNSPEC;
-	hints.ai_flags = AI_ADDRCONFIG;
-	hints.ai_socktype = SOCK_STREAM;
-
-	s = getaddrinfo(host, NULL, &hints, &ainfo);
-	if(s) return MOSQ_ERR_UNKNOWN;
-
-	for(rp = ainfo; rp != NULL; rp = rp->ai_next){
-		sock = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-		if(sock == INVALID_SOCKET) continue;
-		
-		if(rp->ai_family == PF_INET){
-			((struct sockaddr_in *)rp->ai_addr)->sin_port = htons(port);
-		}else if(rp->ai_family == PF_INET6){
-			((struct sockaddr_in6 *)rp->ai_addr)->sin6_port = htons(port);
-		}else{
-			continue;
-		}
-		if(connect(sock, rp->ai_addr, rp->ai_addrlen) != -1){
-			break;
-		}
-
-#ifdef WIN32
-		errno = WSAGetLastError();
-#endif
-		COMPAT_CLOSE(sock);
-	}
-	freeaddrinfo(ainfo);
-	if(!rp){
-		return MOSQ_ERR_ERRNO;
-	}
+	rc = _mosquitto_try_connect(host, port, &sock);
+	if(rc != MOSQ_ERR_SUCCESS) return rc;
 
 	/* Set non-blocking */
 #ifndef WIN32
