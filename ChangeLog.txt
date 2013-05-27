@@ -44,7 +44,8 @@ Broker:
 - Fix remapping of messages for clients connected to a listener with
   mount_point set. Closes bug #1180765.
 - Fix duplicate retained messages being sent for some wildcard patterns.
-- Report an error if the bind_address config option contains a ":".
+- The broker now attempts to resolve bind_address and bridge addresses
+  immediately when parsing the config file in order to detect invalid hosts.
 - Bridges now set their notification state before attempting to connect, so if
   they fail to connect the state can still be seen.
 
