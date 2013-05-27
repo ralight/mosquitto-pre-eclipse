@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2012 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2013 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -271,6 +271,7 @@ struct _mqtt3_bridge{
 	struct bridge_address *addresses;
 	int cur_address;
 	int address_count;
+	time_t primary_retry_s;
 	bool round_robin;
 	char *clientid;
 	int keepalive_ms;

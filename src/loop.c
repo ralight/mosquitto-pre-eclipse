@@ -81,6 +81,9 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 	struct pollfd *pollfds = NULL;
 	int pollfd_count = 0;
 	int pollfd_index;
+#ifdef WITH_BRIDGE
+	int bridge_sock;
+#endif
 
 #ifndef WIN32
 	sigemptyset(&sigblock);
@@ -120,6 +123,16 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 #ifdef WITH_BRIDGE
 					if(db->contexts[i]->bridge){
 						_mosquitto_check_keepalive(db->contexts[i]);
+						if(db->contexts[i]->bridge->round_robin == false
+								&& db->contexts[i]->bridge->cur_address != 0
+								&& mosquitto_time_s() > db->contexts[i]->bridge->primary_retry_s){
+
+							if(_mosquitto_try_connect(db->contexts[i]->bridge->addresses[0].address, db->contexts[i]->bridge->addresses[0].port, &bridge_sock) == MOSQ_ERR_SUCCESS){
+								COMPAT_CLOSE(bridge_sock);
+								_mosquitto_socket_close(db->contexts[i]);
+								db->contexts[i]->bridge->cur_address = db->contexts[i]->bridge->address_count-1;
+							}
+						}
 					}
 #endif
 
@@ -156,6 +169,9 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 							db->contexts[i]->bridge->cur_address++;
 							if(db->contexts[i]->bridge->cur_address == db->contexts[i]->bridge->address_count){
 								db->contexts[i]->bridge->cur_address = 0;
+							}
+							if(db->contexts[i]->bridge->round_robin == false && db->contexts[i]->bridge->cur_address != 0){
+								db->contexts[i]->bridge->primary_retry_s = mosquitto_time_s() + 5;
 							}
 						}else{
 							if(db->contexts[i]->bridge->start_type == bst_lazy && db->contexts[i]->bridge->lazy_reconnect){
