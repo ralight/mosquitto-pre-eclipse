@@ -27,12 +27,12 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <config.h>
+#include "config.h"
 
 #include <stdlib.h>
 #include <string.h>
 
-#include <memory_mosq.h>
+#include "memory_mosq.h"
 
 #ifdef REAL_WITH_MEMORY_TRACKING
 #  if defined(__APPLE__)
@@ -43,8 +43,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #    include <malloc.h>
 #  endif
 #endif
-
-#include <memory_mosq.h>
 
 #ifdef REAL_WITH_MEMORY_TRACKING
 static unsigned long memcount = 0;

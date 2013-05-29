@@ -30,7 +30,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef _MOSQUITTO_INTERNAL_H_
 #define _MOSQUITTO_INTERNAL_H_
 
-#include <config.h>
+#include "config.h"
 
 #ifdef WIN32
 #  include <winsock2.h>
@@ -60,7 +60,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #	include <stdint.h>
 #endif
 
-#include <mosquitto.h>
+#include "mosquitto.h"
 #ifdef WITH_BROKER
 struct mosquitto_client_msg;
 #endif
