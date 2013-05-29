@@ -31,9 +31,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include <string.h>
 
-#include <mosquitto_internal.h>
-#include <mosquitto.h>
-#include <memory_mosq.h>
+#include "mosquitto_internal.h"
+#include "mosquitto.h"
+#include "memory_mosq.h"
 
 int _mosquitto_log_printf(struct mosquitto *mosq, int priority, const char *fmt, ...)
 {

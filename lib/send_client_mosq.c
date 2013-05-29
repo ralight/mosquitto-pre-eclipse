@@ -30,16 +30,16 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <assert.h>
 #include <string.h>
 
-#include <mosquitto.h>
-#include <logging_mosq.h>
-#include <memory_mosq.h>
-#include <mqtt3_protocol.h>
-#include <net_mosq.h>
-#include <send_mosq.h>
-#include <util_mosq.h>
+#include "mosquitto.h"
+#include "logging_mosq.h"
+#include "memory_mosq.h"
+#include "mqtt3_protocol.h"
+#include "net_mosq.h"
+#include "send_mosq.h"
+#include "util_mosq.h"
 
 #ifdef WITH_BROKER
-#include <mosquitto_broker.h>
+#include "mosquitto_broker.h"
 #endif
 
 int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session)

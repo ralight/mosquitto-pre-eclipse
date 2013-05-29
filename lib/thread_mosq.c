@@ -27,13 +27,13 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <config.h>
+#include "config.h"
 
 #ifndef WIN32
 #include <unistd.h>
 #endif
 
-#include <mosquitto_internal.h>
+#include "mosquitto_internal.h"
 
 void *_mosquitto_thread_main(void *obj);
 
