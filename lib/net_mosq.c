@@ -722,6 +722,13 @@ int _mosquitto_packet_write(struct mosquitto *mosq)
 		mosq->current_out_packet = mosq->out_packet;
 		if(mosq->out_packet){
 			mosq->out_packet = mosq->out_packet->next;
+			if(mosq->out_packet){
+				if(mosq->current_out_packet){
+					mosq->out_packet->last = mosq->current_out_packet->last;
+				}else{
+					mosq->out_packet->last = NULL;
+				}
+			}
 		}
 		pthread_mutex_unlock(&mosq->out_packet_mutex);
 
