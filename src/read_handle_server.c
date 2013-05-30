@@ -351,20 +351,6 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		db->persistence_changes++;
 	}
 #endif
-	context->will = will_struct;
-	if(context->will){
-		context->will->topic = will_topic;
-		if(will_payload){
-			context->will->payload = will_payload;
-			context->will->payloadlen = will_payloadlen;
-		}else{
-			context->will->payload = NULL;
-			context->will->payloadlen = 0;
-		}
-		context->will->qos = will_qos;
-		context->will->retain = will_retain;
-	}
-
 	/* Associate user with its ACL, assuming we have ACLs loaded. */
 	if(db->acl_list){
 		acl_tail = db->acl_list;
@@ -384,6 +370,30 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		}
 	}else{
 		context->acl_list = NULL;
+	}
+
+	if(will_struct){
+		if(mosquitto_acl_check(db, context, will_topic, MOSQ_ACL_WRITE) != MOSQ_ERR_SUCCESS){
+			_mosquitto_send_connack(context, CONNACK_REFUSED_NOT_AUTHORIZED);
+			mqtt3_context_disconnect(db, context);
+			_mosquitto_free(will_struct);
+			_mosquitto_free(will_topic);
+			if(will_payload){
+				_mosquitto_free(will_payload);
+			}
+			return MOSQ_ERR_SUCCESS;
+		}
+		context->will = will_struct;
+		context->will->topic = will_topic;
+		if(will_payload){
+			context->will->payload = will_payload;
+			context->will->payloadlen = will_payloadlen;
+		}else{
+			context->will->payload = NULL;
+			context->will->payloadlen = 0;
+		}
+		context->will->qos = will_qos;
+		context->will->retain = will_retain;
 	}
 
 	if(db->config->connection_messages == true){

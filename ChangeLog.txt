@@ -48,6 +48,8 @@ Broker:
   immediately when parsing the config file in order to detect invalid hosts.
 - Bridges now set their notification state before attempting to connect, so if
   they fail to connect the state can still be seen.
+- If a client connects with a will topic to which they do not have write
+  access, they are now disconnected with CONNACK "not authorised".
 
 Client library:
 - Allow control of reconnection timeouts in mosquitto_loop_forever() and after
