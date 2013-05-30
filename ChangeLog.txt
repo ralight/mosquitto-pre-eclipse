@@ -50,6 +50,7 @@ Broker:
   they fail to connect the state can still be seen.
 - If a client connects with a will topic to which they do not have write
   access, they are now disconnected with CONNACK "not authorised".
+- Fix bridge notification payload length - no need to send a null byte.
 
 Client library:
 - Allow control of reconnection timeouts in mosquitto_loop_forever() and after
