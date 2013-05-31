@@ -159,6 +159,7 @@ void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, b
 		if(context->will->topic) _mosquitto_free(context->will->topic);
 		if(context->will->payload) _mosquitto_free(context->will->payload);
 		_mosquitto_free(context->will);
+		context->will = NULL;
 	}
 	if(do_free || context->clean_session){
 		msg = context->msgs;
