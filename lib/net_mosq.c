@@ -217,10 +217,11 @@ static unsigned int psk_client_callback(SSL *ssl, const char *hint,
 }
 #endif
 
-int _mosquitto_try_connect(const char *host, uint16_t port, int *sock)
+int _mosquitto_try_connect(const char *host, uint16_t port, int *sock, const char *bind_address)
 {
 	struct addrinfo hints;
 	struct addrinfo *ainfo, *rp;
+	struct addrinfo *ainfo_bind, *rp_bind;
 	int s;
 
 	*sock = INVALID_SOCKET;
@@ -231,6 +232,14 @@ int _mosquitto_try_connect(const char *host, uint16_t port, int *sock)
 
 	s = getaddrinfo(host, NULL, &hints, &ainfo);
 	if(s) return MOSQ_ERR_UNKNOWN;
+
+	if(bind_address){
+		s = getaddrinfo(bind_address, NULL, &hints, &ainfo_bind);
+		if(s){
+			freeaddrinfo(ainfo);
+			return MOSQ_ERR_UNKNOWN;
+		}
+	}
 
 	for(rp = ainfo; rp != NULL; rp = rp->ai_next){
 		*sock = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
@@ -243,6 +252,17 @@ int _mosquitto_try_connect(const char *host, uint16_t port, int *sock)
 		}else{
 			continue;
 		}
+
+		if(bind_address){
+			for(rp_bind = ainfo_bind; rp_bind != NULL; rp_bind = rp_bind->ai_next){
+				if(bind(*sock, rp_bind->ai_addr, rp_bind->ai_addrlen) == 0){
+					break;
+				}
+			}
+			if(!rp_bind){
+				continue;
+			}
+		}
 		if(connect(*sock, rp->ai_addr, rp->ai_addrlen) != -1){
 			break;
 		}
@@ -251,11 +271,16 @@ int _mosquitto_try_connect(const char *host, uint16_t port, int *sock)
 		errno = WSAGetLastError();
 #endif
 		COMPAT_CLOSE(*sock);
+		*sock = INVALID_SOCKET;
 	}
 	freeaddrinfo(ainfo);
+	if(bind_address){
+		freeaddrinfo(ainfo_bind);
+	}
 	if(!rp){
 		return MOSQ_ERR_ERRNO;
 	}
+
 	return MOSQ_ERR_SUCCESS;
 }
 
@@ -263,7 +288,7 @@ int _mosquitto_try_connect(const char *host, uint16_t port, int *sock)
  * Returns -1 on failure (ip is NULL, socket creation/connection error)
  * Returns sock number on success.
  */
-int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t port)
+int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t port, const char *bind_address)
 {
 	int sock = INVALID_SOCKET;
 #ifndef WIN32
@@ -280,7 +305,7 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 
 	if(!mosq || !host || !port) return MOSQ_ERR_INVAL;
 
-	rc = _mosquitto_try_connect(host, port, &sock);
+	rc = _mosquitto_try_connect(host, port, &sock, bind_address);
 	if(rc != MOSQ_ERR_SUCCESS) return rc;
 
 	/* Set non-blocking */

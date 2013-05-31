@@ -148,11 +148,27 @@
 					<paramdef>int <parameter>keepalive</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
+			<funcsynopsis><funcprototype><funcdef>void <function>mosquitto_connect_bind</function></funcdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>const char *<parameter>host</parameter></paramdef>
+					<paramdef>int <parameter>port</parameter></paramdef>
+					<paramdef>int <parameter>keepalive</parameter></paramdef>
+					<paramdef>const char *<parameter>bind_address</parameter></paramdef>
+			</funcprototype></funcsynopsis>
+
 			<funcsynopsis><funcprototype><funcdef>void <function>mosquitto_connect_async</function></funcdef>
 					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
 					<paramdef>const char *<parameter>host</parameter></paramdef>
 					<paramdef>int <parameter>port</parameter></paramdef>
 					<paramdef>int <parameter>keepalive</parameter></paramdef>
+			</funcprototype></funcsynopsis>
+
+			<funcsynopsis><funcprototype><funcdef>void <function>mosquitto_connect_bind_async</function></funcdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>const char *<parameter>host</parameter></paramdef>
+					<paramdef>int <parameter>port</parameter></paramdef>
+					<paramdef>int <parameter>keepalive</parameter></paramdef>
+					<paramdef>const char *<parameter>bind_address</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
 			<funcsynopsis><funcprototype><funcdef>void <function>mosquitto_reconnect</function></funcdef>

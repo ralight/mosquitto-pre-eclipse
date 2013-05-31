@@ -215,6 +215,7 @@ void print_usage(void)
 	printf("mosquitto_pub is a simple mqtt client that will publish a message on a single topic and exit.\n");
 	printf("mosquitto_pub version %s running on libmosquitto %d.%d.%d.\n\n", VERSION, major, minor, revision);
 	printf("Usage: mosquitto_pub [-h host] [-p port] [-q qos] [-r] {-f file | -l | -n | -m message} -t topic\n");
+	printf("                     [-A bind_address]\n");
 	printf("                     [-i id] [-I id_prefix]\n");
 	printf("                     [-d] [--quiet]\n");
 	printf("                     [-u username [-P password]]\n");
@@ -226,6 +227,8 @@ void print_usage(void)
 #endif
 #endif
 	printf("       mosquitto_pub --help\n\n");
+	printf(" -A : bind the outgoing socket to this host/ip address. Use to control which interface\n");
+	printf("      the client communicates over.\n");
 	printf(" -d : enable debug messages.\n");
 	printf(" -f : send the contents of a file as the message.\n");
 	printf(" -h : mqtt host to connect to. Defaults to localhost.\n");
@@ -272,6 +275,7 @@ int main(int argc, char *argv[])
 	int i;
 	char *host = "localhost";
 	int port = 1883;
+	char *bind_address = NULL;
 	int keepalive = 60;
 	char buf[1024];
 	bool debug = false;
@@ -309,6 +313,15 @@ int main(int argc, char *argv[])
 					print_usage();
 					return 1;
 				}
+			}
+			i++;
+		}else if(!strcmp(argv[i], "-A")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: -A argument given but no address specified.\n\n");
+				print_usage();
+				return 1;
+			}else{
+				bind_address = argv[i+1];
 			}
 			i++;
 		}else if(!strcmp(argv[i], "--cafile")){
@@ -646,7 +659,7 @@ int main(int argc, char *argv[])
 	mosquitto_disconnect_callback_set(mosq, my_disconnect_callback);
 	mosquitto_publish_callback_set(mosq, my_publish_callback);
 
-	rc = mosquitto_connect(mosq, host, port, keepalive);
+	rc = mosquitto_connect_bind(mosq, host, port, keepalive, bind_address);
 	if(rc){
 		if(!quiet){
 			if(rc == MOSQ_ERR_ERRNO){

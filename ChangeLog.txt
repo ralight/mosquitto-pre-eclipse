@@ -65,9 +65,11 @@ Client library:
 - Fix possible crash after disconnects when using the threaded interface with
   TLS.
 - Allow build/install without Python. Closes bug #1174972.
+- Add support for binding connection to a local interface.
 
 Clients:
 - Sub client can now suppress printing of messages with the retain bit set.
+- Add support for binding connection to a local interface.
 
 1.1.3 - 20130211
 ================
