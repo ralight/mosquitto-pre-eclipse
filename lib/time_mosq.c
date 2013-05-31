@@ -71,7 +71,7 @@ time_t mosquitto_time_ms(void)
 	struct timespec tp;
 
 	clock_gettime(CLOCK_MONOTONIC, &tp);
-	return tp.tv_sec*1000 + tp.tv_nsec/100000;
+	return tp.tv_sec*1000 + tp.tv_nsec/1000000;
 #elif defined(__APPLE__)
 	static mach_timebase_info_data_t tb;
     	uint64_t ticks;
