@@ -315,6 +315,7 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 		if(local_topic[0] == '/'){
 			if(strcmp(acl_tail->topic, "/")){
 				acl_root = acl_root->next;
+				_mosquitto_free(local_topic);
 				continue;
 			}
 			acl_tail = acl_tail->child;
