@@ -57,5 +57,7 @@ MOSQ_1.1 {
 
 MOSQ_1.2 {
 	global:
+		mosquitto_connect_bind;
+		mosquitto_connect_bind_async;
 		mosquitto_reconnect_delay_set;
 } MOSQ_1.1;

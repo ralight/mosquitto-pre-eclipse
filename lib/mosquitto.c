@@ -314,11 +314,30 @@ void _mosquitto_destroy(struct mosquitto *mosq)
 	if(mosq->tls_psk_identity) _mosquitto_free(mosq->tls_psk_identity);
 #endif
 
-	if(mosq->address) _mosquitto_free(mosq->address);
-	if(mosq->id) _mosquitto_free(mosq->id);
-	if(mosq->username) _mosquitto_free(mosq->username);
-	if(mosq->password) _mosquitto_free(mosq->password);
-	if(mosq->host) _mosquitto_free(mosq->host);
+	if(mosq->address){
+		_mosquitto_free(mosq->address);
+		mosq->address = NULL;
+	}
+	if(mosq->id){
+		_mosquitto_free(mosq->id);
+		mosq->id = NULL;
+	}
+	if(mosq->username){
+		_mosquitto_free(mosq->username);
+		mosq->username = NULL;
+	}
+	if(mosq->password){
+		_mosquitto_free(mosq->password);
+		mosq->password = NULL;
+	}
+	if(mosq->host){
+		_mosquitto_free(mosq->host);
+		mosq->host = NULL;
+	}
+	if(mosq->bind_address){
+		_mosquitto_free(mosq->bind_address);
+		mosq->bind_address = NULL;
+	}
 
 	/* Out packet cleanup */
 	if(mosq->out_packet && !mosq->current_out_packet){
@@ -354,14 +373,24 @@ int mosquitto_socket(struct mosquitto *mosq)
 
 int mosquitto_connect(struct mosquitto *mosq, const char *host, int port, int keepalive)
 {
+	return mosquitto_connect_bind(mosq, host, port, keepalive, NULL);
+}
+
+int mosquitto_connect_bind(struct mosquitto *mosq, const char *host, int port, int keepalive, const char *bind_address)
+{
 	int rc;
-	rc = mosquitto_connect_async(mosq, host, port, keepalive);
+	rc = mosquitto_connect_bind_async(mosq, host, port, keepalive, bind_address);
 	if(rc) return rc;
 
 	return mosquitto_reconnect(mosq);
 }
 
 int mosquitto_connect_async(struct mosquitto *mosq, const char *host, int port, int keepalive)
+{
+	return mosquitto_connect_bind_async(mosq, host, port, keepalive, NULL);
+}
+
+int mosquitto_connect_bind_async(struct mosquitto *mosq, const char *host, int port, int keepalive, const char *bind_address)
 {
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(!host || port <= 0) return MOSQ_ERR_INVAL;
@@ -370,6 +399,12 @@ int mosquitto_connect_async(struct mosquitto *mosq, const char *host, int port, 
 	mosq->host = _mosquitto_strdup(host);
 	if(!mosq->host) return MOSQ_ERR_NOMEM;
 	mosq->port = port;
+
+	if(mosq->bind_address) _mosquitto_free(mosq->bind_address);
+	if(bind_address){
+		mosq->bind_address = _mosquitto_strdup(bind_address);
+		if(!mosq->bind_address) return MOSQ_ERR_NOMEM;
+	}
 
 	mosq->keepalive_ms = keepalive*1000;
 	pthread_mutex_lock(&mosq->state_mutex);
@@ -423,7 +458,7 @@ int mosquitto_reconnect(struct mosquitto *mosq)
 
 	_mosquitto_messages_reconnect_reset(mosq);
 
-	rc = _mosquitto_socket_connect(mosq, mosq->host, mosq->port);
+	rc = _mosquitto_socket_connect(mosq, mosq->host, mosq->port, mosq->bind_address);
 	if(rc){
 		return rc;
 	}

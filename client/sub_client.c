@@ -127,6 +127,7 @@ void print_usage(void)
 	printf("mosquitto_sub is a simple mqtt client that will subscribe to a single topic and print all messages it receives.\n");
 	printf("mosquitto_sub version %s running on libmosquitto %d.%d.%d.\n\n", VERSION, major, minor, revision);
 	printf("Usage: mosquitto_sub [-c] [-h host] [-k keepalive] [-p port] [-q qos] [-R] [-v] -t topic ...\n");
+	printf("                     [-A bind_address]\n");
 	printf("                     [-i id] [-I id_prefix]\n");
 	printf("                     [-d] [--quiet]\n");
 	printf("                     [-u username [-P password]]\n");
@@ -138,6 +139,8 @@ void print_usage(void)
 #endif
 #endif
 	printf("       mosquitto_sub --help\n\n");
+	printf(" -A : bind the outgoing socket to this host/ip address. Use to control which interface\n");
+	printf("      the client communicates over.\n");
 	printf(" -c : disable 'clean session' (store subscription and pending messages when client disconnects).\n");
 	printf(" -d : enable debug messages.\n");
 	printf(" -h : mqtt host to connect to. Defaults to localhost.\n");
@@ -182,6 +185,7 @@ int main(int argc, char *argv[])
 	int i;
 	char *host = "localhost";
 	int port = 1883;
+	char *bind_address = NULL;
 	int keepalive = 60;
 	bool clean_session = true;
 	bool debug = false;
@@ -221,6 +225,15 @@ int main(int argc, char *argv[])
 					print_usage();
 					return 1;
 				}
+			}
+			i++;
+		}else if(!strcmp(argv[i], "-A")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: -A argument given but no address specified.\n\n");
+				print_usage();
+				return 1;
+			}else{
+				bind_address = argv[i+1];
 			}
 			i++;
 		}else if(!strcmp(argv[i], "-c") || !strcmp(argv[i], "--disable-clean-session")){
@@ -532,7 +545,7 @@ int main(int argc, char *argv[])
 		mosquitto_subscribe_callback_set(mosq, my_subscribe_callback);
 	}
 
-	rc = mosquitto_connect(mosq, host, port, keepalive);
+	rc = mosquitto_connect_bind(mosq, host, port, keepalive, bind_address);
 	if(rc){
 		if(!ud.quiet){
 			if(rc == MOSQ_ERR_ERRNO){

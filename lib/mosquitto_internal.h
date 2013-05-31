@@ -181,6 +181,7 @@ struct mosquitto {
 	char *host;
 	int port;
 	int queue_len;
+	char *bind_address;
 	unsigned int reconnect_delay_s;
 	unsigned int reconnect_delay_max;
 	bool reconnect_exponential_backoff;

@@ -127,7 +127,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 								&& db->contexts[i]->bridge->cur_address != 0
 								&& mosquitto_time_s() > db->contexts[i]->bridge->primary_retry_s){
 
-							if(_mosquitto_try_connect(db->contexts[i]->bridge->addresses[0].address, db->contexts[i]->bridge->addresses[0].port, &bridge_sock) == MOSQ_ERR_SUCCESS){
+							if(_mosquitto_try_connect(db->contexts[i]->bridge->addresses[0].address, db->contexts[i]->bridge->addresses[0].port, &bridge_sock, NULL) == MOSQ_ERR_SUCCESS){
 								COMPAT_CLOSE(bridge_sock);
 								_mosquitto_socket_close(db->contexts[i]);
 								db->contexts[i]->bridge->cur_address = db->contexts[i]->bridge->address_count-1;
