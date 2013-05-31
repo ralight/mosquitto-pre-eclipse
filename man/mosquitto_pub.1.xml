@@ -17,6 +17,7 @@
 	<refsynopsisdiv>
 		<cmdsynopsis>
 			<command>mosquitto_pub</command>
+			<arg><option>-A</option> <replaceable>bind_address</replaceable></arg>
 			<arg><option>-d</option></arg>
 			<arg><option>-h</option> <replaceable>hostname</replaceable></arg>
 			<arg><option>-i</option> <replaceable>client_id</replaceable></arg>
@@ -74,6 +75,15 @@
 	<refsect1>
 		<title>Options</title>
 		<variablelist>
+			<varlistentry>
+				<term><option>-A</option></term>
+				<listitem>
+					<para>Bind the outgoing connection to a local ip
+						address/hostname. Use this argument if you need to
+						restrict network communication to a particular
+						interface.</para>
+				</listitem>
+			</varlistentry>
 			<varlistentry>
 				<term><option>--cafile</option></term>
 				<listitem>
