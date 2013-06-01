@@ -149,14 +149,11 @@ int _mosquitto_packet_queue(struct mosquitto *mosq, struct _mosquitto_packet *pa
 	packet->next = NULL;
 	pthread_mutex_lock(&mosq->out_packet_mutex);
 	if(mosq->out_packet){
-		if(mosq->out_packet->last){
-			mosq->out_packet->last->next = packet;
-		}
-		mosq->out_packet->last = packet;
+		mosq->out_packet_last->next = packet;
 	}else{
 		mosq->out_packet = packet;
-		mosq->out_packet->last = packet;
 	}
+	mosq->out_packet_last = packet;
 	pthread_mutex_unlock(&mosq->out_packet_mutex);
 #ifdef WITH_BROKER
 	return _mosquitto_packet_write(mosq);
@@ -682,12 +679,8 @@ int _mosquitto_packet_write(struct mosquitto *mosq)
 	if(mosq->out_packet && !mosq->current_out_packet){
 		mosq->current_out_packet = mosq->out_packet;
 		mosq->out_packet = mosq->out_packet->next;
-		if(mosq->out_packet){
-			if(mosq->current_out_packet){
-				mosq->out_packet->last = mosq->current_out_packet->last;
-			}else{
-				mosq->out_packet->last = NULL;
-			}
+		if(!mosq->out_packet){
+			mosq->out_packet_last = NULL;
 		}
 	}
 	pthread_mutex_unlock(&mosq->out_packet_mutex);
@@ -747,12 +740,8 @@ int _mosquitto_packet_write(struct mosquitto *mosq)
 		mosq->current_out_packet = mosq->out_packet;
 		if(mosq->out_packet){
 			mosq->out_packet = mosq->out_packet->next;
-			if(mosq->out_packet){
-				if(mosq->current_out_packet){
-					mosq->out_packet->last = mosq->current_out_packet->last;
-				}else{
-					mosq->out_packet->last = NULL;
-				}
+			if(!mosq->out_packet){
+				mosq->out_packet_last = NULL;
 			}
 		}
 		pthread_mutex_unlock(&mosq->out_packet_mutex);

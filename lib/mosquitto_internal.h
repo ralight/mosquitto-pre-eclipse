@@ -97,7 +97,6 @@ struct _mosquitto_packet{
 	uint32_t pos;
 	uint8_t *payload;
 	struct _mosquitto_packet *next;
-	struct _mosquitto_packet *last;
 };
 
 struct mosquitto_message_all{
@@ -164,6 +163,7 @@ struct mosquitto {
 	time_t disconnect_t_s;
 	int pollfd_index;
 	int db_index;
+	struct _mosquitto_packet *out_packet_last;
 #else
 	void *userdata;
 	bool in_callback;
@@ -186,6 +186,7 @@ struct mosquitto {
 	unsigned int reconnect_delay_max;
 	bool reconnect_exponential_backoff;
 	bool threaded;
+	struct _mosquitto_packet *out_packet_last;
 #endif
 };
 
