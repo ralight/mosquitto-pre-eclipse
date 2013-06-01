@@ -116,22 +116,17 @@ void mosquitto_message_free(struct mosquitto_message **message)
 
 void _mosquitto_message_queue(struct mosquitto *mosq, struct mosquitto_message_all *message)
 {
-	struct mosquitto_message_all *tail;
-
 	assert(mosq);
 	assert(message);
 
 	mosq->queue_len++;
 	message->next = NULL;
-	if(mosq->messages){
-		tail = mosq->messages;
-		while(tail->next){
-			tail = tail->next;
-		}
-		tail->next = message;
+	if(mosq->messages_last){
+		mosq->messages_last->next = message;
 	}else{
 		mosq->messages = message;
 	}
+	mosq->messages_last = message;
 }
 
 void _mosquitto_messages_reconnect_reset(struct mosquitto *mosq)
@@ -165,6 +160,7 @@ void _mosquitto_messages_reconnect_reset(struct mosquitto *mosq)
 		prev = message;
 		message = message->next;
 	}
+	mosq->messages_last = prev;
 }
 
 int _mosquitto_message_remove(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_direction dir, struct mosquitto_message_all **message)
@@ -183,6 +179,9 @@ int _mosquitto_message_remove(struct mosquitto *mosq, uint16_t mid, enum mosquit
 			}
 			*message = cur;
 			mosq->queue_len--;
+			if(!mosq->messages){
+				mosq->messages_last = NULL;
+			}
 			return MOSQ_ERR_SUCCESS;
 		}
 		prev = cur;

@@ -187,6 +187,7 @@ struct mosquitto {
 	bool reconnect_exponential_backoff;
 	bool threaded;
 	struct _mosquitto_packet *out_packet_last;
+	struct mosquitto_message_all *messages_last;
 #endif
 };
 
