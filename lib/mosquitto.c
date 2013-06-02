@@ -181,6 +181,7 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 	mosq->last_mid = 0;
 	mosq->state = mosq_cs_new;
 	mosq->messages = NULL;
+	mosq->max_inflight_messages = 20;
 	mosq->will = NULL;
 	mosq->on_connect = NULL;
 	mosq->on_publish = NULL;
@@ -206,6 +207,7 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 	pthread_mutex_init(&mosq->out_packet_mutex, NULL);
 	pthread_mutex_init(&mosq->current_out_packet_mutex, NULL);
 	pthread_mutex_init(&mosq->msgtime_mutex, NULL);
+	pthread_mutex_init(&mosq->message_mutex, NULL);
 	mosq->thread_id = pthread_self();
 #endif
 
@@ -289,6 +291,7 @@ void _mosquitto_destroy(struct mosquitto *mosq)
 		pthread_mutex_destroy(&mosq->out_packet_mutex);
 		pthread_mutex_destroy(&mosq->current_out_packet_mutex);
 		pthread_mutex_destroy(&mosq->msgtime_mutex);
+		pthread_mutex_destroy(&mosq->message_mutex);
 	}
 #endif
 	if(mosq->sock != INVALID_SOCKET){
@@ -505,11 +508,6 @@ int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int p
 		message->next = NULL;
 		message->timestamp_s = mosquitto_time_s();
 		message->direction = mosq_md_out;
-		if(qos == 1){
-			message->state = mosq_ms_wait_puback;
-		}else if(qos == 2){
-			message->state = mosq_ms_wait_pubrec;
-		}
 		message->msg.mid = local_mid;
 		message->msg.topic = _mosquitto_strdup(topic);
 		if(!message->msg.topic){
@@ -533,7 +531,20 @@ int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int p
 		message->dup = false;
 
 		_mosquitto_message_queue(mosq, message);
-		return _mosquitto_send_publish(mosq, message->msg.mid, message->msg.topic, message->msg.payloadlen, message->msg.payload, message->msg.qos, message->msg.retain, message->dup);
+		pthread_mutex_lock(&mosq->message_mutex);
+		if(mosq->max_inflight_messages == 0 || mosq->inflight_messages < mosq->max_inflight_messages){
+			if(qos == 1){
+				message->state = mosq_ms_wait_puback;
+			}else if(qos == 2){
+				message->state = mosq_ms_wait_pubrec;
+			}
+			pthread_mutex_unlock(&mosq->message_mutex);
+			return _mosquitto_send_publish(mosq, message->msg.mid, message->msg.topic, message->msg.payloadlen, message->msg.payload, message->msg.qos, message->msg.retain, message->dup);
+		}else{
+			message->state = mosq_ms_invalid;
+			pthread_mutex_unlock(&mosq->message_mutex);
+			return MOSQ_ERR_SUCCESS;
+		}
 	}
 }
 
@@ -730,6 +741,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 	FD_ZERO(&readfds);
 	FD_SET(mosq->sock, &readfds);
 	FD_ZERO(&writefds);
+	pthread_mutex_lock(&mosq->current_out_packet_mutex);
 	pthread_mutex_lock(&mosq->out_packet_mutex);
 	if(mosq->out_packet || mosq->current_out_packet){
 		FD_SET(mosq->sock, &writefds);
@@ -739,6 +751,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 #endif
 	}
 	pthread_mutex_unlock(&mosq->out_packet_mutex);
+	pthread_mutex_unlock(&mosq->current_out_packet_mutex);
 	if(timeout >= 0){
 		local_timeout.tv_sec = timeout/1000;
 #ifdef HAVE_PSELECT
@@ -902,7 +915,9 @@ int mosquitto_loop_read(struct mosquitto *mosq, int max_packets)
 	int i;
 	if(max_packets < 1) return MOSQ_ERR_INVAL;
 
+	pthread_mutex_lock(&mosq->message_mutex);
 	max_packets = mosq->queue_len;
+	pthread_mutex_unlock(&mosq->message_mutex);
 	if(max_packets < 1) max_packets = 1;
 	/* Queue len here tells us how many messages are awaiting processing and
 	 * have QoS > 0. We should try to deal with that many in this loop in order
@@ -922,7 +937,9 @@ int mosquitto_loop_write(struct mosquitto *mosq, int max_packets)
 	int i;
 	if(max_packets < 1) return MOSQ_ERR_INVAL;
 
+	pthread_mutex_lock(&mosq->message_mutex);
 	max_packets = mosq->queue_len;
+	pthread_mutex_unlock(&mosq->message_mutex);
 	if(max_packets < 1) max_packets = 1;
 	/* Queue len here tells us how many messages are awaiting processing and
 	 * have QoS > 0. We should try to deal with that many in this loop in order

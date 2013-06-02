@@ -524,6 +524,9 @@ libmosq_EXPORT int mosquitto_disconnect(struct mosquitto *mosq);
  *	MOSQ_ERR_PROTOCOL -     if there is a protocol error communicating with the
  *                          broker.
  * 	MOSQ_ERR_PAYLOAD_SIZE - if payloadlen is too large.
+ *
+ * See Also: 
+ *	<mosquitto_max_inflight_messages_set>
  */
 libmosq_EXPORT int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int payloadlen, const void *payload, int qos, bool retain);
 
@@ -1112,8 +1115,37 @@ libmosq_EXPORT void mosquitto_log_callback_set(struct mosquitto *mosq, void (*on
  *  reconnect_exponential_backoff - use exponential backoff between
  *                                  reconnect attempts. Set to true to enable
  *                                  exponential backoff.
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - on success.
+ * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
  */
 libmosq_EXPORT int mosquitto_reconnect_delay_set(struct mosquitto *mosq, unsigned int reconnect_delay, unsigned int reconnect_delay_max, bool reconnect_exponential_backoff);
+
+/*
+ * Function: mosquitto_max_inflight_messages_set
+ *
+ * Set the number of QoS 1 and 2 messages that can be "in flight" at one time.
+ * An in flight message is part way through its delivery flow. Attempts to send
+ * further messages with <mosquitto_publish> will result in the messages being
+ * queued until the number of in flight messages reduces.
+ *
+ * A higher number here results in greater message throughput, but if set
+ * higher than the maximum in flight messages on the broker may lead to
+ * delays in the messages being acknowledged.
+ *
+ * Set to 0 for no maximum.
+ *
+ * Parameters:
+ *  mosq -                  a valid mosquitto instance.
+ *  max_inflight_messages - the maximum number of inflight messages. Defaults
+ *                          to 20.
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - on success.
+ * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ */
+libmosq_EXPORT int mosquitto_max_inflight_messages_set(struct mosquitto *mosq, unsigned int max_inflight_messages);
 
 /*
  * Function: mosquitto_message_retry_set

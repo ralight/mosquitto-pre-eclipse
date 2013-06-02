@@ -218,6 +218,7 @@ void print_usage(void)
 	printf("                     [-A bind_address]\n");
 	printf("                     [-i id] [-I id_prefix]\n");
 	printf("                     [-d] [--quiet]\n");
+	printf("                     [-M max_inflight]\n");
 	printf("                     [-u username [-P password]]\n");
 	printf("                     [--will-topic [--will-payload payload] [--will-qos qos] [--will-retain]]\n");
 #ifdef WITH_TLS
@@ -237,6 +238,7 @@ void print_usage(void)
 	printf("      broker is using the clientid_prefixes option.\n");
 	printf(" -l : read messages from stdin, sending a separate message for each line.\n");
 	printf(" -m : message payload to send.\n");
+	printf(" -M : the maximum inflight messages for QoS 1/2..\n");
 	printf(" -n : send a null (zero length) message.\n");
 	printf(" -p : network port to connect to. Defaults to 1883.\n");
 	printf(" -q : quality of service level to use for all messages. Defaults to 0.\n");
@@ -285,6 +287,7 @@ int main(int argc, char *argv[])
 	char hostname[256];
 	char err[1024];
 	int len;
+	unsigned int max_inflight = 20;
 
 	char *will_payload = NULL;
 	long will_payloadlen = 0;
@@ -436,6 +439,15 @@ int main(int argc, char *argv[])
 				message = argv[i+1];
 				msglen = strlen(message);
 				mode = MSGMODE_CMD;
+			}
+			i++;
+		}else if(!strcmp(argv[i], "-M")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: -M argument given but max_inflight not specified.\n\n");
+				print_usage();
+				return 1;
+			}else{
+				max_inflight = atoi(argv[i+1]);
 			}
 			i++;
 		}else if(!strcmp(argv[i], "-n") || !strcmp(argv[i], "--null-message")){
@@ -655,6 +667,7 @@ int main(int argc, char *argv[])
 		mosquitto_lib_cleanup();
 		return 1;
 	}
+	mosquitto_max_inflight_messages_set(mosq, max_inflight);
 	mosquitto_connect_callback_set(mosq, my_connect_callback);
 	mosquitto_disconnect_callback_set(mosq, my_disconnect_callback);
 	mosquitto_publish_callback_set(mosq, my_publish_callback);

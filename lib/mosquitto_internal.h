@@ -188,6 +188,11 @@ struct mosquitto {
 	bool threaded;
 	struct _mosquitto_packet *out_packet_last;
 	struct mosquitto_message_all *messages_last;
+	int inflight_messages;
+	int max_inflight_messages;
+#if defined(WITH_THREADING) && !defined(WITH_BROKER)
+	pthread_mutex_t message_mutex;
+#endif
 #endif
 };
 

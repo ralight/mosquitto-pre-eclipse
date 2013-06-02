@@ -90,6 +90,7 @@ class mosqpp_EXPORT mosquittopp {
 		int subscribe(int *mid, const char *sub, int qos=0);
 		int unsubscribe(int *mid, const char *sub);
 		void reconnect_delay_set(unsigned int reconnect_delay, unsigned int reconnect_delay_max, bool reconnect_exponential_backoff);
+		int max_inflight_messages_set(unsigned int max_inflight_messages);
 		void message_retry_set(unsigned int message_retry);
 		void user_data_set(void *userdata);
 		int tls_set(const char *cafile, const char *capath=NULL, const char *certfile=NULL, const char *keyfile=NULL, int (*pw_callback)(char *buf, int size, int rwflag, void *userdata)=NULL);
