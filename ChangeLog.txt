@@ -66,10 +66,12 @@ Client library:
   TLS.
 - Allow build/install without Python. Closes bug #1174972.
 - Add support for binding connection to a local interface.
+- Implement maximum inflight messages handling.
 
 Clients:
 - Sub client can now suppress printing of messages with the retain bit set.
 - Add support for binding connection to a local interface.
+- Implement maximum inflight messages handling for the pub client.
 
 1.1.3 - 20130211
 ================

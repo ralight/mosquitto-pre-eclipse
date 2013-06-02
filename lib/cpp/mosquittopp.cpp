@@ -212,6 +212,11 @@ void mosquittopp::reconnect_delay_set(unsigned int reconnect_delay, unsigned int
 	mosquitto_reconnect_delay_set(m_mosq, reconnect_delay, reconnect_delay_max, reconnect_exponential_backoff);
 }
 
+int mosquittopp::max_inflight_messages_set(unsigned int max_inflight_messages)
+{
+	return mosquitto_max_inflight_messages_set(m_mosq, max_inflight_messages);
+}
+
 void mosquittopp::message_retry_set(unsigned int message_retry)
 {
 	mosquitto_message_retry_set(m_mosq, message_retry);

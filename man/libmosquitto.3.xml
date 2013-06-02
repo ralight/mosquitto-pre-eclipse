@@ -265,6 +265,11 @@
 		<refsect2>
 			<title>Misc client functions</title>
 
+			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_max_inflight_messages_set</function></funcdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>unsigned int <parameter>max_inflight_messages</parameter></paramdef>
+			</funcprototype></funcsynopsis>
+
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_message_retry_set</function></funcdef>
 					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
 					<paramdef>unsigned int <parameter>message_retry</parameter></paramdef>
