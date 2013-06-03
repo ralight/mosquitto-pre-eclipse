@@ -853,18 +853,18 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 
 int mosquitto_loop_misc(struct mosquitto *mosq)
 {
-	time_t now = mosquitto_time_s();
+	time_t now_ms = mosquitto_time_ms();
 	int rc;
 
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
 
 	_mosquitto_check_keepalive(mosq);
-	if(mosq->last_retry_check+1 < now){
+	if(mosq->last_retry_check+1000 < now_ms){
 		_mosquitto_message_retry_check(mosq);
-		mosq->last_retry_check = now;
+		mosq->last_retry_check = now_ms;
 	}
-	if(mosq->ping_t_ms && now - mosq->ping_t_ms >= mosq->keepalive_ms){
+	if(mosq->ping_t_ms && now_ms - mosq->ping_t_ms >= mosq->keepalive_ms){
 		/* mosq->ping_t_ms != 0 means we are waiting for a pingresp.
 		 * This hasn't happened in the keepalive time so we should disconnect.
 		 */
