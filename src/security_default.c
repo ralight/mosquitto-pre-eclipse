@@ -658,7 +658,7 @@ static int _pwfile_parse(const char *file, struct _mosquitto_unpwd **root)
 						return MOSQ_ERR_NOMEM;
 					}
 					len = strlen(unpwd->password);
-					while(unpwd->password[len-1] == 10 || unpwd->password[len-1] == 13){
+					while(len && (unpwd->password[len-1] == 10 || unpwd->password[len-1] == 13)){
 						unpwd->password[len-1] = '\0';
 						len = strlen(unpwd->password);
 					}
