@@ -17,6 +17,7 @@ Broker:
 - Add support for "log_type all".
 - Add support for "-v" option on the command line to provide the equivalent of
   "log_type all" without needing a config file.
+- Add the "upgrade_outgoing_qos" option, a non-standard feature.
 - Persistence data is now written to a temporary file which is atomically
   renamed on completion, so a crash during writing will not produce a corrupt
   file.
