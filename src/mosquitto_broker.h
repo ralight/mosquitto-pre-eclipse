@@ -125,6 +125,7 @@ struct mqtt3_config {
 	int retry_interval_s;
 	int store_clean_interval_s;
 	int sys_interval_s;
+	bool upgrade_outgoing_qos;
 	char *user;
 	bool verbose;
 #ifdef WITH_BRIDGE

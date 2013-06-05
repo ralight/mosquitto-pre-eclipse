@@ -118,10 +118,14 @@ static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hie
 		}else if(rc2 == MOSQ_ERR_SUCCESS){
 			client_qos = leaf->qos;
 
-			if(qos > client_qos){
+			if(db->config->upgrade_outgoing_qos){
 				msg_qos = client_qos;
 			}else{
-				msg_qos = qos;
+				if(qos > client_qos){
+					msg_qos = client_qos;
+				}else{
+					msg_qos = qos;
+				}
 			}
 			if(msg_qos){
 				mid = _mosquitto_mid_generate(leaf->context);
