@@ -75,7 +75,11 @@ add_executable(mosquitto ${MOSQ_SRCS})
 set (MOSQ_LIBS ${OPENSSL_LIBRARIES})
 
 if (UNIX)
-	set (MOSQ_LIBS ${MOSQ_LIBS} rt dl m)
+	if (APPLE)
+		set (MOSQ_LIBS ${MOSQ_LIBS} dl m)
+	else (APPLE)
+		set (MOSQ_LIBS ${MOSQ_LIBS} rt dl m)
+	endif (APPLE)
 endif (UNIX)
 
 if (WIN32)

@@ -40,7 +40,7 @@ add_library(libmosquitto SHARED
 
 set (LIBRARIES ${OPENSSL_LIBRARIES} ${PTHREAD_LIBRARIES})
 
-if (UNIX)
+if (UNIX AND NOT APPLE)
 	set (LIBRARIES ${LIBRARIES} rt)
 endif (UNIX)
 
