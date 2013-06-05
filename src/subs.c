@@ -615,7 +615,7 @@ static int _retain_process(struct mosquitto_db *db, struct mosquitto_msg_store *
 	return mqtt3_db_message_insert(db, context, mid, mosq_md_out, qos, true, retained);
 }
 
-static int _retain_search(struct mosquitto_db *db, struct _mosquitto_subhier *subhier, struct _sub_token *tokens, struct mosquitto *context, const char *sub, int sub_qos)
+static int _retain_search(struct mosquitto_db *db, struct _mosquitto_subhier *subhier, struct _sub_token *tokens, struct mosquitto *context, const char *sub, int sub_qos, int level)
 {
 	struct _mosquitto_subhier *branch;
 	int flag = 0;
@@ -635,11 +635,11 @@ static int _retain_search(struct mosquitto_db *db, struct _mosquitto_subhier *su
 				_retain_process(db, branch->retained, context, sub, sub_qos);
 			}
 			if(branch->children){
-				_retain_search(db, branch, tokens, context, sub, sub_qos);
+				_retain_search(db, branch, tokens, context, sub, sub_qos, level+1);
 			}
 		}else if(strcmp(branch->topic, "+") && (!strcmp(branch->topic, tokens->topic) || !strcmp(tokens->topic, "+"))){
 			if(tokens->next){
-				if(_retain_search(db, branch, tokens->next, context, sub, sub_qos) == -1){
+				if(_retain_search(db, branch, tokens->next, context, sub, sub_qos, level+1) == -1){
 					if(branch->retained){
 						_retain_process(db, branch->retained, context, sub, sub_qos);
 					}
@@ -650,7 +650,7 @@ static int _retain_search(struct mosquitto_db *db, struct _mosquitto_subhier *su
 				}
 			}
 		}
-		if(!branch->next && tokens->next && !strcmp(tokens->next->topic, "#")){
+		if(!branch->next && tokens->next && !strcmp(tokens->next->topic, "#") && level>0){
 			if(branch->retained){
 				_retain_process(db, branch->retained, context, sub, sub_qos);
 			}
@@ -681,10 +681,10 @@ int mqtt3_retain_queue(struct mosquitto_db *db, struct mosquitto *context, const
 	subhier = db->subs.children;
 	while(subhier){
 		if(!strcmp(subhier->topic, "") && tree == 0){
-			_retain_search(db, subhier, tokens, context, sub, sub_qos);
+			_retain_search(db, subhier, tokens, context, sub, sub_qos, 0);
 			break;
 		}else if(!strcmp(subhier->topic, "$SYS") && tree == 2){
-			_retain_search(db, subhier, tokens, context, sub, sub_qos);
+			_retain_search(db, subhier, tokens, context, sub, sub_qos, 0);
 			break;
 		}
 		subhier = subhier->next;
