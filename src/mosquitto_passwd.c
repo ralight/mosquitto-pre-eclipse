@@ -184,12 +184,18 @@ int update_file(FILE *fptr, FILE *ftmp)
 	char lbuf[MAX_BUFFER_LEN];
 	char *username, *password;
 	int rc;
+	int len;
 
 	while(!feof(fptr) && fgets(buf, MAX_BUFFER_LEN, fptr)){
 		memcpy(lbuf, buf, MAX_BUFFER_LEN);
 		username = strtok(lbuf, ":");
 		password = strtok(NULL, ":");
 		if(password){
+			len = strlen(password);
+			while(len && (password[len-1] == '\n' || password[len-1] == '\r')){
+				password[len-1] = '\0';
+				len = strlen(password);
+			}
 			rc = output_new_password(ftmp, username, password);
 			if(rc) return rc;
 		}else{
