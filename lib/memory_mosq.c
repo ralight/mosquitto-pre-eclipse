@@ -36,6 +36,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef REAL_WITH_MEMORY_TRACKING
 #  if defined(__APPLE__)
+#    include <malloc/malloc.h>
 #    define malloc_usable_size malloc_size
 #  elif defined(__FreeBSD__)
 #    include <malloc_np.h>
