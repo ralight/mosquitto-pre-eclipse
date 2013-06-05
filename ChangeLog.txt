@@ -51,6 +51,8 @@ Broker:
 - If a client connects with a will topic to which they do not have write
   access, they are now disconnected with CONNACK "not authorised".
 - Fix bridge notification payload length - no need to send a null byte.
+- Fix retained messages on topic foo being incorrectly delivered to
+  subscriptions of /#
 
 Client library:
 - Allow control of reconnection timeouts in mosquitto_loop_forever() and after
