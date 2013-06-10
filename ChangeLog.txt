@@ -27,6 +27,7 @@ Broker:
   causing client disconnections or message retries.
 - Clean session and keepalive status are now display the log when a client
   connects.
+- Clients that connect with zero length will topics are now rejected.
 - The broker now attempts to resolve bind_address and bridge addresses
   immediately when parsing the config file in order to detect invalid hosts.
 - Fix problem with out of order calls to free() when restarting a lazy bridge.
