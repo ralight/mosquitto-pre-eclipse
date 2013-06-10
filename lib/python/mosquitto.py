@@ -1446,7 +1446,11 @@ class Mosquitto:
             connect_flags = connect_flags | 0x02
 
         if self._will:
-            remaining_length = remaining_length + 2+len(self._will_topic) + 2+len(self._will_payload)
+            if self._will_payload != None:
+                remaining_length = remaining_length + 2+len(self._will_topic) + 2+len(self._will_payload)
+            else:
+                remaining_length = remaining_length + 2+len(self._will_topic) + 2
+
             connect_flags = connect_flags | 0x04 | ((self._will_qos&0x03) << 3) | ((self._will_retain&0x01) << 5)
 
         if self._username:
@@ -1466,10 +1470,10 @@ class Mosquitto:
 
         if self._will:
             self._pack_str16(packet, self._will_topic)
-            if len(self._will_payload) > 0:
-                self._pack_str16(packet, self._will_payload)
-            else:
+            if self._will_payload == None or len(self._will_payload) == 0:
                 packet.extend(struct.pack("!H", 0))
+            else:
+                self._pack_str16(packet, self._will_payload)
 
         if self._username:
             self._pack_str16(packet, self._username)

@@ -71,6 +71,7 @@ Client library:
 - Allow build/install without Python. Closes bug #1174972.
 - Add support for binding connection to a local interface.
 - Implement maximum inflight messages handling.
+- Fix Python client not handling will_payload==None.
 
 Clients:
 - Sub client can now suppress printing of messages with the retain bit set.
