@@ -167,6 +167,13 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			rc = 1;
 			goto handle_connect_error;
 		}
+		if(strlen(will_topic) == 0){
+			/* FIXME - CONNACK_REFUSED_IDENTIFIER_REJECTED not really appropriate here. */
+			_mosquitto_send_connack(context, CONNACK_REFUSED_IDENTIFIER_REJECTED);
+			mqtt3_context_disconnect(db, context);
+			rc = 1;
+			goto handle_connect_error;
+		}
 		if(_mosquitto_read_uint16(&context->in_packet, &will_payloadlen)){
 			mqtt3_context_disconnect(db, context);
 			rc = 1;
