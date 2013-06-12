@@ -1083,22 +1083,8 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 							return MOSQ_ERR_INVAL;
 						}
 						cur_listener = &config->listeners[config->listener_count-1];
-						cur_listener->mount_point = NULL;
+						memset(cur_listener, 0, sizeof(struct _mqtt3_listener));
 						cur_listener->port = port_tmp;
-						cur_listener->socks = NULL;
-						cur_listener->sock_count = 0;
-						cur_listener->client_count = 0;
-#ifdef WITH_TLS
-						cur_listener->cafile = NULL;
-						cur_listener->capath = NULL;
-						cur_listener->certfile = NULL;
-						cur_listener->keyfile = NULL;
-						cur_listener->ciphers = NULL;
-						cur_listener->psk_hint = NULL;
-						cur_listener->require_certificate = false;
-						cur_listener->ssl_ctx = NULL;
-						cur_listener->crlfile = NULL;
-#endif
 						token = strtok_r(NULL, " ", &saveptr);
 						if(token){
 							cur_listener->host = _mosquitto_strdup(token);
