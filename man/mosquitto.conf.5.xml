@@ -950,13 +950,16 @@
 								<row><entry>2</entry><entry>value</entry><entry>value</entry><entry>""</entry><entry>valid</entry></row>
 								<row><entry>3</entry><entry>value</entry><entry>""</entry><entry>value</entry><entry>valid</entry></row>
 								<row><entry>4</entry><entry>value</entry><entry>""</entry><entry>""</entry><entry>valid (no remapping)</entry></row>
-								<row><entry>5</entry><entry>""</entry><entry>value</entry><entry>value</entry><entry>valid (remap entire local topic to remote)</entry></row>
+								<row><entry>5</entry><entry>""</entry><entry>value</entry><entry>value</entry><entry>valid (remap single local topic to remote)</entry></row>
 								<row><entry>6</entry><entry>""</entry><entry>value</entry><entry>""</entry><entry>invalid</entry></row>
 								<row><entry>7</entry><entry>""</entry><entry>""</entry><entry>value</entry><entry>invalid</entry></row>
 								<row><entry>8</entry><entry>""</entry><entry>""</entry><entry>""</entry><entry>invalid</entry></row>
 							</tbody>
 						</tgroup>
 					</informaltable>
+					<para>To remap an entire topic tree, use e.g.:</para>
+					<programlisting language="config">
+topic # both 2 local/topic/ remote/topic/</programlisting>
 
 					<para>This option can be specified multiple times per
 					bridge.</para>
