@@ -132,6 +132,8 @@
 
 					<para>Example:</para>
 					<para><code>pattern write sensor/%u/data</code></para>
+					<para>Allow access for bridge connection messages:</para>
+					<para><code>pattern write $SYS/broker/connection/%c/state</code></para>
 
 					<para>If the first character of a line of the ACL file is a
 						# it is treated as a comment.</para>
