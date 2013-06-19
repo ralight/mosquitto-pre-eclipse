@@ -40,6 +40,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #endif
 #include <time.h>
 
+#include "mosquitto.h"
+#include "time_mosq.h"
+
 #ifdef WIN32
 static bool tick64 = false;
 
@@ -59,68 +62,34 @@ void _windows_time_version_check(void)
 }
 #endif
 
-time_t mosquitto_time_ms(void)
+time_t mosquitto_time(void)
 {
 #ifdef WIN32
 	if(tick64){
-		return GetTickCount64();
+		return GetTickCount64()/1000;
 	}else{
-		return GetTickCount(); /* FIXME - need to deal with overflow. */
+		return GetTickCount()/1000; /* FIXME - need to deal with overflow. */
 	}
 #elif _POSIX_TIMERS>0 && defined(_POSIX_MONOTONIC_CLOCK)
 	struct timespec tp;
 
 	clock_gettime(CLOCK_MONOTONIC, &tp);
-	return tp.tv_sec*1000 + tp.tv_nsec/1000000;
+	return tp.tv_sec;
 #elif defined(__APPLE__)
 	static mach_timebase_info_data_t tb;
-    	uint64_t ticks;
-	uint64_t milli;
+    uint64_t ticks;
+	uint64_t sec;
 
 	ticks = mach_absolute_time();
 
 	if(tb.denom == 0){
 		mach_timebase_info(&tb);
 	}
+	sec = (ticks/1000000000)*(tb.numer/tb.denom);
 
-	milli = ticks/1000000/tb.denom * tb.numer;
-
-	return (time_t)milli;
+	return (time_t)sec;
 #else
-	return time(NULL)*1000;
+	return time(NULL);
 #endif
-}
-
-time_t mosquitto_time_s(void)
-{
-	return mosquitto_time_ms()/1000;
-}
-
-time_t mosquitto_time_interval_ms(time_t *previous)
-{
-	time_t current = mosquitto_time_ms();
-	time_t diff;
-
-	diff = current - *previous;
-
-#ifdef WIN32
-	if(!tick64 && diff < 0){
-		diff &= 0xFFFFFFFF;
-	}
-#endif
-	*previous = current;
-
-	return diff;
-}
-
-time_t mosquitto_time_interval_s(time_t *previous)
-{
-	time_t diff;
-
-	*previous *= 1000;
-	diff = mosquitto_time_interval_ms(previous);
-	*previous /= 1000;
-
-	return diff;
 }
 

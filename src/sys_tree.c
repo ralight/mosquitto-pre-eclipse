@@ -137,7 +137,7 @@ static void calc_load(struct mosquitto_db *db, char *buf, const char *topic, dou
 void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_time)
 {
 	static time_t last_update = 0;
-	time_t now = mosquitto_time_s();
+	time_t now;
 	time_t uptime;
 	char buf[BUFLEN];
 
@@ -192,6 +192,8 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 	double connection_interval;
 
 	double exponent;
+
+	now = mosquitto_time();
 
 	if(interval && now - interval > last_update){
 		uptime = now - start_time;
@@ -331,7 +333,7 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/publish/bytes/sent", 2, strlen(buf), buf, 1);
 		}
 
-		last_update = mosquitto_time_s();
+		last_update = mosquitto_time();
 	}
 }
 

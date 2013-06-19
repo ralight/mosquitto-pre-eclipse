@@ -30,9 +30,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef _TIME_MOSQ_H_
 #define _TIME_MOSQ_H_
 
-time_t mosquitto_time_ms(void);
-time_t mosquitto_time_s(void);
-time_t mosquitto_time_interval_ms(time_t *previous);
-time_t mosquitto_time_interval_s(time_t *previous);
+time_t mosquitto_time(void);
 
 #endif
