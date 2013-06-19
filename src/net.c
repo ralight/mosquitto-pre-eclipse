@@ -404,7 +404,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 			}else{
 				SSL_CTX_set_verify(listener->ssl_ctx, SSL_VERIFY_PEER, client_certificate_verify);
 			}
-			rc = SSL_CTX_use_certificate_file(listener->ssl_ctx, listener->certfile, SSL_FILETYPE_PEM);
+			rc = SSL_CTX_use_certificate_chain_file(listener->ssl_ctx, listener->certfile);
 			if(rc != 1){
 				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load server certificate \"%s\". Check certfile.", listener->certfile);
 				COMPAT_CLOSE(sock);
