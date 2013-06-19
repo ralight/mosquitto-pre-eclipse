@@ -59,7 +59,7 @@ int _mosquitto_send_pingreq(struct mosquitto *mosq)
 #endif
 	rc = _mosquitto_send_simple_command(mosq, PINGREQ);
 	if(rc == MOSQ_ERR_SUCCESS){
-		mosq->ping_t_ms = mosquitto_time_ms();
+		mosq->ping_t = mosquitto_time();
 	}
 	return rc;
 }

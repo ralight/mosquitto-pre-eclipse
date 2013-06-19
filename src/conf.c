@@ -108,7 +108,7 @@ static void _config_init_reload(struct mqtt3_config *config)
 	config->acl_file = NULL;
 	config->allow_anonymous = true;
 	config->allow_duplicate_messages = false;
-	config->autosave_interval_s = 1800;
+	config->autosave_interval = 1800;
 	config->autosave_on_changes = false;
 	if(config->clientid_prefixes) _mosquitto_free(config->clientid_prefixes);
 	config->connection_messages = true;
@@ -146,13 +146,13 @@ static void _config_init_reload(struct mqtt3_config *config)
 	config->persistence_location = NULL;
 	if(config->persistence_file) _mosquitto_free(config->persistence_file);
 	config->persistence_file = NULL;
-	config->persistent_client_expiration_s = 0;
+	config->persistent_client_expiration = 0;
 	if(config->psk_file) _mosquitto_free(config->psk_file);
 	config->psk_file = NULL;
 	config->queue_qos0_messages = false;
-	config->retry_interval_s = 20;
-	config->store_clean_interval_s = 10;
-	config->sys_interval_s = 10;
+	config->retry_interval = 20;
+	config->store_clean_interval = 10;
+	config->sys_interval = 10;
 	config->upgrade_outgoing_qos = false;
 	if(config->auth_options){
 		for(i=0; i<config->auth_option_count; i++){
@@ -634,8 +634,8 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 					if(reload) continue; // Auth plugin not currently valid for reloading.
 					if(_conf_parse_string(&token, "auth_plugin", &config->auth_plugin, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "autosave_interval")){
-					if(_conf_parse_int(&token, "autosave_interval", &config->autosave_interval_s, saveptr)) return MOSQ_ERR_INVAL;
-					if(config->autosave_interval_s < 0) config->autosave_interval_s = 0;
+					if(_conf_parse_int(&token, "autosave_interval", &config->autosave_interval, saveptr)) return MOSQ_ERR_INVAL;
+					if(config->autosave_interval < 0) config->autosave_interval = 0;
 				}else if(!strcmp(token, "autosave_on_changes")){
 					if(_conf_parse_bool(&token, "autosave_on_changes", &config->autosave_on_changes, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "bind_address")){
@@ -923,20 +923,20 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 						cur_bridge->address_count = 0;
 						cur_bridge->cur_address = 0;
 						cur_bridge->round_robin = false;
-						cur_bridge->keepalive_ms = 60000;
+						cur_bridge->keepalive = 60;
 						cur_bridge->clean_session = false;
 						cur_bridge->clientid = NULL;
 						cur_bridge->topics = NULL;
 						cur_bridge->topic_count = 0;
 						cur_bridge->topic_remapping = false;
-						cur_bridge->restart_t_s = 0;
+						cur_bridge->restart_t = 0;
 						cur_bridge->username = NULL;
 						cur_bridge->password = NULL;
 						cur_bridge->notifications = true;
 						cur_bridge->notification_topic = NULL;
 						cur_bridge->start_type = bst_automatic;
-						cur_bridge->idle_timeout_ms = 60000;
-						cur_bridge->restart_timeout_s = 30;
+						cur_bridge->idle_timeout = 60;
+						cur_bridge->restart_timeout = 30;
 						cur_bridge->threshold = 10;
 						cur_bridge->try_private = true;
 #ifdef WITH_TLS
@@ -972,12 +972,11 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 						return MOSQ_ERR_INVAL;
 					}
-					if(_conf_parse_int(&token, "idle_timeout", &cur_bridge->idle_timeout_ms, saveptr)) return MOSQ_ERR_INVAL;
-					if(cur_bridge->idle_timeout_ms < 1){
+					if(_conf_parse_int(&token, "idle_timeout", &cur_bridge->idle_timeout, saveptr)) return MOSQ_ERR_INVAL;
+					if(cur_bridge->idle_timeout < 1){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "idle_timeout interval too low, using 1 second.");
-						cur_bridge->idle_timeout_ms = 1;
+						cur_bridge->idle_timeout = 1;
 					}
-					cur_bridge->idle_timeout_ms *= 1000;
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
@@ -1051,12 +1050,11 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 						return MOSQ_ERR_INVAL;
 					}
-					if(_conf_parse_int(&token, "keepalive_interval", &cur_bridge->keepalive_ms, saveptr)) return MOSQ_ERR_INVAL;
-					if(cur_bridge->keepalive_ms < 5){
+					if(_conf_parse_int(&token, "keepalive_interval", &cur_bridge->keepalive, saveptr)) return MOSQ_ERR_INVAL;
+					if(cur_bridge->keepalive < 5){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "keepalive interval too low, using 5 seconds.");
-						cur_bridge->keepalive_ms = 5;
+						cur_bridge->keepalive = 5;
 					}
-					cur_bridge->keepalive_ms *= 1000;
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
@@ -1300,8 +1298,8 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 								return MOSQ_ERR_INVAL;
 						}
 						token[strlen(token)-1] = '\0';
-						config->persistent_client_expiration_s = atoi(token)*expiration_mult;
-						if(config->persistent_client_expiration_s <= 0){
+						config->persistent_client_expiration = atoi(token)*expiration_mult;
+						if(config->persistent_client_expiration <= 0){
 							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid persistent_client_expiration duration in configuration.");
 							return MOSQ_ERR_INVAL;
 						}
@@ -1357,18 +1355,18 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 						return MOSQ_ERR_INVAL;
 					}
-					if(_conf_parse_int(&token, "restart_timeout", &cur_bridge->restart_timeout_s, saveptr)) return MOSQ_ERR_INVAL;
-					if(cur_bridge->restart_timeout_s < 1){
+					if(_conf_parse_int(&token, "restart_timeout", &cur_bridge->restart_timeout, saveptr)) return MOSQ_ERR_INVAL;
+					if(cur_bridge->restart_timeout < 1){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "restart_timeout interval too low, using 1 second.");
-						cur_bridge->restart_timeout_s = 1;
+						cur_bridge->restart_timeout = 1;
 					}
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "retry_interval")){
-					if(_conf_parse_int(&token, "retry_interval", &config->retry_interval_s, saveptr)) return MOSQ_ERR_INVAL;
-					if(config->retry_interval_s < 1 || config->retry_interval_s > 3600){
-						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid retry_interval value (%d).", config->retry_interval_s);
+					if(_conf_parse_int(&token, "retry_interval", &config->retry_interval, saveptr)) return MOSQ_ERR_INVAL;
+					if(config->retry_interval < 1 || config->retry_interval > 3600){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid retry_interval value (%d).", config->retry_interval);
 						return MOSQ_ERR_INVAL;
 					}
 				}else if(!strcmp(token, "round_robin")){
@@ -1412,15 +1410,15 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "store_clean_interval")){
-					if(_conf_parse_int(&token, "store_clean_interval", &config->store_clean_interval_s, saveptr)) return MOSQ_ERR_INVAL;
-					if(config->store_clean_interval_s < 0 || config->store_clean_interval_s > 65535){
-						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid store_clean_interval value (%d).", config->store_clean_interval_s);
+					if(_conf_parse_int(&token, "store_clean_interval", &config->store_clean_interval, saveptr)) return MOSQ_ERR_INVAL;
+					if(config->store_clean_interval < 0 || config->store_clean_interval > 65535){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid store_clean_interval value (%d).", config->store_clean_interval);
 						return MOSQ_ERR_INVAL;
 					}
 				}else if(!strcmp(token, "sys_interval")){
-					if(_conf_parse_int(&token, "sys_interval", &config->sys_interval_s, saveptr)) return MOSQ_ERR_INVAL;
-					if(config->sys_interval_s < 1 || config->sys_interval_s > 65535){
-						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid sys_interval value (%d).", config->sys_interval_s);
+					if(_conf_parse_int(&token, "sys_interval", &config->sys_interval, saveptr)) return MOSQ_ERR_INVAL;
+					if(config->sys_interval < 1 || config->sys_interval > 65535){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid sys_interval value (%d).", config->sys_interval);
 						return MOSQ_ERR_INVAL;
 					}
 				}else if(!strcmp(token, "threshold")){

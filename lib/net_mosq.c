@@ -750,7 +750,7 @@ int _mosquitto_packet_write(struct mosquitto *mosq)
 		_mosquitto_free(packet);
 
 		pthread_mutex_lock(&mosq->msgtime_mutex);
-		mosq->last_msg_out_ms = mosquitto_time_ms();
+		mosq->last_msg_out = mosquitto_time();
 		pthread_mutex_unlock(&mosq->msgtime_mutex);
 	}
 	pthread_mutex_unlock(&mosq->current_out_packet_mutex);
@@ -898,7 +898,7 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 	_mosquitto_packet_cleanup(&mosq->in_packet);
 
 	pthread_mutex_lock(&mosq->msgtime_mutex);
-	mosq->last_msg_in_ms = mosquitto_time_ms();
+	mosq->last_msg_in = mosquitto_time();
 	pthread_mutex_unlock(&mosq->msgtime_mutex);
 	return rc;
 }

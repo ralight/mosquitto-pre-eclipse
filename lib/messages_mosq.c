@@ -145,7 +145,7 @@ void _mosquitto_messages_reconnect_reset(struct mosquitto *mosq)
 	mosq->inflight_messages = 0;
 	message = mosq->messages;
 	while(message){
-		message->timestamp_s = 0;
+		message->timestamp = 0;
 		if(message->direction == mosq_md_out){
 			mosq->queue_len++;
 			if(message->msg.qos > 0){
@@ -245,27 +245,27 @@ int _mosquitto_message_remove(struct mosquitto *mosq, uint16_t mid, enum mosquit
 void _mosquitto_message_retry_check(struct mosquitto *mosq)
 {
 	struct mosquitto_message_all *message;
-	time_t now = mosquitto_time_s();
+	time_t now = mosquitto_time();
 	assert(mosq);
 
 	pthread_mutex_lock(&mosq->message_mutex);
 	message = mosq->messages;
 	while(message){
-		if(message->timestamp_s + mosq->message_retry_s < now){
+		if(message->timestamp + mosq->message_retry < now){
 			switch(message->state){
 				case mosq_ms_wait_puback:
 				case mosq_ms_wait_pubrec:
-					message->timestamp_s = now;
+					message->timestamp = now;
 					message->dup = true;
 					_mosquitto_send_publish(mosq, message->msg.mid, message->msg.topic, message->msg.payloadlen, message->msg.payload, message->msg.qos, message->msg.retain, message->dup);
 					break;
 				case mosq_ms_wait_pubrel:
-					message->timestamp_s = now;
+					message->timestamp = now;
 					message->dup = true;
 					_mosquitto_send_pubrec(mosq, message->msg.mid);
 					break;
 				case mosq_ms_wait_pubcomp:
-					message->timestamp_s = now;
+					message->timestamp = now;
 					message->dup = true;
 					_mosquitto_send_pubrel(mosq, message->msg.mid, true);
 					break;
@@ -281,7 +281,7 @@ void _mosquitto_message_retry_check(struct mosquitto *mosq)
 void mosquitto_message_retry_set(struct mosquitto *mosq, unsigned int message_retry)
 {
 	assert(mosq);
-	if(mosq) mosq->message_retry_s = message_retry;
+	if(mosq) mosq->message_retry = message_retry;
 }
 
 int _mosquitto_message_update(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_direction dir, enum mosquitto_msg_state state)
@@ -294,7 +294,7 @@ int _mosquitto_message_update(struct mosquitto *mosq, uint16_t mid, enum mosquit
 	while(message){
 		if(message->msg.mid == mid && message->direction == dir){
 			message->state = state;
-			message->timestamp_s = mosquitto_time_s();
+			message->timestamp = mosquitto_time();
 			pthread_mutex_unlock(&mosq->message_mutex);
 			return MOSQ_ERR_SUCCESS;
 		}

@@ -69,9 +69,9 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 
 int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock_count, int listener_max)
 {
-	time_t start_time = mosquitto_time_s();
-	time_t last_backup = mosquitto_time_s();
-	time_t last_store_clean = mosquitto_time_s();
+	time_t start_time = mosquitto_time();
+	time_t last_backup = mosquitto_time();
+	time_t last_store_clean = mosquitto_time();
 	time_t now;
 	int fdcount;
 #ifndef WIN32
@@ -92,7 +92,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 
 	while(run){
 #ifdef WITH_SYS_TREE
-		mqtt3_db_sys_update(db, db->config->sys_interval_s, start_time);
+		mqtt3_db_sys_update(db, db->config->sys_interval, start_time);
 #endif
 
 		if(listensock_count + db->context_count > pollfd_count){
@@ -114,7 +114,6 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 			pollfd_index++;
 		}
 
-		now = mosquitto_time_s();
 		for(i=0; i<db->context_count; i++){
 			if(db->contexts[i]){
 				db->contexts[i]->pollfd_index = -1;
@@ -125,7 +124,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 						_mosquitto_check_keepalive(db->contexts[i]);
 						if(db->contexts[i]->bridge->round_robin == false
 								&& db->contexts[i]->bridge->cur_address != 0
-								&& mosquitto_time_s() > db->contexts[i]->bridge->primary_retry_s){
+								&& mosquitto_time() > db->contexts[i]->bridge->primary_retry){
 
 							if(_mosquitto_try_connect(db->contexts[i]->bridge->addresses[0].address, db->contexts[i]->bridge->addresses[0].port, &bridge_sock, NULL) == MOSQ_ERR_SUCCESS){
 								COMPAT_CLOSE(bridge_sock);
@@ -137,9 +136,9 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 #endif
 
 					/* Local bridges never time out in this fashion. */
-					if(!(db->contexts[i]->keepalive_ms) 
+					if(!(db->contexts[i]->keepalive) 
 							|| db->contexts[i]->bridge
-							|| mosquitto_time_ms() - db->contexts[i]->last_msg_in_ms < (time_t)(db->contexts[i]->keepalive_ms)*3/2){
+							|| mosquitto_time() - db->contexts[i]->last_msg_in < (time_t)(db->contexts[i]->keepalive)*3/2){
 
 						if(mqtt3_db_message_write(db->contexts[i]) == MOSQ_ERR_SUCCESS){
 							pollfds[pollfd_index].fd = db->contexts[i]->sock;
@@ -164,21 +163,22 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 #ifdef WITH_BRIDGE
 					if(db->contexts[i]->bridge){
 						/* Want to try to restart the bridge connection */
-						if(!db->contexts[i]->bridge->restart_t_s){
-							db->contexts[i]->bridge->restart_t_s = mosquitto_time_s()+db->contexts[i]->bridge->restart_timeout_s;
+						if(!db->contexts[i]->bridge->restart_t){
+							db->contexts[i]->bridge->restart_t = mosquitto_time()+db->contexts[i]->bridge->restart_timeout;
 							db->contexts[i]->bridge->cur_address++;
 							if(db->contexts[i]->bridge->cur_address == db->contexts[i]->bridge->address_count){
 								db->contexts[i]->bridge->cur_address = 0;
 							}
 							if(db->contexts[i]->bridge->round_robin == false && db->contexts[i]->bridge->cur_address != 0){
-								db->contexts[i]->bridge->primary_retry_s = mosquitto_time_s() + 5;
+								db->contexts[i]->bridge->primary_retry = mosquitto_time() + 5;
 							}
 						}else{
 							if(db->contexts[i]->bridge->start_type == bst_lazy && db->contexts[i]->bridge->lazy_reconnect){
 								mqtt3_bridge_connect(db, db->contexts[i]);
 							}
-							if(db->contexts[i]->bridge->start_type == bst_automatic && mosquitto_time_s() > db->contexts[i]->bridge->restart_t_s){
-								db->contexts[i]->bridge->restart_t_s = 0;
+							now = mosquitto_time();
+							if(db->contexts[i]->bridge->start_type == bst_automatic && now > db->contexts[i]->bridge->restart_t){
+								db->contexts[i]->bridge->restart_t = 0;
 								if(mqtt3_bridge_connect(db, db->contexts[i]) == MOSQ_ERR_SUCCESS){
 									pollfds[pollfd_index].fd = db->contexts[i]->sock;
 									pollfds[pollfd_index].events = POLLIN | POLLRDHUP;
@@ -190,7 +190,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 									pollfd_index++;
 								}else{
 									/* Retry later. */
-									db->contexts[i]->bridge->restart_t_s = mosquitto_time_s()+db->contexts[i]->bridge->restart_timeout_s;
+									db->contexts[i]->bridge->restart_t = now+db->contexts[i]->bridge->restart_timeout;
 								}
 							}
 						}
@@ -199,13 +199,13 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 						if(db->contexts[i]->clean_session == true){
 							mqtt3_context_cleanup(db, db->contexts[i], true);
 							db->contexts[i] = NULL;
-						}else if(db->config->persistent_client_expiration_s > 0){
+						}else if(db->config->persistent_client_expiration > 0){
 							/* This is a persistent client, check to see if the
 							 * last time it connected was longer than
 							 * persistent_client_expiration seconds ago. If so,
 							 * expire it and clean up.
 							 */
-							if(mosquitto_time_s() > db->contexts[i]->disconnect_t_s+db->config->persistent_client_expiration_s){
+							if(mosquitto_time() > db->contexts[i]->disconnect_t+db->config->persistent_client_expiration){
 								_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Expiring persistent client %s due to timeout.", db->contexts[i]->id);
 #ifdef WITH_SYS_TREE
 								g_clients_expired++;
@@ -222,7 +222,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 			}
 		}
 
-		mqtt3_db_message_timeout_check(db, db->config->retry_interval_s);
+		mqtt3_db_message_timeout_check(db, db->config->retry_interval);
 
 #ifndef WIN32
 		sigprocmask(SIG_SETMASK, &sigblock, &origsig);
@@ -243,24 +243,25 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 				}
 			}
 		}
+		now = mosquitto_time();
 #ifdef WITH_PERSISTENCE
-		if(db->config->persistence && db->config->autosave_interval_s){
+		if(db->config->persistence && db->config->autosave_interval){
 			if(db->config->autosave_on_changes){
-				if(db->persistence_changes > db->config->autosave_interval_s){
+				if(db->persistence_changes > db->config->autosave_interval){
 					mqtt3_db_backup(db, false, false);
 					db->persistence_changes = 0;
 				}
 			}else{
-				if(last_backup + db->config->autosave_interval_s < now){
+				if(last_backup + db->config->autosave_interval < now){
 					mqtt3_db_backup(db, false, false);
-					last_backup = mosquitto_time_s();
+					last_backup = mosquitto_time();
 				}
 			}
 		}
 #endif
-		if(!db->config->store_clean_interval_s || last_store_clean + db->config->store_clean_interval_s < now){
+		if(!db->config->store_clean_interval || last_store_clean + db->config->store_clean_interval < now){
 			mqtt3_db_store_clean(db);
-			last_store_clean = mosquitto_time_s();
+			last_store_clean = mosquitto_time();
 		}
 #ifdef WITH_PERSISTENCE
 		if(flag_db_backup){
