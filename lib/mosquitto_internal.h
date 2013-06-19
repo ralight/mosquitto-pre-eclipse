@@ -153,6 +153,7 @@ struct mosquitto {
 	pthread_mutex_t out_packet_mutex;
 	pthread_mutex_t current_out_packet_mutex;
 	pthread_mutex_t state_mutex;
+	pthread_mutex_t message_mutex;
 	pthread_t thread_id;
 #endif
 #ifdef WITH_BROKER
@@ -191,9 +192,6 @@ struct mosquitto {
 	struct mosquitto_message_all *messages_last;
 	int inflight_messages;
 	int max_inflight_messages;
-#if defined(WITH_THREADING) && !defined(WITH_BROKER)
-	pthread_mutex_t message_mutex;
-#endif
 #endif
 };
 
