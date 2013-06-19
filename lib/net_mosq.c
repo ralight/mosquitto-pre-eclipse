@@ -408,7 +408,7 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 			}
 
 			if(mosq->tls_certfile){
-				ret = SSL_CTX_use_certificate_file(mosq->ssl_ctx, mosq->tls_certfile, SSL_FILETYPE_PEM);
+				ret = SSL_CTX_use_certificate_chain_file(mosq->ssl_ctx, mosq->tls_certfile);
 				if(ret != 1){
 #ifdef WITH_BROKER
 					_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load client certificate, check bridge_certfile \"%s\".", mosq->tls_certfile);
