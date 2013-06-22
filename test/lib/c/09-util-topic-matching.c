@@ -17,6 +17,10 @@ int main(int argc, char *argv[])
 
 	mosquitto_topic_matches_sub("foo/+/#", "fo2/bar/baz", &match); if(match) return 1;
 
+	mosquitto_topic_matches_sub("#", "/foo/bar", &match); if(!match) return 1;
+	mosquitto_topic_matches_sub("/#", "/foo/bar", &match); if(!match) return 1;
+	mosquitto_topic_matches_sub("/#", "foo/bar", &match); if(match) return 1;
+
 	return 0;
 }
 
