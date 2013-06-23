@@ -364,6 +364,8 @@ void _mosquitto_destroy(struct mosquitto *mosq)
 
 void mosquitto_destroy(struct mosquitto *mosq)
 {
+	if(!mosq) return;
+
 	_mosquitto_destroy(mosq);
 	_mosquitto_free(mosq);
 }
