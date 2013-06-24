@@ -68,6 +68,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef WITH_TLS
 #include <openssl/ssl.h>
+#include <openssl/err.h>
 static int tls_ex_index_context = -1;
 static int tls_ex_index_listener = -1;
 #endif
@@ -87,6 +88,8 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 #ifdef WITH_TLS
 	BIO *bio;
 	int rc;
+	char ebuf[256];
+	unsigned long e;
 #endif
 #ifdef WITH_WRAP
 	struct request_info wrap_req;
@@ -197,6 +200,14 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 								new_context->want_read = true;
 							}else if(rc == SSL_ERROR_WANT_WRITE){
 								new_context->want_write = true;
+							}else{
+								e = ERR_get_error();
+								while(e){
+									_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE,
+											"Client connection from %s failed: %s.",
+											new_context->address, ERR_error_string(e, ebuf));
+									e = ERR_get_error();
+								}
 							}
 						}
 					}
