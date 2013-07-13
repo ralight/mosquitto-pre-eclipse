@@ -475,9 +475,40 @@ libmosq_EXPORT int mosquitto_connect_bind_async(struct mosquitto *mosq, const ch
  *                     Windows.
  *
  * See Also:
- * 	<mosquitto_connect>, <mosquitto_disconnect>
+ * 	<mosquitto_connect>, <mosquitto_disconnect>, <mosquitto_reconnect_async>
  */
 libmosq_EXPORT int mosquitto_reconnect(struct mosquitto *mosq);
+
+/*
+ * Function: mosquitto_reconnect_async
+ *
+ * Reconnect to a broker. Non blocking version of <mosquitto_reconnect>.
+ *
+ * This function provides an easy way of reconnecting to a broker after a
+ * connection has been lost. It uses the values that were provided in the
+ * <mosquitto_connect> or <mosquitto_connect_async> calls. It must not be
+ * called before <mosquitto_connect>.
+ * 
+ * Parameters:
+ * 	mosq - a valid mosquitto instance.
+ *
+ * Returns:
+ * 	MOSQ_ERR_SUCCESS - on success.
+ * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ *
+ * Returns:
+ * 	MOSQ_ERR_SUCCESS - on success.
+ * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ * 	MOSQ_ERR_ERRNO -   if a system call returned an error. The variable errno
+ *                     contains the error code, even on Windows.
+ *                     Use strerror_r() where available or FormatMessage() on
+ *                     Windows.
+ *
+ * See Also:
+ * 	<mosquitto_connect>, <mosquitto_disconnect>
+ */
+libmosq_EXPORT int mosquitto_reconnect_async(struct mosquitto *mosq);
 
 /*
  * Function: mosquitto_disconnect

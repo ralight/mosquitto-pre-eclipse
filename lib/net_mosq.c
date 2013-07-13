@@ -214,12 +214,16 @@ static unsigned int psk_client_callback(SSL *ssl, const char *hint,
 }
 #endif
 
-int _mosquitto_try_connect(const char *host, uint16_t port, int *sock, const char *bind_address)
+int _mosquitto_try_connect(const char *host, uint16_t port, int *sock, const char *bind_address, bool blocking)
 {
 	struct addrinfo hints;
 	struct addrinfo *ainfo, *rp;
 	struct addrinfo *ainfo_bind, *rp_bind;
 	int s;
+	int rc;
+#ifndef WIN32
+	int opt;
+#endif
 
 	*sock = INVALID_SOCKET;
 	memset(&hints, 0, sizeof(struct addrinfo));
@@ -257,16 +261,50 @@ int _mosquitto_try_connect(const char *host, uint16_t port, int *sock, const cha
 				}
 			}
 			if(!rp_bind){
+				COMPAT_CLOSE(*sock);
 				continue;
 			}
 		}
-		if(connect(*sock, rp->ai_addr, rp->ai_addrlen) != -1){
-			break;
+
+		if(!blocking){
+			/* Set non-blocking */
+#ifndef WIN32
+			opt = fcntl(*sock, F_GETFL, 0);
+			if(opt == -1 || fcntl(*sock, F_SETFL, opt | O_NONBLOCK) == -1){
+				COMPAT_CLOSE(*sock);
+				continue;
+			}
+#else
+			if(ioctlsocket(*sock, FIONBIO, &val)){
+				COMPAT_CLOSE(*sock);
+				continue;
+			}
+#endif
 		}
 
+		rc = connect(*sock, rp->ai_addr, rp->ai_addrlen);
 #ifdef WIN32
 		errno = WSAGetLastError();
 #endif
+		if(rc == 0 || errno == EINPROGRESS){
+			if(blocking){
+			/* Set non-blocking */
+#ifndef WIN32
+				opt = fcntl(*sock, F_GETFL, 0);
+				if(opt == -1 || fcntl(*sock, F_SETFL, opt | O_NONBLOCK) == -1){
+					COMPAT_CLOSE(*sock);
+					continue;
+				}
+#else
+				if(ioctlsocket(*sock, FIONBIO, &val)){
+					COMPAT_CLOSE(*sock);
+					continue;
+				}
+#endif
+			}
+			break;
+		}
+
 		COMPAT_CLOSE(*sock);
 		*sock = INVALID_SOCKET;
 	}
@@ -277,7 +315,6 @@ int _mosquitto_try_connect(const char *host, uint16_t port, int *sock, const cha
 	if(!rp){
 		return MOSQ_ERR_ERRNO;
 	}
-
 	return MOSQ_ERR_SUCCESS;
 }
 
@@ -285,12 +322,9 @@ int _mosquitto_try_connect(const char *host, uint16_t port, int *sock, const cha
  * Returns -1 on failure (ip is NULL, socket creation/connection error)
  * Returns sock number on success.
  */
-int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t port, const char *bind_address)
+int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t port, const char *bind_address, bool blocking)
 {
 	int sock = INVALID_SOCKET;
-#ifndef WIN32
-	int opt;
-#endif
 	int rc;
 #ifdef WIN32
 	uint32_t val = 1;
@@ -302,45 +336,8 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 
 	if(!mosq || !host || !port) return MOSQ_ERR_INVAL;
 
-	rc = _mosquitto_try_connect(host, port, &sock, bind_address);
+	rc = _mosquitto_try_connect(host, port, &sock, bind_address, blocking);
 	if(rc != MOSQ_ERR_SUCCESS) return rc;
-
-	/* Set non-blocking */
-#ifndef WIN32
-	opt = fcntl(sock, F_GETFL, 0);
-	if(opt == -1 || fcntl(sock, F_SETFL, opt | O_NONBLOCK) == -1){
-#ifdef WITH_TLS
-		if(mosq->ssl){
-			SSL_shutdown(mosq->ssl);
-			SSL_free(mosq->ssl);
-			mosq->ssl = NULL;
-		}
-		if(mosq->ssl_ctx){
-			SSL_CTX_free(mosq->ssl_ctx);
-			mosq->ssl_ctx = NULL;
-		}
-#endif
-		COMPAT_CLOSE(sock);
-		return MOSQ_ERR_ERRNO;
-	}
-#else
-	if(ioctlsocket(sock, FIONBIO, &val)){
-		errno = WSAGetLastError();
-#ifdef WITH_TLS
-		if(mosq->ssl){
-			SSL_shutdown(mosq->ssl);
-			SSL_free(mosq->ssl);
-			mosq->ssl = NULL;
-		}
-		if(mosq->ssl_ctx){
-			SSL_CTX_free(mosq->ssl_ctx);
-			mosq->ssl_ctx = NULL;
-		}
-#endif
-		COMPAT_CLOSE(sock);
-		return MOSQ_ERR_ERRNO;
-	}
-#endif
 
 #ifdef WITH_TLS
 	if(mosq->tls_cafile || mosq->tls_capath || mosq->tls_psk){

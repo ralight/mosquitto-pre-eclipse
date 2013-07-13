@@ -60,6 +60,8 @@ typedef int ssize_t;
 #endif
 
 void _mosquitto_destroy(struct mosquitto *mosq);
+static int _mosquitto_reconnect(struct mosquitto *mosq, bool blocking);
+static int _mosquitto_connect_init(struct mosquitto *mosq, const char *host, int port, int keepalive, const char *bind_address);
 
 int mosquitto_lib_version(int *major, int *minor, int *revision)
 {
@@ -376,26 +378,7 @@ int mosquitto_socket(struct mosquitto *mosq)
 	return mosq->sock;
 }
 
-int mosquitto_connect(struct mosquitto *mosq, const char *host, int port, int keepalive)
-{
-	return mosquitto_connect_bind(mosq, host, port, keepalive, NULL);
-}
-
-int mosquitto_connect_bind(struct mosquitto *mosq, const char *host, int port, int keepalive, const char *bind_address)
-{
-	int rc;
-	rc = mosquitto_connect_bind_async(mosq, host, port, keepalive, bind_address);
-	if(rc) return rc;
-
-	return mosquitto_reconnect(mosq);
-}
-
-int mosquitto_connect_async(struct mosquitto *mosq, const char *host, int port, int keepalive)
-{
-	return mosquitto_connect_bind_async(mosq, host, port, keepalive, NULL);
-}
-
-int mosquitto_connect_bind_async(struct mosquitto *mosq, const char *host, int port, int keepalive, const char *bind_address)
+static int _mosquitto_connect_init(struct mosquitto *mosq, const char *host, int port, int keepalive, const char *bind_address)
 {
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(!host || port <= 0) return MOSQ_ERR_INVAL;
@@ -412,14 +395,56 @@ int mosquitto_connect_bind_async(struct mosquitto *mosq, const char *host, int p
 	}
 
 	mosq->keepalive = keepalive;
-	pthread_mutex_lock(&mosq->state_mutex);
-	mosq->state = mosq_cs_connect_async;
-	pthread_mutex_unlock(&mosq->state_mutex);
 
 	return MOSQ_ERR_SUCCESS;
 }
 
+int mosquitto_connect(struct mosquitto *mosq, const char *host, int port, int keepalive)
+{
+	return mosquitto_connect_bind(mosq, host, port, keepalive, NULL);
+}
+
+int mosquitto_connect_bind(struct mosquitto *mosq, const char *host, int port, int keepalive, const char *bind_address)
+{
+	int rc;
+	rc = _mosquitto_connect_init(mosq, host, port, keepalive, bind_address);
+	if(rc) return rc;
+
+	pthread_mutex_lock(&mosq->state_mutex);
+	mosq->state = mosq_cs_new;
+	pthread_mutex_unlock(&mosq->state_mutex);
+
+	return _mosquitto_reconnect(mosq, true);
+}
+
+int mosquitto_connect_async(struct mosquitto *mosq, const char *host, int port, int keepalive)
+{
+	return mosquitto_connect_bind_async(mosq, host, port, keepalive, NULL);
+}
+
+int mosquitto_connect_bind_async(struct mosquitto *mosq, const char *host, int port, int keepalive, const char *bind_address)
+{
+	int rc = _mosquitto_connect_init(mosq, host, port, keepalive, bind_address);
+	if(rc) return rc;
+
+	pthread_mutex_lock(&mosq->state_mutex);
+	mosq->state = mosq_cs_connect_async;
+	pthread_mutex_unlock(&mosq->state_mutex);
+
+	return _mosquitto_reconnect(mosq, false);
+}
+
+int mosquitto_reconnect_async(struct mosquitto *mosq)
+{
+	return _mosquitto_reconnect(mosq, false);
+}
+
 int mosquitto_reconnect(struct mosquitto *mosq)
+{
+	return _mosquitto_reconnect(mosq, true);
+}
+
+static int _mosquitto_reconnect(struct mosquitto *mosq, bool blocking)
 {
 	int rc;
 	struct _mosquitto_packet *packet;
@@ -463,7 +488,7 @@ int mosquitto_reconnect(struct mosquitto *mosq)
 
 	_mosquitto_messages_reconnect_reset(mosq);
 
-	rc = _mosquitto_socket_connect(mosq, mosq->host, mosq->port, mosq->bind_address);
+	rc = _mosquitto_socket_connect(mosq, mosq->host, mosq->port, mosq->bind_address, blocking);
 	if(rc){
 		return rc;
 	}

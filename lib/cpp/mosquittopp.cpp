@@ -177,6 +177,11 @@ int mosquittopp::reconnect()
 	return mosquitto_reconnect(m_mosq);
 }
 
+int mosquittopp::reconnect_async()
+{
+	return mosquitto_reconnect_async(m_mosq);
+}
+
 int mosquittopp::disconnect()
 {
 	return mosquitto_disconnect(m_mosq);
