@@ -141,29 +141,14 @@
 		<refsect2>
 			<title>Connect/disconnect</title>
 
-			<funcsynopsis><funcprototype><funcdef>void <function>mosquitto_connect</function></funcdef>
+			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_connect</function></funcdef>
 					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
 					<paramdef>const char *<parameter>host</parameter></paramdef>
 					<paramdef>int <parameter>port</parameter></paramdef>
 					<paramdef>int <parameter>keepalive</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
-			<funcsynopsis><funcprototype><funcdef>void <function>mosquitto_connect_bind</function></funcdef>
-					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
-					<paramdef>const char *<parameter>host</parameter></paramdef>
-					<paramdef>int <parameter>port</parameter></paramdef>
-					<paramdef>int <parameter>keepalive</parameter></paramdef>
-					<paramdef>const char *<parameter>bind_address</parameter></paramdef>
-			</funcprototype></funcsynopsis>
-
-			<funcsynopsis><funcprototype><funcdef>void <function>mosquitto_connect_async</function></funcdef>
-					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
-					<paramdef>const char *<parameter>host</parameter></paramdef>
-					<paramdef>int <parameter>port</parameter></paramdef>
-					<paramdef>int <parameter>keepalive</parameter></paramdef>
-			</funcprototype></funcsynopsis>
-
-			<funcsynopsis><funcprototype><funcdef>void <function>mosquitto_connect_bind_async</function></funcdef>
+			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_connect_bind</function></funcdef>
 					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
 					<paramdef>const char *<parameter>host</parameter></paramdef>
 					<paramdef>int <parameter>port</parameter></paramdef>
@@ -171,7 +156,26 @@
 					<paramdef>const char *<parameter>bind_address</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
-			<funcsynopsis><funcprototype><funcdef>void <function>mosquitto_reconnect</function></funcdef>
+			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_connect_async</function></funcdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>const char *<parameter>host</parameter></paramdef>
+					<paramdef>int <parameter>port</parameter></paramdef>
+					<paramdef>int <parameter>keepalive</parameter></paramdef>
+			</funcprototype></funcsynopsis>
+
+			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_connect_bind_async</function></funcdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+					<paramdef>const char *<parameter>host</parameter></paramdef>
+					<paramdef>int <parameter>port</parameter></paramdef>
+					<paramdef>int <parameter>keepalive</parameter></paramdef>
+					<paramdef>const char *<parameter>bind_address</parameter></paramdef>
+			</funcprototype></funcsynopsis>
+
+			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_reconnect</function></funcdef>
+					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
+			</funcprototype></funcsynopsis>
+
+			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_reconnect_async</function></funcdef>
 					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 

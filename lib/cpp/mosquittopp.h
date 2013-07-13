@@ -85,6 +85,7 @@ class mosqpp_EXPORT mosquittopp {
 		int connect(const char *host, int port, int keepalive, const char *bind_address);
 		int connect_async(const char *host, int port, int keepalive, const char *bind_address);
 		int reconnect();
+		int reconnect_async();
 		int disconnect();
 		int publish(int *mid, const char *topic, int payloadlen=0, const void *payload=NULL, int qos=0, bool retain=false);
 		int subscribe(int *mid, const char *sub, int qos=0);

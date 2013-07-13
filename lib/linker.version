@@ -61,4 +61,5 @@ MOSQ_1.2 {
 		mosquitto_connect_bind_async;
 		mosquitto_max_inflight_messages_set;
 		mosquitto_reconnect_delay_set;
+		mosquitto_reconnect_async;
 } MOSQ_1.1;
