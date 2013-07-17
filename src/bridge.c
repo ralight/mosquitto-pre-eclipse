@@ -28,8 +28,17 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
+
+#ifndef WIN32
+#include <netdb.h>
+#include <sys/socket.h>
+#else
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
 
 #include <config.h>
 
@@ -200,13 +209,36 @@ int mqtt3_bridge_connect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Connecting bridge %s (%s:%d)", context->bridge->name, context->bridge->addresses[context->bridge->cur_address].address, context->bridge->addresses[context->bridge->cur_address].port);
-	rc = _mosquitto_socket_connect(context, context->bridge->addresses[context->bridge->cur_address].address, context->bridge->addresses[context->bridge->cur_address].port, NULL, false);
+	//rc = _mosquitto_socket_connect(context, context->bridge->addresses[context->bridge->cur_address].address, context->bridge->addresses[context->bridge->cur_address].port, NULL, false);
+	rc = _mosquitto_socket_connect(context, context->bridge->addresses[context->bridge->cur_address].address, context->bridge->addresses[context->bridge->cur_address].port, NULL, true);
 	if(rc != MOSQ_ERR_SUCCESS){
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error creating bridge.");
+		if(rc == MOSQ_ERR_TLS){
+			return rc; /* Error already printed */
+		}else if(rc == MOSQ_ERR_ERRNO){
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error creating bridge: %s.", strerror(errno));
+		}else if(rc == MOSQ_ERR_EAI){
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error creating bridge: %s.", gai_strerror(errno));
+		}
+
 		return rc;
 	}
 
-	return _mosquitto_send_connect(context, context->keepalive, context->clean_session);
+	rc = _mosquitto_send_connect(context, context->keepalive, context->clean_session);
+	if(rc == MOSQ_ERR_SUCCESS){
+		return MOSQ_ERR_SUCCESS;
+	}else if(rc == MOSQ_ERR_ERRNO && errno == ENOTCONN){
+		return MOSQ_ERR_SUCCESS;
+	}else{
+		if(rc == MOSQ_ERR_TLS){
+			return rc; /* Error already printed */
+		}else if(rc == MOSQ_ERR_ERRNO){
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error creating bridge: %s.", strerror(errno));
+		}else if(rc == MOSQ_ERR_EAI){
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error creating bridge: %s.", gai_strerror(errno));
+		}
+		_mosquitto_socket_close(context);
+		return rc;
+	}
 }
 
 void mqtt3_bridge_packet_cleanup(struct mosquitto *context)

@@ -232,13 +232,17 @@ int _mosquitto_try_connect(const char *host, uint16_t port, int *sock, const cha
 	hints.ai_socktype = SOCK_STREAM;
 
 	s = getaddrinfo(host, NULL, &hints, &ainfo);
-	if(s) return MOSQ_ERR_UNKNOWN;
+	if(s){
+		errno = s;
+		return MOSQ_ERR_EAI;
+	}
 
 	if(bind_address){
 		s = getaddrinfo(bind_address, NULL, &hints, &ainfo_bind);
 		if(s){
 			freeaddrinfo(ainfo);
-			return MOSQ_ERR_UNKNOWN;
+			errno = s;
+			return MOSQ_ERR_EAI;
 		}
 	}
 
