@@ -40,6 +40,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <ws2tcpip.h>
 #endif
 
+#include <errno.h>
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
@@ -84,6 +85,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 	int pollfd_index;
 #ifdef WITH_BRIDGE
 	int bridge_sock;
+	int rc;
 #endif
 
 #ifndef WIN32
@@ -187,7 +189,8 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 							}
 							if(db->contexts[i]->bridge->start_type == bst_automatic && now > db->contexts[i]->bridge->restart_t){
 								db->contexts[i]->bridge->restart_t = 0;
-								if(mqtt3_bridge_connect(db, db->contexts[i]) == MOSQ_ERR_SUCCESS){
+								rc = mqtt3_bridge_connect(db, db->contexts[i]);
+								if(rc == MOSQ_ERR_SUCCESS){
 									pollfds[pollfd_index].fd = db->contexts[i]->sock;
 									pollfds[pollfd_index].events = POLLIN | POLLRDHUP;
 									pollfds[pollfd_index].revents = 0;

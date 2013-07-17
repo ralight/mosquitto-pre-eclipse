@@ -95,7 +95,8 @@ enum mosq_err_t {
 	MOSQ_ERR_AUTH = 11,
 	MOSQ_ERR_ACL_DENIED = 12,
 	MOSQ_ERR_UNKNOWN = 13,
-	MOSQ_ERR_ERRNO = 14
+	MOSQ_ERR_ERRNO = 14,
+	MOSQ_ERR_EAI = 15
 };
 
 /* MQTT specification restricts client ids to a maximum of 23 characters */
