@@ -232,13 +232,18 @@ int mosquitto_username_pw_set(struct mosquitto *mosq, const char *username, cons
 {
 	if(!mosq) return MOSQ_ERR_INVAL;
 
+	if(mosq->username){
+		_mosquitto_free(mosq->username);
+		mosq->username = NULL;
+	}
+	if(mosq->password){
+		_mosquitto_free(mosq->password);
+		mosq->password = NULL;
+	}
+
 	if(username){
 		mosq->username = _mosquitto_strdup(username);
 		if(!mosq->username) return MOSQ_ERR_NOMEM;
-		if(mosq->password){
-			_mosquitto_free(mosq->password);
-			mosq->password = NULL;
-		}
 		if(password){
 			mosq->password = _mosquitto_strdup(password);
 			if(!mosq->password){
@@ -246,15 +251,6 @@ int mosquitto_username_pw_set(struct mosquitto *mosq, const char *username, cons
 				mosq->username = NULL;
 				return MOSQ_ERR_NOMEM;
 			}
-		}
-	}else{
-		if(mosq->username){
-			_mosquitto_free(mosq->username);
-			mosq->username = NULL;
-		}
-		if(mosq->password){
-			_mosquitto_free(mosq->password);
-			mosq->password = NULL;
 		}
 	}
 	return MOSQ_ERR_SUCCESS;

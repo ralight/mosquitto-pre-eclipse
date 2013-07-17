@@ -77,6 +77,7 @@ Client library:
 - Add support for binding connection to a local interface.
 - Implement maximum inflight messages handling.
 - Fix Python client not handling will_payload==None.
+- Fix potential memory leak when setting username/password.
 
 Clients:
 - Sub client can now suppress printing of messages with the retain bit set.
