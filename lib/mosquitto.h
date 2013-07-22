@@ -926,9 +926,9 @@ libmosq_EXPORT int mosquitto_tls_set(struct mosquitto *mosq,
  *
  * Configure verification of the server hostname in the server certificate. If
  * value is set to true, it is impossible to guarantee that the host you are
- * connecting to is not impersonating your server. This makes is possible for a
- * malicious third party to impersonate your server through DNS spoofing, for
- * example.
+ * connecting to is not impersonating your server. This can be useful in
+ * initial server testing, but makes it possible for a malicious third party to
+ * impersonate your server through DNS spoofing, for example.
  * Do not use this function in a real system. Setting value to true makes the
  * connection encryption pointless.
  * Must be called before <mosquitto_connect>.
