@@ -133,7 +133,7 @@ void print_usage(void)
 	printf("                     [-u username [-P password]]\n");
 	printf("                     [--will-topic [--will-payload payload] [--will-qos qos] [--will-retain]]\n");
 #ifdef WITH_TLS
-	printf("                     [{--cafile file | --capath dir} [--cert file] [--key file]]\n");
+	printf("                     [{--cafile file | --capath dir} [--cert file] [--key file] [--insecure]]\n");
 #ifdef WITH_TLS_PSK
 	printf("                     [--psk hex-key --psk-identity identity]\n");
 #endif
@@ -170,6 +170,10 @@ void print_usage(void)
 	printf("            communication.\n");
 	printf(" --cert : client certificate for authentication, if required by server.\n");
 	printf(" --key : client private key for authentication, if required by server.\n");
+	printf(" --insecure : do not check that the server certificate hostname matches the remote\n");
+	printf("              hostname. Using this option means that you cannot be sure that the\n");
+	printf("              remote host is the server you wish to connect to and so is insecure.\n");
+	printf("              Do not use this option in a production environment.\n");
 #ifdef WITH_TLS_PSK
 	printf(" --psk : pre-shared-key in hexadecimal (no leading 0x) to enable TLS-PSK mode.\n");
 	printf(" --psk-identity : client identity string for TLS-PSK mode.\n");
@@ -202,6 +206,7 @@ int main(int argc, char *argv[])
 	bool will_retain = false;
 	char *will_topic = NULL;
 
+	bool insecure = false;
 	char *cafile = NULL;
 	char *capath = NULL;
 	char *certfile = NULL;
@@ -279,6 +284,8 @@ int main(int argc, char *argv[])
 				host = argv[i+1];
 			}
 			i++;
+		}else if(!strcmp(argv[i], "--insecure")){
+			insecure = true;
 		}else if(!strcmp(argv[i], "-i") || !strcmp(argv[i], "--id")){
 			if(id_prefix){
 				fprintf(stderr, "Error: -i and -I argument cannot be used together.\n\n");
@@ -531,6 +538,11 @@ int main(int argc, char *argv[])
 	}
 	if((cafile || capath) && mosquitto_tls_set(mosq, cafile, capath, certfile, keyfile, NULL)){
 		if(!ud.quiet) fprintf(stderr, "Error: Problem setting TLS options.\n");
+		mosquitto_lib_cleanup();
+		return 1;
+	}
+	if(insecure && mosquitto_tls_insecure_set(mosq, true)){
+		if(!ud.quiet) fprintf(stderr, "Error: Problem setting TLS insecure option.\n");
 		mosquitto_lib_cleanup();
 		return 1;
 	}

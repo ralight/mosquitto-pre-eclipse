@@ -51,6 +51,7 @@
 					</group>
 					<arg><option>--cert</option> <replaceable>file</replaceable></arg>
 					<arg><option>--key</option> <replaceable>file</replaceable></arg>
+					<arg><option>--insecure</option></arg>
 				</arg>
 				<arg>
 					<arg choice='plain'><option>--psk</option> <replaceable>hex-key</replaceable></arg>
@@ -161,6 +162,21 @@
 					useful where the broker is using the clientid_prefixes
 					option. Cannot be used at the same time as the
 					<option>--id</option> argument.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>--insecure</option></term>
+				<listitem>
+					<para>When using certificate based encryption, this option
+						disables verification of the server hostname in the
+						server certificate. This makes it possible for a
+						malicious third party to impersonate your server
+						through DNS spoofing, for example. Use this option in
+						testing <strong>only</strong>. If you need to resort to
+						using this option in a production environment, your
+						setup is at fault and you are making the encryption
+						pointless.</para>
+					<para></para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
