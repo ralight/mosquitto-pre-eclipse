@@ -143,6 +143,7 @@ struct mosquitto {
 	char *tls_ciphers;
 	char *tls_psk;
 	char *tls_psk_identity;
+	bool tls_insecure;
 #endif
 	bool want_read;
 	bool want_write;

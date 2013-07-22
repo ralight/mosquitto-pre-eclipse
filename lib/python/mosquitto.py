@@ -446,6 +446,7 @@ class Mosquitto:
         self._tls_ca_certs = None
         self._tls_cert_reqs = None
         self._tls_ciphers = None
+        self._tls_insecure = False
         self._reconnect_delay = 1
         self._reconnect_delay_max = 1
         self._reconnect_exponential_backoff = False
@@ -531,6 +532,20 @@ class Mosquitto:
         self._tls_cert_reqs = cert_reqs
         self._tls_version = tls_version
         self._tls_ciphers = ciphers
+
+    def tls_insecure_set(self, value):
+        """Configure verification of the server hostname in the server certificate.
+
+        If value is set to true, it is impossible to guarantee that the host
+        you are connecting to is not impersonating your server. This makes is
+        possible for a malicious third party to impersonate your server through
+        DNS spoofing, for example.
+
+        Do not use this function in a real system. Setting value to true makes
+        the connection encryption pointless.
+        
+        Must be called before connect()."""
+        self._tls_insecure = value
 
     def connect(self, host, port=1883, keepalive=60, bind_address=""):
         """Connect to a remote broker.

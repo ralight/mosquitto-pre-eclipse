@@ -914,12 +914,39 @@ libmosq_EXPORT bool mosquitto_want_write(struct mosquitto *mosq);
  * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
  *
  * See Also:
- *	<mosquitto_tls_opts_set>, <mosquitto_tls_psk_set>
+ *	<mosquitto_tls_opts_set>, <mosquitto_tls_psk_set>, <mosquitto_tls_insecure_set>
  */
 libmosq_EXPORT int mosquitto_tls_set(struct mosquitto *mosq,
 		const char *cafile, const char *capath,
 		const char *certfile, const char *keyfile,
 		int (*pw_callback)(char *buf, int size, int rwflag, void *userdata));
+
+/*
+ * Function: mosquitto_tls_insecure_set
+ *
+ * Configure verification of the server hostname in the server certificate. If
+ * value is set to true, it is impossible to guarantee that the host you are
+ * connecting to is not impersonating your server. This makes is possible for a
+ * malicious third party to impersonate your server through DNS spoofing, for
+ * example.
+ * Do not use this function in a real system. Setting value to true makes the
+ * connection encryption pointless.
+ * Must be called before <mosquitto_connect>.
+ *
+ * Parameters:
+ *  mosq -  a valid mosquitto instance.
+ *  value - if set to false, the default, certificate hostname checking is
+ *          performed. If set to true, no hostname checking is performed and
+ *          the connection is insecure.
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - on success.
+ * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *
+ * See Also:
+ *	<mosquitto_tls_set>
+ */
+libmosq_EXPORT int mosquitto_tls_insecure_set(struct mosquitto *mosq, bool value);
 
 /*
  * Function: mosquitto_tls_opts_set
