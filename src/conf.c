@@ -766,6 +766,20 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS-PSK support not available.");
 #endif
+				}else if(!strcmp(token, "bridge_insecure")){
+#if defined(WITH_BRIDGE) && defined(WITH_TLS)
+					if(reload) continue; // FIXME
+					if(!cur_bridge){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
+						return MOSQ_ERR_INVAL;
+					}
+					if(_conf_parse_bool(&token, "bridge_insecure", &cur_bridge->tls_insecure, saveptr)) return MOSQ_ERR_INVAL;
+					if(cur_bridge->tls_insecure){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge %s using insecure mode.", cur_bridge->name);
+					}
+#else
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS-PSK support not available.");
+#endif
 				}else if(!strcmp(token, "bridge_keyfile")){
 #if defined(WITH_BRIDGE) && defined(WITH_TLS)
 					if(reload) continue; // FIXME
@@ -944,6 +958,7 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 						cur_bridge->tls_capath = NULL;
 						cur_bridge->tls_certfile = NULL;
 						cur_bridge->tls_keyfile = NULL;
+						cur_bridge->tls_insecure = false;
 #  ifdef WITH_TLS_PSK
 						cur_bridge->tls_psk = NULL;
 						cur_bridge->tls_psk_identity = NULL;
