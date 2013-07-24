@@ -36,7 +36,7 @@ disconnect_packet = mosq_test.gen_disconnect()
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-ssock = ssl.wrap_socket(sock, ca_certs="../ssl/test-ca.crt", keyfile="../ssl/server.key", certfile="../ssl/server.crt", server_side=True, ssl_version=ssl.PROTOCOL_TLSv1)
+ssock = ssl.wrap_socket(sock, ca_certs="../ssl/all-ca.crt", keyfile="../ssl/server.key", certfile="../ssl/server.crt", server_side=True, ssl_version=ssl.PROTOCOL_TLSv1)
 ssock.settimeout(10)
 ssock.bind(('', 1888))
 ssock.listen(5)
@@ -53,7 +53,7 @@ client = subprocess.Popen(client_args, env=env)
 
 try:
     (conn, address) = ssock.accept()
-    conn.settimeout(10)
+    conn.settimeout(100)
 
     if mosq_test.expect_packet(conn, "connect", connect_packet):
         conn.send(connack_packet)

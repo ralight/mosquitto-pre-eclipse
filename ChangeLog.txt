@@ -30,6 +30,8 @@ Broker:
 - Clients that connect with zero length will topics are now rejected.
 - The broker now attempts to resolve bind_address and bridge addresses
   immediately when parsing the config file in order to detect invalid hosts.
+- Add bridge support for verifying remote server certificate subject against
+  the remote hostname.
 - Fix problem with out of order calls to free() when restarting a lazy bridge.
 - Fix an ACL with topic "#" incorrectly granting access to $SYS.
 - mosquitto_passwd utility now reports errors more clearly.
@@ -60,6 +62,8 @@ Broker:
 - Fix handling of SSL errors on SSL_accept().
 
 Client library:
+- Add support for verifying remote server certificate subject against the
+  remote hostname.
 - Add mosquitto_reconnect_async() support and make asynchronous connections
   truely asynchronous rather than simply deferred.
 - Allow control of reconnection timeouts in mosquitto_loop_forever() and after

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2010,2011 Roger Light <roger@atchoo.org>
+Copyright (c) 2010,2011,2013 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -93,6 +93,10 @@ int _mosquitto_packet_write(struct mosquitto *mosq);
 int _mosquitto_packet_read(struct mosquitto_db *db, struct mosquitto *mosq);
 #else
 int _mosquitto_packet_read(struct mosquitto *mosq);
+#endif
+
+#ifdef WITH_TLS
+int _mosquitto_socket_apply_tls(struct mosquitto *mosq);
 #endif
 
 #endif

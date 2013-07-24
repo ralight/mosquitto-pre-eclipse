@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2010-2012 Roger Light <roger@atchoo.org>
+Copyright (c) 2010-2013 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -81,6 +81,7 @@ extern "C" {
 
 /* Error values */
 enum mosq_err_t {
+	MOSQ_ERR_CONN_PENDING = -1,
 	MOSQ_ERR_SUCCESS = 0,
 	MOSQ_ERR_NOMEM = 1,
 	MOSQ_ERR_PROTOCOL = 2,

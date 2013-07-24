@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2010,2011 Roger Light <roger@atchoo.org>
+Copyright (c) 2010,2011,2013 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -83,7 +83,8 @@ enum mosquitto_client_state {
 	mosq_cs_new = 0,
 	mosq_cs_connected = 1,
 	mosq_cs_disconnecting = 2,
-	mosq_cs_connect_async = 3
+	mosq_cs_connect_async = 3,
+	mosq_cs_connect_pending = 4
 };
 
 struct _mosquitto_packet{

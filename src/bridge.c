@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2012 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2013 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -49,6 +49,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <memory_mosq.h>
 #include <send_mosq.h>
 #include <time_mosq.h>
+#include <tls_mosq.h>
 #include <util_mosq.h>
 #include <will_mosq.h>
 
@@ -134,6 +135,10 @@ int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge)
 	new_context->tls_capath = new_context->bridge->tls_capath;
 	new_context->tls_certfile = new_context->bridge->tls_certfile;
 	new_context->tls_keyfile = new_context->bridge->tls_keyfile;
+	new_context->tls_insecure = new_context->bridge->tls_insecure;
+	if(new_context->tls_insecure == false){
+
+	}
 #ifdef WITH_TLS_PSK
 	new_context->tls_psk_identity = new_context->bridge->tls_psk_identity;
 	new_context->tls_psk = new_context->bridge->tls_psk;

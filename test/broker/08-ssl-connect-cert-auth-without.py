@@ -31,7 +31,7 @@ broker = subprocess.Popen(['../../src/mosquitto', '-c', '08-ssl-connect-cert-aut
 time.sleep(0.5)
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-ssock = ssl.wrap_socket(sock, ca_certs="../ssl/test-ca.crt", cert_reqs=ssl.CERT_REQUIRED)
+ssock = ssl.wrap_socket(sock, ca_certs="../ssl/test-root-ca.crt", cert_reqs=ssl.CERT_REQUIRED)
 ssock.settimeout(10)
 try:
     ssock.connect(("localhost", 1888))

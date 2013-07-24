@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
 
 	mosq = new mosquittopp_test("08-ssl-fake-cacert");
 
-	mosq->tls_set("../ssl/fake-ca.crt", NULL, "../ssl/client.crt", "../ssl/client.key");
+	mosq->tls_set("../ssl/test-fake-root-ca.crt", NULL, "../ssl/client.crt", "../ssl/client.key");
 	mosq->connect("localhost", 1888, 60);
 
 	rc = mosq->loop_forever();

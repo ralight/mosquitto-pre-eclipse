@@ -18,7 +18,7 @@ def on_connect(mosq, obj, rc):
     exit(1)
 
 mosq = mosquitto.Mosquitto("08-ssl-fake-cacert")
-mosq.tls_set("../ssl/fake-ca.crt", "../ssl/client.crt", "../ssl/client.key")
+mosq.tls_set("../ssl/test-fake-root-ca.crt", "../ssl/client.crt", "../ssl/client.key")
 mosq.on_connect = on_connect
 
 try:

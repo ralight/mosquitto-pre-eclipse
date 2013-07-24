@@ -75,6 +75,7 @@ test : test-compile 01 02 03 04 05 06 07 08 09 10
 	./08-ssl-connect-cert-auth-crl.py
 	./08-ssl-connect-identity.py
 	./08-ssl-connect-no-identity.py
+	./08-ssl-bridge.py
 	./08-tls-psk-pub.py
 	./08-tls-psk-bridge.py
 
