@@ -65,6 +65,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef WITH_TLS
 #include <openssl/err.h>
+#include <tls_mosq.h>
 #endif
 
 #ifdef WITH_BROKER
@@ -89,7 +90,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "util_mosq.h"
 
 #ifdef WITH_TLS
-static int tls_ex_index_mosq = -1;
+int tls_ex_index_mosq = -1;
 #endif
 
 void _mosquitto_net_init(void)
@@ -340,6 +341,12 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 
 	if(!mosq || !host || !port) return MOSQ_ERR_INVAL;
 
+#ifdef WITH_TLS
+	if(mosq->tls_cafile || mosq->tls_capath || mosq->tls_psk){
+		blocking = true;
+	}
+#endif
+
 	rc = _mosquitto_try_connect(host, port, &sock, bind_address, blocking);
 	if(rc != MOSQ_ERR_SUCCESS) return rc;
 
@@ -400,7 +407,7 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 			if(mosq->tls_cert_reqs == 0){
 				SSL_CTX_set_verify(mosq->ssl_ctx, SSL_VERIFY_NONE, NULL);
 			}else{
-				SSL_CTX_set_verify(mosq->ssl_ctx, SSL_VERIFY_PEER, NULL);
+				SSL_CTX_set_verify(mosq->ssl_ctx, SSL_VERIFY_PEER, _mosquitto_server_certificate_verify);
 			}
 
 			if(mosq->tls_pw_callback){

@@ -14,6 +14,7 @@ MOSQ_OBJS=mosquitto.o \
 		  send_client_mosq.o \
 		  thread_mosq.o \
 		  time_mosq.o \
+		  tls_mosq.o \
 		  util_mosq.o \
 		  will_mosq.o
 
@@ -81,6 +82,9 @@ thread_mosq.o : thread_mosq.c
 	$(CC) $(LIB_CFLAGS) -c $< -o $@
 
 time_mosq.o : time_mosq.c
+	$(CC) $(LIB_CFLAGS) -c $< -o $@
+
+tls_mosq.o : tls_mosq.c
 	$(CC) $(LIB_CFLAGS) -c $< -o $@
 
 util_mosq.o : util_mosq.c util_mosq.h

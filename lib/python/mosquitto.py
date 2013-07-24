@@ -644,6 +644,12 @@ class Mosquitto:
                     ssl_version=self._tls_version,
                     ciphers=self._tls_ciphers)
 
+            if self._tls_insecure == False:
+                if (sys.version_info[0] == 3 and sys.version_info[1] >= 2) or sys.version_info[0] > 3:
+                    ssl.match_hostname(self._ssl.getpeercert(), self._host)
+                else:
+                    self._tls_match_hostname()
+
         self._sock.setblocking(0)
 
         return self._send_connect(self._keepalive, self._clean_session)
@@ -1876,4 +1882,27 @@ class Mosquitto:
             self._state_mutex.release()
 
         self.loop_forever()
+
+    def _tls_match_hostname(self):
+        cert = self._ssl.getpeercert()
+        san = cert.get('subjectAltName')
+        if san:
+            have_san_dns = False
+            for ((key,value),) in san:
+                if key == 'DNS':
+                    have_san_dns = True
+                    if value == self._host:
+                        return
+
+            if have_san_dns:
+                # Only check subject if subjectAltName dns not found.
+                raise ssl.SSLError('Certificate subject does not match remote hostname.')
+        subject = cert.get('subject')
+        if subject:
+            for ((key,value),) in subject:
+                if key == 'commonName':
+                    if value == self._host:
+                        return
+
+        raise ssl.SSLError('Certificate subject does not match remote hostname.')
 

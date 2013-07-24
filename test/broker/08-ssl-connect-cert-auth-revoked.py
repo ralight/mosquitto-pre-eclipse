@@ -29,7 +29,7 @@ try:
     time.sleep(0.5)
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    ssock = ssl.wrap_socket(sock, ca_certs="../ssl/test-ca.crt", certfile="../ssl/client-revoked.crt", keyfile="../ssl/client-revoked.key", cert_reqs=ssl.CERT_REQUIRED)
+    ssock = ssl.wrap_socket(sock, ca_certs="../ssl/test-root-ca.crt", certfile="../ssl/client-revoked.crt", keyfile="../ssl/client-revoked.key", cert_reqs=ssl.CERT_REQUIRED)
     ssock.settimeout(10)
     try:
         ssock.connect(("localhost", 1888))
@@ -38,6 +38,7 @@ try:
             rc = 0
         else:
             broker.terminate()
+            print(err.strerror)
             raise ValueError(err.errno)
 
 finally:

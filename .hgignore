@@ -35,5 +35,7 @@ lib/cpp/libmosquittopp.so*
 lib/libmosquitto.so*
 lib/libmosquitto.a
 
+test/ssl/*.csr
+
 build/
 dist/
