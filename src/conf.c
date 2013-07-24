@@ -482,6 +482,16 @@ int mqtt3_config_read(struct mqtt3_config *config, bool reload)
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 			return MOSQ_ERR_INVAL;
 		}
+#ifdef WITH_TLS_PSK
+		if(config->bridges[i].tls_psk && !config->bridges[i].tls_psk_identity){
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration: missing bridge_identity.\n");
+			return MOSQ_ERR_INVAL;
+		}
+		if(config->bridges[i].tls_psk_identity && !config->bridges[i].tls_psk){
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration: missing bridge_psk.\n");
+			return MOSQ_ERR_INVAL;
+		}
+#endif
 	}
 #endif
 
