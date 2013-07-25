@@ -375,7 +375,19 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 	if(listener->sock_count > 0){
 #ifdef WITH_TLS
 		if((listener->cafile || listener->capath) && listener->certfile && listener->keyfile){
+#if OPENSSL_VERSION_NUMBER >= 0x10001000L
+			if(listener->tls_version == NULL){
+				listener->ssl_ctx = SSL_CTX_new(TLSv1_2_server_method());
+			}else if(!strcmp(listener->tls_version, "tlsv1.2")){
+				listener->ssl_ctx = SSL_CTX_new(TLSv1_2_server_method());
+			}else if(!strcmp(listener->tls_version, "tlsv1.1")){
+				listener->ssl_ctx = SSL_CTX_new(TLSv1_1_server_method());
+			}else if(!strcmp(listener->tls_version, "tlsv1")){
+				listener->ssl_ctx = SSL_CTX_new(TLSv1_server_method());
+			}
+#else
 			listener->ssl_ctx = SSL_CTX_new(TLSv1_server_method());
+#endif
 			if(!listener->ssl_ctx){
 				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create TLS context.");
 				COMPAT_CLOSE(sock);
@@ -460,7 +472,19 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 				tls_ex_index_listener = SSL_get_ex_new_index(0, "listener", NULL, NULL, NULL);
 			}
 
+#if OPENSSL_VERSION_NUMBER >= 0x10001000L
+			if(listener->tls_version == NULL){
+				listener->ssl_ctx = SSL_CTX_new(TLSv1_2_server_method());
+			}else if(!strcmp(listener->tls_version, "tlsv1.2")){
+				listener->ssl_ctx = SSL_CTX_new(TLSv1_2_server_method());
+			}else if(!strcmp(listener->tls_version, "tlsv1.1")){
+				listener->ssl_ctx = SSL_CTX_new(TLSv1_1_server_method());
+			}else if(!strcmp(listener->tls_version, "tlsv1")){
+				listener->ssl_ctx = SSL_CTX_new(TLSv1_server_method());
+			}
+#else
 			listener->ssl_ctx = SSL_CTX_new(TLSv1_server_method());
+#endif
 			if(!listener->ssl_ctx){
 				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create TLS context.");
 				COMPAT_CLOSE(sock);

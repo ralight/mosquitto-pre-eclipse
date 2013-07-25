@@ -352,16 +352,31 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 
 #ifdef WITH_TLS
 	if(mosq->tls_cafile || mosq->tls_capath || mosq->tls_psk){
-		if(!mosq->tls_version || !strcmp(mosq->tls_version, "tlsv1")){
+#if OPENSSL_VERSION_NUMBER >= 0x10001000L
+		if(!mosq->tls_version || !strcmp(mosq->tls_version, "tlsv1.2")){
+			mosq->ssl_ctx = SSL_CTX_new(TLSv1_2_client_method());
+		}else if(!strcmp(mosq->tls_version, "tlsv1.1")){
+			mosq->ssl_ctx = SSL_CTX_new(TLSv1_1_client_method());
+		}else if(!strcmp(mosq->tls_version, "tlsv1")){
 			mosq->ssl_ctx = SSL_CTX_new(TLSv1_client_method());
-			if(!mosq->ssl_ctx){
-				_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to create TLS context.");
-				COMPAT_CLOSE(sock);
-				return MOSQ_ERR_TLS;
-			}
 		}else{
+			_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Error: Protocol %s not supported.", mosq->tls_version);
 			COMPAT_CLOSE(sock);
 			return MOSQ_ERR_INVAL;
+		}
+#else
+		if(!mosq->tls_version || !strcmp(mosq->tls_version, "tlsv1")){
+			mosq->ssl_ctx = SSL_CTX_new(TLSv1_client_method());
+		}else{
+			_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Error: Protocol %s not supported.", mosq->tls_version);
+			COMPAT_CLOSE(sock);
+			return MOSQ_ERR_INVAL;
+		}
+#endif
+		if(!mosq->ssl_ctx){
+			_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to create TLS context.");
+			COMPAT_CLOSE(sock);
+			return MOSQ_ERR_TLS;
 		}
 
 #if OPENSSL_VERSION_NUMBER >= 0x10000000

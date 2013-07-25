@@ -179,6 +179,7 @@ void mqtt3_config_init(struct mqtt3_config *config)
 	config->default_listener.sock_count = 0;
 	config->default_listener.client_count = 0;
 #ifdef WITH_TLS
+	config->default_listener.tls_version = NULL;
 	config->default_listener.cafile = NULL;
 	config->default_listener.capath = NULL;
 	config->default_listener.certfile = NULL;
@@ -397,6 +398,7 @@ int mqtt3_config_parse_args(struct mqtt3_config *config, int argc, char *argv[])
 		config->listeners[config->listener_count-1].sock_count = 0;
 		config->listeners[config->listener_count-1].client_count = 0;
 #ifdef WITH_TLS
+		config->listeners[config->listener_count-1].tls_version = config->default_listener.tls_version;
 		config->listeners[config->listener_count-1].cafile = config->default_listener.cafile;
 		config->listeners[config->listener_count-1].capath = config->default_listener.capath;
 		config->listeners[config->listener_count-1].certfile = config->default_listener.certfile;
@@ -849,6 +851,31 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 					}
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS-PSK support not available.");
+#endif
+				}else if(!strcmp(token, "bridge_tls_version")){
+#if defined(WITH_BRIDGE) && defined(WITH_TLS)
+					if(reload) continue; // FIXME
+					if(!cur_bridge){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
+						return MOSQ_ERR_INVAL;
+					}
+					token = strtok_r(NULL, " ", &saveptr);
+					if(token){
+						if(cur_bridge->tls_certfile){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate bridge_tls_version value in bridge configuration.");
+							return MOSQ_ERR_INVAL;
+						}
+						cur_bridge->tls_version = _mosquitto_strdup(token);
+						if(!cur_bridge->tls_version){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+							return MOSQ_ERR_NOMEM;
+						}
+					}else{
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty bridge_tls_version value in configuration.");
+						return MOSQ_ERR_INVAL;
+					}
+#else
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS support not available.");
 #endif
 				}else if(!strcmp(token, "cafile")){
 #if defined(WITH_TLS)
@@ -1460,6 +1487,13 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 					}
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+#endif
+				}else if(!strcmp(token, "tls_version")){
+#if defined(WITH_TLS)
+					if(reload) continue; // Listeners not valid for reloading.
+					if(_conf_parse_string(&token, "tls_version", &cur_listener->tls_version, saveptr)) return MOSQ_ERR_INVAL;
+#else
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
 #endif
 				}else if(!strcmp(token, "topic")){
 #ifdef WITH_BRIDGE

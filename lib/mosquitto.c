@@ -691,14 +691,30 @@ int mosquitto_tls_opts_set(struct mosquitto *mosq, int cert_reqs, const char *tl
 
 	mosq->tls_cert_reqs = cert_reqs;
 	if(tls_version){
+#if OPENSSL_VERSION_NUMBER >= 0x10001000L
+		if(!strcasecmp(tls_version, "tlsv1.2")
+				|| !strcasecmp(tls_version, "tlsv1.1")
+				|| !strcasecmp(tls_version, "tlsv1")){
+
+			mosq->tls_version = _mosquitto_strdup(tls_version);
+			if(!mosq->tls_version) return MOSQ_ERR_NOMEM;
+		}else{
+			return MOSQ_ERR_INVAL;
+		}
+#else
 		if(!strcasecmp(tls_version, "tlsv1")){
 			mosq->tls_version = _mosquitto_strdup(tls_version);
 			if(!mosq->tls_version) return MOSQ_ERR_NOMEM;
 		}else{
 			return MOSQ_ERR_INVAL;
 		}
+#endif
 	}else{
+#if OPENSSL_VERSION_NUMBER >= 0x10001000L
+		mosq->tls_version = _mosquitto_strdup("tlsv1.2");
+#else
 		mosq->tls_version = _mosquitto_strdup("tlsv1");
+#endif
 		if(!mosq->tls_version) return MOSQ_ERR_NOMEM;
 	}
 	if(ciphers){

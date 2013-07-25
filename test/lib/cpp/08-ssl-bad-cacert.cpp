@@ -21,6 +21,7 @@ int main(int argc, char *argv[])
 
 	mosq = new mosquittopp_test("08-ssl-bad-cacert");
 
+	mosq->tls_opts_set(1, "tlsv1", NULL);
 	if(mosq->tls_set("this/file/doesnt/exist") == MOSQ_ERR_INVAL){
 		rc = 0;
 	}

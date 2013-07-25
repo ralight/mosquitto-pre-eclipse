@@ -38,6 +38,7 @@ int main(int argc, char *argv[])
 
 	mosq = new mosquittopp_test("08-ssl-connect-crt-auth");
 
+	mosq->tls_opts_set(1, "tlsv1", NULL);
 	//mosq->tls_set("../ssl/test-ca.crt", NULL, "../ssl/client.crt", "../ssl/client.key");
 	mosq->tls_set("../ssl/all-ca.crt", NULL, "../ssl/client.crt", "../ssl/client.key");
 	mosq->connect("localhost", 1888, 60);

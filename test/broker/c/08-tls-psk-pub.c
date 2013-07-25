@@ -40,6 +40,7 @@ int main(int argc, char *argv[])
 	mosquitto_lib_init();
 
 	mosq = mosquitto_new("08-tls-psk-pub", true, NULL);
+	mosquitto_tls_opts_set(mosq, 1, "tlsv1", NULL);
 	rc = mosquitto_tls_psk_set(mosq, "deadbeef", "psk-id", NULL);
 	if(rc) return rc;
 	mosquitto_connect_callback_set(mosq, on_connect);
