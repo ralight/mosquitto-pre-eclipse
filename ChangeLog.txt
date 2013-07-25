@@ -27,6 +27,7 @@ Broker:
   causing client disconnections or message retries.
 - Clean session and keepalive status are now display the log when a client
   connects.
+- Add support for TLSv1.2 and TLSv1.1.
 - Clients that connect with zero length will topics are now rejected.
 - The broker now attempts to resolve bind_address and bridge addresses
   immediately when parsing the config file in order to detect invalid hosts.
@@ -62,6 +63,7 @@ Broker:
 - Fix handling of SSL errors on SSL_accept().
 
 Client library:
+- Add support for TLSv1.2 and TLSv1.1, except for on the Python module.
 - Add support for verifying remote server certificate subject against the
   remote hostname.
 - Add mosquitto_reconnect_async() support and make asynchronous connections
@@ -84,6 +86,7 @@ Client library:
 - Fix potential memory leak when setting username/password.
 
 Clients:
+- Add support for TLSv1.2 and TLSv1.1.
 - Sub client can now suppress printing of messages with the retain bit set.
 - Add support for binding connection to a local interface.
 - Implement maximum inflight messages handling for the pub client.

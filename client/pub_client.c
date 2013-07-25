@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2012 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2013 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -262,6 +262,8 @@ void print_usage(void)
 	printf("            communication.\n");
 	printf(" --cert : client certificate for authentication, if required by server.\n");
 	printf(" --key : client private key for authentication, if required by server.\n");
+	printf(" --tls-version : TLS protocol version, can be one of tlsv1.2 tlsv1.1 or tlsv1.\n");
+	printf("                 Defaults to tlsv1.2 if available.\n");
 	printf(" --insecure : do not check that the server certificate hostname matches the remote\n");
 	printf("              hostname. Using this option means that you cannot be sure that the\n");
 	printf("              remote host is the server you wish to connect to and so is insecure.\n");
@@ -304,6 +306,7 @@ int main(int argc, char *argv[])
 	char *capath = NULL;
 	char *certfile = NULL;
 	char *keyfile = NULL;
+	char *tls_version = NULL;
 
 	char *psk = NULL;
 	char *psk_identity = NULL;
@@ -518,6 +521,15 @@ int main(int argc, char *argv[])
 				topic = argv[i+1];
 			}
 			i++;
+		}else if(!strcmp(argv[i], "--tls-version")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --tls-version argument given but no version specified.\n\n");
+				print_usage();
+				return 1;
+			}else{
+				tls_version = argv[i+1];
+			}
+			i++;
 		}else if(!strcmp(argv[i], "-u") || !strcmp(argv[i], "--username")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: -u argument given but no username specified.\n\n");
@@ -676,6 +688,11 @@ int main(int argc, char *argv[])
 	}
 	if(psk && mosquitto_tls_psk_set(mosq, psk, psk_identity, NULL)){
 		if(!quiet) fprintf(stderr, "Error: Problem setting TLS-PSK options.\n");
+		mosquitto_lib_cleanup();
+		return 1;
+	}
+	if(tls_version && mosquitto_tls_opts_set(mosq, 1, tls_version, NULL)){
+		if(!quiet) fprintf(stderr, "Error: Problem setting TLS options.\n");
 		mosquitto_lib_cleanup();
 		return 1;
 	}

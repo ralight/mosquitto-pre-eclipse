@@ -92,6 +92,7 @@ struct _mqtt3_listener {
 	SSL_CTX *ssl_ctx;
 	char *crlfile;
 	bool use_identity_as_username;
+	char *tls_version;
 #endif
 };
 
@@ -298,6 +299,7 @@ struct _mqtt3_bridge{
 	char *tls_certfile;
 	char *tls_keyfile;
 	bool tls_insecure;
+	char *tls_version;
 #  ifdef WITH_TLS_PSK
 	char *tls_psk_identity;
 	char *tls_psk;
