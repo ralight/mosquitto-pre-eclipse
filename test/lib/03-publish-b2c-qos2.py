@@ -82,7 +82,11 @@ finally:
             break
         time.sleep(0.1)
 
-    client.terminate()
+    try:
+        client.terminate()
+    except OSError:
+        pass
+
     client.wait()
     sock.close()
     if client.returncode != 0:

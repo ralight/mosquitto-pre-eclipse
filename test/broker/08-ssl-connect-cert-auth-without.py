@@ -38,6 +38,9 @@ try:
 except ssl.SSLError as err:
     if err.errno == 1:
         rc = 0
+except socket.error as err:
+    if err.errno == 104:
+        rc = 0
 
 broker.terminate()
 broker.wait()
