@@ -47,7 +47,10 @@ except ssl.SSLError:
     pass
 finally:
     time.sleep(1.0)
-    client.terminate()
+    try:
+        client.terminate()
+    except OSError:
+        pass
     client.wait()
     ssock.close()
 
