@@ -52,9 +52,9 @@ void _windows_time_version_check(void)
 
 	tick64 = false;
 
-	memset(vi, sizeof(OSVERSIONINFO));
+	memset(&vi, 0, sizeof(OSVERSIONINFO));
 	vi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-	if(GetVersionEx(vi)){
+	if(GetVersionEx(&vi)){
 		if(vi.dwMajorVersion > 5){
 			tick64 = true;
 		}

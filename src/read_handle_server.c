@@ -64,6 +64,8 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	X509_NAME *name;
 	X509_NAME_ENTRY *name_entry;
 #endif
+	struct _clientid_index_hash *find_cih;
+	struct _clientid_index_hash *new_cih;
 
 #ifdef WITH_SYS_TREE
 	g_connection_count++;
@@ -294,7 +296,6 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 #endif
 
 	/* Find if this client already has an entry. This must be done *after* any security checks. */
-	struct _clientid_index_hash *find_cih;
 	HASH_FIND_STR(db->clientid_index_hash, client_id, find_cih);
 	if(find_cih){
 		i = find_cih->db_context_index;
@@ -341,7 +342,6 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	context->ping_t = 0;
 
 	// Add the client ID to the DB hash table here
-	struct _clientid_index_hash *new_cih;
 	new_cih = _mosquitto_malloc(sizeof(struct _clientid_index_hash));
 	if(!new_cih){
 		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");

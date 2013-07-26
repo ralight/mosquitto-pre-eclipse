@@ -225,6 +225,9 @@ int _mosquitto_try_connect(const char *host, uint16_t port, int *sock, const cha
 #ifndef WIN32
 	int opt;
 #endif
+#ifdef WIN32
+	uint32_t val = 1;
+#endif
 
 	*sock = INVALID_SOCKET;
 	memset(&hints, 0, sizeof(struct addrinfo));
@@ -331,9 +334,6 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 {
 	int sock = INVALID_SOCKET;
 	int rc;
-#ifdef WIN32
-	uint32_t val = 1;
-#endif
 #ifdef WITH_TLS
 	int ret;
 	BIO *bio;

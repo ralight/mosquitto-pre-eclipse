@@ -86,6 +86,7 @@ static int _conf_attempt_resolve(const char *host, const char *text)
 		freeaddrinfo(gai_res);
 	}
 	if(rc != 0){
+#ifndef WIN32
 		if(rc == EAI_SYSTEM){
 			if(errno == ENOENT){
 				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to resolve %s %s.", text, host);
@@ -95,6 +96,11 @@ static int _conf_attempt_resolve(const char *host, const char *text)
 		}else{
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error resolving %s: %s.", text, gai_strerror(rc));
 		}
+#else
+		if(rc == WSAHOST_NOT_FOUND){
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error resolving %s.", text);
+		}
+#endif
 		return MOSQ_ERR_INVAL;
 	}
 	return MOSQ_ERR_SUCCESS;
