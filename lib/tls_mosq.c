@@ -29,6 +29,10 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef WITH_TLS
 
+#ifdef WIN32
+#  include <winsock2.h>
+#endif
+
 #include <string.h>
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
