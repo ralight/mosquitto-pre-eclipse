@@ -164,8 +164,8 @@ int _mosquitto_handle_pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 	_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Received PUBREL from %s (Mid: %d)", mosq->id, mid);
 
 	if(mqtt3_db_message_release(db, mosq, mid, mosq_md_in)){
-		/* Message not found. */
-		return MOSQ_ERR_SUCCESS;
+		/* Message not found. Still send a PUBCOMP anyway because this could be
+		 * due to a repeated PUBREL after a client has reconnected. */
 	}
 #else
 	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s received PUBREL (Mid: %d)", mosq->id, mid);

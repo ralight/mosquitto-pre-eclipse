@@ -521,7 +521,7 @@ int mqtt3_db_message_store_find(struct mosquitto *context, uint16_t mid, struct 
 }
 
 /* Called on reconnect to set outgoing messages to a sensible state and force a
- * retry, and to clear incoming messages. */
+ * retry, and to set incoming messages to expect an appropriate retry. */
 int mqtt3_db_message_reconnect_reset(struct mosquitto *context)
 {
 	struct mosquitto_client_msg *msg;
@@ -549,16 +549,22 @@ int mqtt3_db_message_reconnect_reset(struct mosquitto *context)
 				}
 			}
 		}else{
-			/* Client must resend any partially completed messages. */
-			msg->store->ref_count--;
-			if(prev){
-				prev->next = msg->next;
-				_mosquitto_free(msg);
-				msg = prev;
+			if(msg->qos != 2){
+				/* Anything <QoS 2 can be completely retried by the client at
+				 * no harm. */
+				msg->store->ref_count--;
+				if(prev){
+					prev->next = msg->next;
+					_mosquitto_free(msg);
+					msg = prev;
+				}else{
+					context->msgs = msg->next;
+					_mosquitto_free(msg);
+					msg = context->msgs;
+				}
 			}else{
-				context->msgs = msg->next;
-				_mosquitto_free(msg);
-				msg = context->msgs;
+				/* Message state can be preserved here because it should match
+				 * whatever the client has got. */
 			}
 		}
 		prev = msg;
