@@ -540,7 +540,11 @@ int mqtt3_db_message_reconnect_reset(struct mosquitto *context)
 						msg->state = ms_publish_qos1;
 						break;
 					case 2:
-						msg->state = ms_publish_qos2;
+						if(msg->state == ms_wait_for_pubcomp){
+							msg->state = ms_resend_pubrel;
+						}else{
+							msg->state = ms_publish_qos2;
+						}
 						break;
 				}
 			}
