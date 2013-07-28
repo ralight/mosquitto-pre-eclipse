@@ -76,7 +76,9 @@ enum mosquitto_msg_state {
 	mosq_ms_wait_puback = 1,
 	mosq_ms_wait_pubrec = 2,
 	mosq_ms_wait_pubrel = 3,
-	mosq_ms_wait_pubcomp = 4
+	mosq_ms_wait_pubcomp = 4,
+	mosq_ms_resend_publish = 5,
+	mosq_ms_resend_pubrel = 6,
 };
 
 enum mosquitto_client_state {

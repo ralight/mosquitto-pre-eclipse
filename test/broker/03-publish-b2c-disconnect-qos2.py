@@ -79,12 +79,9 @@ try:
                             sock.send(connect_packet)
 
                             if mosq_test.expect_packet(sock, "connack", connack_packet):
-                                if mosq_test.expect_packet(sock, "dup publish", publish_dup_packet):
-                                    sock.send(pubrec_packet)
-
-                                    if mosq_test.expect_packet(sock, "pubrel", pubrel_packet):
-                                        sock.send(pubcomp_packet)
-                                        rc = 0
+                                if mosq_test.expect_packet(sock, "dup pubrel", pubrel_dup_packet):
+                                    sock.send(pubcomp_packet)
+                                    rc = 0
 
     sock.close()
 finally:
