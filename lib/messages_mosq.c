@@ -153,9 +153,9 @@ void _mosquitto_messages_reconnect_reset(struct mosquitto *mosq)
 			}
 			if(mosq->max_inflight_messages == 0 || mosq->inflight_messages < mosq->max_inflight_messages){
 				if(message->msg.qos == 1){
-					message->state = mosq_ms_wait_puback;
+					message->state = mosq_ms_wait_for_puback;
 				}else if(message->msg.qos == 2){
-					message->state = mosq_ms_wait_pubrec;
+					message->state = mosq_ms_wait_for_pubrec;
 				}
 			}else{
 				message->state = mosq_ms_invalid;
@@ -217,9 +217,9 @@ int _mosquitto_message_remove(struct mosquitto *mosq, uint16_t mid, enum mosquit
 				if(cur->msg.qos > 0 && cur->state == mosq_ms_invalid && cur->direction == mosq_md_out){
 					mosq->inflight_messages++;
 					if(cur->msg.qos == 1){
-						cur->state = mosq_ms_wait_puback;
+						cur->state = mosq_ms_wait_for_puback;
 					}else if(cur->msg.qos == 2){
-						cur->state = mosq_ms_wait_pubrec;
+						cur->state = mosq_ms_wait_for_pubrec;
 					}
 					rc = _mosquitto_send_publish(mosq, cur->msg.mid, cur->msg.topic, cur->msg.payloadlen, cur->msg.payload, cur->msg.qos, cur->msg.retain, cur->dup);
 					if(rc){
@@ -253,18 +253,18 @@ void _mosquitto_message_retry_check(struct mosquitto *mosq)
 	while(message){
 		if(message->timestamp + mosq->message_retry < now){
 			switch(message->state){
-				case mosq_ms_wait_puback:
-				case mosq_ms_wait_pubrec:
+				case mosq_ms_wait_for_puback:
+				case mosq_ms_wait_for_pubrec:
 					message->timestamp = now;
 					message->dup = true;
 					_mosquitto_send_publish(mosq, message->msg.mid, message->msg.topic, message->msg.payloadlen, message->msg.payload, message->msg.qos, message->msg.retain, message->dup);
 					break;
-				case mosq_ms_wait_pubrel:
+				case mosq_ms_wait_for_pubrel:
 					message->timestamp = now;
 					message->dup = true;
 					_mosquitto_send_pubrec(mosq, message->msg.mid);
 					break;
-				case mosq_ms_wait_pubcomp:
+				case mosq_ms_wait_for_pubcomp:
 					message->timestamp = now;
 					message->dup = true;
 					_mosquitto_send_pubrel(mosq, message->msg.mid, true);
