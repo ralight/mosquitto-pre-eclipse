@@ -57,21 +57,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 typedef uint64_t dbid_t;
 
-enum mqtt3_msg_state {
-	ms_invalid = 0,
-	ms_publish_qos0 = 1,
-	ms_publish_qos1 = 2,
-	ms_wait_for_puback = 3,
-	ms_publish_qos2 = 4,
-	ms_wait_for_pubrec = 5,
-	ms_resend_pubrel = 6,
-	ms_wait_for_pubrel = 7,
-	ms_resend_pubcomp = 8,
-	ms_wait_for_pubcomp = 9,
-	ms_send_pubrec = 10,
-	ms_queued = 11
-};
-
 struct _mqtt3_listener {
 	int fd;
 	char *host;
@@ -172,7 +157,7 @@ struct mosquitto_client_msg{
 	bool retain;
 	time_t timestamp;
 	enum mosquitto_msg_direction direction;
-	enum mqtt3_msg_state state;
+	enum mosquitto_msg_state state;
 	bool dup;
 };
 
@@ -370,7 +355,7 @@ int mqtt3_db_message_count(int *count);
 int mqtt3_db_message_delete(struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir);
 int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, int qos, bool retain, struct mosquitto_msg_store *stored);
 int mqtt3_db_message_release(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir);
-int mqtt3_db_message_update(struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, enum mqtt3_msg_state state);
+int mqtt3_db_message_update(struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, enum mosquitto_msg_state state);
 int mqtt3_db_message_write(struct mosquitto *context);
 int mqtt3_db_messages_delete(struct mosquitto *context);
 int mqtt3_db_messages_easy_queue(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain);

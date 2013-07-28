@@ -558,9 +558,9 @@ int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int p
 		pthread_mutex_lock(&mosq->message_mutex);
 		if(mosq->max_inflight_messages == 0 || mosq->inflight_messages < mosq->max_inflight_messages){
 			if(qos == 1){
-				message->state = mosq_ms_wait_puback;
+				message->state = mosq_ms_wait_for_puback;
 			}else if(qos == 2){
-				message->state = mosq_ms_wait_pubrec;
+				message->state = mosq_ms_wait_for_pubrec;
 			}
 			pthread_mutex_unlock(&mosq->message_mutex);
 			return _mosquitto_send_publish(mosq, message->msg.mid, message->msg.topic, message->msg.payloadlen, message->msg.payload, message->msg.qos, message->msg.retain, message->dup);

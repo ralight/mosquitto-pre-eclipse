@@ -73,12 +73,17 @@ enum mosquitto_msg_direction {
 
 enum mosquitto_msg_state {
 	mosq_ms_invalid = 0,
-	mosq_ms_wait_puback = 1,
-	mosq_ms_wait_pubrec = 2,
-	mosq_ms_wait_pubrel = 3,
-	mosq_ms_wait_pubcomp = 4,
-	mosq_ms_resend_publish = 5,
+	mosq_ms_publish_qos0 = 1,
+	mosq_ms_publish_qos1 = 2,
+	mosq_ms_wait_for_puback = 3,
+	mosq_ms_publish_qos2 = 4,
+	mosq_ms_wait_for_pubrec = 5,
 	mosq_ms_resend_pubrel = 6,
+	mosq_ms_wait_for_pubrel = 7,
+	mosq_ms_resend_pubcomp = 8,
+	mosq_ms_wait_for_pubcomp = 9,
+	mosq_ms_send_pubrec = 10,
+	mosq_ms_queued = 11
 };
 
 enum mosquitto_client_state {
