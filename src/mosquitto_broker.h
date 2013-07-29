@@ -36,11 +36,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <mosquitto_internal.h>
 #include <mosquitto_plugin.h>
 #include <mosquitto.h>
+#include "tls_mosq.h"
 #include "uthash.h"
-
-#ifdef WITH_TLS
-#  include <openssl/ssl.h>
-#endif
 
 #ifndef __GNUC__
 #define __attribute__(attrib)
@@ -285,7 +282,7 @@ struct _mqtt3_bridge{
 	char *tls_keyfile;
 	bool tls_insecure;
 	char *tls_version;
-#  ifdef WITH_TLS_PSK
+#  ifdef REAL_WITH_TLS_PSK
 	char *tls_psk_identity;
 	char *tls_psk;
 #  endif

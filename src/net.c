@@ -67,7 +67,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <util_mosq.h>
 
 #ifdef WITH_TLS
-#include <openssl/ssl.h>
+#include "tls_mosq.h"
 #include <openssl/err.h>
 static int tls_ex_index_context = -1;
 static int tls_ex_index_listener = -1;
@@ -230,7 +230,7 @@ static int client_certificate_verify(int preverify_ok, X509_STORE_CTX *ctx)
 }
 #endif
 
-#if defined(WITH_TLS) && defined(WITH_TLS_PSK)
+#ifdef REAL_WITH_TLS_PSK
 static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned char *psk, unsigned int max_psk_len)
 {
 	struct mosquitto_db *db;
@@ -463,7 +463,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 				X509_STORE_set_flags(store, X509_V_FLAG_CRL_CHECK);
 			}
 
-#  ifdef WITH_TLS_PSK
+#  ifdef REAL_WITH_TLS_PSK
 		}else if(listener->psk_hint){
 			if(tls_ex_index_context == -1){
 				tls_ex_index_context = SSL_get_ex_new_index(0, "client context", NULL, NULL, NULL);
@@ -507,7 +507,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 					return 1;
 				}
 			}
-#  endif /* WITH_TLS_PSK */
+#  endif /* REAL_WITH_TLS_PSK */
 		}
 #endif /* WITH_TLS */
 		return 0;

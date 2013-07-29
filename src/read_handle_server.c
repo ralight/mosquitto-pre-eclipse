@@ -37,6 +37,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <memory_mosq.h>
 #include <send_mosq.h>
 #include <time_mosq.h>
+#include <tls_mosq.h>
 #include <util_mosq.h>
 
 #ifdef WITH_SYS_TREE
@@ -225,7 +226,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			rc = MOSQ_ERR_SUCCESS;
 			goto handle_connect_error;
 		}
-#ifdef WITH_TLS_PSK
+#ifdef REAL_WITH_TLS_PSK
 		if(context->listener->psk_hint){
 			/* Client should have provided an identity to get this far. */
 			if(!context->username){
@@ -235,7 +236,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 				goto handle_connect_error;
 			}
 		}else{
-#endif /* WITH_TLS_PSK */
+#endif /* REAL_WITH_TLS_PSK */
 			client_cert = SSL_get_peer_certificate(context->ssl);
 			if(!client_cert){
 				_mosquitto_send_connack(context, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
@@ -264,9 +265,9 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 				rc = MOSQ_ERR_SUCCESS;
 				goto handle_connect_error;
 			}
-#ifdef WITH_TLS_PSK
+#ifdef REAL_WITH_TLS_PSK
 		}
-#endif /* WITH_TLS_PSK */
+#endif /* REAL_WITH_TLS_PSK */
 	}else{
 #endif /* WITH_TLS */
 		if(username_flag){

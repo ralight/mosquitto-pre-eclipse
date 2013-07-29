@@ -52,6 +52,7 @@ typedef int ssize_t;
 #include "read_handle.h"
 #include "send_mosq.h"
 #include "time_mosq.h"
+#include "tls_mosq.h"
 #include "util_mosq.h"
 #include "will_mosq.h"
 
@@ -743,7 +744,7 @@ int mosquitto_tls_insecure_set(struct mosquitto *mosq, bool value)
 
 int mosquitto_tls_psk_set(struct mosquitto *mosq, const char *psk, const char *identity, const char *ciphers)
 {
-#if defined(WITH_TLS) && defined(WITH_TLS_PSK)
+#ifdef REAL_WITH_TLS_PSK
 	if(!mosq || !psk || !identity) return MOSQ_ERR_INVAL;
 
 	/* Check for hex only digits */
