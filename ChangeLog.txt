@@ -61,6 +61,7 @@ Broker:
 - Fix retained messages on topic foo being incorrectly delivered to
   subscriptions of /#
 - Fix handling of SSL errors on SSL_accept().
+- Fix handling of QoS 2 messages on client reconnect.
 
 Client library:
 - Add support for TLSv1.2 and TLSv1.1, except for on the Python module.
@@ -84,6 +85,7 @@ Client library:
 - Implement maximum inflight messages handling.
 - Fix Python client not handling will_payload==None.
 - Fix potential memory leak when setting username/password.
+- Fix handling of QoS 2 messages on reconnect.
 
 Clients:
 - Add support for TLSv1.2 and TLSv1.1.
