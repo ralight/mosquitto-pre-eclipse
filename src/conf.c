@@ -49,6 +49,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <mosquitto_broker.h>
 #include <memory_mosq.h>
+#include "tls_mosq.h"
 #include "util_mosq.h"
 
 struct config_recurse {
@@ -263,7 +264,7 @@ void mqtt3_config_cleanup(struct mqtt3_config *config)
 				_mosquitto_free(config->bridges[i].topics);
 			}
 			if(config->bridges[i].notification_topic) _mosquitto_free(config->bridges[i].notification_topic);
-#ifdef WITH_TLS_PSK
+#ifdef REAL_WITH_TLS_PSK
 			if(config->bridges[i].tls_psk_identity) _mosquitto_free(config->bridges[i].tls_psk_identity);
 			if(config->bridges[i].tls_psk) _mosquitto_free(config->bridges[i].tls_psk);
 #endif
@@ -490,7 +491,7 @@ int mqtt3_config_read(struct mqtt3_config *config, bool reload)
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 			return MOSQ_ERR_INVAL;
 		}
-#ifdef WITH_TLS_PSK
+#ifdef REAL_WITH_TLS_PSK
 		if(config->bridges[i].tls_psk && !config->bridges[i].tls_psk_identity){
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration: missing bridge_identity.\n");
 			return MOSQ_ERR_INVAL;
@@ -669,7 +670,7 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 						return MOSQ_ERR_INVAL;
 					}
-#ifdef WITH_TLS_PSK
+#ifdef REAL_WITH_TLS_PSK
 					if(cur_bridge->tls_psk_identity || cur_bridge->tls_psk){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single bridge.");
 						return MOSQ_ERR_INVAL;
@@ -700,7 +701,7 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 						return MOSQ_ERR_INVAL;
 					}
-#ifdef WITH_TLS_PSK
+#ifdef REAL_WITH_TLS_PSK
 					if(cur_bridge->tls_psk_identity || cur_bridge->tls_psk){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single bridge.");
 						return MOSQ_ERR_INVAL;
@@ -731,7 +732,7 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 						return MOSQ_ERR_INVAL;
 					}
-#ifdef WITH_TLS_PSK
+#ifdef REAL_WITH_TLS_PSK
 					if(cur_bridge->tls_psk_identity || cur_bridge->tls_psk){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single bridge.");
 						return MOSQ_ERR_INVAL;
@@ -756,7 +757,7 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS support not available.");
 #endif
 				}else if(!strcmp(token, "bridge_identity")){
-#if defined(WITH_BRIDGE) && defined(WITH_TLS) && defined(WITH_TLS_PSK)
+#if defined(WITH_BRIDGE) && defined(REAL_WITH_TLS_PSK)
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
@@ -805,7 +806,7 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 						return MOSQ_ERR_INVAL;
 					}
-#ifdef WITH_TLS_PSK
+#ifdef REAL_WITH_TLS_PSK
 					if(cur_bridge->tls_psk_identity || cur_bridge->tls_psk){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single bridge.");
 						return MOSQ_ERR_INVAL;
@@ -830,7 +831,7 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS support not available.");
 #endif
 				}else if(!strcmp(token, "bridge_psk")){
-#if defined(WITH_BRIDGE) && defined(WITH_TLS) && defined(WITH_TLS_PSK)
+#if defined(WITH_BRIDGE) && defined(REAL_WITH_TLS_PSK)
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
@@ -1002,7 +1003,7 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 						cur_bridge->tls_certfile = NULL;
 						cur_bridge->tls_keyfile = NULL;
 						cur_bridge->tls_insecure = false;
-#  ifdef WITH_TLS_PSK
+#  ifdef REAL_WITH_TLS_PSK
 						cur_bridge->tls_psk = NULL;
 						cur_bridge->tls_psk_identity = NULL;
 #  endif
@@ -1379,7 +1380,7 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 					}
 					config->default_listener.port = port_tmp;
 				}else if(!strcmp(token, "psk_file")){
-#if defined(WITH_TLS) && defined(WITH_TLS_PSK)
+#ifdef REAL_WITH_TLS_PSK
 					if(reload){
 						if(config->psk_file){
 							_mosquitto_free(config->psk_file);
@@ -1391,7 +1392,7 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS/TLS-PSK support not available.");
 #endif
 				}else if(!strcmp(token, "psk_hint")){
-#if defined(WITH_TLS) && defined(WITH_TLS_PSK)
+#ifdef REAL_WITH_TLS_PSK
 					if(reload) continue; // Listeners not valid for reloading.
 					if(_conf_parse_string(&token, "psk_hint", &cur_listener->psk_hint, saveptr)) return MOSQ_ERR_INVAL;
 #else

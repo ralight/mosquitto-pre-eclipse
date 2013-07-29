@@ -29,6 +29,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef _UTIL_MOSQ_H_
 #define _UTIL_MOSQ_H_
 
+#include "tls_mosq.h"
 #include "mosquitto.h"
 
 int _mosquitto_packet_alloc(struct _mosquitto_packet *packet);
@@ -37,7 +38,7 @@ int _mosquitto_fix_sub_topic(char **subtopic);
 uint16_t _mosquitto_mid_generate(struct mosquitto *mosq);
 int _mosquitto_topic_wildcard_len_check(const char *str);
 
-#if defined(WITH_TLS) && defined(WITH_TLS_PSK)
+#ifdef REAL_WITH_TLS_PSK
 int _mosquitto_hex2bin(const char *hex, unsigned char *bin, int bin_max_len);
 #endif
 

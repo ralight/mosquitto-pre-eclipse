@@ -34,15 +34,13 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <winsock2.h>
 #endif
 
-#if defined(WITH_TLS) && defined(WITH_TLS_PSK)
-#include <openssl/ssl.h>
-#endif
 
 #include "mosquitto.h"
 #include "memory_mosq.h"
 #include "net_mosq.h"
 #include "send_mosq.h"
 #include "time_mosq.h"
+#include "tls_mosq.h"
 #include "util_mosq.h"
 
 #ifdef WITH_BROKER
@@ -300,7 +298,7 @@ int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result
 	return MOSQ_ERR_SUCCESS;
 }
 
-#if defined(WITH_TLS) && defined(WITH_TLS_PSK)
+#ifdef REAL_WITH_TLS_PSK
 int _mosquitto_hex2bin(const char *hex, unsigned char *bin, int bin_max_len)
 {
 	BIGNUM *bn = NULL;
