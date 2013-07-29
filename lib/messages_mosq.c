@@ -155,20 +155,25 @@ void _mosquitto_messages_reconnect_reset(struct mosquitto *mosq)
 				if(message->msg.qos == 1){
 					message->state = mosq_ms_wait_for_puback;
 				}else if(message->msg.qos == 2){
-					message->state = mosq_ms_wait_for_pubrec;
+					/* Should be able to preserve state. */
 				}
 			}else{
 				message->state = mosq_ms_invalid;
 			}
 		}else{
-			if(prev){
-				prev->next = message->next;
-				_mosquitto_message_cleanup(&message);
-				message = prev;
+			if(message->msg.qos != 2){
+				if(prev){
+					prev->next = message->next;
+					_mosquitto_message_cleanup(&message);
+					message = prev;
+				}else{
+					mosq->messages = message->next;
+					_mosquitto_message_cleanup(&message);
+					message = mosq->messages;
+				}
 			}else{
-				mosq->messages = message->next;
-				_mosquitto_message_cleanup(&message);
-				message = mosq->messages;
+				/* Message state can be preserved here because it should match
+				 * whatever the client has got. */
 			}
 		}
 		prev = message;
