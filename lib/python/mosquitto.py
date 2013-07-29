@@ -645,10 +645,10 @@ class Mosquitto:
                     ciphers=self._tls_ciphers)
 
             if self._tls_insecure == False:
-                if (sys.version_info[0] == 3 and sys.version_info[1] >= 2) or sys.version_info[0] > 3:
-                    ssl.match_hostname(self._ssl.getpeercert(), self._host)
-                else:
+                if sys.version_info[0] < 3 or (sys.version_info[0] == 3 and sys.version_info[1] < 2):
                     self._tls_match_hostname()
+                else:
+                    ssl.match_hostname(self._ssl.getpeercert(), self._host)
 
         self._sock.setblocking(0)
 
