@@ -597,13 +597,7 @@ static int _db_msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
-		if(fread(source_id, 1, slen, db_fptr) != slen){
-			strerror_r(errno, err, 256);
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
-			fclose(db_fptr);
-			_mosquitto_free(source_id);
-			return 1;
-		}
+		read_e(db_fptr, source_id, slen);
 	}
 	read_e(db_fptr, &i16temp, sizeof(uint16_t));
 	source_mid = ntohs(i16temp);
@@ -621,14 +615,7 @@ static int _db_msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
-		if(fread(topic, 1, slen, db_fptr) != slen){
-			strerror_r(errno, err, 256);
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
-			fclose(db_fptr);
-			if(source_id) _mosquitto_free(source_id);
-			_mosquitto_free(topic);
-			return 1;
-		}
+		read_e(db_fptr, topic, slen);
 	}else{
 		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid msg_store chunk when restoring persistent database.");
 		fclose(db_fptr);
@@ -650,15 +637,7 @@ static int _db_msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
-		if(fread(payload, 1, payloadlen, db_fptr) != payloadlen){
-			strerror_r(errno, err, 256);
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
-			fclose(db_fptr);
-			if(source_id) _mosquitto_free(source_id);
-			_mosquitto_free(topic);
-			_mosquitto_free(payload);
-			return 1;
-		}
+		read_e(db_fptr, payload, payloadlen);
 	}
 
 	rc = mqtt3_db_message_store(db, source_id, source_mid, topic, qos, payloadlen, payload, retain, &stored, store_id);
@@ -673,6 +652,7 @@ error:
 	if(db_fptr) fclose(db_fptr);
 	if(source_id) _mosquitto_free(source_id);
 	if(topic) _mosquitto_free(topic);
+	if(payload) _mosquitto_free(payload);
 	return 1;
 }
 
