@@ -617,7 +617,7 @@ static int _db_msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 		topic = _mosquitto_calloc(slen+1, sizeof(char));
 		if(!topic){
 			fclose(db_fptr);
-			_mosquitto_free(source_id);
+			if(source_id) _mosquitto_free(source_id);
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
@@ -625,14 +625,14 @@ static int _db_msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 			strerror_r(errno, err, 256);
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
 			fclose(db_fptr);
-			_mosquitto_free(source_id);
+			if(source_id) _mosquitto_free(source_id);
 			_mosquitto_free(topic);
 			return 1;
 		}
 	}else{
 		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid msg_store chunk when restoring persistent database.");
 		fclose(db_fptr);
-		_mosquitto_free(source_id);
+		if(source_id) _mosquitto_free(source_id);
 		return 1;
 	}
 	read_e(db_fptr, &qos, sizeof(uint8_t));
@@ -645,7 +645,7 @@ static int _db_msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 		payload = _mosquitto_malloc(payloadlen);
 		if(!payload){
 			fclose(db_fptr);
-			_mosquitto_free(source_id);
+			if(source_id) _mosquitto_free(source_id);
 			_mosquitto_free(topic);
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
@@ -654,7 +654,7 @@ static int _db_msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 			strerror_r(errno, err, 256);
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
 			fclose(db_fptr);
-			_mosquitto_free(source_id);
+			if(source_id) _mosquitto_free(source_id);
 			_mosquitto_free(topic);
 			_mosquitto_free(payload);
 			return 1;
@@ -662,7 +662,7 @@ static int _db_msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	}
 
 	rc = mqtt3_db_message_store(db, source_id, source_mid, topic, qos, payloadlen, payload, retain, &stored, store_id);
-	_mosquitto_free(source_id);
+	if(source_id) _mosquitto_free(source_id);
 	_mosquitto_free(topic);
 	_mosquitto_free(payload);
 
