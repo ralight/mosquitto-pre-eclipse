@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2012 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2013 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -318,3 +318,20 @@ int _mosquitto_hex2bin(const char *hex, unsigned char *bin, int bin_max_len)
 	return len;
 }
 #endif
+
+FILE *_mosquitto_fopen(const char *path, const char *mode)
+{
+#ifdef WIN32
+	char buf[MAX_PATH];
+	int rc;
+	rc = ExpandEnvironmentStrings(path, buf, MAX_PATH);
+	if(rc == 0 || rc == MAX_PATH){
+		return NULL;
+	}else{
+		return fopen(buf, mode);
+	}
+#else
+	return fopen(path, mode);
+#endif
+}
+

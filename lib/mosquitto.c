@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2010-2012 Roger Light <roger@atchoo.org>
+Copyright (c) 2010-2013 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -597,7 +597,7 @@ int mosquitto_tls_set(struct mosquitto *mosq, const char *cafile, const char *ca
 	if(!mosq || (!cafile && !capath) || (certfile && !keyfile) || (!certfile && keyfile)) return MOSQ_ERR_INVAL;
 
 	if(cafile){
-		fptr = fopen(cafile, "rt");
+		fptr = _mosquitto_fopen(cafile, "rt");
 		if(fptr){
 			fclose(fptr);
 		}else{
@@ -624,7 +624,7 @@ int mosquitto_tls_set(struct mosquitto *mosq, const char *cafile, const char *ca
 	}
 
 	if(certfile){
-		fptr = fopen(certfile, "rt");
+		fptr = _mosquitto_fopen(certfile, "rt");
 		if(fptr){
 			fclose(fptr);
 		}else{
@@ -648,7 +648,7 @@ int mosquitto_tls_set(struct mosquitto *mosq, const char *cafile, const char *ca
 	}
 
 	if(keyfile){
-		fptr = fopen(keyfile, "rt");
+		fptr = _mosquitto_fopen(keyfile, "rt");
 		if(fptr){
 			fclose(fptr);
 		}else{
