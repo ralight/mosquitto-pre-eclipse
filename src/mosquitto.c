@@ -30,6 +30,13 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <config.h>
 
 #ifndef WIN32
+/* For initgroups() */
+#  define _BSD_SOURCE
+#  include <unistd.h>
+#  include <grp.h>
+#endif
+
+#ifndef WIN32
 #include <pwd.h>
 #else
 #include <process.h>
@@ -93,14 +100,19 @@ int drop_privileges(struct mqtt3_config *config)
 				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid user '%s'.", config->user);
 				return 1;
 			}
+			if(initgroups(config->user, pwd->pw_gid) == -1){
+				strerror_r(errno, err, 256);
+				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error setting groups whilst dropping privileges: %s.", err);
+				return 1;
+			}
 			if(setgid(pwd->pw_gid) == -1){
 				strerror_r(errno, err, 256);
-				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
+				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error setting gid whilst dropping privileges: %s.", err);
 				return 1;
 			}
 			if(setuid(pwd->pw_uid) == -1){
 				strerror_r(errno, err, 256);
-				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
+				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error setting uid whilst dropping privileges: %s.", err);
 				return 1;
 			}
 		}
