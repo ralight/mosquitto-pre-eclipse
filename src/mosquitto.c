@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2012 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2013 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -54,6 +54,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <mosquitto_broker.h>
 #include <memory_mosq.h>
+#include "util_mosq.h"
 
 struct mosquitto_db int_db;
 
@@ -207,7 +208,7 @@ int main(int argc, char *argv[])
 	}
 
 	if(config.daemon && config.pid_file){
-		pid = fopen(config.pid_file, "wt");
+		pid = _mosquitto_fopen(config.pid_file, "wt");
 		if(pid){
 			fprintf(pid, "%d", getpid());
 			fclose(pid);

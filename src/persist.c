@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2010,2011 Roger Light <roger@atchoo.org>
+Copyright (c) 2010-2013 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -45,6 +45,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <memory_mosq.h>
 #include <persist.h>
 #include <time_mosq.h>
+#include "util_mosq.h"
 
 static uint32_t db_version;
 
@@ -375,7 +376,7 @@ int mqtt3_db_backup(struct mosquitto_db *db, bool cleanup, bool shutdown)
 		return MOSQ_ERR_NOMEM;
 	}
 	snprintf(outfile, len, "%s.new", db->config->persistence_filepath);
-	db_fptr = fopen(outfile, "wb");
+	db_fptr = _mosquitto_fopen(outfile, "wb");
 	if(db_fptr == NULL){
 		_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Error saving in-memory database, unable to open %s for writing.", outfile);
 		goto error;
@@ -740,7 +741,7 @@ int mqtt3_db_restore(struct mosquitto_db *db)
 	assert(db->config);
 	assert(db->config->persistence_filepath);
 
-	fptr = fopen(db->config->persistence_filepath, "rb");
+	fptr = _mosquitto_fopen(db->config->persistence_filepath, "rb");
 	if(fptr == NULL) return MOSQ_ERR_SUCCESS;
 	read_e(fptr, &header, 15);
 	if(!memcmp(header, magic, 15)){

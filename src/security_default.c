@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2011,2012 Roger Light <roger@atchoo.org>
+Copyright (c) 2011-2013 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <mosquitto_broker.h>
 #include <memory_mosq.h>
+#include "util_mosq.h"
 
 static int _aclfile_parse(struct mosquitto_db *db);
 static int _unpwd_file_parse(struct mosquitto_db *db);
@@ -473,7 +474,7 @@ static int _aclfile_parse(struct mosquitto_db *db)
 	if(!db || !db->config) return MOSQ_ERR_INVAL;
 	if(!db->config->acl_file) return MOSQ_ERR_SUCCESS;
 
-	aclfile = fopen(db->config->acl_file, "rt");
+	aclfile = _mosquitto_fopen(db->config->acl_file, "rt");
 	if(!aclfile){
 		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open acl_file \"%s\".", db->config->acl_file);
 		return 1;
@@ -625,7 +626,7 @@ static int _pwfile_parse(const char *file, struct _mosquitto_unpwd **root)
 	int len;
 	char *saveptr = NULL;
 
-	pwfile = fopen(file, "rt");
+	pwfile = _mosquitto_fopen(file, "rt");
 	if(!pwfile){
 		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open pwfile \"%s\".", file);
 		return 1;
