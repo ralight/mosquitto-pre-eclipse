@@ -137,7 +137,7 @@ int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge)
 	new_context->tls_keyfile = new_context->bridge->tls_keyfile;
 	new_context->tls_version = new_context->bridge->tls_version;
 	new_context->tls_insecure = new_context->bridge->tls_insecure;
-#ifdef WITH_TLS_PSK
+#ifdef REAL_WITH_TLS_PSK
 	new_context->tls_psk_identity = new_context->bridge->tls_psk_identity;
 	new_context->tls_psk = new_context->bridge->tls_psk;
 #endif
