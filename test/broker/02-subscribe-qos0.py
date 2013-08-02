@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Test whether a SUBSCRIBE to a topic with QoS 0 results in the correct SUBACK packet.
 

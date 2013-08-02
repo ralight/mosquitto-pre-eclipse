@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Test whether a retained PUBLISH to a topic with QoS 1 is retained.
 # Subscription is made with QoS 0 so the retained message should also have QoS

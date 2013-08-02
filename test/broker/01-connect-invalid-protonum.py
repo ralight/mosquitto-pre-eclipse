@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Test whether a CONNECT with an invalid protocol number results in the correct CONNACK packet.
 

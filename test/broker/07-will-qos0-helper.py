@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Connect a client with a will, then disconnect without DISCONNECT.
 

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Test whether a client can connect without an SSL certificate if one is required.
 # 

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Test whether a bridge topics work correctly after reconnection.
 # Important point here is that persistence is enabled.

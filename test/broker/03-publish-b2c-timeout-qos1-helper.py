@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Test whether a PUBLISH to a topic with QoS 2 results in the correct packet flow.
 

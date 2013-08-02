@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Test whether a CONNECT with a too-long client id results in the correct CONNACK packet.
 

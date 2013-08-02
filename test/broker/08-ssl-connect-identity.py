@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Client connects with a certificate to a server that has use_identity_as_username=true. Shouldn't be rejected.
 import subprocess
