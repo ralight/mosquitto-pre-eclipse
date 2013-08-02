@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Test whether a client subscribed to a topic receives its own message sent to that topic.
 

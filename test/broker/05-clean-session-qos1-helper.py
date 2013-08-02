@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Test whether a clean session client has a QoS 1 message queued for it.
 

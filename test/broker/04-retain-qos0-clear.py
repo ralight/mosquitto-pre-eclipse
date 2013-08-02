@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Test whether a retained PUBLISH is cleared when a zero length retained
 # message is published to a topic.
