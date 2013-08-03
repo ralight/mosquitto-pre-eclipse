@@ -723,6 +723,7 @@ int main(int argc, char *argv[])
 		mosquitto_loop_start(mosq);
 	}
 
+	int b=1;
 	do{
 		if(mode == MSGMODE_STDIN_LINE){
 			if(status == STATUS_CONNACK_RECVD){
@@ -736,6 +737,11 @@ int main(int argc, char *argv[])
 				}else if(feof(stdin)){
 					last_mid = mid_sent;
 					status = STATUS_WAITING;
+				}
+				if(b==1){
+				usleep(3000000);
+				mosquitto_disconnect(mosq);
+				b=0;
 				}
 			}else if(status == STATUS_WAITING){
 #ifdef WIN32

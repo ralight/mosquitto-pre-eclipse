@@ -497,12 +497,12 @@ static int _mosquitto_reconnect(struct mosquitto *mosq, bool blocking)
 int mosquitto_disconnect(struct mosquitto *mosq)
 {
 	if(!mosq) return MOSQ_ERR_INVAL;
-	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
 
 	pthread_mutex_lock(&mosq->state_mutex);
 	mosq->state = mosq_cs_disconnecting;
 	pthread_mutex_unlock(&mosq->state_mutex);
 
+	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
 	return _mosquitto_send_disconnect(mosq);
 }
 
@@ -894,7 +894,15 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 #else
 			sleep(reconnect_delay);
 #endif
-			mosquitto_reconnect(mosq);
+
+			pthread_mutex_lock(&mosq->state_mutex);
+			if(mosq->state == mosq_cs_disconnecting){
+				run = 0;
+				pthread_mutex_unlock(&mosq->state_mutex);
+			}else{
+				pthread_mutex_unlock(&mosq->state_mutex);
+				mosquitto_reconnect(mosq);
+			}
 		}
 	}
 	return rc;
