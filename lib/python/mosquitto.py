@@ -802,12 +802,12 @@ class Mosquitto:
 
     def disconnect(self):
         """Disconnect a connected client from the broker."""
-        if self._sock == None and self._ssl == None:
-            return MOSQ_ERR_NO_CONN
-
         self._state_mutex.acquire()
         self._state = mosq_cs_disconnecting
         self._state_mutex.release()
+
+        if self._sock == None and self._ssl == None:
+            return MOSQ_ERR_NO_CONN
 
         return self._send_disconnect()
 
@@ -1077,7 +1077,14 @@ class Mosquitto:
                     reconnects = reconnects + 1
 
                 time.sleep(reconnect_delay)
-                self.reconnect()
+
+                self._state_mutex.acquire()
+                if self._state == mosq_cs_disconnecting:
+                    run = False
+                    self._state_mutex.release()
+                else:
+                    self._state_mutex.release()
+                    self.reconnect()
         return rc
 
     def loop_start(self):

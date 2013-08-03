@@ -87,6 +87,7 @@ Client library:
 - Fix Python client not handling will_payload==None.
 - Fix potential memory leak when setting username/password.
 - Fix handling of QoS 2 messages on reconnect.
+- Improve handling of mosquitto_disconnect() with threaded mode.
 
 Clients:
 - Add support for TLSv1.2 and TLSv1.1.
