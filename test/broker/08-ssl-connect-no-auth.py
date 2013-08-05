@@ -32,7 +32,7 @@ try:
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     ssock = ssl.wrap_socket(sock, ca_certs="../ssl/test-root-ca.crt", cert_reqs=ssl.CERT_REQUIRED, ssl_version=ssl.PROTOCOL_TLSv1)
-    ssock.settimeout(10)
+    ssock.settimeout(20)
     ssock.connect(("localhost", 1888))
     ssock.send(connect_packet)
 
