@@ -65,6 +65,7 @@ Broker:
 - Fix handling of SSL errors on SSL_accept().
 - Fix handling of QoS 2 messages on client reconnect.
 - Drop privileges now sets supplementary groups correctly.
+- Fix load reporting interval (is now 60s).
 
 Client library:
 - Add support for TLSv1.2 and TLSv1.1, except for on the Python module.

@@ -182,8 +182,9 @@
 					<para>The moving average of the number of CONNECT packets
 						received by the broker over different time intervals.
 						The final "+" of the hierarchy can be 1min, 5min or
-						15min and represents the intervals over which the
-						moving average filter is applied.</para>
+						15min. The value returned represents the number of
+						connections received in 1 minute, averaged over 1, 5 or
+						15 minutes.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -191,19 +192,19 @@
 				<listitem>
 					<para>The moving average of the number of bytes received by
 						the broker over different time intervals. The final "+"
-						of the hierarchy can be 1min, 5min or 15min and
-						represents the intervals over which the moving average
-						filter is applied.</para>
+						of the hierarchy can be 1min, 5min or 15min. The value
+						returned represents the number of bytes received in 1
+						minute, averaged over 1, 5 or 15 minutes.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
 				<term><option>$SYS/broker/load/bytes/sent/+</option></term>
 				<listitem>
-					<para>The moving average of the number of bytes sent by
-						the broker over different time intervals. The final "+"
-						of the hierarchy can be 1min, 5min or 15min and
-						represents the intervals over which the moving average
-						filter is applied.</para>
+					<para>The moving average of the number of bytes sent by the
+						broker over different time intervals. The final "+" of
+						the hierarchy can be 1min, 5min or 15min. The value
+						returned represents the number of bytes sent in 1
+						minute, averaged over 1, 5 or 15 minutes.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -212,8 +213,9 @@
 					<para>The moving average of the number of all types of MQTT
 						messages received by the broker over different time
 						intervals.  The final "+" of the hierarchy can be 1min,
-						5min or 15min and represents the intervals over which
-						the moving average filter is applied.</para>
+						5min or 15min. The value returned represents the number
+						of messages received in 1 minute, averaged over 1, 5 or
+						15 minutes.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -222,8 +224,9 @@
 					<para>The moving average of the number of all types of MQTT
 						messages sent by the broker over different time
 						intervals. The final "+" of the hierarchy can be 1min,
-						5min or 15min and represent the intervals over which
-						the moving average filter is applied.</para>
+						5min or 15min. The value returned represents the number
+						of messages send in 1 minute, averaged over 1, 5 or 15
+						minutes.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -232,10 +235,10 @@
 					<para>The moving average of the number of publish messages
 						dropped by the broker over different time intervals.
 						This shows the rate at which durable clients that are
-						disconnected are losing messages.
-						The final "+" of the hierarchy can be 1min, 5min or
-						15min and represent the intervals over which the moving
-						average filter is applied.</para>
+						disconnected are losing messages. The final "+" of the
+						hierarchy can be 1min, 5min or 15min. The value
+						returned represents the number of messages dropped in 1
+						minute, averaged over 1, 5 or 15 minutes.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -244,8 +247,9 @@
 					<para>The moving average of the number of publish messages
 						received by the broker over different time intervals.
 						The final "+" of the hierarchy can be 1min, 5min or
-						15min and represent the intervals over which the moving
-						average filter is applied.</para>
+						15min. The value returned represents the number of
+						publish messages received in 1 minute, averaged over 1,
+						5 or 15 minutes.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -253,9 +257,10 @@
 				<listitem>
 					<para>The moving average of the number of publish messages
 						sent by the broker over different time intervals. The
-						final "+" of the hierarchy can be 1min, 5min or 15min
-						and represent the intervals over which the moving
-						average filter is applied.</para>
+						final "+" of the hierarchy can be 1min, 5min or 15min.
+						The value returned represents the number of publish
+						messages sent in 1 minute, averaged over 1, 5 or 15
+						minutes.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -264,8 +269,9 @@
 					<para>The moving average of the number of socket
 						connections opened to the broker over different time
 						intervals. The final "+" of the hierarchy can be 1min,
-						5min or 15min and represent the intervals over which
-						the moving average filter is applied.</para>
+						5min or 15min. The value returned represents the number
+						of socket connections in 1 minute, averaged over 1, 5
+						or 15 minutes.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

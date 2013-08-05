@@ -192,6 +192,7 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 	double connection_interval;
 
 	double exponent;
+	double i_mult;
 
 	now = mosquitto_time();
 
@@ -202,19 +203,21 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 
 		_sys_update_clients(db, buf);
 		if(last_update > 0){
-			msgs_received_interval = g_msgs_received - msgs_received;
-			msgs_sent_interval = g_msgs_sent - msgs_sent;
-			publish_dropped_interval = g_msgs_dropped - publish_dropped;
+			i_mult = 60.0/(double)(now-last_update);
 
-			publish_received_interval = g_pub_msgs_received - pub_msgs_received;
-			publish_sent_interval = g_pub_msgs_sent - pub_msgs_sent;
+			msgs_received_interval = (g_msgs_received - msgs_received)*i_mult;
+			msgs_sent_interval = (g_msgs_sent - msgs_sent)*i_mult;
+			publish_dropped_interval = (g_msgs_dropped - publish_dropped)*i_mult;
 
-			bytes_received_interval = g_bytes_received - bytes_received;
-			bytes_sent_interval = g_bytes_sent - bytes_sent;
+			publish_received_interval = (g_pub_msgs_received - pub_msgs_received)*i_mult;
+			publish_sent_interval = (g_pub_msgs_sent - pub_msgs_sent)*i_mult;
 
-			socket_interval = g_socket_connections;
+			bytes_received_interval = (g_bytes_received - bytes_received)*i_mult;
+			bytes_sent_interval = (g_bytes_sent - bytes_sent)*i_mult;
+
+			socket_interval = g_socket_connections*i_mult;
 			g_socket_connections = 0;
-			connection_interval = g_connection_count;
+			connection_interval = g_connection_count*i_mult;
 			g_connection_count = 0;
 
 			/* 1 minute load */
