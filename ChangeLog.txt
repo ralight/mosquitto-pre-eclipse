@@ -54,7 +54,9 @@ Broker:
   immediately when parsing the config file in order to detect invalid hosts.
 - Bridges now set their notification state before attempting to connect, so if
   they fail to connect the state can still be seen.
-- Bridge connections are now made with non-blocking sockets.
+- Bridge connections are now made with non-blocking sockets. DNS lookups are
+  still blocking, so asynchronous connections require an IP address instead of
+  hostname.
 - If a client connects with a will topic to which they do not have write
   access, they are now disconnected with CONNACK "not authorised".
 - Fix bridge notification payload length - no need to send a null byte.
@@ -69,7 +71,9 @@ Client library:
 - Add support for verifying remote server certificate subject against the
   remote hostname.
 - Add mosquitto_reconnect_async() support and make asynchronous connections
-  truely asynchronous rather than simply deferred.
+  truely asynchronous rather than simply deferred. DNS lookups are still
+  blocking, so asynchronous connections require an IP address instead of
+  hostname.
 - Allow control of reconnection timeouts in mosquitto_loop_forever() and after
   mosquitto_loop_start() by using mosquitto_reconnect_delay_set().
 - Fix building on Android NDK.
