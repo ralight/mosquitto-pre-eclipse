@@ -30,7 +30,7 @@ try:
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     ssock = ssl.wrap_socket(sock, ca_certs="../ssl/test-root-ca.crt", certfile="../ssl/client-revoked.crt", keyfile="../ssl/client-revoked.key", cert_reqs=ssl.CERT_REQUIRED)
-    ssock.settimeout(10)
+    ssock.settimeout(20)
     try:
         ssock.connect(("localhost", 1888))
     except ssl.SSLError as err:

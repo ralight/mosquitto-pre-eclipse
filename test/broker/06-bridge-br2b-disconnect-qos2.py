@@ -53,7 +53,7 @@ try:
     time.sleep(0.5)
 
     (bridge, address) = ssock.accept()
-    bridge.settimeout(10)
+    bridge.settimeout(20)
 
     if mosq_test.expect_packet(bridge, "connect", connect_packet):
         bridge.send(connack_packet)
@@ -69,7 +69,7 @@ try:
                 bridge.close()
 
                 (bridge, address) = ssock.accept()
-                bridge.settimeout(10)
+                bridge.settimeout(20)
 
                 if mosq_test.expect_packet(bridge, "connect", connect_packet):
                     bridge.send(connack_packet)
@@ -84,7 +84,7 @@ try:
                                 bridge.close()
 
                                 (bridge, address) = ssock.accept()
-                                bridge.settimeout(10)
+                                bridge.settimeout(20)
 
                                 if mosq_test.expect_packet(bridge, "connect", connect_packet):
                                     bridge.send(connack_packet)

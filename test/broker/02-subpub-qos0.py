@@ -31,7 +31,7 @@ try:
     time.sleep(0.5)
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.settimeout(10)
+    sock.settimeout(20)
     sock.connect(("localhost", 1888))
     sock.send(connect_packet)
     if mosq_test.expect_packet(sock, "connack", connack_packet):

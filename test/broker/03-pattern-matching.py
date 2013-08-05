@@ -36,7 +36,7 @@ def pattern_test(sub_topic, pub_topic):
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect(("localhost", 1888))
-        sock.settimeout(10)
+        sock.settimeout(20)
         sock.send(connect_packet)
 
         if mosq_test.expect_packet(sock, "connack", connack_packet):
