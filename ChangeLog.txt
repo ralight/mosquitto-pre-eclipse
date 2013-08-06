@@ -52,9 +52,6 @@ Broker:
   immediately when parsing the config file in order to detect invalid hosts.
 - Bridges now set their notification state before attempting to connect, so if
   they fail to connect the state can still be seen.
-- Bridge connections are now made with non-blocking sockets. DNS lookups are
-  still blocking, so asynchronous connections require an IP address instead of
-  hostname.
 - If a client connects with a will topic to which they do not have write
   access, they are now disconnected with CONNACK "not authorised".
 - Fix bridge notification payload length - no need to send a null byte.
