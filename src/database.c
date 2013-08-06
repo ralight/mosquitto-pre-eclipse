@@ -436,8 +436,6 @@ int mqtt3_db_message_store(struct mosquitto_db *db, const char *source, uint16_t
 	assert(db);
 	assert(stored);
 
-	if(!topic) return MOSQ_ERR_INVAL;
-
 	temp = _mosquitto_malloc(sizeof(struct mosquitto_msg_store));
 	if(!temp) return MOSQ_ERR_NOMEM;
 
@@ -457,12 +455,16 @@ int mqtt3_db_message_store(struct mosquitto_db *db, const char *source, uint16_t
 	temp->msg.mid = 0;
 	temp->msg.qos = qos;
 	temp->msg.retain = retain;
-	temp->msg.topic = _mosquitto_strdup(topic);
-	if(!temp->msg.topic){
-		_mosquitto_free(temp->source_id);
-		_mosquitto_free(temp);
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-		return MOSQ_ERR_NOMEM;
+	if(topic){
+		temp->msg.topic = _mosquitto_strdup(topic);
+		if(!temp->msg.topic){
+			_mosquitto_free(temp->source_id);
+			_mosquitto_free(temp);
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+			return MOSQ_ERR_NOMEM;
+		}
+	}else{
+		temp->msg.topic = NULL;
 	}
 	temp->msg.payloadlen = payloadlen;
 	if(payloadlen){
@@ -479,7 +481,7 @@ int mqtt3_db_message_store(struct mosquitto_db *db, const char *source, uint16_t
 		temp->msg.payload = NULL;
 	}
 
-	if(!temp->source_id || !temp->msg.topic || (payloadlen && !temp->msg.payload)){
+	if(!temp->source_id || (payloadlen && !temp->msg.payload)){
 		if(temp->source_id) _mosquitto_free(temp->source_id);
 		if(temp->msg.topic) _mosquitto_free(temp->msg.topic);
 		if(temp->msg.payload) _mosquitto_free(temp->msg.payload);
@@ -692,7 +694,11 @@ int mqtt3_db_message_release(struct mosquitto_db *db, struct mosquitto *context,
 			retain = tail->retain;
 			source_id = tail->store->source_id;
 
-			if(!mqtt3_db_messages_queue(db, source_id, topic, qos, retain, tail->store)){
+			/* topic==NULL should be a QoS 2 message that was
+			 * denied/dropped and is being processed so the client doesn't
+			 * keep resending it. That means we don't send it to other
+			 * clients. */
+			if(!topic || !mqtt3_db_messages_queue(db, source_id, topic, qos, retain, tail->store)){
 				tail->store->ref_count--;
 				if(last){
 					last->next = tail->next;

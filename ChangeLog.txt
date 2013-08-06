@@ -53,6 +53,8 @@ Broker:
 - Be strict with malformed PUBLISH packets - clients are now disconnected
   rather than the packet discarded. This goes inline with future OASIS spec
   changes and makes other changes more straightforward.
+- Process incoming messages denied by ACL properly so that clients don't keep
+  resending them.
 
 - Add support for round_robin bridge option.
 - Add bridge support for verifying remote server certificate subject against
