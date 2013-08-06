@@ -29,8 +29,6 @@ Broker:
   connects.
 - Add support for TLSv1.2 and TLSv1.1.
 - Clients that connect with zero length will topics are now rejected.
-- The broker now attempts to resolve bind_address and bridge addresses
-  immediately when parsing the config file in order to detect invalid hosts.
 - Add bridge support for verifying remote server certificate subject against
   the remote hostname.
 - Fix problem with out of order calls to free() when restarting a lazy bridge.
