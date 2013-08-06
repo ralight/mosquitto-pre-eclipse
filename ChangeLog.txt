@@ -50,6 +50,9 @@ Broker:
 - Fix handling of QoS 2 messages on client reconnect.
 - Drop privileges now sets supplementary groups correctly.
 - Fix load reporting interval (is now 60s).
+- Be strict with malformed PUBLISH packets - clients are now disconnected
+  rather than the packet discarded. This goes inline with future OASIS spec
+  changes and makes other changes more straightforward.
 
 - Add support for round_robin bridge option.
 - Add bridge support for verifying remote server certificate subject against
