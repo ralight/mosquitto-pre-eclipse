@@ -196,7 +196,6 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 		topic = topic_mount;
 	}
 
-	_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Received PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, qos, retain, mid, topic, (long)payloadlen);
 	if(payloadlen){
 		payload = _mosquitto_calloc(payloadlen+1, sizeof(uint8_t));
 		if(_mosquitto_read_bytes(&context->in_packet, payload, payloadlen)){
@@ -208,15 +207,15 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 	/* Check for topic access */
 	rc = mosquitto_acl_check(db, context, topic, MOSQ_ACL_WRITE);
 	if(rc == MOSQ_ERR_ACL_DENIED){
-		_mosquitto_free(topic);
-		if(payload) _mosquitto_free(payload);
-		return MOSQ_ERR_SUCCESS;
+		_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Denied PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, qos, retain, mid, topic, (long)payloadlen);
+		goto process_bad_message;
 	}else if(rc != MOSQ_ERR_SUCCESS){
 		_mosquitto_free(topic);
 		if(payload) _mosquitto_free(payload);
 		return rc;
 	}
 
+	_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Received PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, qos, retain, mid, topic, (long)payloadlen);
 	if(qos > 0){
 		mqtt3_db_message_store_find(context, mid, &stored);
 	}
@@ -257,5 +256,29 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 	if(payload) _mosquitto_free(payload);
 
 	return rc;
+process_bad_message:
+	if(topic) _mosquitto_free(topic);
+	if(payload) _mosquitto_free(payload);
+	switch(qos){
+		case 0:
+			return MOSQ_ERR_SUCCESS;
+		case 1:
+			return _mosquitto_send_puback(context, mid);
+		case 2:
+			mqtt3_db_message_store_find(context, mid, &stored);
+			if(!stored){
+				if(mqtt3_db_message_store(db, context->id, mid, NULL, qos, 0, NULL, false, &stored, 0)){
+					return 1;
+				}
+				res = mqtt3_db_message_insert(db, context, mid, mosq_md_in, qos, false, stored);
+			}else{
+				res = 0;
+			}
+			if(!res){
+				res = _mosquitto_send_pubrec(context, mid);
+			}
+			return res;
+	}
+	return 1;
 }
 
