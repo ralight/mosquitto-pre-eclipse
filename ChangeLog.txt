@@ -3,7 +3,6 @@
 
 Broker:
 - Replace O(n) username lookup on CONNECT with a roughly O(1) hashtable version.
-- Add support for round_robin bridge option.
 - It is now possible to disable $SYS at compile time.
 - Add dropped publish messages to load tree in $SYS. Closes bug #1183318.
 - Add support for logging SUBSCRIBE/UNSUBSCRIBE events.
@@ -29,12 +28,7 @@ Broker:
   connects.
 - Add support for TLSv1.2 and TLSv1.1.
 - Clients that connect with zero length will topics are now rejected.
-- Add bridge support for verifying remote server certificate subject against
-  the remote hostname.
-- Fix problem with out of order calls to free() when restarting a lazy bridge.
 - Fix an ACL with topic "#" incorrectly granting access to $SYS.
-- mosquitto_passwd utility now reports errors more clearly.
-- Fix "mosquitto_passwd -U".
 - Fix retained messages incorrectly being set on wildcard topics, leading to
   duplicate retained messages being sent on subscription. Closes bug #1116233.
 - Don't discard listener values when no "port" option given. Closes bug
@@ -48,19 +42,28 @@ Broker:
 - Fix remapping of messages for clients connected to a listener with
   mount_point set. Closes bug #1180765.
 - Fix duplicate retained messages being sent for some wildcard patterns.
-- The broker now attempts to resolve bind_address and bridge addresses
-  immediately when parsing the config file in order to detect invalid hosts.
-- Bridges now set their notification state before attempting to connect, so if
-  they fail to connect the state can still be seen.
 - If a client connects with a will topic to which they do not have write
   access, they are now disconnected with CONNACK "not authorised".
-- Fix bridge notification payload length - no need to send a null byte.
 - Fix retained messages on topic foo being incorrectly delivered to
   subscriptions of /#
 - Fix handling of SSL errors on SSL_accept().
 - Fix handling of QoS 2 messages on client reconnect.
 - Drop privileges now sets supplementary groups correctly.
 - Fix load reporting interval (is now 60s).
+
+- Add support for round_robin bridge option.
+- Add bridge support for verifying remote server certificate subject against
+  the remote hostname.
+- Fix problem with out of order calls to free() when restarting a lazy bridge.
+- The broker now attempts to resolve bind_address and bridge addresses
+  immediately when parsing the config file in order to detect invalid hosts.
+- Bridges now set their notification state before attempting to connect, so if
+  they fail to connect the state can still be seen.
+- Fix bridge notification payload length - no need to send a null byte.
+
+- mosquitto_passwd utility now reports errors more clearly.
+- Fix "mosquitto_passwd -U".
+
 
 Client library:
 - Add support for TLSv1.2 and TLSv1.1, except for on the Python module.
@@ -88,6 +91,7 @@ Client library:
 - Fix potential memory leak when setting username/password.
 - Fix handling of QoS 2 messages on reconnect.
 - Improve handling of mosquitto_disconnect() with threaded mode.
+
 
 Clients:
 - Add support for TLSv1.2 and TLSv1.1.
