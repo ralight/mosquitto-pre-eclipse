@@ -52,6 +52,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <memory_mosq.h>
 #include "tls_mosq.h"
 #include "util_mosq.h"
+#include "mqtt3_protocol.h"
 
 struct config_recurse {
 	int log_dest;
@@ -208,6 +209,7 @@ void mqtt3_config_init(struct mqtt3_config *config)
 #endif
 	config->auth_plugin = NULL;
 	config->verbose = false;
+	config->message_size_limit = 0;
 }
 
 void mqtt3_config_cleanup(struct mqtt3_config *config)
@@ -1262,6 +1264,12 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 						if(cr->max_queued_messages < 0) cr->max_queued_messages = 0;
 					}else{
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty max_queued_messages value in configuration.");
+					}
+				}else if(!strcmp(token, "message_size_limit")){
+					if(_conf_parse_int(&token, "message_size_limit", &config->message_size_limit, saveptr)) return MOSQ_ERR_INVAL;
+					if(config->message_size_limit < 0 || config->message_size_limit > MQTT_MAX_PAYLOAD){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid message_size_limit value (%d).", config->message_size_limit);
+						return MOSQ_ERR_INVAL;
 					}
 				}else if(!strcmp(token, "mount_point")){
 					if(reload) continue; // Listeners not valid for reloading.

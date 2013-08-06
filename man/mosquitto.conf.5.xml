@@ -332,6 +332,17 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>message_size_limit</option> <replaceable>limit</replaceable></term>
+				<listitem> 
+					<para>This option sets the maximum publish payload size
+						that the broker will allow. Received messages that
+						exceed this size will not be accepted by the broker.
+						The default value is 0, which means that all valid MQTT
+						messages are accepted. MQTT imposes a maximum payload
+						size of 268435455 bytes.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>password_file</option> <replaceable>file path</replaceable></term>
 				<listitem>
 					<para>Set the path to a password file. If defined, the

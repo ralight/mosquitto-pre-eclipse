@@ -28,6 +28,7 @@ Broker:
   connects.
 - Add support for TLSv1.2 and TLSv1.1.
 - Clients that connect with zero length will topics are now rejected.
+- Add the ability to set a maximum allowed PUBLISH payload size.
 - Fix an ACL with topic "#" incorrectly granting access to $SYS.
 - Fix retained messages incorrectly being set on wildcard topics, leading to
   duplicate retained messages being sent on subscription. Closes bug #1116233.
