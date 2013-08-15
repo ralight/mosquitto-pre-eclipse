@@ -29,6 +29,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef _UTIL_MOSQ_H_
 #define _UTIL_MOSQ_H_
 
+#include <stdio.h>
+
 #include "tls_mosq.h"
 #include "mosquitto.h"
 
