@@ -581,6 +581,9 @@ class Mosquitto:
             raise ValueError('Invalid port number.')
         if keepalive < 0:
             raise ValueError('Keepalive must be >=0.')
+        if bind_address != "" and bind_address != None:
+            if (sys.version_info[0] == 2 and sys.version_info[1] < 7) or (sys.version_info[0] == 3 and sys.version_info[1] < 2):
+                raise ValueError('bind_address requires Python 2.7 or 3.2.')
 
         self._host = host
         self._port = port
@@ -629,7 +632,10 @@ class Mosquitto:
         self._messages_reconnect_reset()
 
         try:
-            self._sock = socket.create_connection((self._host, self._port), source_address=(self._bind_address, 0))
+            if (sys.version_info[0] == 2 and sys.version_info[1] < 7) or (sys.version_info[0] == 3 and sys.version_info[1] < 2):
+                self._sock = socket.create_connection((self._host, self._port), source_address=(self._bind_address, 0))
+            else:
+                self._sock = socket.create_connection((self._host, self._port))
         except socket.error as err:
             (msg) = err
             if msg.errno != errno.EINPROGRESS:
