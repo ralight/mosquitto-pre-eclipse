@@ -58,6 +58,9 @@ mqttc.on_subscribe = on_subscribe
 mqttc.connect("test.mosquitto.org", 1883, 60)
 mqttc.subscribe("$SYS/#", 0)
 
+#mqttc.subscribe("string", 0)
+#mqttc.subscribe(("tuple", 1))
+#mqttc.subscribe([("list0", 0), ("list1", 1)])
 
 rc = 0
 while rc == 0:
