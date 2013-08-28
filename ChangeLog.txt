@@ -1,6 +1,9 @@
 1.3 - 201xxxxx
 ==============
 
+Broker:
+- The broker no longer ignores the auth_plugin_init() return value.
+
 Client library:
 - Fix support for Python 2.6, 3.0, 3.1.
 - Add support for un/subscribing to multiple topics at once in un/subscribe().
