@@ -755,6 +755,40 @@ int _mosquitto_packet_write(struct mosquitto *mosq)
 				mosq->in_callback = false;
 			}
 			pthread_mutex_unlock(&mosq->callback_mutex);
+		}else if(((packet->command)&0xF0) == DISCONNECT){
+			/* FIXME what cleanup needs doing here? 
+			 * incoming/outgoing messages? */
+			_mosquitto_socket_close(mosq);
+
+			/* Start of duplicate, possibly unnecessary code.
+			 * This does leave things in a consistent state at least. */
+			/* Free data and reset values */
+			pthread_mutex_lock(&mosq->out_packet_mutex);
+			mosq->current_out_packet = mosq->out_packet;
+			if(mosq->out_packet){
+				mosq->out_packet = mosq->out_packet->next;
+				if(!mosq->out_packet){
+					mosq->out_packet_last = NULL;
+				}
+			}
+			pthread_mutex_unlock(&mosq->out_packet_mutex);
+
+			_mosquitto_packet_cleanup(packet);
+			_mosquitto_free(packet);
+
+			pthread_mutex_lock(&mosq->msgtime_mutex);
+			mosq->last_msg_out = mosquitto_time();
+			pthread_mutex_unlock(&mosq->msgtime_mutex);
+			/* End of duplicate, possibly unnecessary code */
+
+			pthread_mutex_lock(&mosq->callback_mutex);
+			if(mosq->on_disconnect){
+				mosq->in_callback = true;
+				mosq->on_disconnect(mosq, mosq->userdata, 0);
+				mosq->in_callback = false;
+			}
+			pthread_mutex_unlock(&mosq->current_out_packet_mutex);
+			return MOSQ_ERR_SUCCESS;
 		}
 #endif
 
