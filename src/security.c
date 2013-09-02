@@ -51,6 +51,7 @@ int mosquitto_security_module_init(struct mosquitto_db *db)
 	void *lib;
 	int (*plugin_version)(void) = NULL;
 	int version;
+	int rc;
 	if(db->config->auth_plugin){
 		lib = LIB_LOAD(db->config->auth_plugin);
 		if(!lib){
@@ -126,7 +127,12 @@ int mosquitto_security_module_init(struct mosquitto_db *db)
 		db->auth_plugin.lib = lib;
 		db->auth_plugin.user_data = NULL;
 		if(db->auth_plugin.plugin_init){
-			db->auth_plugin.plugin_init(&db->auth_plugin.user_data, db->config->auth_options, db->config->auth_option_count);
+			rc = db->auth_plugin.plugin_init(&db->auth_plugin.user_data, db->config->auth_options, db->config->auth_option_count);
+			if(rc){
+				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR,
+						"Error: Authentication plugin returned %d when initialising.", rc);
+			}
+			return rc;
 		}
 	}else{
 		db->auth_plugin.lib = NULL;
