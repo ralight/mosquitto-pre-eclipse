@@ -1906,9 +1906,7 @@ class Mosquitto:
         san = cert.get('subjectAltName')
         if san:
             have_san_dns = False
-            print(san.count)
             for ((key,value)) in san:
-                print(key+" "+value)
                 if key == 'DNS':
                     have_san_dns = True
                     if value == self._host:
