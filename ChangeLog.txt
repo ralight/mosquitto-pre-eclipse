@@ -1,3 +1,9 @@
+1.2.1 - 201309xx
+================
+
+Client library:
+- Fix support for Python 2.6, 3.0, 3.1.
+
 1.2 - 20130708
 ==============
 
@@ -69,7 +75,6 @@ Broker:
 
 - mosquitto_passwd utility now reports errors more clearly.
 - Fix "mosquitto_passwd -U".
-
 
 Client library:
 - Add support for TLSv1.2 and TLSv1.1, except for on the Python module.
