@@ -84,45 +84,75 @@ int _mosquitto_server_certificate_verify(int preverify_ok, X509_STORE_CTX *ctx)
  */
 int _mosquitto_verify_certificate_hostname(X509 *cert, const char *hostname)
 {
-	int san_index;
 	int i;
-	char name[256];
+	int j;
+	char name_or_ip[256];
 	X509_NAME *subj;
-	CONF_VALUE *nval;
-	const unsigned char *data;
-	X509_EXTENSION *ext;
-	const X509V3_EXT_METHOD *meth;
-	STACK_OF(CONF_VALUE) *val;
 	bool have_san_dns = false;
+	STACK_OF(GENERAL_NAME) *san;
+	const GENERAL_NAME *nval;
+	const unsigned char *data;
+	char *tmp;
+	int found_zeros = 0;
+	int num;
 
-	san_index = X509_get_ext_by_NID(cert, NID_subject_alt_name, -1);
-	ext = X509_get_ext(cert, san_index);
-	if(ext){
-		meth = X509V3_EXT_get(ext);
-		if(meth){
-			data = ext->value->data;
-				
-			val = meth->i2v(meth, meth->d2i(0, &data, ext->value->length), 0);
-			for(i=0; i<sk_CONF_VALUE_num(val); i++){
-				nval = sk_CONF_VALUE_value(val, i);
-				if(!strcasecmp(nval->name, "DNS")){
-					if(!strcasecmp(nval->value, hostname)){
+	san = X509_get_ext_d2i(cert, NID_subject_alt_name, NULL, NULL);
+	if(san){
+		for(i=0; i<sk_GENERAL_NAME_num(san); i++){
+			nval = sk_GENERAL_NAME_value(san, i);
+			if(nval->type == GEN_DNS){
+				data = ASN1_STRING_data(nval->d.dNSName);
+				if(data && !strcasecmp((char *)data, hostname)){
+					return 1;
+				}
+				have_san_dns = true;
+			}else if(nval->type == GEN_IPADD){
+				data = ASN1_STRING_data(nval->d.iPAddress);
+				if(nval->d.iPAddress->length == 4){
+					/* IPv4 */
+					snprintf(name_or_ip, 256, "%d.%d.%d.%d", data[0], data[1], data[2], data[3]);
+					if(!strcmp(name_or_ip, hostname)){
 						return 1;
+					}
+				}else if(nval->d.iPAddress->length == 16){
+					/* IPv6 */
+					memset(name_or_ip, 0, 256);
+					tmp = name_or_ip;
+					if(data[0] == 0 && data[1] == 0){
+						strcat(tmp, ":");
+						found_zeros = 1;
 					}else{
-						have_san_dns = true;
+						sprintf(tmp, "%x", data[0]<<8 | data[1]);
+					}
+					tmp += strlen(tmp);
+					for(j=1; j<8; j++){
+						num = data[j*2]<<8 | data[j*2+1];
+						if(num){
+							sprintf(tmp, ":%x", num);
+							found_zeros = 0;
+						}else{
+							if(!found_zeros){
+								strcat(tmp, ":");
+								found_zeros = 1;
+							}
+						}
+						tmp += strlen(tmp);
+					}
+					if(!strcasecmp(name_or_ip, hostname)){
+						return 1;
 					}
 				}
 			}
-			if(have_san_dns){
-				/* Only check CN if subjectAltName DNS entry does not exist. */
-				return 0;
-			}
+		}
+		if(have_san_dns){
+			/* Only check CN if subjectAltName DNS entry does not exist. */
+			return 0;
 		}
 	}
 	subj = X509_get_subject_name(cert);
-	if(X509_NAME_get_text_by_NID(subj, NID_commonName, name, sizeof(name)) > 0){
-		name[sizeof(name) - 1] = '\0';
-		if (!strcasecmp(name, hostname)) return 1;
+	if(X509_NAME_get_text_by_NID(subj, NID_commonName, name_or_ip, sizeof(name_or_ip)) > 0){
+		name_or_ip[sizeof(name_or_ip) - 1] = '\0';
+		if (!strcasecmp(name_or_ip, hostname)) return 1;
 	}
 	return 0;
 }
