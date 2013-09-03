@@ -8,6 +8,7 @@ Broker:
 Client library:
 - Fix support for Python 2.6, 3.0, 3.1.
 - Fix TLS subjectAltName verification and segfaults.
+- Handle EAGAIN in Python on Windows. Closes bug #1220004.
 
 1.2 - 20130708
 ==============
