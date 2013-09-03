@@ -31,6 +31,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef WIN32
 #  include <winsock2.h>
+#else
+#  include <arpa/inet.h>
 #endif
 
 #include <string.h>
@@ -85,16 +87,24 @@ int _mosquitto_server_certificate_verify(int preverify_ok, X509_STORE_CTX *ctx)
 int _mosquitto_verify_certificate_hostname(X509 *cert, const char *hostname)
 {
 	int i;
-	int j;
-	char name_or_ip[256];
+	char name[256];
 	X509_NAME *subj;
 	bool have_san_dns = false;
 	STACK_OF(GENERAL_NAME) *san;
 	const GENERAL_NAME *nval;
 	const unsigned char *data;
-	char *tmp;
-	int found_zeros = 0;
-	int num;
+	unsigned char ipv6_addr[16];
+	unsigned char ipv4_addr[4];
+	int ipv6_ok;
+	int ipv4_ok;
+
+#ifdef WIN32
+	ipv6_ok = InetPton(AF_INET6, hostname, &ipv6_addr);
+	ipv4_ok = InetPton(AF_INET, hostname, &ipv4_addr);
+#else
+	ipv6_ok = inet_pton(AF_INET6, hostname, &ipv6_addr);
+	ipv4_ok = inet_pton(AF_INET, hostname, &ipv4_addr);
+#endif
 
 	san = X509_get_ext_d2i(cert, NID_subject_alt_name, NULL, NULL);
 	if(san){
@@ -108,37 +118,12 @@ int _mosquitto_verify_certificate_hostname(X509 *cert, const char *hostname)
 				have_san_dns = true;
 			}else if(nval->type == GEN_IPADD){
 				data = ASN1_STRING_data(nval->d.iPAddress);
-				if(nval->d.iPAddress->length == 4){
-					/* IPv4 */
-					snprintf(name_or_ip, 256, "%d.%d.%d.%d", data[0], data[1], data[2], data[3]);
-					if(!strcmp(name_or_ip, hostname)){
+				if(nval->d.iPAddress->length == 4 && ipv4_ok){
+					if(!memcmp(ipv4_addr, data, 4)){
 						return 1;
 					}
-				}else if(nval->d.iPAddress->length == 16){
-					/* IPv6 */
-					memset(name_or_ip, 0, 256);
-					tmp = name_or_ip;
-					if(data[0] == 0 && data[1] == 0){
-						strcat(tmp, ":");
-						found_zeros = 1;
-					}else{
-						sprintf(tmp, "%x", data[0]<<8 | data[1]);
-					}
-					tmp += strlen(tmp);
-					for(j=1; j<8; j++){
-						num = data[j*2]<<8 | data[j*2+1];
-						if(num){
-							sprintf(tmp, ":%x", num);
-							found_zeros = 0;
-						}else{
-							if(!found_zeros){
-								strcat(tmp, ":");
-								found_zeros = 1;
-							}
-						}
-						tmp += strlen(tmp);
-					}
-					if(!strcasecmp(name_or_ip, hostname)){
+				}else if(nval->d.iPAddress->length == 16 && ipv6_ok){
+					if(!memcmp(ipv6_addr, data, 16)){
 						return 1;
 					}
 				}
@@ -150,9 +135,9 @@ int _mosquitto_verify_certificate_hostname(X509 *cert, const char *hostname)
 		}
 	}
 	subj = X509_get_subject_name(cert);
-	if(X509_NAME_get_text_by_NID(subj, NID_commonName, name_or_ip, sizeof(name_or_ip)) > 0){
-		name_or_ip[sizeof(name_or_ip) - 1] = '\0';
-		if (!strcasecmp(name_or_ip, hostname)) return 1;
+	if(X509_NAME_get_text_by_NID(subj, NID_commonName, name, sizeof(name)) > 0){
+		name[sizeof(name) - 1] = '\0';
+		if (!strcasecmp(name, hostname)) return 1;
 	}
 	return 0;
 }
