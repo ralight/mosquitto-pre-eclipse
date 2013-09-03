@@ -37,6 +37,7 @@ This is an MQTT v3.1 client module. MQTT is a lightweight pub/sub messaging
 protocol that is easy to implement and suitable for low powered devices.
 """
 import errno
+import platform
 import random
 import select
 import socket
@@ -45,6 +46,11 @@ import struct
 import sys
 import threading
 import time
+
+if platform.system() == 'Windows':
+    EAGAIN = errno.WSAEWOULDBLOCK
+else:
+    EAGAIN = errno.EAGAIN
 
 if sys.version_info[0] < 3:
     PROTOCOL_NAME = "MQIsdp"
@@ -1169,7 +1175,7 @@ class Mosquitto:
                 (msg) = err
                 if self._ssl and (msg.errno == ssl.SSL_ERROR_WANT_READ or msg.errno == ssl.SSL_ERROR_WANT_WRITE):
                     return MOSQ_ERR_AGAIN
-                if msg.errno == errno.EAGAIN:
+                if msg.errno == EAGAIN:
                     return MOSQ_ERR_AGAIN
                 raise
             else:
@@ -1192,7 +1198,7 @@ class Mosquitto:
                     (msg) = err
                     if self._ssl and (msg.errno == ssl.SSL_ERROR_WANT_READ or msg.errno == ssl.SSL_ERROR_WANT_WRITE):
                         return MOSQ_ERR_AGAIN
-                    if msg.errno == errno.EAGAIN:
+                    if msg.errno == EAGAIN:
                         return MOSQ_ERR_AGAIN
                     raise
                 else:
@@ -1223,7 +1229,7 @@ class Mosquitto:
                 (msg) = err
                 if self._ssl and (msg.errno == ssl.SSL_ERROR_WANT_READ or msg.errno == ssl.SSL_ERROR_WANT_WRITE):
                     return MOSQ_ERR_AGAIN
-                if msg.errno == errno.EAGAIN:
+                if msg.errno == EAGAIN:
                     return MOSQ_ERR_AGAIN
                 raise
             else:
@@ -1261,7 +1267,7 @@ class Mosquitto:
                 (msg) = err
                 if self._ssl and (msg.errno == ssl.SSL_ERROR_WANT_READ or msg.errno == ssl.SSL_ERROR_WANT_WRITE):
                     return MOSQ_ERR_AGAIN
-                if msg.errno == errno.EAGAIN:
+                if msg.errno == EAGAIN:
                     return MOSQ_ERR_AGAIN
                 raise
 
