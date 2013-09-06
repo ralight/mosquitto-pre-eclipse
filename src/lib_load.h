@@ -41,7 +41,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #	define LIB_CLOSE(A) FreeLibrary(A)
 #	define LIB_SYM(HANDLE, SYM) GetProcAddress(HANDLE, SYM)
 #else
-#	define LIB_LOAD(A) dlopen(A, RTLD_NOW)
+#	define LIB_LOAD(A) dlopen(A, RTLD_NOW|RTLD_GLOBAL)
 #	define LIB_CLOSE(A) dlclose(A)
 #	define LIB_SYM(HANDLE, SYM) dlsym(HANDLE, SYM)
 #endif
