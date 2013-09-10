@@ -736,9 +736,13 @@ int mosquitto_tls_opts_set(struct mosquitto *mosq, int cert_reqs, const char *tl
 
 int mosquitto_tls_insecure_set(struct mosquitto *mosq, bool value)
 {
+#ifdef WITH_TLS
 	if(!mosq) return MOSQ_ERR_INVAL;
 	mosq->tls_insecure = value;
 	return MOSQ_ERR_SUCCESS;
+#else
+	return MOSQ_ERR_NOT_SUPPORTED;
+#endif
 }
 
 
