@@ -6,6 +6,7 @@ Broker:
   bug #1215084.
 - Use RTLD_GLOBAL when opening authentication plugins on posix systems. Fixes
   resolving of symbols in libraries used by authentication plugins.
+- Add/fix some config documentation.
 
 Client library:
 - Fix support for Python 2.6, 3.0, 3.1.
