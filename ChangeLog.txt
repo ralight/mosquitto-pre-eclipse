@@ -8,6 +8,7 @@ Client library:
 - Fix support for Python 2.6, 3.0, 3.1.
 - Add support for un/subscribing to multiple topics at once in un/subscribe().
 - Clients now close their socket after sending DISCONNECT.
+- Python client now contains its version number.
 
 
 1.2 - 20130708
