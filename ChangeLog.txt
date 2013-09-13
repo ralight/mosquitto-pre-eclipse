@@ -10,6 +10,8 @@ Broker:
 - Clients loaded from the persistence file on startup were not being added to
   the client hash, causing subtle problems when the client reconnected,
   including ACLs failing. This has been fixed.
+- Add note to mosquitto-tls man page stating that certificates need to be
+  unique. Closes bug #1221285.
 
 Client library:
 - Fix support for Python 2.6, 3.0, 3.1.
