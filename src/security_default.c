@@ -308,19 +308,29 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 
 	/* Loop through all ACLs for this client. */
 	while(acl_root){
-		local_topic = _mosquitto_strdup(topic);
-		if(!local_topic) return MOSQ_ERR_NOMEM;
-
 		acl_tail = acl_root;
 
-		if(local_topic[0] == '/'){
+		/* If subscription starts with $SYS, acl_tail->topic must also start with $SYS. */
+		if(!strncmp(topic, "$SYS", 4)){
+			if(strcmp(acl_tail->topic, "$SYS")){
+				acl_root = acl_root->next;
+				continue;
+			}
+		}else{
+			/* Topic doesn't start with $SYS */
+			if(!strcmp(acl_tail->topic, "#") && !acl_tail->next) return MOSQ_ERR_SUCCESS;
+		}
+
+		if(topic[0] == '/'){
 			if(strcmp(acl_tail->topic, "/")){
 				acl_root = acl_root->next;
-				_mosquitto_free(local_topic);
 				continue;
 			}
 			acl_tail = acl_tail->child;
 		}
+
+		local_topic = _mosquitto_strdup(topic);
+		if(!local_topic) return MOSQ_ERR_NOMEM;
 
 		token = strtok_r(local_topic, "/", &saveptr);
 		/* Loop through the topic looking for matches to this ACL. */
