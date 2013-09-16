@@ -7,6 +7,7 @@ Broker:
 - Use RTLD_GLOBAL when opening authentication plugins on posix systems. Fixes
   resolving of symbols in libraries used by authentication plugins.
 - Add/fix some config documentation.
+- Fix ACLs for topics with $SYS.
 - Clients loaded from the persistence file on startup were not being added to
   the client hash, causing subtle problems when the client reconnected,
   including ACLs failing. This has been fixed.
