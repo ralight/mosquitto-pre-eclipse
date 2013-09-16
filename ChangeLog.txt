@@ -13,6 +13,8 @@ Broker:
   including ACLs failing. This has been fixed.
 - Add note to mosquitto-tls man page stating that certificates need to be
   unique. Closes bug #1221285.
+- Fix incorrect retained message delivery when using wildcard subs in some
+  circumstances. Fixes bug #1226040.
 
 Client library:
 - Fix support for Python 2.6, 3.0, 3.1.

@@ -653,12 +653,13 @@ static int _retain_search(struct mosquitto_db *db, struct _mosquitto_subhier *su
 					_retain_process(db, branch->retained, context, sub, sub_qos);
 				}
 			}
-		}
-		if(!branch->next && tokens->next && !strcmp(tokens->next->topic, "#") && level>0){
-			if(branch->retained){
-				_retain_process(db, branch->retained, context, sub, sub_qos);
+			if(!branch->next && tokens->next && !strcmp(tokens->next->topic, "#") && level>0){
+				if(branch->retained){
+					_retain_process(db, branch->retained, context, sub, sub_qos);
+				}
 			}
 		}
+
 		branch = branch->next;
 	}
 	return flag;
