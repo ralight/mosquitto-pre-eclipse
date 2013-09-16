@@ -30,6 +30,7 @@
 import mosquitto
 
 def on_connect(mosq, obj, rc):
+    mosq.subscribe("$SYS/#", 0)
     print("rc: "+str(rc))
 
 def on_message(mosq, obj, msg):
@@ -56,11 +57,7 @@ mqttc.on_subscribe = on_subscribe
 # Uncomment to enable debug messages
 #mqttc.on_log = on_log
 mqttc.connect("test.mosquitto.org", 1883, 60)
-mqttc.subscribe("$SYS/#", 0)
 
 
-rc = 0
-while rc == 0:
-    rc = mqttc.loop()
+mqttc.loop_forever()
 
-print("rc: "+str(rc))
