@@ -74,7 +74,7 @@ WITH_PYTHON:=yes
 
 # Also bump lib/mosquitto.h, lib/python/setup.py, CMakeLists.txt,
 # installer/mosquitto.nsi, installer/mosquitto-cygwin.nsi
-VERSION=1.2
+VERSION=1.2.1
 TIMESTAMP:=$(shell date "+%F %T%z")
 
 # Client library SO version. Bump if incompatible API/ABI changes are made.
