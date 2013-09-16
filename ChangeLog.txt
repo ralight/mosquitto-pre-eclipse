@@ -21,6 +21,7 @@ Client library:
 - Fix TLS subjectAltName verification and segfaults.
 - Handle EAGAIN in Python on Windows. Closes bug #1220004.
 - Fix compilation when using WITH_TLS=no.
+- Don't fail reconnecting in Python when broker is temporarily unavailable.
 
 1.2 - 20130708
 ==============

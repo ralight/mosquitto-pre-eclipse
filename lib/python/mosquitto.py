@@ -1096,7 +1096,10 @@ class Mosquitto:
                     self._state_mutex.release()
                 else:
                     self._state_mutex.release()
-                    self.reconnect()
+                    try:
+                        self.reconnect()
+                    except socket.error as err:
+                        pass
         return rc
 
     def loop_start(self):
