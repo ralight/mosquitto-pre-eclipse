@@ -3,6 +3,8 @@
 
 Broker:
 - The broker no longer ignores the auth_plugin_init() return value.
+- Accept SSLv2/SSLv3 HELLOs when using TLSv1, whilst keeping SSLv2 and SSLv3
+  disabled. This increases client compatibility without sacrificing security.
 
 Client library:
 - Fix support for Python 2.6, 3.0, 3.1.
