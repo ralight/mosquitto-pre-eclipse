@@ -382,19 +382,22 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 			}else if(!strcmp(listener->tls_version, "tlsv1.1")){
 				listener->ssl_ctx = SSL_CTX_new(TLSv1_1_server_method());
 			}else if(!strcmp(listener->tls_version, "tlsv1")){
-				listener->ssl_ctx = SSL_CTX_new(TLSv1_server_method());
+				listener->ssl_ctx = SSL_CTX_new(SSLv23_server_method());
 			}
 #else
-			listener->ssl_ctx = SSL_CTX_new(TLSv1_server_method());
+			listener->ssl_ctx = SSL_CTX_new(SSLv23_server_method());
 #endif
 			if(!listener->ssl_ctx){
 				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create TLS context.");
 				COMPAT_CLOSE(sock);
 				return 1;
 			}
-#if OPENSSL_VERSION_NUMBER >= 0x10000000
-			/* Disable compression */
-			SSL_CTX_set_options(listener->ssl_ctx, SSL_OP_NO_COMPRESSION);
+#ifdef SSL_OP_NO_COMPRESSION
+			/* Disable compression
+			 * Don't accept SSLv2 or SSLv3 */
+			SSL_CTX_set_options(listener->ssl_ctx, SSL_OP_NO_COMPRESSION | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
+#else
+			SSL_CTX_set_options(listener->ssl_ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
 #endif
 #ifdef SSL_MODE_RELEASE_BUFFERS
 			/* Use even less memory per SSL connection. */
