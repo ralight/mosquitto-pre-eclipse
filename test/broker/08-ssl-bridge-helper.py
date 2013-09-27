@@ -21,14 +21,9 @@ publish_packet = mosq_test.gen_publish("bridge/ssl/test", qos=0, payload="messag
 
 disconnect_packet = mosq_test.gen_disconnect()
 
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-sock.connect(("localhost", 1889))
-sock.send(connect_packet)
-
-if mosq_test.expect_packet(sock, "connack", connack_packet):
-    sock.send(publish_packet)
-    sock.send(disconnect_packet)
-
+sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=1889, connack_error="helper connack")
+sock.send(publish_packet)
+sock.send(disconnect_packet)
 sock.close()
     
 exit(0)

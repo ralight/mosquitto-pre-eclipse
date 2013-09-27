@@ -25,13 +25,9 @@ broker = subprocess.Popen(['../../src/mosquitto', '-c', '01-connect-uname-no-pas
 try:
     time.sleep(0.5)
 
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect(("localhost", 1888))
-    sock.send(connect_packet)
-    if mosq_test.expect_packet(sock, "connack", connack_packet):
-        rc = 0
- 
+    sock = mosq_test.do_client_connect(connect_packet, connack_packet)
     sock.close()
+    rc = 0
 finally:
     broker.terminate()
     broker.wait()

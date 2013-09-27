@@ -31,20 +31,15 @@ broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'], stderr=subproce
 try:
     time.sleep(0.5)
 
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.settimeout(30)
-    sock.connect(("localhost", 1888))
-    sock.send(connect_packet)
+    sock = mosq_test.do_client_connect(connect_packet, connack_packet, timeout=30)
+    sock.send(subscribe_packet)
 
-    if mosq_test.expect_packet(sock, "connack", connack_packet):
-        sock.send(subscribe_packet)
+    if mosq_test.expect_packet(sock, "suback", suback_packet):
+        will = subprocess.Popen(['./07-will-null-helper.py'])
+        will.wait()
 
-        if mosq_test.expect_packet(sock, "suback", suback_packet):
-            will = subprocess.Popen(['./07-will-null-helper.py'])
-            will.wait()
-
-            if mosq_test.expect_packet(sock, "publish", publish_packet):
-                rc = 0
+        if mosq_test.expect_packet(sock, "publish", publish_packet):
+            rc = 0
 
     sock.close()
 finally:

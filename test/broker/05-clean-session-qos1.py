@@ -34,32 +34,23 @@ broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'], stderr=subproce
 try:
     time.sleep(0.5)
 
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect(("localhost", 1888))
-    sock.send(connect_packet)
+    sock = mosq_test.do_client_connect(connect_packet, connack_packet)
+    sock.send(subscribe_packet)
 
-    if mosq_test.expect_packet(sock, "connack", connack_packet):
-        sock.send(subscribe_packet)
+    if mosq_test.expect_packet(sock, "suback", suback_packet):
+        sock.send(disconnect_packet)
+        sock.close()
 
-        if mosq_test.expect_packet(sock, "suback", suback_packet):
-            sock.send(disconnect_packet)
-            sock.close()
+        pub = subprocess.Popen(['./05-clean-session-qos1-helper.py'])
+        pub.wait()
 
-            pub = subprocess.Popen(['./05-clean-session-qos1-helper.py'])
-            pub.wait()
+        # Now reconnect and expect a publish message.
+        sock = mosq_test.do_client_connect(connect_packet, connack_packet, timeout=30)
+        if mosq_test.expect_packet(sock, "publish", publish_packet):
+            sock.send(puback_packet)
+            rc = 0
 
-            # Now reconnect and expect a publish message.
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(30)
-            sock.connect(("localhost", 1888))
-            sock.send(connect_packet)
-
-            if mosq_test.expect_packet(sock, "connack", connack_packet):
-                if mosq_test.expect_packet(sock, "publish", publish_packet):
-                    sock.send(puback_packet)
-                    rc = 0
-
-    sock.close()
+        sock.close()
 finally:
     broker.terminate()
     broker.wait()
