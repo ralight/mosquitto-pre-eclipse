@@ -20,13 +20,8 @@ keepalive = 60
 connect_packet = mosq_test.gen_connect("test-helper", keepalive=keepalive, will_topic="will/qos0/test", will_payload=struct.pack("!4sB7s", "will", 0, "message"))
 connack_packet = mosq_test.gen_connack(rc=0)
 
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-sock.connect(("localhost", 1888))
-sock.send(connect_packet)
-
-if mosq_test.expect_packet(sock, "connack", connack_packet):
-    rc = 0
-
+sock = mosq_test.do_client_connect(connect_packet, connack_packet)
+rc = 0
 sock.close()
     
 exit(rc)

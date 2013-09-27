@@ -32,22 +32,17 @@ broker = subprocess.Popen(['../../src/mosquitto', '-c', '03-publish-c2b-timeout-
 try:
     time.sleep(0.5)
 
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.settimeout(60) # 60 seconds timeout is much longer than 5 seconds message retry.
-    sock.connect(("localhost", 1888))
-    sock.send(connect_packet)
+    sock = mosq_test.do_client_connect(connect_packet, connack_packet)
+    sock.send(publish_packet)
 
-    if mosq_test.expect_packet(sock, "connack", connack_packet):
-        sock.send(publish_packet)
+    if mosq_test.expect_packet(sock, "pubrec", pubrec_packet):
+        # Timeout is 8 seconds which means the broker should repeat the PUBREC.
 
         if mosq_test.expect_packet(sock, "pubrec", pubrec_packet):
-            # Timeout is 8 seconds which means the broker should repeat the PUBREC.
+            sock.send(pubrel_packet)
 
-            if mosq_test.expect_packet(sock, "pubrec", pubrec_packet):
-                sock.send(pubrel_packet)
-
-                if mosq_test.expect_packet(sock, "pubcomp", pubcomp_packet):
-                    rc = 0
+            if mosq_test.expect_packet(sock, "pubcomp", pubcomp_packet):
+                rc = 0
 
     sock.close()
 finally:

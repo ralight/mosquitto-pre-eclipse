@@ -37,33 +37,28 @@ broker = subprocess.Popen(['../../src/mosquitto', '-c', '03-publish-b2c-timeout-
 try:
     time.sleep(0.5)
 
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.settimeout(60) # 60 seconds timeout is much longer than 5 seconds message retry.
-    sock.connect(("localhost", 1888))
-    sock.send(connect_packet)
+    sock = mosq_test.do_client_connect(connect_packet, connack_packet)
+    sock.send(subscribe_packet)
 
-    if mosq_test.expect_packet(sock, "connack", connack_packet):
-        sock.send(subscribe_packet)
+    if mosq_test.expect_packet(sock, "suback", suback_packet):
+        pub = subprocess.Popen(['./03-publish-b2c-timeout-qos2-helper.py'])
+        pub.wait()
+        # Should have now received a publish command
 
-        if mosq_test.expect_packet(sock, "suback", suback_packet):
-            pub = subprocess.Popen(['./03-publish-b2c-timeout-qos2-helper.py'])
-            pub.wait()
-            # Should have now received a publish command
+        if mosq_test.expect_packet(sock, "publish", publish_packet):
+            # Wait for longer than 5 seconds to get republish with dup set
+            # This is covered by the 8 second timeout
 
-            if mosq_test.expect_packet(sock, "publish", publish_packet):
-                # Wait for longer than 5 seconds to get republish with dup set
-                # This is covered by the 8 second timeout
+            if mosq_test.expect_packet(sock, "dup publish", publish_dup_packet):
+                sock.send(pubrec_packet)
 
-                if mosq_test.expect_packet(sock, "dup publish", publish_dup_packet):
-                    sock.send(pubrec_packet)
+                if mosq_test.expect_packet(sock, "pubrel", pubrel_packet):
+                    # Wait for longer than 5 seconds to get republish with dup set
+                    # This is covered by the 8 second timeout
 
-                    if mosq_test.expect_packet(sock, "pubrel", pubrel_packet):
-                        # Wait for longer than 5 seconds to get republish with dup set
-                        # This is covered by the 8 second timeout
-
-                        if mosq_test.expect_packet(sock, "dup pubrel", pubrel_dup_packet):
-                            sock.send(pubcomp_packet)
-                            rc = 0
+                    if mosq_test.expect_packet(sock, "dup pubrel", pubrel_dup_packet):
+                        sock.send(pubcomp_packet)
+                        rc = 0
 
     sock.close()
 finally:

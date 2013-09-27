@@ -26,25 +26,11 @@ broker = subprocess.Popen(['../../src/mosquitto', '-c', '07-will-acl-denied.conf
 try:
     time.sleep(0.5)
 
-    sock_ok = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock_ok.settimeout(5)
-    sock_ok.connect(("localhost", 1888))
-    sock_ok.send(connect_packet_ok)
-    sock = None
-
-    if mosq_test.expect_packet(sock_ok, "connack_ok", connack_packet_ok):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(5)
-        sock.connect(("localhost", 1888))
-        sock.send(connect_packet)
-
-        if mosq_test.expect_packet(sock, "connack", connack_packet):
-            rc = 0
-
+    sock_ok = mosq_test.do_client_connect(connect_packet_ok, connack_packet_ok, timeout=5, connack_error="connack ok")
+    sock = mosq_test.do_client_connect(connect_packet, connack_packet)
+    rc = 0
+    sock.close()
     sock_ok.close()
-    if sock:
-        sock.close()
-
 finally:
     broker.terminate()
     broker.wait()

@@ -25,13 +25,8 @@ broker = subprocess.Popen(['../../src/mosquitto', '-c', '09-plugin-auth-unpwd-fa
 try:
     time.sleep(0.5)
 
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.settimeout(20)
-    sock.connect(("localhost", 1888))
-    sock.send(connect_packet)
-
-    if mosq_test.expect_packet(sock, "connack", connack_packet):
-        rc = 0
+    sock = mosq_test.do_client_connect(connect_packet, connack_packet, timeout=20)
+    rc = 0
 
     sock.close()
 finally:

@@ -22,16 +22,12 @@ puback_packet = mosq_test.gen_puback(mid=1)
 
 disconnect_packet = mosq_test.gen_disconnect()
 
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-sock.connect(("localhost", 1889))
-sock.send(connect_packet)
+sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=1889, connack_error="helper connack")
+sock.send(publish_packet)
 
-if mosq_test.expect_packet(sock, "connack", connack_packet):
-    sock.send(publish_packet)
-
-    if mosq_test.expect_packet(sock, "puback", puback_packet):
-        sock.send(disconnect_packet)
-        rc = 0
+if mosq_test.expect_packet(sock, "puback", puback_packet):
+    sock.send(disconnect_packet)
+    rc = 0
 
 sock.close()
     

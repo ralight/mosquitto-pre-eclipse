@@ -1,3 +1,4 @@
+import socket
 import struct
 
 def expect_packet(sock, name, expected):
@@ -24,6 +25,18 @@ def packet_matches(name, recvd, expected):
         return 0
     else:
         return 1
+
+def do_client_connect(connect_packet, connack_packet, hostname="localhost", port=1888, timeout=60, connack_error="connack"):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(timeout)
+    sock.connect((hostname, port))
+    sock.send(connect_packet)
+
+    if expect_packet(sock, connack_error, connack_packet):
+        return sock
+    else:
+        sock.close()
+        raise ValueError
 
 def remaining_length(packet):
     l = min(5, len(packet))
