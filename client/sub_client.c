@@ -133,9 +133,10 @@ void print_usage(void)
 	printf("                     [-u username [-P password]]\n");
 	printf("                     [--will-topic [--will-payload payload] [--will-qos qos] [--will-retain]]\n");
 #ifdef WITH_TLS
-	printf("                     [{--cafile file | --capath dir} [--cert file] [--key file] [--insecure]]\n");
+	printf("                     [{--cafile file | --capath dir} [--cert file] [--key file]\n");
+	printf("                      [--ciphers ciphers] [--insecure]]\n");
 #ifdef WITH_TLS_PSK
-	printf("                     [--psk hex-key --psk-identity identity]\n");
+	printf("                     [--psk hex-key --psk-identity identity [--ciphers ciphers]]\n");
 #endif
 #endif
 	printf("       mosquitto_sub --help\n\n");
@@ -170,6 +171,7 @@ void print_usage(void)
 	printf("            communication.\n");
 	printf(" --cert : client certificate for authentication, if required by server.\n");
 	printf(" --key : client private key for authentication, if required by server.\n");
+	printf(" --ciphers : openssl compatible list of TLS ciphers to support.\n");
 	printf(" --tls-version : TLS protocol version, can be one of tlsv1.2 tlsv1.1 or tlsv1.\n");
 	printf("                 Defaults to tlsv1.2 if available.\n");
 	printf(" --insecure : do not check that the server certificate hostname matches the remote\n");
@@ -217,6 +219,8 @@ int main(int argc, char *argv[])
 
 	char *psk = NULL;
 	char *psk_identity = NULL;
+
+	char *ciphers = NULL;
 
 	memset(&ud, 0, sizeof(struct userdata));
 
@@ -271,6 +275,15 @@ int main(int argc, char *argv[])
 				return 1;
 			}else{
 				certfile = argv[i+1];
+			}
+			i++;
+		}else if(!strcmp(argv[i], "--ciphers")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --ciphers argument given but no ciphers specified.\n\n");
+				print_usage();
+				return 1;
+			}else{
+				ciphers = argv[i+1];
 			}
 			i++;
 		}else if(!strcmp(argv[i], "-d") || !strcmp(argv[i], "--debug")){
@@ -563,7 +576,7 @@ int main(int argc, char *argv[])
 		mosquitto_lib_cleanup();
 		return 1;
 	}
-	if(tls_version && mosquitto_tls_opts_set(mosq, 1, tls_version, NULL)){
+	if(tls_version && mosquitto_tls_opts_set(mosq, 1, tls_version, ciphers)){
 		if(!ud.quiet) fprintf(stderr, "Error: Problem setting TLS options.\n");
 		mosquitto_lib_cleanup();
 		return 1;

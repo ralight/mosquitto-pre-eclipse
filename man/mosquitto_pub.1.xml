@@ -51,12 +51,14 @@
 					</group>
 					<arg><option>--cert</option> <replaceable>file</replaceable></arg>
 					<arg><option>--key</option> <replaceable>file</replaceable></arg>
+					<arg><option>--ciphers</option> <replaceable>ciphers</replaceable></arg>
 					<arg><option>--tls-version</option> <replaceable>version</replaceable></arg>
 					<arg><option>--insecure</option></arg>
 				</arg>
 				<arg>
 					<arg choice='plain'><option>--psk</option> <replaceable>hex-key</replaceable></arg>
 					<arg choice='plain'><option>--psk-identity</option> <replaceable>identity</replaceable></arg>
+					<arg><option>--ciphers</option> <replaceable>ciphers</replaceable></arg>
 					<arg><option>--tls-version</option> <replaceable>version</replaceable></arg>
 				</arg>
 			</group>
@@ -116,6 +118,15 @@
 						certificate for this client, if required by the
 						server.</para>
 					<para>See also <option>--key</option>.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>--ciphers</option></term>
+				<listitem>
+					<para>An openssl compatible list of TLS ciphers to support
+						in the client. See
+						<citerefentry><refentrytitle>ciphers</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+						for more information.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

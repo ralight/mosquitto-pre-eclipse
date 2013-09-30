@@ -130,6 +130,15 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>--ciphers</option></term>
+				<listitem>
+					<para>An openssl compatible list of TLS ciphers to support
+						in the client. See
+						<citerefentry><refentrytitle>ciphers</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+						for more information.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>-d</option></term>
 				<term><option>--debug</option></term>
 				<listitem>
