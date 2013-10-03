@@ -980,38 +980,19 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 							return MOSQ_ERR_NOMEM;
 						}
 						cur_bridge = &(config->bridges[config->bridge_count-1]);
+						memset(cur_bridge, 0, sizeof(struct _mqtt3_bridge));
 						cur_bridge->name = _mosquitto_strdup(token);
-						cur_bridge->addresses = NULL;
-						cur_bridge->address_count = 0;
-						cur_bridge->cur_address = 0;
-						cur_bridge->round_robin = false;
+						if(!cur_bridge->name){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+							return MOSQ_ERR_NOMEM;
+						}
 						cur_bridge->keepalive = 60;
-						cur_bridge->clean_session = false;
-						cur_bridge->clientid = NULL;
-						cur_bridge->topics = NULL;
-						cur_bridge->topic_count = 0;
-						cur_bridge->topic_remapping = false;
-						cur_bridge->restart_t = 0;
-						cur_bridge->username = NULL;
-						cur_bridge->password = NULL;
 						cur_bridge->notifications = true;
-						cur_bridge->notification_topic = NULL;
 						cur_bridge->start_type = bst_automatic;
 						cur_bridge->idle_timeout = 60;
 						cur_bridge->restart_timeout = 30;
 						cur_bridge->threshold = 10;
 						cur_bridge->try_private = true;
-#ifdef WITH_TLS
-						cur_bridge->tls_cafile = NULL;
-						cur_bridge->tls_capath = NULL;
-						cur_bridge->tls_certfile = NULL;
-						cur_bridge->tls_keyfile = NULL;
-						cur_bridge->tls_insecure = false;
-#  ifdef REAL_WITH_TLS_PSK
-						cur_bridge->tls_psk = NULL;
-						cur_bridge->tls_psk_identity = NULL;
-#  endif
-#endif
 					}else{
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty connection value in configuration.");
 						return MOSQ_ERR_INVAL;
