@@ -1,3 +1,10 @@
+1.2.2 - 201310xx
+================
+
+Client library:
+- Fix incorrect inflight message accounting, which caused messages to go
+  unsent. Fixes bug #1237351.
+
 1.2.1 - 20130918
 ================
 
