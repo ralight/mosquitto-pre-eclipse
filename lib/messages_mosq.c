@@ -116,15 +116,14 @@ void mosquitto_message_free(struct mosquitto_message **message)
 
 void _mosquitto_message_queue(struct mosquitto *mosq, struct mosquitto_message_all *message, bool doinc)
 {
+	/* mosq->message_mutex should be locked before entering this function */
 	assert(mosq);
 	assert(message);
 
-	pthread_mutex_lock(&mosq->message_mutex);
 	mosq->queue_len++;
 	if(doinc == true && message->msg.qos > 0 && (mosq->max_inflight_messages == 0 || mosq->inflight_messages < mosq->max_inflight_messages)){
 		mosq->inflight_messages++;
 	}
-	pthread_mutex_unlock(&mosq->message_mutex);
 	message->next = NULL;
 	if(mosq->messages_last){
 		mosq->messages_last->next = message;
