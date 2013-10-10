@@ -577,14 +577,11 @@ int mqtt3_db_message_reconnect_reset(struct mosquitto *context)
 	 * appropriate "publish" state, then the queued messages won't
 	 * get sent until the client next receives a message - and they
 	 * will be sent out of order.
-	 * This only sets a single message up to be published, but once
-	 * it is sent the full max_inflight amount of messages will be
-	 * queued up for sending.
 	 */
 	if(context->msgs){
 		count = 0;
 		msg = context->msgs;
-		while(msg && (max_queued == 0 || count < max_queued)){
+		while(msg && (max_inflight == 0 || count < max_inflight)){
 			if(msg->state == mosq_ms_queued){
 				switch(msg->qos){
 					case 0:

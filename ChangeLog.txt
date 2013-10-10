@@ -1,6 +1,10 @@
 1.2.2 - 201310xx
 ================
 
+Broker:
+- Fix compliance with max_inflight_messages when a non-clean session client
+  reconnects. Closes one of the issues on bug #1237389.
+
 Client library:
 - Fix incorrect inflight message accounting, which caused messages to go
   unsent. Fixes bug #1237351.
