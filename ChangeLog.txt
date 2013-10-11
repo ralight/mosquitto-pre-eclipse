@@ -4,6 +4,8 @@
 Broker:
 - Fix compliance with max_inflight_messages when a non-clean session client
   reconnects. Closes one of the issues on bug #1237389.
+- Fix inflight message limit behaviour. Previously it was possible for all
+  messages to get stuck in certain situations.
 
 Client library:
 - Fix incorrect inflight message accounting, which caused messages to go
