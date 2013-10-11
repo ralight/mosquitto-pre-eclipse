@@ -173,10 +173,10 @@ int mqtt3_db_message_delete(struct mosquitto *context, uint16_t mid, enum mosqui
 
 	tail = context->msgs;
 	while(tail){
-		msg_index++;
-		if(tail->state == mosq_ms_queued && msg_index <= max_inflight){
-			tail->timestamp = mosquitto_time();
-			if(tail->direction == mosq_md_out){
+		if(tail->direction == mosq_md_out){
+			msg_index++;
+			if(tail->state == mosq_ms_queued && msg_index <= max_inflight){
+				tail->timestamp = mosquitto_time();
 				switch(tail->qos){
 					case 0:
 						tail->state = mosq_ms_publish_qos0;
@@ -195,7 +195,9 @@ int mqtt3_db_message_delete(struct mosquitto *context, uint16_t mid, enum mosqui
 			}
 		}
 		if(tail->mid == mid && tail->direction == dir){
-			msg_index--;
+			if(dir == mosq_md_out){
+				msg_index--;
+			}
 			/* FIXME - it would be nice to be able to remove the stored message here if ref_count==0 */
 			tail->store->ref_count--;
 			if(last){
@@ -275,8 +277,14 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 	}
 
 	if(context->sock != INVALID_SOCKET){
-		if(qos == 0 || max_inflight == 0 || msg_count < max_inflight){
-			if(dir == mosq_md_out){
+		if(dir == mosq_md_in){
+			if(qos == 2){
+				state = mosq_ms_wait_for_pubrel;
+			}else{
+				return 1;
+			}
+		}else{
+			if(qos == 0 || max_inflight == 0 || msg_count < max_inflight){
 				switch(qos){
 					case 0:
 						state = mosq_ms_publish_qos0;
@@ -288,23 +296,17 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 						state = mosq_ms_publish_qos2;
 						break;
 				}
+			}else if(max_queued == 0 || msg_count-max_inflight < max_queued){
+				state = mosq_ms_queued;
+				rc = 2;
 			}else{
-				if(qos == 2){
-					state = mosq_ms_wait_for_pubrel;
-				}else{
-					return 1;
-				}
-			}
-		}else if(max_queued == 0 || msg_count-max_inflight < max_queued){
-			state = mosq_ms_queued;
-			rc = 2;
-		}else{
-			/* Dropping message due to full queue.
-		 	* FIXME - should this be logged? */
+				/* Dropping message due to full queue.
+				* FIXME - should this be logged? */
 #ifdef WITH_SYS_TREE
-			g_msgs_dropped++;
+				g_msgs_dropped++;
 #endif
-			return 2;
+				return 2;
+			}
 		}
 	}else{
 		if(max_queued > 0 && msg_count >= max_queued){
@@ -663,10 +665,11 @@ int mqtt3_db_message_release(struct mosquitto_db *db, struct mosquitto *context,
 
 	tail = context->msgs;
 	while(tail){
-		msg_index++;
-		if(tail->state == mosq_ms_queued && msg_index <= max_inflight){
-			tail->timestamp = mosquitto_time();
-			if(tail->direction == mosq_md_out){
+		if(tail->direction == mosq_md_out){
+			msg_index++;
+
+			if(tail->state == mosq_ms_queued && msg_index <= max_inflight){
+				tail->timestamp = mosquitto_time();
 				switch(tail->qos){
 					case 0:
 						tail->state = mosq_ms_publish_qos0;
@@ -677,11 +680,6 @@ int mqtt3_db_message_release(struct mosquitto_db *db, struct mosquitto *context,
 					case 2:
 						tail->state = mosq_ms_publish_qos2;
 						break;
-				}
-			}else{
-				if(tail->qos == 2){
-					_mosquitto_send_pubrec(context, tail->mid);
-					tail->state = mosq_ms_wait_for_pubrel;
 				}
 			}
 		}
@@ -845,7 +843,7 @@ int mqtt3_db_message_write(struct mosquitto *context)
 			}
 		}else{
 			/* state == mosq_ms_queued */
-			if(tail->direction == mosq_md_in && (max_inflight == 0 || msg_count < max_inflight)){
+			if(tail->direction == mosq_md_in){
 				if(tail->qos == 2){
 					tail->state = mosq_ms_send_pubrec;
 				}
