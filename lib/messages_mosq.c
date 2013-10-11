@@ -201,7 +201,9 @@ int _mosquitto_message_remove(struct mosquitto *mosq, uint16_t mid, enum mosquit
 			}
 			*message = cur;
 			mosq->queue_len--;
-			if(!mosq->messages){
+			if(cur->next == NULL){
+				mosq->messages_last = prev;
+			}else if(!mosq->messages){
 				mosq->messages_last = NULL;
 			}
 			if((cur->msg.qos == 2 && dir == mosq_md_in) || (cur->msg.qos > 0 && dir == mosq_md_out)){
