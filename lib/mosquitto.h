@@ -1171,6 +1171,14 @@ libmosq_EXPORT void mosquitto_log_callback_set(struct mosquitto *mosq, void (*on
  * between reconnections by setting reconnect_exponential_backoff to true and
  * set an upper bound on the delay with reconnect_delay_max.
  *
+ * Example 1:
+ *	delay=2, delay_max=10, exponential_backoff=False
+ *	Delays would be: 2, 4, 6, 8, 10, 10, ...
+ *
+ * Example 2:
+ *	delay=3, delay_max=30, exponential_backoff=True
+ *	Delays would be: 3, 6, 12, 24, 30, 30, ...
+ *
  * Parameters:
  *  mosq -                          a valid mosquitto instance.
  *  reconnect_delay -               the number of seconds to wait between

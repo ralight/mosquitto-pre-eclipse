@@ -12,6 +12,8 @@ Client library:
   unsent. Partial fix for bug #1237351.
 - Fix potential memory corruption when sending QoS>0 messages at a high rate
   using the threaded interface. Further fix for #1237351.
+- Fix incorrect delay scaling when exponential_backoff=true in
+  mosquitto_reconnect_delay_set().
 
 1.2.1 - 20130918
 ================

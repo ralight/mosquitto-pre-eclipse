@@ -982,6 +982,36 @@ class Mosquitto:
         self._message_retry = retry
 
     def reconnect_delay_set(self, delay, delay_max, exponential_backoff):
+        """Set the amount of time that the client will wait before reconnecting
+        after losing its connection to the broker.
+
+        delay is the number of seconds to wait between successive reconnect
+        attempts. By default this is set to 1.
+        
+        delay_max is the maximum number of seconds to wait between reconnection
+        attempts and is also set to 1 by default. This means that the default
+        behaviour is to attempt to reconnect every second.
+
+        If exponential_backoff is False and delay_max is greater than delay,
+        then on each successive reconnect failure the delay will increase
+        linearly in the form delay*failure_count.
+
+        If exponential_backoff is True and delay_max is greater than delay,
+        then on each successive reconnect failure the delay will increase
+        exponentially in the form delay*failure_count^2.
+
+        In both cases, the maximum delay ever used is set by delay_max.
+
+        Example 1:
+            delay=2, delay_max=10, exponential_backoff=False
+
+            Delays would be: 2, 4, 6, 8, 10, 10, ...
+
+        Example 2:
+            delay=3, delay_max=30, exponential_backoff=True
+
+            Delays would be: 3, 6, 12, 24, 30, 30, ...
+        """
         if not isinstance(delay, int) or delay <= 0:
             ValueError("delay must be a positive integer.")
         if not isinstance(delay_max, int) or delay_max < delay:
@@ -1079,9 +1109,10 @@ class Mosquitto:
                 self._state_mutex.release()
             else:
                 self._state_mutex.release()
-                reconnect_delay = self._reconnect_delay
                 if reconnect_delay > 0 and self._reconnect_exponential_backoff:
-                    reconnect_delay = reconnect_delay * self._reconnect_delay*reconnects*reconnects
+                    reconnect_delay = self._reconnect_delay*reconnects*reconnects
+                else:
+                    reconnect_delay = self._reconnect_delay
 
                 if reconnect_delay > self._reconnect_delay_max:
                     reconnect_delay = self._reconnect_delay_max
