@@ -14,6 +14,7 @@ Client library:
   using the threaded interface. Further fix for #1237351.
 - Fix incorrect delay scaling when exponential_backoff=true in
   mosquitto_reconnect_delay_set().
+- Some pep8 fixes for Python.
 
 1.2.1 - 20130918
 ================
