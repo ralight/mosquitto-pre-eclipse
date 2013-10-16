@@ -1,11 +1,12 @@
 #include <stdio.h>
+#include <string.h>
 #include <mosquitto.h>
 
 void print_error(const char *topic, char **topics, int topic_count)
 {
 	int i;
 	printf("TOPIC: %s\n", topic);
-	printf("TOKENS: ", topic);
+	printf("TOKENS: ");
 	for(i=0; i<topic_count; i++){
 		printf("%s", topics[i]);
 		if(i+1<topic_count){
