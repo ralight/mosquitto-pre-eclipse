@@ -883,7 +883,7 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 		}else{
 			pthread_mutex_unlock(&mosq->state_mutex);
 
-			if(reconnect_delay > 0 && mosq->reconnect_exponential_backoff){
+			if(mosq->reconnect_delay > 0 && mosq->reconnect_exponential_backoff){
 				reconnect_delay = mosq->reconnect_delay*reconnects*reconnects;
 			}else{
 				reconnect_delay = mosq->reconnect_delay;

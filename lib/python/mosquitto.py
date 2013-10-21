@@ -1125,7 +1125,7 @@ class Mosquitto:
                 self._state_mutex.release()
             else:
                 self._state_mutex.release()
-                if reconnect_delay > 0 and self._reconnect_exponential_backoff:
+                if self._reconnect_delay > 0 and self._reconnect_exponential_backoff:
                     reconnect_delay = self._reconnect_delay*reconnects*reconnects
                 else:
                     reconnect_delay = self._reconnect_delay
