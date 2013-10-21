@@ -65,7 +65,7 @@ extern "C" {
 
 #define LIBMOSQUITTO_MAJOR 1
 #define LIBMOSQUITTO_MINOR 2
-#define LIBMOSQUITTO_REVISION 1
+#define LIBMOSQUITTO_REVISION 2
 /* LIBMOSQUITTO_VERSION_NUMBER looks like 1002001 for e.g. version 1.2.1. */
 #define LIBMOSQUITTO_VERSION_NUMBER (LIBMOSQUITTO_MAJOR*1000000+LIBMOSQUITTO_MINOR*1000+LIBMOSQUITTO_REVISION)
 
@@ -1170,6 +1170,14 @@ libmosq_EXPORT void mosquitto_log_callback_set(struct mosquitto *mosq, void (*on
  * reconnection attempts. You may also enable exponential backoff of the time
  * between reconnections by setting reconnect_exponential_backoff to true and
  * set an upper bound on the delay with reconnect_delay_max.
+ *
+ * Example 1:
+ *	delay=2, delay_max=10, exponential_backoff=False
+ *	Delays would be: 2, 4, 6, 8, 10, 10, ...
+ *
+ * Example 2:
+ *	delay=3, delay_max=30, exponential_backoff=True
+ *	Delays would be: 3, 6, 12, 24, 30, 30, ...
  *
  * Parameters:
  *  mosq -                          a valid mosquitto instance.

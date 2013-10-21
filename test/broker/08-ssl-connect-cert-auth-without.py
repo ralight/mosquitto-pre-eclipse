@@ -3,6 +3,7 @@
 # Test whether a client can connect without an SSL certificate if one is required.
 # 
 
+import errno
 import subprocess
 import socket
 import ssl
@@ -39,7 +40,7 @@ except ssl.SSLError as err:
     if err.errno == 1:
         rc = 0
 except socket.error as err:
-    if err.errno == 104:
+    if err.errno == errno.ECONNRESET:
         rc = 0
 
 broker.terminate()

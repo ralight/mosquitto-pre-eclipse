@@ -207,6 +207,9 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 											new_context->address, ERR_error_string(e, ebuf));
 									e = ERR_get_error();
 								}
+								COMPAT_CLOSE(new_sock);
+								SSL_free(new_context->ssl);
+								new_context->ssl = NULL;
 							}
 						}
 					}
