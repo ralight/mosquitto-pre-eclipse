@@ -163,6 +163,7 @@ int _mosquitto_handle_publish(struct mosquitto *mosq)
 			pthread_mutex_unlock(&mosq->message_mutex);
 			return rc;
 		default:
+			_mosquitto_message_cleanup(&message);
 			return MOSQ_ERR_PROTOCOL;
 	}
 }
