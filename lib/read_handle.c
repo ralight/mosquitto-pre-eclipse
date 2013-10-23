@@ -161,6 +161,7 @@ int _mosquitto_handle_publish(struct mosquitto *mosq)
 			_mosquitto_message_queue(mosq, message);
 			return rc;
 		default:
+			_mosquitto_message_cleanup(&message);
 			return MOSQ_ERR_PROTOCOL;
 	}
 }
