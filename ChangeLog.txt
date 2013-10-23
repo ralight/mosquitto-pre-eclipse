@@ -13,6 +13,8 @@ Client library:
 - Clients now close their socket after sending DISCONNECT.
 - Python client now contains its version number.
 - C library mosquitto_want_write() now supports TLS clients.
+- Fix possible memory leak in C/C++ library when communicating with
+  a broker that doesn't follow the spec.
 
 Clients:
 - Add --ciphers to allow specifying which TLS ciphers to support.
