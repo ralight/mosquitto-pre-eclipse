@@ -241,15 +241,17 @@ int main(int argc, char *argv[])
 	rc = mosquitto_security_init(&int_db, false);
 	if(rc) return rc;
 
-	/* Set static $SYS messages */
-	snprintf(buf, 1024, "mosquitto version %s", VERSION);
-	mqtt3_db_messages_easy_queue(&int_db, NULL, "$SYS/broker/version", 2, strlen(buf), buf, 1);
-	snprintf(buf, 1024, "%s", TIMESTAMP);
-	mqtt3_db_messages_easy_queue(&int_db, NULL, "$SYS/broker/timestamp", 2, strlen(buf), buf, 1);
+	if(config.sys_interval > 0){
+		/* Set static $SYS messages */
+		snprintf(buf, 1024, "mosquitto version %s", VERSION);
+		mqtt3_db_messages_easy_queue(&int_db, NULL, "$SYS/broker/version", 2, strlen(buf), buf, 1);
+		snprintf(buf, 1024, "%s", TIMESTAMP);
+		mqtt3_db_messages_easy_queue(&int_db, NULL, "$SYS/broker/timestamp", 2, strlen(buf), buf, 1);
 #ifdef CHANGESET
-	snprintf(buf, 1024, "%s", CHANGESET);
-	mqtt3_db_messages_easy_queue(&int_db, NULL, "$SYS/broker/changeset", 2, strlen(buf), buf, 1);
+		snprintf(buf, 1024, "%s", CHANGESET);
+		mqtt3_db_messages_easy_queue(&int_db, NULL, "$SYS/broker/changeset", 2, strlen(buf), buf, 1);
 #endif
+	}
 
 	listener_max = -1;
 	listensock_index = 0;
