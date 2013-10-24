@@ -169,6 +169,7 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 			}else{
 				// Out of memory
 				mqtt3_context_cleanup(NULL, new_context, true);
+				return -1;
 			}
 		}
 		// If we got here then the context's DB index is "i" regardless of how we got here
