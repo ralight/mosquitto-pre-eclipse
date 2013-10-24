@@ -500,9 +500,11 @@
 				<term><option>sys_interval</option> <replaceable>seconds</replaceable></term>
 				<listitem>
 					<para>The integer number of seconds between updates of the
-					$SYS subscription hierarchy, which provides status
-					information about the broker. If unset, defaults to 10
-					seconds.</para>
+						$SYS subscription hierarchy, which provides status
+						information about the broker. If unset, defaults to 10
+						seconds.</para>
+					<para>Set to 0 to disable publishing the $SYS hierarchy
+						completely.</para>
 					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>

@@ -1467,7 +1467,7 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 					}
 				}else if(!strcmp(token, "sys_interval")){
 					if(_conf_parse_int(&token, "sys_interval", &config->sys_interval, saveptr)) return MOSQ_ERR_INVAL;
-					if(config->sys_interval < 1 || config->sys_interval > 65535){
+					if(config->sys_interval < 0 || config->sys_interval > 65535){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid sys_interval value (%d).", config->sys_interval);
 						return MOSQ_ERR_INVAL;
 					}
