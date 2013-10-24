@@ -1014,8 +1014,12 @@ int mosquitto_loop_write(struct mosquitto *mosq, int max_packets)
 
 bool mosquitto_want_write(struct mosquitto *mosq)
 {
-	if(mosq->out_packet){
-		return true;
+	if(mosq->out_packet || mosq->current_out_packet){
+		return true
+#ifdef WITH_TLS
+	}else if(mosq->ssl && mosq->want_write){
+		return true
+#endif
 	}else{
 		return false;
 	}
