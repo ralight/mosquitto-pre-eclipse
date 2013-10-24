@@ -12,6 +12,7 @@ Client library:
 - Add support for un/subscribing to multiple topics at once in un/subscribe().
 - Clients now close their socket after sending DISCONNECT.
 - Python client now contains its version number.
+- C library mosquitto_want_write() now supports TLS clients.
 
 Clients:
 - Add --ciphers to allow specifying which TLS ciphers to support.
