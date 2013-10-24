@@ -173,7 +173,6 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 		}
 		// If we got here then the context's DB index is "i" regardless of how we got here
 		new_context->db_index = i;
-		new_context->listener->client_count++;
 
 #ifdef WITH_TLS
 		/* TLS init */
@@ -221,6 +220,7 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 #ifdef WITH_WRAP
 	}
 #endif
+	new_context->listener->client_count++;
 	return new_sock;
 }
 
