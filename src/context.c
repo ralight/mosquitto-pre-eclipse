@@ -117,6 +117,12 @@ void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, b
 		}
 	}
 #endif
+#ifdef WITH_TLS
+	if(context->ssl){
+		SSL_free(context->ssl);
+		context->ssl = NULL;
+	}
+#endif
 	if(context->sock != -1){
 		if(context->listener){
 			context->listener->client_count--;
