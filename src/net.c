@@ -139,18 +139,19 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 			for(j=0; j<db->config->listeners[i].sock_count; j++){
 				if(db->config->listeners[i].socks[j] == listensock){
 					new_context->listener = &db->config->listeners[i];
+					new_context->listener->client_count++;
 					break;
 				}
 			}
 		}
 		if(!new_context->listener){
-			COMPAT_CLOSE(new_sock);
+			mqtt3_context_cleanup(NULL, new_context, true);
 			return -1;
 		}
 
-		if(new_context->listener->max_connections > 0 && new_context->listener->client_count >= new_context->listener->max_connections){
+		if(new_context->listener->max_connections > 0 && new_context->listener->client_count > new_context->listener->max_connections){
 			_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client connection from %s denied: max_connections exceeded.", new_context->address);
-			COMPAT_CLOSE(new_sock);
+			mqtt3_context_cleanup(NULL, new_context, true);
 			return -1;
 		}
 		_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "New connection from %s on port %d.", new_context->address, new_context->listener->port);
@@ -183,7 +184,7 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 					if(db->config->listeners[i].ssl_ctx){
 						new_context->ssl = SSL_new(db->config->listeners[i].ssl_ctx);
 						if(!new_context->ssl){
-							COMPAT_CLOSE(new_sock);
+							mqtt3_context_cleanup(NULL, new_context, true);
 							return -1;
 						}
 						SSL_set_ex_data(new_context->ssl, tls_ex_index_context, new_context);
@@ -207,9 +208,7 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 											new_context->address, ERR_error_string(e, ebuf));
 									e = ERR_get_error();
 								}
-								COMPAT_CLOSE(new_sock);
-								SSL_free(new_context->ssl);
-								new_context->ssl = NULL;
+								mqtt3_context_cleanup(NULL, new_context, true);
 							}
 						}
 					}
@@ -221,7 +220,6 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 #ifdef WITH_WRAP
 	}
 #endif
-	new_context->listener->client_count++;
 	return new_sock;
 }
 
