@@ -125,7 +125,8 @@ int _mosquitto_send_publish(struct mosquitto *mosq, uint16_t mid, const char *to
 	if(mosq->bridge && mosq->bridge->topics && mosq->bridge->topic_remapping){
 		for(i=0; i<mosq->bridge->topic_count; i++){
 			cur_topic = &mosq->bridge->topics[i];
-			if(cur_topic->remote_prefix || cur_topic->local_prefix){
+			if((cur_topic->direction == bd_both || cur_topic->direction == bd_out) 
+					&& (cur_topic->remote_prefix || cur_topic->local_prefix)){
 				/* Topic mapping required on this topic if the message matches */
 
 				rc = mosquitto_topic_matches_sub(cur_topic->local_topic, topic, &match);
