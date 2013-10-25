@@ -6,6 +6,9 @@ Broker:
 - Accept SSLv2/SSLv3 HELLOs when using TLSv1, whilst keeping SSLv2 and SSLv3
   disabled. This increases client compatibility without sacrificing security.
 - The $SYS tree can now be disabled at runtime as well as at compile time.
+- When remapping bridged topics, only check for matches when the message
+  direction is correct. This allows two identical topics to be remapped
+  differently for both in and out.
 
 Client library:
 - Fix support for Python 2.6, 3.0, 3.1.
