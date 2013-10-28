@@ -483,7 +483,7 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 		if(ret != 1){
 			ret = SSL_get_error(mosq->ssl, ret);
 			if(ret == SSL_ERROR_WANT_READ){
-				mosq->want_read = true;
+				/* We always try to read anyway */
 			}else if(ret == SSL_ERROR_WANT_WRITE){
 				mosq->want_write = true;
 			}else{
@@ -608,7 +608,6 @@ ssize_t _mosquitto_net_read(struct mosquitto *mosq, void *buf, size_t count)
 			err = SSL_get_error(mosq->ssl, ret);
 			if(err == SSL_ERROR_WANT_READ){
 				ret = -1;
-				mosq->want_read = true;
 				errno = EAGAIN;
 			}else if(err == SSL_ERROR_WANT_WRITE){
 				ret = -1;
@@ -658,7 +657,6 @@ ssize_t _mosquitto_net_write(struct mosquitto *mosq, void *buf, size_t count)
 			err = SSL_get_error(mosq->ssl, ret);
 			if(err == SSL_ERROR_WANT_READ){
 				ret = -1;
-				mosq->want_read = true;
 				errno = EAGAIN;
 			}else if(err == SSL_ERROR_WANT_WRITE){
 				ret = -1;
