@@ -22,6 +22,8 @@ Client library:
 - C library mosquitto_want_write() now supports TLS clients.
 - Fix possible memory leak in C/C++ library when communicating with
   a broker that doesn't follow the spec.
+- Return strerror() through mosquitto_strerror() to make error printing
+  easier.
 
 Clients:
 - Add --ciphers to allow specifying which TLS ciphers to support.

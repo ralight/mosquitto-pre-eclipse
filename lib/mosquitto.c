@@ -1113,7 +1113,7 @@ const char *mosquitto_strerror(int mosq_errno)
 		case MOSQ_ERR_UNKNOWN:
 			return "Unknown error.";
 		case MOSQ_ERR_ERRNO:
-			return "Error defined by errno.";
+			return strerror(errno);
 		default:
 			return "Unknown error.";
 	}
