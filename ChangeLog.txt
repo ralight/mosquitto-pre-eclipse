@@ -9,6 +9,10 @@ Broker:
 - When remapping bridged topics, only check for matches when the message
   direction is correct. This allows two identical topics to be remapped
   differently for both in and out.
+- Change "$SYS/broker/heap/current size" to "$SYS/broker/heap/current" for
+  easier parsing.
+- Change "$SYS/broker/heap/maximum size" to "$SYS/broker/heap/maximum" for
+  easier parsing.
 
 Client library:
 - Fix support for Python 2.6, 3.0, 3.1.
