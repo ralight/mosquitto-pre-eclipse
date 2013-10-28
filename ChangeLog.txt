@@ -13,6 +13,8 @@ Broker:
   easier parsing.
 - Change "$SYS/broker/heap/maximum size" to "$SYS/broker/heap/maximum" for
   easier parsing.
+- Don't always attempt to call read() for SSL clients, irrespective of whether
+  they were ready to read or not. Reduces syscalls significantly.
 
 Client library:
 - Fix support for Python 2.6, 3.0, 3.1.
