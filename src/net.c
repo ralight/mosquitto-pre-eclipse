@@ -189,7 +189,6 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 						}
 						SSL_set_ex_data(new_context->ssl, tls_ex_index_context, new_context);
 						SSL_set_ex_data(new_context->ssl, tls_ex_index_listener, &db->config->listeners[i]);
-						new_context->want_read = true;
 						new_context->want_write = true;
 						bio = BIO_new_socket(new_sock, BIO_NOCLOSE);
 						SSL_set_bio(new_context->ssl, bio, bio);
@@ -197,7 +196,7 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 						if(rc != 1){
 							rc = SSL_get_error(new_context->ssl, rc);
 							if(rc == SSL_ERROR_WANT_READ){
-								new_context->want_read = true;
+								/* We always want to read. */
 							}else if(rc == SSL_ERROR_WANT_WRITE){
 								new_context->want_write = true;
 							}else{

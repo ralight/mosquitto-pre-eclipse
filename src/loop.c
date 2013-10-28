@@ -357,7 +357,6 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 			assert(pollfds[db->contexts[i]->pollfd_index].fd == db->contexts[i]->sock);
 #ifdef WITH_TLS
 			if(pollfds[db->contexts[i]->pollfd_index].revents & POLLIN ||
-					db->contexts[i]->want_read ||
 					(db->contexts[i]->ssl && db->contexts[i]->state == mosq_cs_new)){
 #else
 			if(pollfds[db->contexts[i]->pollfd_index].revents & POLLIN){
