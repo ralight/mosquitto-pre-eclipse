@@ -1243,13 +1243,13 @@ libmosq_EXPORT void mosquitto_user_data_set(struct mosquitto *mosq, void *obj);
 
 /* =============================================================================
  *
- * Utility functions
+ * Section: Utility functions
  *
  * =============================================================================
  */
 
 /*
- * Function mosquitto_strerror
+ * Function: mosquitto_strerror
  *
  * Call to obtain a const string description of a mosquitto error number.
  *
@@ -1262,7 +1262,7 @@ libmosq_EXPORT void mosquitto_user_data_set(struct mosquitto *mosq, void *obj);
 libmosq_EXPORT const char *mosquitto_strerror(int mosq_errno);
 
 /*
- * Function mosquitto_connack_string
+ * Function: mosquitto_connack_string
  *
  * Call to obtain a const string description of an MQTT connection result.
  *
@@ -1275,7 +1275,7 @@ libmosq_EXPORT const char *mosquitto_strerror(int mosq_errno);
 libmosq_EXPORT const char *mosquitto_connack_string(int connack_code);
 
 /*
- * Function mosquitto_sub_topic_tokenise
+ * Function: mosquitto_sub_topic_tokenise
  *
  * Tokenise a topic or subscription string into an array of strings
  * representing the topic hierarchy.
@@ -1330,7 +1330,7 @@ libmosq_EXPORT const char *mosquitto_connack_string(int connack_code);
 libmosq_EXPORT int mosquitto_sub_topic_tokenise(const char *subtopic, char ***topics, int *count);
 
 /*
- * Function mosquitto_sub_topic_tokens_free
+ * Function: mosquitto_sub_topic_tokens_free
  *
  * Free memory that was allocated in <mosquitto_sub_topic_tokenise>.
  *
@@ -1348,7 +1348,7 @@ libmosq_EXPORT int mosquitto_sub_topic_tokenise(const char *subtopic, char ***to
 libmosq_EXPORT int mosquitto_sub_topic_tokens_free(char ***topics, int count);
 
 /*
- * Function mosquitto_topic_matches_sub
+ * Function: mosquitto_topic_matches_sub
  *
  * Check whether a topic matches a subscription.
  *
