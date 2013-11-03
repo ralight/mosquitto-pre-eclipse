@@ -1154,10 +1154,6 @@ int mosquitto_sub_topic_tokenise(const char *subtopic, char ***topics, int *coun
 
 	for(i=0; i<len; i++){
 		if(subtopic[i] == '/'){
-			while(i<len && subtopic[i] == '/'){
-				/* Ignore duplicate separators. */
-				i++;
-			}
 			if(i > len-1){
 				/* Separator at end of line */
 			}else{
@@ -1175,10 +1171,6 @@ int mosquitto_sub_topic_tokenise(const char *subtopic, char ***topics, int *coun
 
 	for(i=0; i<len+1; i++){
 		if(subtopic[i] == '/' || subtopic[i] == '\0'){
-			if(i>0 && subtopic[i] == '/' && subtopic[i-1] == '/'){
-				start = i+1;
-				continue;
-			}
 			stop = i;
 			if(start != stop){
 				tlen = stop-start + 1;

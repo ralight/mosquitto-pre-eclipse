@@ -58,6 +58,7 @@ def pattern_test(sub_topic, pub_topic):
         if rc:
             (stdo, stde) = broker.communicate()
             print(stde)
+            raise
 
     return rc
 
@@ -70,8 +71,20 @@ pattern_test("foo/+/baz/#", "foo/bar/baz/bar")
 pattern_test("foo/foo/baz/#", "foo/foo/baz/bar")
 pattern_test("foo/#", "foo")
 pattern_test("/#", "/foo")
-pattern_test("test/topic/", "test/topic")
+pattern_test("test/topic/", "test/topic/")
+pattern_test("test/topic/+", "test/topic/")
 pattern_test("+/+/+/+/+/+/+/+/+/+/test", "one/two/three/four/five/six/seven/eight/nine/ten/test")
+
+pattern_test("#", "test////a//topic")
+pattern_test("#", "/test////a//topic")
+pattern_test("foo/#", "foo//bar///baz")
+pattern_test("foo/+/baz", "foo//baz")
+pattern_test("foo/+/baz//", "foo//baz//")
+pattern_test("foo/+/baz/#", "foo//baz")
+pattern_test("foo/+/baz/#", "foo//baz/bar")
+pattern_test("foo//baz/#", "foo//baz/bar")
+pattern_test("foo/foo/baz/#", "foo/foo/baz/bar")
+pattern_test("/#", "////foo///bar")
 
 exit(0)
 

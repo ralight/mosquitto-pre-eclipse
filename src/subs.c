@@ -154,19 +154,16 @@ static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hie
 static int _sub_topic_tokenise(const char *subtopic, struct _sub_token **topics)
 {
 	struct _sub_token *new_topic, *tail = NULL;
-	char *token;
-	char *local_subtopic = NULL;
-	char *saveptr = NULL;
-	char *real_subtopic;
+	int len;
+	int start, stop, tlen;
+	int i;
 
 	assert(subtopic);
 	assert(topics);
 
-	local_subtopic = _mosquitto_strdup(subtopic);
-	if(!local_subtopic) return MOSQ_ERR_NOMEM;
-	real_subtopic = local_subtopic;
+	len = strlen(subtopic);
 
-	if(local_subtopic[0] == '/'){
+	if(subtopic[0] == '/'){
 		new_topic = _mosquitto_malloc(sizeof(struct _sub_token));
 		if(!new_topic) goto cleanup;
 		new_topic->next = NULL;
@@ -176,34 +173,43 @@ static int _sub_topic_tokenise(const char *subtopic, struct _sub_token **topics)
 		*topics = new_topic;
 		tail = new_topic;
 
-		local_subtopic++;
+		start = 1;
+	}else{
+		start = 0;
 	}
 
-	token = strtok_r(local_subtopic, "/", &saveptr);
-	while(token){
-		new_topic = _mosquitto_malloc(sizeof(struct _sub_token));
-		if(!new_topic) goto cleanup;
-		new_topic->next = NULL;
-		new_topic->topic = _mosquitto_strdup(token);
-		if(!new_topic->topic) goto cleanup;
+	stop = 0;
+	for(i=start; i<len+1; i++){
+		if(subtopic[i] == '/' || subtopic[i] == '\0'){
+			stop = i;
+			new_topic = _mosquitto_malloc(sizeof(struct _sub_token));
+			if(!new_topic) goto cleanup;
+			new_topic->next = NULL;
 
-		if(tail){
-			tail->next = new_topic;
-			tail = tail->next;
-		}else{
-			tail = new_topic;
-			*topics = tail;
+			if(start != stop){
+				tlen = stop-start + 1;
+
+				new_topic->topic = _mosquitto_calloc(tlen, sizeof(char));
+				if(!new_topic->topic) goto cleanup;
+				memcpy(new_topic->topic, &subtopic[start], tlen-1);
+			}else{
+				new_topic->topic = _mosquitto_strdup("/");
+				if(!new_topic->topic) goto cleanup;
+			}
+			if(tail){
+				tail->next = new_topic;
+				tail = tail->next;
+			}else{
+				tail = new_topic;
+				*topics = tail;
+			}
+			start = i+1;
 		}
-		token = strtok_r(NULL, "/", &saveptr);
 	}
-	
-	_mosquitto_free(real_subtopic);
 
 	return MOSQ_ERR_SUCCESS;
 
 cleanup:
-	_mosquitto_free(real_subtopic);
-
 	tail = *topics;
 	*topics = NULL;
 	while(tail){

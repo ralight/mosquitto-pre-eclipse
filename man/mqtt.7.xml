@@ -93,6 +93,14 @@
 			<listitem><para>a/b/c/#</para></listitem>
 			<listitem><para>+/b/c/#</para></listitem>
 		</itemizedlist>
+		<para>Zero length topic levels are valid, which can lead to some
+			slightly non-obvious behaviour. For example, a topic of "a//topic"
+			would correctly match against a subscription of "a/+/topic".
+			Likewise, zero length topic levels can exist at both the beginning
+			and the end of a topic string, so "/a/topic" would match against a
+			subscription of "+/a/topic", "#" or "/#", and a topic "a/topic/"
+			would match against a subscription of "a/topic/+" or
+			"a/topic/#".</para>
 	</refsect1>
 
 	<refsect1>

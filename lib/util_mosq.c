@@ -146,40 +146,6 @@ void _mosquitto_check_keepalive(struct mosquitto *mosq)
 	}
 }
 
-/* Convert ////some////over/slashed///topic/etc/etc//
- * into some/over/slashed/topic/etc/etc
- */
-int _mosquitto_fix_sub_topic(char **subtopic)
-{
-	char *fixed = NULL;
-	char *token;
-	char *saveptr = NULL;
-
-	assert(subtopic);
-	assert(*subtopic);
-
-	if(strlen(*subtopic) == 0) return MOSQ_ERR_SUCCESS;
-	/* size of fixed here is +1 for the terminating 0 and +1 for the spurious /
-	 * that gets appended. */
-	fixed = _mosquitto_calloc(strlen(*subtopic)+2, 1);
-	if(!fixed) return MOSQ_ERR_NOMEM;
-
-	if((*subtopic)[0] == '/'){
-		fixed[0] = '/';
-	}
-	token = strtok_r(*subtopic, "/", &saveptr);
-	while(token){
-		strcat(fixed, token);
-		strcat(fixed, "/");
-		token = strtok_r(NULL, "/", &saveptr);
-	}
-
-	fixed[strlen(fixed)-1] = '\0';
-	_mosquitto_free(*subtopic);
-	*subtopic = fixed;
-	return MOSQ_ERR_SUCCESS;
-}
-
 uint16_t _mosquitto_mid_generate(struct mosquitto *mosq)
 {
 	assert(mosq);
@@ -215,29 +181,17 @@ int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result
 	char *local_sub, *local_topic;
 	int slen, tlen;
 	int spos, tpos;
-	int rc;
 	bool multilevel_wildcard = false;
 
 	if(!sub || !topic || !result) return MOSQ_ERR_INVAL;
 
 	local_sub = _mosquitto_strdup(sub);
 	if(!local_sub) return MOSQ_ERR_NOMEM;
-	rc = _mosquitto_fix_sub_topic(&local_sub);
-	if(rc){
-		_mosquitto_free(local_sub);
-		return rc;
-	}
 
 	local_topic = _mosquitto_strdup(topic);
 	if(!local_topic){
 		_mosquitto_free(local_sub);
 		return MOSQ_ERR_NOMEM;
-	}
-	rc = _mosquitto_fix_sub_topic(&local_topic);
-	if(rc){
-		_mosquitto_free(local_sub);
-		_mosquitto_free(local_topic);
-		return rc;
 	}
 
 	slen = strlen(local_sub);
@@ -251,6 +205,10 @@ int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result
 			spos++;
 			tpos++;
 			if(spos == slen && tpos == tlen){
+				*result = true;
+				break;
+			}else if(tpos == tlen && spos == slen-1 && local_sub[spos] == '+'){
+				spos++;
 				*result = true;
 				break;
 			}

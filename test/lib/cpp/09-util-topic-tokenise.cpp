@@ -81,6 +81,49 @@ int main(int argc, char *argv[])
 		print_error("/a/b/c", topics, topic_count);
 		return 1;
 	}
+
+	if(mosqpp::sub_topic_tokenise("a///hierarchy", &topics, &topic_count)){
+		printf("Out of memory.\n");
+		return 1;
+	}
+	if(topic_count != 4
+			|| strcmp(topics[0], "a")
+			|| topics[1]
+			|| topics[2]
+			|| strcmp(topics[3], "hierarchy")){
+		print_error("a///hierarchy", topics, topic_count);
+		return 1;
+	}
+
+	if(mosqpp::sub_topic_tokenise("/a///hierarchy", &topics, &topic_count)){
+		printf("Out of memory.\n");
+		return 1;
+	}
+	if(topic_count != 5
+			|| topics[0]
+			|| strcmp(topics[1], "a")
+			|| topics[2]
+			|| topics[3]
+			|| strcmp(topics[4], "hierarchy")){
+		print_error("/a///hierarchy", topics, topic_count);
+		return 1;
+	}
+
+	if(mosqpp::sub_topic_tokenise("/a///hierarchy/", &topics, &topic_count)){
+		printf("Out of memory.\n");
+		return 1;
+	}
+	if(topic_count != 6
+			|| topics[0]
+			|| strcmp(topics[1], "a")
+			|| topics[2]
+			|| topics[3]
+			|| strcmp(topics[4], "hierarchy")
+			|| topics[3]){
+		print_error("/a///hierarchy/", topics, topic_count);
+		return 1;
+	}
+
 	return 0;
 }
 
