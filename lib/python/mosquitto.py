@@ -126,15 +126,6 @@ MOSQ_ERR_UNKNOWN = 13
 MOSQ_ERR_ERRNO = 14
 
 
-def _fix_sub_topic(subtopic):
-    # Convert ////some////over/slashed///topic/etc/etc//
-    # into some/over/slashed/topic/etc/etc
-    if subtopic[0] == '/':
-        return '/'+'/'.join(filter(None, subtopic.split('/')))
-    else:
-        return '/'.join(filter(None, subtopic.split('/')))
-
-
 def error_string(mosq_errno):
     """Return the error string associated with a mosquitto error number."""
     if mosq_errno == MOSQ_ERR_SUCCESS:
@@ -198,30 +189,33 @@ def topic_matches_sub(sub, topic):
     non/matching would not match the subscription non/+/+
     """
     result = True
-    local_sub = _fix_sub_topic(sub)
-    local_topic = _fix_sub_topic(topic)
     multilevel_wildcard = False
 
-    slen = len(local_sub)
-    tlen = len(local_topic)
+    slen = len(sub)
+    tlen = len(topic)
 
     spos = 0
     tpos = 0
 
     while spos < slen and tpos < tlen:
-        if local_sub[spos] == local_topic[tpos]:
+        if sub[spos] == topic[tpos]:
             spos += 1
             tpos += 1
-        else:
-            if local_sub[spos] == '+':
+
+            if tpos == tlen and spos == slen-1 and sub[spos] == '+':
                 spos += 1
-                while tpos < tlen and local_topic[tpos] != '/':
+                result = True
+                break
+        else:
+            if sub[spos] == '+':
+                spos += 1
+                while tpos < tlen and topic[tpos] != '/':
                     tpos += 1
                 if tpos == tlen and spos == slen:
                     result = True
                     break
 
-            elif local_sub[spos] == '#':
+            elif sub[spos] == '#':
                 multilevel_wildcard = True
                 if spos+1 != slen:
                     result = False
@@ -236,7 +230,7 @@ def topic_matches_sub(sub, topic):
 
         if tpos == tlen-1:
             # Check for e.g. foo matching foo/#
-            if spos == slen-3 and local_sub[spos+1] == '/' and local_sub[spos+2] == '#':
+            if spos == slen-3 and sub[spos+1] == '/' and sub[spos+2] == '#':
                 result = True
                 multilevel_wildcard = True
                 break
@@ -879,7 +873,6 @@ class Mosquitto:
                 raise ValueError('Invalid QoS level.')
             if topic is None or len(topic) == 0:
                 raise ValueError('Invalid topic.')
-            topic = _fix_sub_topic(topic)
             topic_qos_list = [(topic, qos)]
         elif isinstance(topic, tuple):
             if topic[1]<0 or topic[1]>2:
@@ -924,7 +917,6 @@ class Mosquitto:
         if isinstance(topic, str):
             if len(topic) == 0:
                 raise ValueError('Invalid topic.')
-            topic = _fix_sub_topic(topic)
             topic_list = [topic]
         elif isinstance(topic, list):
             for t in topic:
@@ -1817,7 +1809,6 @@ class Mosquitto:
 
         if sys.version_info[0] >= 3:
             message.topic = message.topic.decode('utf-8')
-        message.topic = _fix_sub_topic(message.topic)
 
         if message.qos > 0:
             pack_format = "!H" + str(len(packet)-2) + 's'

@@ -15,6 +15,9 @@ Broker:
   easier parsing.
 - Don't always attempt to call read() for SSL clients, irrespective of whether
   they were ready to read or not. Reduces syscalls significantly.
+- Topics are no longer normalised from e.g a///topic to a/topic. This matches
+  the behaviour as clarified by the Oasis MQTT spec. This will lead to
+  unexpected behaviour if you were using topics of this form.
 
 Client library:
 - Fix support for Python 2.6, 3.0, 3.1.
@@ -26,6 +29,9 @@ Client library:
   a broker that doesn't follow the spec.
 - Return strerror() through mosquitto_strerror() to make error printing
   easier.
+- Topics are no longer normalised from e.g a///topic to a/topic. This matches
+  the behaviour as clarified by the Oasis MQTT spec. This will lead to
+  unexpected behaviour if you were using topics of this form.
 
 Clients:
 - Add --ciphers to allow specifying which TLS ciphers to support.

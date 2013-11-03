@@ -21,6 +21,11 @@ int main(int argc, char *argv[])
 	mosqpp::topic_matches_sub("/#", "/foo/bar", &match); if(!match) return 1;
 	mosqpp::topic_matches_sub("/#", "foo/bar", &match); if(match) return 1;
 
+	mosqpp::topic_matches_sub("foo//bar", "foo//bar", &match); if(!match) return 1;
+	mosqpp::topic_matches_sub("foo//+", "foo//bar", &match); if(!match) return 1;
+	mosqpp::topic_matches_sub("foo/+/+/baz", "foo///baz", &match); if(!match) return 1;
+	mosqpp::topic_matches_sub("foo/bar/+", "foo/bar/", &match); if(!match) return 1;
+
 	return 0;
 }
 

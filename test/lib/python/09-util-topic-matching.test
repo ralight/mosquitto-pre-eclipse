@@ -23,4 +23,9 @@ do_check("#", "/foo/bar", False)
 do_check("/#", "/foo/bar", False)
 do_check("/#", "foo/bar", True)
 
+do_check("foo//bar", "foo//bar", False)
+do_check("foo//+", "foo//bar", False)
+do_check("foo/+/+/baz", "foo///baz", False)
+do_check("foo/bar/+", "foo/bar/", False)
+
 sys.exit(0)

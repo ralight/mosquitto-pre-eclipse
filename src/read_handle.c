@@ -115,10 +115,6 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 		_mosquitto_free(topic);
 		return 1;
 	}
-	if(_mosquitto_fix_sub_topic(&topic)){
-		_mosquitto_free(topic);
-		return 1;
-	}
 	if(!strlen(topic)){
 		_mosquitto_free(topic);
 		return 1;

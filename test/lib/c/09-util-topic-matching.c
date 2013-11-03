@@ -1,25 +1,45 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include <mosquitto.h>
 
-int main(int argc, char *argv[])
+void do_check(const char *sub, const char *topic, bool bad_res)
 {
 	bool match;
 
-	mosquitto_topic_matches_sub("foo/bar", "foo/bar", &match); if(!match) return 1;
-	mosquitto_topic_matches_sub("foo/+", "foo/bar", &match); if(!match) return 1;
-	mosquitto_topic_matches_sub("foo/+/baz", "foo/bar/baz", &match); if(!match) return 1;
+	mosquitto_topic_matches_sub(sub, topic, &match);
+	
+	if(match == bad_res){
+		printf("s: %s t: %s\n", sub, topic);
+		exit(1);
+	}
+}
 
-	mosquitto_topic_matches_sub("foo/+/#", "foo/bar/baz", &match); if(!match) return 1;
-	mosquitto_topic_matches_sub("#", "foo/bar/baz", &match); if(!match) return 1;
+int main(int argc, char *argv[])
+{
+#if 0
+	do_check("foo/bar", "foo/bar", false);
+	do_check("foo/+", "foo/bar", false);
+	do_check("foo/+/baz", "foo/bar/baz", false);
 
-	mosquitto_topic_matches_sub("foo/bar", "foo", &match); if(match) return 1;
-	mosquitto_topic_matches_sub("foo/+", "foo/bar/baz", &match); if(match) return 1;
-	mosquitto_topic_matches_sub("foo/+/baz", "foo/bar/bar", &match); if(match) return 1;
+	do_check("foo/+/#", "foo/bar/baz", false);
+	do_check("#", "foo/bar/baz", false);
 
-	mosquitto_topic_matches_sub("foo/+/#", "fo2/bar/baz", &match); if(match) return 1;
+	do_check("foo/bar", "foo", true);
+	do_check("foo/+", "foo/bar/baz", true);
+	do_check("foo/+/baz", "foo/bar/bar", true);
 
-	mosquitto_topic_matches_sub("#", "/foo/bar", &match); if(!match) return 1;
-	mosquitto_topic_matches_sub("/#", "/foo/bar", &match); if(!match) return 1;
-	mosquitto_topic_matches_sub("/#", "foo/bar", &match); if(match) return 1;
+	do_check("foo/+/#", "fo2/bar/baz", true);
+
+	do_check("#", "/foo/bar", false);
+	do_check("/#", "/foo/bar", false);
+	do_check("/#", "foo/bar", true);
+
+
+	do_check("foo//bar", "foo//bar", false);
+	do_check("foo//+", "foo//bar", false);
+	do_check("foo/+/+/baz", "foo///baz", false);
+#endif
+	do_check("foo/bar/+", "foo/bar/", false);
 
 	return 0;
 }

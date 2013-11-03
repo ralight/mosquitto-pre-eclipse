@@ -98,11 +98,6 @@ int _mosquitto_handle_publish(struct mosquitto *mosq)
 		_mosquitto_message_cleanup(&message);
 		return rc;
 	}
-	rc = _mosquitto_fix_sub_topic(&message->msg.topic);
-	if(rc){
-		_mosquitto_message_cleanup(&message);
-		return rc;
-	}
 	if(!strlen(message->msg.topic)){
 		_mosquitto_message_cleanup(&message);
 		return MOSQ_ERR_PROTOCOL;
