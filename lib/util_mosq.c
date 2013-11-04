@@ -178,72 +178,62 @@ int _mosquitto_topic_wildcard_len_check(const char *str)
 /* Does a topic match a subscription? */
 int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result)
 {
-	char *local_sub, *local_topic;
 	int slen, tlen;
 	int spos, tpos;
 	bool multilevel_wildcard = false;
 
 	if(!sub || !topic || !result) return MOSQ_ERR_INVAL;
 
-	local_sub = _mosquitto_strdup(sub);
-	if(!local_sub) return MOSQ_ERR_NOMEM;
-
-	local_topic = _mosquitto_strdup(topic);
-	if(!local_topic){
-		_mosquitto_free(local_sub);
-		return MOSQ_ERR_NOMEM;
-	}
-
-	slen = strlen(local_sub);
-	tlen = strlen(local_topic);
+	slen = strlen(sub);
+	tlen = strlen(topic);
 
 	spos = 0;
 	tpos = 0;
 
 	while(spos < slen && tpos < tlen){
-		if(local_sub[spos] == local_topic[tpos]){
+		if(sub[spos] == topic[tpos]){
 			spos++;
 			tpos++;
 			if(spos == slen && tpos == tlen){
 				*result = true;
-				break;
-			}else if(tpos == tlen && spos == slen-1 && local_sub[spos] == '+'){
+				return MOSQ_ERR_SUCCESS;
+			}else if(tpos == tlen && spos == slen-1 && sub[spos] == '+'){
 				spos++;
 				*result = true;
-				break;
+				return MOSQ_ERR_SUCCESS;
 			}
 		}else{
-			if(local_sub[spos] == '+'){
+			if(sub[spos] == '+'){
 				spos++;
-				while(tpos < tlen && local_topic[tpos] != '/'){
+				while(tpos < tlen && topic[tpos] != '/'){
 					tpos++;
 				}
 				if(tpos == tlen && spos == slen){
 					*result = true;
-					break;
+					return MOSQ_ERR_SUCCESS;
 				}
-			}else if(local_sub[spos] == '#'){
+			}else if(sub[spos] == '#'){
 				multilevel_wildcard = true;
 				if(spos+1 != slen){
 					*result = false;
-					break;
+					return MOSQ_ERR_SUCCESS;
 				}else{
 					*result = true;
-					break;
+					return MOSQ_ERR_SUCCESS;
 				}
 			}else{
 				*result = false;
-				break;
+				return MOSQ_ERR_SUCCESS;
 			}
 		}
 		if(tpos == tlen-1){
 			/* Check for e.g. foo matching foo/# */
 			if(spos == slen-3 
-					&& local_sub[spos+1] == '/'
-					&& local_sub[spos+2] == '#'){
+					&& sub[spos+1] == '/'
+					&& sub[spos+2] == '#'){
 				*result = true;
 				multilevel_wildcard = true;
-				break;
+				return MOSQ_ERR_SUCCESS;
 			}
 		}
 	}
@@ -251,8 +241,6 @@ int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result
 		*result = false;
 	}
 
-	_mosquitto_free(local_sub);
-	_mosquitto_free(local_topic);
 	return MOSQ_ERR_SUCCESS;
 }
 
