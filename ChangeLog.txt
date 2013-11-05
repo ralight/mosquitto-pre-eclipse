@@ -12,6 +12,10 @@ Client library:
 - Fix possible memory leak in C/C++ library when communicating with
   a broker that doesn't follow the spec.
 
+Clients:
+- mosquitto_sub now uses fwrite() instead of printf() to output messages, so
+  messages with NULL characters aren't truncated.
+
 1.2.2 - 20131021
 ================
 
