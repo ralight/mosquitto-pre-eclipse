@@ -1,7 +1,16 @@
-- Fix possible memory leak in C/C++ library when communicating with
-  a broker that doesn't follow the spec.
+1.2.3 - 2013xxxx
+================
+
+Broker:
 - Don't always attempt to call read() for SSL clients, irrespective of whether
   they were ready to read or not. Reduces syscalls significantly.
+- Possible memory leak fixes. 
+- Further fix for bug #1226040: multiple retained messages being delivered for
+  subscriptions ending in #.
+
+Client library:
+- Fix possible memory leak in C/C++ library when communicating with
+  a broker that doesn't follow the spec.
 
 1.2.2 - 20131021
 ================
