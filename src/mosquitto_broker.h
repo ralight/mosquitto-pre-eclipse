@@ -171,7 +171,6 @@ struct _mosquitto_unpwd{
 };
 
 struct _mosquitto_acl{
-	struct _mosquitto_acl *child;
 	struct _mosquitto_acl *next;
 	char *topic;
 	int access;

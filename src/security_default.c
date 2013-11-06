@@ -94,11 +94,9 @@ int mosquitto_security_cleanup_default(struct mosquitto_db *db, bool reload)
 int _add_acl(struct mosquitto_db *db, const char *user, const char *topic, int access)
 {
 	struct _mosquitto_acl_user *acl_user=NULL, *user_tail;
-	struct _mosquitto_acl *acl, *acl_root=NULL, *acl_tail=NULL;
+	struct _mosquitto_acl *acl, *acl_tail;
 	char *local_topic;
-	char *token = NULL;
 	bool new_user = false;
-	char *saveptr = NULL;
 
 	if(!db || !topic) return MOSQ_ERR_INVAL;
 
@@ -143,49 +141,11 @@ int _add_acl(struct mosquitto_db *db, const char *user, const char *topic, int a
 		acl_user->acl = NULL;
 	}
 
-	/* Tokenise topic */
-	if(local_topic[0] == '/'){
-		acl_root = _mosquitto_malloc(sizeof(struct _mosquitto_acl));
-		if(!acl_root) return MOSQ_ERR_NOMEM;
-		acl_tail = acl_root;
-		acl_root->child = NULL;
-		acl_root->next = NULL;
-		acl_root->access = MOSQ_ACL_NONE;
-		acl_root->topic = _mosquitto_strdup("/");
-		if(!acl_root->topic) return MOSQ_ERR_NOMEM;
-
-		token = strtok_r(local_topic+1, "/", &saveptr);
-	}else{
-		token = strtok_r(local_topic, "/", &saveptr);
-	}
-
-	while(token){
-		acl = _mosquitto_malloc(sizeof(struct _mosquitto_acl));
-		if(!acl) return MOSQ_ERR_NOMEM;
-		acl->child = NULL;
-		acl->next = NULL;
-		acl->access = MOSQ_ACL_NONE;
-		acl->topic = _mosquitto_strdup(token);
-		if(!acl->topic) return MOSQ_ERR_NOMEM;
-		if(acl_root){
-			acl_tail->child = acl;
-			acl_tail = acl;
-		}else{
-			acl_root = acl;
-			acl_tail = acl;
-		}
-
-		token = strtok_r(NULL, "/", &saveptr);
-	}
-	if(acl_root){
-		acl_tail = acl_root;
-		while(acl_tail->child){
-			acl_tail = acl_tail->child;
-		}
-		acl_tail->access = access;
-	}else{
-		return MOSQ_ERR_INVAL;
-	}
+	acl= _mosquitto_malloc(sizeof(struct _mosquitto_acl));
+	if(!acl) return MOSQ_ERR_NOMEM;
+	acl->access = access;
+	acl->topic = local_topic;
+	acl->next = NULL;
 
 	/* Add acl to user acl list */
 	if(acl_user->acl){
@@ -193,9 +153,9 @@ int _add_acl(struct mosquitto_db *db, const char *user, const char *topic, int a
 		while(acl_tail->next){
 			acl_tail = acl_tail->next;
 		}
-		acl_tail->next = acl_root;
+		acl_tail->next = acl;
 	}else{
-		acl_user->acl = acl_root;
+		acl_user->acl = acl;
 	}
 
 	if(new_user){
@@ -211,16 +171,13 @@ int _add_acl(struct mosquitto_db *db, const char *user, const char *topic, int a
 		}
 	}
 
-	_mosquitto_free(local_topic);
 	return MOSQ_ERR_SUCCESS;
 }
 
 int _add_acl_pattern(struct mosquitto_db *db, const char *topic, int access)
 {
-	struct _mosquitto_acl *acl, *acl_root=NULL, *acl_tail=NULL;
+	struct _mosquitto_acl *acl, *acl_tail;
 	char *local_topic;
-	char *token = NULL;
-	char *saveptr = NULL;
 
 	if(!db || !topic) return MOSQ_ERR_INVAL;
 
@@ -229,71 +186,34 @@ int _add_acl_pattern(struct mosquitto_db *db, const char *topic, int access)
 		return MOSQ_ERR_NOMEM;
 	}
 
-	/* Tokenise topic */
-	if(local_topic[0] == '/'){
-		acl_root = _mosquitto_malloc(sizeof(struct _mosquitto_acl));
-		if(!acl_root) return MOSQ_ERR_NOMEM;
-		acl_tail = acl_root;
-		acl_root->child = NULL;
-		acl_root->next = NULL;
-		acl_root->access = MOSQ_ACL_NONE;
-		acl_root->topic = _mosquitto_strdup("/");
-		if(!acl_root->topic) return MOSQ_ERR_NOMEM;
+	acl = _mosquitto_malloc(sizeof(struct _mosquitto_acl));
+	if(!acl) return MOSQ_ERR_NOMEM;
+	acl->access = access;
+	acl->topic = local_topic;
+	acl->next = NULL;
 
-		token = strtok_r(local_topic+1, "/", &saveptr);
+	if(db->acl_patterns){
+		acl_tail = db->acl_patterns;
+		while(acl_tail->next){
+			acl_tail = acl_tail->next;
+		}
+		acl_tail->next = acl;
 	}else{
-		token = strtok_r(local_topic, "/", &saveptr);
+		db->acl_patterns = acl;
 	}
 
-	while(token){
-		acl = _mosquitto_malloc(sizeof(struct _mosquitto_acl));
-		if(!acl) return MOSQ_ERR_NOMEM;
-		acl->child = NULL;
-		acl->next = NULL;
-		acl->access = MOSQ_ACL_NONE;
-		acl->topic = _mosquitto_strdup(token);
-		if(!acl->topic) return MOSQ_ERR_NOMEM;
-		if(acl_root){
-			acl_tail->child = acl;
-			acl_tail = acl;
-		}else{
-			acl_root = acl;
-			acl_tail = acl;
-		}
-
-		token = strtok_r(NULL, "/", &saveptr);
-	}
-
-	if(acl_root){
-		acl_tail = acl_root;
-		while(acl_tail->child){
-			acl_tail = acl_tail->child;
-		}
-		acl_tail->access = access;
-
-		if(db->acl_patterns){
-			acl_tail = db->acl_patterns;
-			while(acl_tail->next){
-				acl_tail = acl_tail->next;
-			}
-			acl_tail->next = acl_root;
-		}else{
-			db->acl_patterns = acl_root;
-		}
-	}else{
-		return MOSQ_ERR_INVAL;
-	}
-
-	_mosquitto_free(local_topic);
 	return MOSQ_ERR_SUCCESS;
 }
 
 int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int access)
 {
-	char *local_topic;
-	char *token;
-	struct _mosquitto_acl *acl_root, *acl_tail;
-	char *saveptr = NULL;
+	char *local_acl;
+	struct _mosquitto_acl *acl_root;
+	bool result;
+	int i;
+	int len, tlen, clen, ulen;
+	int ccount, ucount;
+	char *s;
 
 	if(!db || !context || !topic) return MOSQ_ERR_INVAL;
 	if(!db->acl_list && !db->acl_patterns) return MOSQ_ERR_SUCCESS;
@@ -308,148 +228,86 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 
 	/* Loop through all ACLs for this client. */
 	while(acl_root){
-		local_topic = _mosquitto_strdup(topic);
-		if(!local_topic) return MOSQ_ERR_NOMEM;
-
-		acl_tail = acl_root;
-
-		if(local_topic[0] == '/'){
-			if(strcmp(acl_tail->topic, "/")){
-				acl_root = acl_root->next;
-				_mosquitto_free(local_topic);
-				continue;
-			}
-			acl_tail = acl_tail->child;
-		}
-
-		token = strtok_r(local_topic, "/", &saveptr);
 		/* Loop through the topic looking for matches to this ACL. */
 
-		/* If subscription starts with $SYS, acl_tail->topic must also start with $SYS. */
-		if(!strcmp(token, "$SYS") && strcmp(acl_tail->topic, "$SYS")){
-			_mosquitto_free(local_topic);
-
+		/* If subscription starts with $SYS, acl_root->topic must also start with $SYS. */
+		if(!strncmp(topic, "$SYS", 4) && strncmp(acl_root->topic, "$SYS", 4)){
 			acl_root = acl_root->next;
 			continue;
 		}
-		while(token){
-			if(acl_tail){
-				if(!strcmp(acl_tail->topic, "#") && acl_tail->child == NULL){
-					/* We have a match */
-					if(access & acl_tail->access){
-						/* And access is allowed. */
-						_mosquitto_free(local_topic);
-						return MOSQ_ERR_SUCCESS;
-					}else{
-						break;
-					}
-				}else if(!strcmp(acl_tail->topic, token) || !strcmp(acl_tail->topic, "+")){
-					token = strtok_r(NULL, "/", &saveptr);
-					if(!token && acl_tail->child == NULL){
-						/* We have a match */
-						if(access & acl_tail->access){
-							/* And access is allowed. */
-							_mosquitto_free(local_topic);
-							return MOSQ_ERR_SUCCESS;
-						}else{
-							break;
-						}
-					}
-				}else{
-					break;
-				}
-				acl_tail = acl_tail->child;
-			}else{
-				break;
+		mosquitto_topic_matches_sub(acl_root->topic, topic, &result);
+		if(result){
+			if(access & acl_root->access){
+				/* And access is allowed. */
+				return MOSQ_ERR_SUCCESS;
 			}
 		}
-		_mosquitto_free(local_topic);
-
 		acl_root = acl_root->next;
 	}
 
 	acl_root = db->acl_patterns;
 	/* Loop through all pattern ACLs. */
+	clen = strlen(context->id);
 	while(acl_root){
-		local_topic = _mosquitto_strdup(topic);
-		if(!local_topic) return MOSQ_ERR_NOMEM;
+		tlen = strlen(acl_root->topic);
 
-		acl_tail = acl_root;
-
-		if(local_topic[0] == '/'){
-			if(strcmp(acl_tail->topic, "/")){
-				acl_root = acl_root->next;
-				continue;
+		ccount = 0;
+		s = acl_root->topic;
+		while(s){
+			s = strstr(s, "%c");
+			if(s){
+				ccount++;
+				s+=2;
 			}
-			acl_tail = acl_tail->child;
 		}
 
-		token = strtok_r(local_topic, "/", &saveptr);
-		/* Loop through the topic looking for matches to this ACL. */
-		while(token){
-			if(acl_tail){
-				if(!strcmp(acl_tail->topic, "#") && acl_tail->child == NULL){
-					/* We have a match */
-					if(access & acl_tail->access){
-						/* And access is allowed. */
-						_mosquitto_free(local_topic);
-						return MOSQ_ERR_SUCCESS;
-					}else{
-						break;
-					}
-				}else if(!strcmp(acl_tail->topic, "%c")){
-					if(!context->id || strcmp(token, context->id)){
-						/* No access */
-						break;
-					}
-					token = strtok_r(NULL, "/", &saveptr);
-					if(!token && acl_tail->child == NULL){
-						/* We have a match */
-						if(access & acl_tail->access){
-							/* And access is allowed. */
-							_mosquitto_free(local_topic);
-							return MOSQ_ERR_SUCCESS;
-						}else{
-							break;
-						}
-					}
-				}else if(!strcmp(acl_tail->topic, "%u")){
-					if(!context->username || strcmp(token, context->username)){
-						/* No access */
-						break;
-					}
-					token = strtok_r(NULL, "/", &saveptr);
-					if(!token && acl_tail->child == NULL){
-						/* We have a match */
-						if(access & acl_tail->access){
-							/* And access is allowed. */
-							_mosquitto_free(local_topic);
-							return MOSQ_ERR_SUCCESS;
-						}else{
-							break;
-						}
-					}
-				}else if(!strcmp(acl_tail->topic, token) || !strcmp(acl_tail->topic, "+")){
-					token = strtok_r(NULL, "/", &saveptr);
-					if(!token && acl_tail->child == NULL){
-						/* We have a match */
-						if(access & acl_tail->access){
-							/* And access is allowed. */
-							_mosquitto_free(local_topic);
-							return MOSQ_ERR_SUCCESS;
-						}else{
-							break;
-						}
-					}
-				}else{
-					break;
+		ucount = 0;
+		s = acl_root->topic;
+		while(s){
+			s = strstr(s, "%u");
+			if(s){
+				ucount++;
+				s+=2;
+			}
+		}
+
+		if(ucount && !context->username){
+			continue;
+		}
+
+		ulen = strlen(context->username);
+		len = tlen + ccount*(clen-2) + ucount*(ulen-2);
+		local_acl = malloc(len+1);
+		if(!local_acl) return 1; // FIXME
+		s = local_acl;
+		for(i=0; i<tlen; i++){
+			if(i<tlen-1 && acl_root->topic[i] == '%'){
+				if(acl_root->topic[i+1] == 'c'){
+					i++;
+					strncpy(s, context->id, clen);
+					s+=clen;
+					continue;
+				}else if(acl_root->topic[i+1] == 'u'){
+					i++;
+					strncpy(s, context->username, ulen);
+					s+=ulen;
+					continue;
 				}
-				acl_tail = acl_tail->child;
-			}else{
-				break;
+			}
+			s[0] = acl_root->topic[i];
+			s++;
+		}
+		local_acl[len] = '\0';
+
+		mosquitto_topic_matches_sub(local_acl, topic, &result);
+		if(result){
+			if(access & acl_root->access){
+				/* And access is allowed. */
+				return MOSQ_ERR_SUCCESS;
 			}
 		}
-		_mosquitto_free(local_topic);
+
+		_mosquitto_free(local_acl);
 
 		acl_root = acl_root->next;
 	}
@@ -564,9 +422,6 @@ static void _free_acl(struct _mosquitto_acl *acl)
 {
 	if(!acl) return;
 
-	if(acl->child){
-		_free_acl(acl->child);
-	}
 	if(acl->next){
 		_free_acl(acl->next);
 	}
