@@ -80,6 +80,9 @@ struct mosquitto *mqtt3_context_init(int sock)
 	}
 	context->bridge = NULL;
 	context->msgs = NULL;
+	context->last_msg = NULL;
+	context->msg_count = 0;
+	context->msg_count12 = 0;
 #ifdef WITH_TLS
 	context->ssl = NULL;
 #endif
@@ -176,6 +179,7 @@ void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, b
 			msg = next;
 		}
 		context->msgs = NULL;
+		context->last_msg = NULL;
 	}
 	if(do_free){
 		_mosquitto_free(context);

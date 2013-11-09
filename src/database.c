@@ -163,6 +163,37 @@ int mqtt3_db_client_count(struct mosquitto_db *db, unsigned int *count, unsigned
 	return MOSQ_ERR_SUCCESS;
 }
 
+static void _message_remove(struct mosquitto *context, struct mosquitto_client_msg **msg, struct mosquitto_client_msg *last)
+{
+	if(!context || !msg || !(*msg)){
+		return;
+	}
+
+	/* FIXME - it would be nice to be able to remove the stored message here if ref_count==0 */
+	(*msg)->store->ref_count--;
+	if(last){
+		last->next = (*msg)->next;
+		if(!last->next){
+			context->last_msg = last;
+		}
+	}else{
+		context->msgs = (*msg)->next;
+		if(!context->msgs){
+			context->last_msg = NULL;
+		}
+	}
+	context->msg_count--;
+	if((*msg)->qos > 0){
+		context->msg_count12--;
+	}
+	_mosquitto_free(*msg);
+	if(last){
+		*msg = last->next;
+	}else{
+		*msg = context->msgs;
+	}
+}
+
 int mqtt3_db_message_delete(struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir)
 {
 	struct mosquitto_client_msg *tail, *last = NULL;
@@ -196,19 +227,7 @@ int mqtt3_db_message_delete(struct mosquitto *context, uint16_t mid, enum mosqui
 		}
 		if(tail->mid == mid && tail->direction == dir){
 			msg_index--;
-			/* FIXME - it would be nice to be able to remove the stored message here if ref_count==0 */
-			tail->store->ref_count--;
-			if(last){
-				last->next = tail->next;
-			}else{
-				context->msgs = tail->next;
-			}
-			_mosquitto_free(tail);
-			if(last){
-				tail = last->next;
-			}else{
-				tail = context->msgs;
-			}
+			_message_remove(context, &tail, last);
 			deleted = true;
 		}else{
 			last = tail;
@@ -224,9 +243,8 @@ int mqtt3_db_message_delete(struct mosquitto *context, uint16_t mid, enum mosqui
 
 int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, int qos, bool retain, struct mosquitto_msg_store *stored)
 {
-	struct mosquitto_client_msg *msg, *tail = NULL;
+	struct mosquitto_client_msg *msg;
 	enum mosquitto_msg_state state = mosq_ms_invalid;
-	int msg_count = 0;
 	int rc = 0;
 	int i;
 	char **dest_ids;
@@ -263,19 +281,9 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 			}
 		}
 	}
-	if(context->msgs){
-		tail = context->msgs;
-		msg_count = 1;
-		while(tail && tail->next){
-			if(tail->qos > 0){
-				msg_count++;
-			}
-			tail = tail->next;
-		}
-	}
 
 	if(context->sock != INVALID_SOCKET){
-		if(qos == 0 || max_inflight == 0 || msg_count < max_inflight){
+		if(qos == 0 || max_inflight == 0 || context->msg_count12 < max_inflight){
 			if(dir == mosq_md_out){
 				switch(qos){
 					case 0:
@@ -295,7 +303,7 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 					return 1;
 				}
 			}
-		}else if(max_queued == 0 || msg_count-max_inflight < max_queued){
+		}else if(max_queued == 0 || context->msg_count12-max_inflight < max_queued){
 			state = mosq_ms_queued;
 			rc = 2;
 		}else{
@@ -307,7 +315,7 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 			return 2;
 		}
 	}else{
-		if(max_queued > 0 && msg_count >= max_queued){
+		if(max_queued > 0 && context->msg_count12 >= max_queued){
 #ifdef WITH_SYS_TREE
 			g_msgs_dropped++;
 #endif
@@ -336,10 +344,16 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 	msg->dup = false;
 	msg->qos = qos;
 	msg->retain = retain;
-	if(tail){
-		tail->next = msg;
+	if(context->last_msg){
+		context->last_msg->next = msg;
+		context->last_msg = msg;
 	}else{
 		context->msgs = msg;
+		context->last_msg = msg;
+	}
+	context->msg_count++;
+	if(qos > 0){
+		context->msg_count12++;
 	}
 
 	if(db->config->allow_duplicate_messages == false && dir == mosq_md_out && retain == false){
@@ -363,10 +377,9 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 		}
 	}
 #ifdef WITH_BRIDGE
-	msg_count++; /* We've just added a message to the list */
 	if(context->bridge && context->bridge->start_type == bst_lazy
 			&& context->sock == INVALID_SOCKET
-			&& msg_count >= context->bridge->threshold){
+			&& context->msg_count >= context->bridge->threshold){
 
 		context->bridge->lazy_reconnect = true;
 	}
@@ -406,6 +419,9 @@ int mqtt3_db_messages_delete(struct mosquitto *context)
 		tail = next;
 	}
 	context->msgs = NULL;
+	context->last_msg = NULL;
+	context->msg_count = 0;
+	context->msg_count12 = 0;
 
 	return MOSQ_ERR_SUCCESS;
 }
@@ -531,7 +547,16 @@ int mqtt3_db_message_reconnect_reset(struct mosquitto *context)
 	int count;
 
 	msg = context->msgs;
+	context->msg_count = 0;
+	context->msg_count12 = 0;
 	while(msg){
+		context->last_msg = msg;
+
+		context->msg_count++;
+		if(msg->qos > 0){
+			context->msg_count12++;
+		}
+
 		if(msg->direction == mosq_md_out){
 			if(msg->state != mosq_ms_queued){
 				switch(msg->qos){
@@ -554,16 +579,7 @@ int mqtt3_db_message_reconnect_reset(struct mosquitto *context)
 			if(msg->qos != 2){
 				/* Anything <QoS 2 can be completely retried by the client at
 				 * no harm. */
-				msg->store->ref_count--;
-				if(prev){
-					prev->next = msg->next;
-					_mosquitto_free(msg);
-					msg = prev;
-				}else{
-					context->msgs = msg->next;
-					_mosquitto_free(msg);
-					msg = context->msgs;
-				}
+				_message_remove(context, &msg, prev);
 			}else{
 				/* Message state can be preserved here because it should match
 				 * whatever the client has got. */
@@ -699,18 +715,7 @@ int mqtt3_db_message_release(struct mosquitto_db *db, struct mosquitto *context,
 			 * keep resending it. That means we don't send it to other
 			 * clients. */
 			if(!topic || !mqtt3_db_messages_queue(db, source_id, topic, qos, retain, tail->store)){
-				tail->store->ref_count--;
-				if(last){
-					last->next = tail->next;
-				}else{
-					context->msgs = tail->next;
-				}
-				_mosquitto_free(tail);
-				if(last){
-					tail = last->next;
-				}else{
-					tail = context->msgs;
-				}
+				_message_remove(context, &tail, last);
 				deleted = true;
 			}else{
 				return 1;
@@ -766,17 +771,7 @@ int mqtt3_db_message_write(struct mosquitto *context)
 				case mosq_ms_publish_qos0:
 					rc = _mosquitto_send_publish(context, mid, topic, payloadlen, payload, qos, retain, retries);
 					if(!rc){
-						if(last){
-							last->next = tail->next;
-							tail->store->ref_count--;
-							_mosquitto_free(tail);
-							tail = last->next;
-						}else{
-							context->msgs = tail->next;
-							tail->store->ref_count--;
-							_mosquitto_free(tail);
-							tail = context->msgs;
-						}
+						_message_remove(context, &tail, last);
 					}else{
 						return rc;
 					}
