@@ -13,6 +13,7 @@ Client library:
   a broker that doesn't follow the spec.
 - Block in Python loop_stop() until all messages are sent, as the
   documentation states should happen.
+- Fix for asynchronous connections on Windows. Closes bug #1249202.
 
 Clients:
 - mosquitto_sub now uses fwrite() instead of printf() to output messages, so
