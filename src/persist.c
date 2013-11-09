@@ -427,7 +427,7 @@ error:
 
 static int _db_client_msg_restore(struct mosquitto_db *db, const char *client_id, uint16_t mid, uint8_t qos, uint8_t retain, uint8_t direction, uint8_t state, uint8_t dup, uint64_t store_id)
 {
-	struct mosquitto_client_msg *cmsg, *tail;
+	struct mosquitto_client_msg *cmsg;
 	struct mosquitto_msg_store *store;
 	struct mosquitto *context;
 
@@ -466,15 +466,12 @@ static int _db_client_msg_restore(struct mosquitto_db *db, const char *client_id
 		return 1;
 	}
 	if(context->msgs){
-		tail = context->msgs;
-		while(tail->next){
-			tail = tail->next;
-		}
-		tail->next = cmsg;
+		context->last_msg->next = cmsg;
 	}else{
 		context->msgs = cmsg;
 	}
 	cmsg->next = NULL;
+	context->last_msg = cmsg;
 
 	return MOSQ_ERR_SUCCESS;
 }
