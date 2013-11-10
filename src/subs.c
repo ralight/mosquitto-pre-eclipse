@@ -326,11 +326,10 @@ static int _sub_remove(struct mosquitto_db *db, struct mosquitto *context, struc
 	return MOSQ_ERR_SUCCESS;
 }
 
-static int _sub_search(struct mosquitto_db *db, struct _mosquitto_subhier *subhier, struct _sub_token *tokens, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored, bool set_retain)
+static void _sub_search(struct mosquitto_db *db, struct _mosquitto_subhier *subhier, struct _sub_token *tokens, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored, bool set_retain)
 {
 	/* FIXME - need to take into account source_id if the client is a bridge */
 	struct _mosquitto_subhier *branch;
-	int flag = 0;
 	bool sr;
 
 	branch = subhier->children;
@@ -344,9 +343,7 @@ static int _sub_search(struct mosquitto_db *db, struct _mosquitto_subhier *subhi
 				/* Don't set a retained message where + is in the hierarchy. */
 				sr = false;
 			}
-			if(_sub_search(db, branch, tokens->next, source_id, topic, qos, retain, stored, sr) == -1){
-				flag = -1;
-			}
+			_sub_search(db, branch, tokens->next, source_id, topic, qos, retain, stored, sr);
 			if(!tokens->next){
 				_subs_process(db, branch, source_id, topic, qos, retain, stored, sr);
 			}
@@ -356,11 +353,9 @@ static int _sub_search(struct mosquitto_db *db, struct _mosquitto_subhier *subhi
 			 * there may still be other subscriptions to deal with.
 			 */
 			_subs_process(db, branch, source_id, topic, qos, retain, stored, false);
-			flag = -1;
 		}
 		branch = branch->next;
 	}
-	return flag;
 }
 
 int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int qos, struct _mosquitto_subhier *root)
@@ -473,11 +468,7 @@ int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, cons
 				 */
 				_sub_add(db, NULL, 0, subhier, tokens);
 			}
-			rc = _sub_search(db, subhier, tokens, source_id, topic, qos, retain, stored, true);
-			if(rc == -1){
-				_subs_process(db, subhier, source_id, topic, qos, retain, stored, true);
-				rc = 0;
-			}
+			_sub_search(db, subhier, tokens, source_id, topic, qos, retain, stored, true);
 		}else if(!strcmp(subhier->topic, "$SYS") && tree == 2){
 			if(retain){
 				/* We have a message that needs to be retained, so ensure that the subscription
@@ -485,11 +476,7 @@ int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, cons
 				 */
 				_sub_add(db, NULL, 0, subhier, tokens);
 			}
-			rc = _sub_search(db, subhier, tokens, source_id, topic, qos, retain, stored, true);
-			if(rc == -1){
-				_subs_process(db, subhier, source_id, topic, qos, retain, stored, true);
-				rc = 0;
-			}
+			_sub_search(db, subhier, tokens, source_id, topic, qos, retain, stored, true);
 		}
 		subhier = subhier->next;
 	}
