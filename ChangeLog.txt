@@ -7,6 +7,7 @@ Broker:
 - Possible memory leak fixes. 
 - Further fix for bug #1226040: multiple retained messages being delivered for
   subscriptions ending in #.
+- Fix bridge reconnections when using multiple bridge addresses.
 
 Client library:
 - Fix possible memory leak in C/C++ library when communicating with
