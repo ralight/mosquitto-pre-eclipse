@@ -47,6 +47,10 @@ POSSIBILITY OF SUCH DAMAGE.
 #  include <dummypthread.h>
 #endif
 
+#ifdef WITH_SRV
+#  include <ares.h>
+#endif
+
 #ifdef WIN32
 #	if _MSC_VER < 1600
 		typedef unsigned char uint8_t;
@@ -91,7 +95,8 @@ enum mosquitto_client_state {
 	mosq_cs_connected = 1,
 	mosq_cs_disconnecting = 2,
 	mosq_cs_connect_async = 3,
-	mosq_cs_connect_pending = 4
+	mosq_cs_connect_pending = 4,
+	mosq_cs_connect_srv = 5
 };
 
 struct _mosquitto_packet{
@@ -204,6 +209,9 @@ struct mosquitto {
 	struct mosquitto_message_all *messages_last;
 	int inflight_messages;
 	int max_inflight_messages;
+#  ifdef WITH_SRV
+	ares_channel achan;
+#  endif
 #endif
 };
 

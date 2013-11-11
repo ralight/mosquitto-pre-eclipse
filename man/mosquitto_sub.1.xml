@@ -27,6 +27,7 @@
 			<arg><option>-p</option> <replaceable>port number</replaceable></arg>
 			<arg><option>-q</option> <replaceable>message QoS</replaceable></arg>
 			<arg><option>-R</option></arg>
+			<arg><option>-S</option></arg>
 			<arg><option>--quiet</option></arg>
 			<arg><option>-v</option></arg>
 			<arg>
@@ -278,6 +279,17 @@
 						subscribing to a wildcard topic there may be a large
 						number of retained messages. This argument suppresses
 						their display.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-S</option></term>
+				<listitem>
+					<para>Use SRV lookups to determine which host to connect
+						to. Performs lookups to
+						<option>_mqtt._tcp.&lt;host&gt;</option> when used in
+						conjunction with <option>-h</option>, otherwise uses
+						<option>_mqtt._tcp.&lt;local dns
+							domain&gt;</option>.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

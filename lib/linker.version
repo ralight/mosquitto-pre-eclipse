@@ -64,3 +64,8 @@ MOSQ_1.2 {
 		mosquitto_reconnect_async;
 		mosquitto_tls_insecure_set;
 } MOSQ_1.1;
+
+MOSQ_1.3 {
+	global:
+		mosquitto_connect_srv;
+} MOSQ_1.2;

@@ -100,6 +100,10 @@ void _mosquitto_net_init(void)
 	WSAStartup(MAKEWORD(2,2), &wsaData);
 #endif
 
+#ifdef WITH_SRV
+	ares_library_init(ARES_LIB_INIT_ALL);
+#endif
+
 #ifdef WITH_TLS
 	SSL_load_error_strings();
 	SSL_library_init();
@@ -116,6 +120,10 @@ void _mosquitto_net_cleanup(void)
 	ERR_free_strings();
 	EVP_cleanup();
 	CRYPTO_cleanup_all_ex_data();
+#endif
+
+#ifdef WITH_SRV
+	ares_library_cleanup();
 #endif
 
 #ifdef WIN32

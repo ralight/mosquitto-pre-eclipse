@@ -67,6 +67,9 @@ WITH_SYS_TREE:=yes
 # Python modules are not available.
 WITH_PYTHON:=yes
 
+# Build with SRV lookup support.
+WITH_SRV:=yes
+
 # =============================================================================
 # End of user configuration
 # =============================================================================
@@ -196,6 +199,11 @@ endif
 
 ifeq ($(WITH_SYS_TREE),yes)
 	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_SYS_TREE
+endif
+
+ifeq ($(WITH_SRV),yes)
+	LIB_CFLAGS:=$(LIB_CFLAGS) -DWITH_SRV
+	LIB_LIBS:=$(LIB_LIBS) -lcares
 endif
 
 ifeq ($(UNAME),SunOS)
