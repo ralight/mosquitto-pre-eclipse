@@ -56,7 +56,7 @@ typedef int ssize_t;
 #include "util_mosq.h"
 #include "will_mosq.h"
 
-#if !defined(WIN32) && defined(__SYMBIAN32__)
+#if !defined(WIN32) && !defined(__SYMBIAN32__)
 #define HAVE_PSELECT
 #endif
 
@@ -785,22 +785,36 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 	int rc;
 
 	if(!mosq || max_packets < 1) return MOSQ_ERR_INVAL;
-	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
 
 	FD_ZERO(&readfds);
-	FD_SET(mosq->sock, &readfds);
 	FD_ZERO(&writefds);
-	pthread_mutex_lock(&mosq->current_out_packet_mutex);
-	pthread_mutex_lock(&mosq->out_packet_mutex);
-	if(mosq->out_packet || mosq->current_out_packet){
-		FD_SET(mosq->sock, &writefds);
+	if(mosq->sock != INVALID_SOCKET){
+		FD_SET(mosq->sock, &readfds);
+		pthread_mutex_lock(&mosq->current_out_packet_mutex);
+		pthread_mutex_lock(&mosq->out_packet_mutex);
+		if(mosq->out_packet || mosq->current_out_packet){
+			FD_SET(mosq->sock, &writefds);
 #ifdef WITH_TLS
-	}else if(mosq->ssl && mosq->want_write){
-		FD_SET(mosq->sock, &writefds);
+		}else if(mosq->ssl && mosq->want_write){
+			FD_SET(mosq->sock, &writefds);
+#endif
+		}
+		pthread_mutex_unlock(&mosq->out_packet_mutex);
+		pthread_mutex_unlock(&mosq->current_out_packet_mutex);
+	}else{
+#ifdef WITH_SRV
+		pthread_mutex_lock(&mosq->state_mutex);
+		if(mosq->state == mosq_cs_connect_srv){
+			ares_fds(mosq->achan, &readfds, &writefds);
+		}else{
+			return MOSQ_ERR_NO_CONN;
+		}
+		pthread_mutex_unlock(&mosq->state_mutex);
+#else
+		return MOSQ_ERR_NO_CONN;
 #endif
 	}
-	pthread_mutex_unlock(&mosq->out_packet_mutex);
-	pthread_mutex_unlock(&mosq->current_out_packet_mutex);
+
 	if(timeout >= 0){
 		local_timeout.tv_sec = timeout/1000;
 #ifdef HAVE_PSELECT
@@ -832,18 +846,23 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 			return MOSQ_ERR_ERRNO;
 		}
 	}else{
-		if(FD_ISSET(mosq->sock, &readfds)){
-			rc = mosquitto_loop_read(mosq, max_packets);
-			if(rc || mosq->sock == INVALID_SOCKET){
-				return rc;
+		if(mosq->sock != INVALID_SOCKET){
+			if(FD_ISSET(mosq->sock, &readfds)){
+				rc = mosquitto_loop_read(mosq, max_packets);
+				if(rc || mosq->sock == INVALID_SOCKET){
+					return rc;
+				}
+			}
+			if(FD_ISSET(mosq->sock, &writefds)){
+				rc = mosquitto_loop_write(mosq, max_packets);
+				if(rc || mosq->sock == INVALID_SOCKET){
+					return rc;
+				}
 			}
 		}
-		if(FD_ISSET(mosq->sock, &writefds)){
-			rc = mosquitto_loop_write(mosq, max_packets);
-			if(rc || mosq->sock == INVALID_SOCKET){
-				return rc;
-			}
-		}
+#ifdef WITH_SRV
+		ares_process(mosq->achan, &readfds, &writefds);
+#endif
 	}
 	return mosquitto_loop_misc(mosq);
 }

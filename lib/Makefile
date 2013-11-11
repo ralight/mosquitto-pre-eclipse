@@ -12,6 +12,7 @@ MOSQ_OBJS=mosquitto.o \
 		  read_handle_shared.o \
 		  send_mosq.o \
 		  send_client_mosq.o \
+		  srv_mosq.o \
 		  thread_mosq.o \
 		  time_mosq.o \
 		  tls_mosq.o \
@@ -76,6 +77,9 @@ send_mosq.o : send_mosq.c send_mosq.h
 	$(CC) $(LIB_CFLAGS) -c $< -o $@
 
 send_client_mosq.o : send_client_mosq.c send_mosq.h
+	$(CC) $(LIB_CFLAGS) -c $< -o $@
+
+srv_mosq.o : srv_mosq.c
 	$(CC) $(LIB_CFLAGS) -c $< -o $@
 
 thread_mosq.o : thread_mosq.c

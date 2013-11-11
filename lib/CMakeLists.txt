@@ -33,6 +33,7 @@ add_library(libmosquitto SHARED
 	read_handle_shared.c
 	send_client_mosq.c
 	send_mosq.c send_mosq.h
+	srv_mosq.c
 	thread_mosq.c
 	time_mosq.c
 	tls_mosq.c
@@ -48,6 +49,11 @@ endif (UNIX AND NOT APPLE)
 if (WIN32)
 	set (LIBRARIES ${LIBRARIES} ws2_32)
 endif (WIN32)
+
+option(WITH_SRV "Include SRV lookup support?" ON)
+if (${WITH_SRV} STREQUAL ON)
+	set (LIBRARIES ${LIBRARIES} cares)
+endif (${WITH_SRV} STREQUAL ON)
 
 target_link_libraries(libmosquitto ${LIBRARIES})
 

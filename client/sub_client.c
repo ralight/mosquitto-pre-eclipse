@@ -127,7 +127,7 @@ void print_usage(void)
 	printf("mosquitto_sub is a simple mqtt client that will subscribe to a single topic and print all messages it receives.\n");
 	printf("mosquitto_sub version %s running on libmosquitto %d.%d.%d.\n\n", VERSION, major, minor, revision);
 	printf("Usage: mosquitto_sub [-c] [-h host] [-k keepalive] [-p port] [-q qos] [-R] [-v] -t topic ...\n");
-	printf("                     [-A bind_address]\n");
+	printf("                     [-A bind_address] [-S]\n");
 	printf("                     [-i id] [-I id_prefix]\n");
 	printf("                     [-d] [--quiet]\n");
 	printf("                     [-u username [-P password]]\n");
@@ -152,6 +152,7 @@ void print_usage(void)
 	printf(" -p : network port to connect to. Defaults to 1883.\n");
 	printf(" -q : quality of service level to use for the subscription. Defaults to 0.\n");
 	printf(" -R : do not print stale messages (those with retain set).\n");
+	printf(" -S : use SRV lookups to determine which host to connect to.\n");
 	printf(" -t : mqtt topic to subscribe to. May be repeated multiple times.\n");
 	printf(" -u : provide a username (requires MQTT 3.1 broker)\n");
 	printf(" -v : print published messages verbosely.\n");
@@ -221,6 +222,8 @@ int main(int argc, char *argv[])
 	char *psk_identity = NULL;
 
 	char *ciphers = NULL;
+
+	bool use_srv = false;
 
 	memset(&ud, 0, sizeof(struct userdata));
 
@@ -389,6 +392,8 @@ int main(int argc, char *argv[])
 			ud.quiet = true;
 		}else if(!strcmp(argv[i], "-R")){
 			ud.no_retain = true;
+		}else if(!strcmp(argv[i], "-S")){
+			use_srv = true;
 		}else if(!strcmp(argv[i], "-t") || !strcmp(argv[i], "--topic")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: -t argument given but no topic specified.\n\n");
@@ -587,7 +592,11 @@ int main(int argc, char *argv[])
 		mosquitto_subscribe_callback_set(mosq, my_subscribe_callback);
 	}
 
-	rc = mosquitto_connect_bind(mosq, host, port, keepalive, bind_address);
+	if(use_srv){
+		rc = mosquitto_connect_srv(mosq, host, keepalive, bind_address);
+	}else{
+		rc = mosquitto_connect_bind(mosq, host, port, keepalive, bind_address);
+	}
 	if(rc){
 		if(!ud.quiet){
 			if(rc == MOSQ_ERR_ERRNO){
