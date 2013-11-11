@@ -75,9 +75,9 @@ int mosquitto_connect_srv(struct mosquitto *mosq, const char *host, int keepaliv
 	}else{
 #ifdef WITH_TLS
 		if(mosq->tls_cafile || mosq->tls_capath || mosq->tls_psk){
-			h = _mosquitto_malloc(strlen(host) + strlen("_mqtts._tcp.") + 1);
+			h = _mosquitto_malloc(strlen(host) + strlen("_secure-mqtt._tcp.") + 1);
 			if(!h) return MOSQ_ERR_NOMEM;
-			sprintf(h, "_mqtts._tcp.%s", host);
+			sprintf(h, "_secure-mqtt._tcp.%s", host);
 		}else{
 #endif
 			h = _mosquitto_malloc(strlen(host) + strlen("_mqtt._tcp.") + 1);
