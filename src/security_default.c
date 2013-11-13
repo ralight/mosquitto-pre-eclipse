@@ -761,8 +761,6 @@ int _pw_digest(const char *password, const unsigned char *salt, unsigned int sal
 {
 	const EVP_MD *digest;
 	EVP_MD_CTX context;
-	char *pass_salt;
-	int pass_salt_len;
 
 	digest = EVP_get_digestbyname("sha512");
 	if(!digest){
@@ -770,21 +768,13 @@ int _pw_digest(const char *password, const unsigned char *salt, unsigned int sal
 		return 1;
 	}
 
-	pass_salt_len = strlen(password) + salt_len;
-	pass_salt = _mosquitto_malloc(pass_salt_len);
-	if(!pass_salt){
-		// FIXME fprintf(stderr, "Error: Out of memory.\n");
-		return 1;
-	}
-	memcpy(pass_salt, password, strlen(password));
-	memcpy(pass_salt+strlen(password), salt, salt_len);
 	EVP_MD_CTX_init(&context);
 	EVP_DigestInit_ex(&context, digest, NULL);
-	EVP_DigestUpdate(&context, pass_salt, pass_salt_len);
+	EVP_DigestUpdate(&context, password, strlen(password));
+	EVP_DigestUpdate(&context, salt, salt_len);
 	/* hash is assumed to be EVP_MAX_MD_SIZE bytes long. */
 	EVP_DigestFinal_ex(&context, hash, hash_len);
 	EVP_MD_CTX_cleanup(&context);
-	_mosquitto_free(pass_salt);
 
 	return MOSQ_ERR_SUCCESS;
 }
