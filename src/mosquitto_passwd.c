@@ -102,8 +102,6 @@ int output_new_password(FILE *fptr, const char *username, const char *password)
 	unsigned int hash_len;
 	const EVP_MD *digest;
 	EVP_MD_CTX context;
-	char *pass_salt;
-	int pass_salt_len;
 
 	rc = RAND_bytes(salt, SALT_LEN);
 	if(!rc){
@@ -125,22 +123,12 @@ int output_new_password(FILE *fptr, const char *username, const char *password)
 		return 1;
 	}
 
-	pass_salt_len = strlen(password) + SALT_LEN;
-	pass_salt = malloc(pass_salt_len);
-	if(!pass_salt){
-		if(salt64) free(salt64);
-		if(hash64) free(hash64);
-		fprintf(stderr, "Error: Out of memory.\n");
-		return 1;
-	}
-	memcpy(pass_salt, password, strlen(password));
-	memcpy(pass_salt+strlen(password), salt, SALT_LEN);
 	EVP_MD_CTX_init(&context);
 	EVP_DigestInit_ex(&context, digest, NULL);
-	EVP_DigestUpdate(&context, pass_salt, pass_salt_len);
+	EVP_DigestUpdate(&context, password, strlen(password));
+	EVP_DigestUpdate(&context, salt, SALT_LEN);
 	EVP_DigestFinal_ex(&context, hash, &hash_len);
 	EVP_MD_CTX_cleanup(&context);
-	free(pass_salt);
 
 	rc = base64_encode(hash, hash_len, &hash64);
 	if(rc){
