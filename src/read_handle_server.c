@@ -341,6 +341,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	client_id = NULL;
 	context->clean_session = clean_session;
 	context->ping_t = 0;
+	context->is_dropping = false;
 
 	// Add the client ID to the DB hash table here
 	new_cih = _mosquitto_malloc(sizeof(struct _clientid_index_hash));

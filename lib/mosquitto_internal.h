@@ -177,6 +177,7 @@ struct mosquitto {
 	int pollfd_index;
 	int db_index;
 	struct _mosquitto_packet *out_packet_last;
+	bool is_dropping;
 #else
 	void *userdata;
 	bool in_callback;

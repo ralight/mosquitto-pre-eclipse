@@ -307,8 +307,13 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 			state = mosq_ms_queued;
 			rc = 2;
 		}else{
-			/* Dropping message due to full queue.
-		 	* FIXME - should this be logged? */
+			/* Dropping message due to full queue. */
+			if(context->is_dropping == false){
+				context->is_dropping = true;
+				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE,
+						"Outgoing messages are being dropped for client %s.",
+						context->id);
+			}
 #ifdef WITH_SYS_TREE
 			g_msgs_dropped++;
 #endif
@@ -319,6 +324,12 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 #ifdef WITH_SYS_TREE
 			g_msgs_dropped++;
 #endif
+			if(context->is_dropping == false){
+				context->is_dropping = true;
+				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE,
+						"Outgoing messages are being dropped for client %s.",
+						context->id);
+			}
 			return 2;
 		}else{
 			state = mosq_ms_queued;
