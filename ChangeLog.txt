@@ -18,6 +18,8 @@ Broker:
 - Topics are no longer normalised from e.g a///topic to a/topic. This matches
   the behaviour as clarified by the Oasis MQTT spec. This will lead to
   unexpected behaviour if you were using topics of this form.
+- Log when outgoing messages for a client begin to drop off the end of the
+  queue.
 
 Client library:
 - Fix support for Python 2.6, 3.0, 3.1.
