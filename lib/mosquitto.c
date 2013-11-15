@@ -803,13 +803,15 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 		pthread_mutex_unlock(&mosq->current_out_packet_mutex);
 	}else{
 #ifdef WITH_SRV
-		pthread_mutex_lock(&mosq->state_mutex);
-		if(mosq->state == mosq_cs_connect_srv){
-			ares_fds(mosq->achan, &readfds, &writefds);
-		}else{
-			return MOSQ_ERR_NO_CONN;
+		if(mosq->achan){
+			pthread_mutex_lock(&mosq->state_mutex);
+			if(mosq->state == mosq_cs_connect_srv){
+				ares_fds(mosq->achan, &readfds, &writefds);
+			}else{
+				return MOSQ_ERR_NO_CONN;
+			}
+			pthread_mutex_unlock(&mosq->state_mutex);
 		}
-		pthread_mutex_unlock(&mosq->state_mutex);
 #else
 		return MOSQ_ERR_NO_CONN;
 #endif
@@ -861,7 +863,9 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 			}
 		}
 #ifdef WITH_SRV
-		ares_process(mosq->achan, &readfds, &writefds);
+		if(mosq->achan){
+			ares_process(mosq->achan, &readfds, &writefds);
+		}
 #endif
 	}
 	return mosquitto_loop_misc(mosq);
