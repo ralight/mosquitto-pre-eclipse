@@ -181,18 +181,20 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			rc = 1;
 			goto handle_connect_error;
 		}
-		will_payload = _mosquitto_malloc(will_payloadlen);
-		if(!will_payload){
-			mqtt3_context_disconnect(db, context);
-			rc = 1;
-			goto handle_connect_error;
-		}
+		if(will_payloadlen > 0){
+			will_payload = _mosquitto_malloc(will_payloadlen);
+			if(!will_payload){
+				mqtt3_context_disconnect(db, context);
+				rc = 1;
+				goto handle_connect_error;
+			}
 
-		rc = _mosquitto_read_bytes(&context->in_packet, will_payload, will_payloadlen);
-		if(rc){
-			mqtt3_context_disconnect(db, context);
-			rc = 1;
-			goto handle_connect_error;
+			rc = _mosquitto_read_bytes(&context->in_packet, will_payload, will_payloadlen);
+			if(rc){
+				mqtt3_context_disconnect(db, context);
+				rc = 1;
+				goto handle_connect_error;
+			}
 		}
 	}
 

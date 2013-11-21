@@ -17,7 +17,7 @@ import mosq_test
 
 rc = 1
 keepalive = 60
-connect_packet = mosq_test.gen_connect("test-helper", keepalive=keepalive, will_topic="will/qos0/test", will_payload=struct.pack("!4sB7s", "will", 0, "message"))
+connect_packet = mosq_test.gen_connect("test-helper", keepalive=keepalive, will_topic="will/null/test")
 connack_packet = mosq_test.gen_connack(rc=0)
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
