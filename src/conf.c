@@ -1162,7 +1162,7 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 							while(token[0] == ' '){
 								token++;
 							}
-							if(token){
+							if(token[0]){
 								config->log_file = _mosquitto_strdup(token);
 								if(!config->log_file){
 									_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
