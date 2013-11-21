@@ -261,7 +261,7 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 
 	return rc;
 process_bad_message:
-	if(topic) _mosquitto_free(topic);
+	_mosquitto_free(topic);
 	if(payload) _mosquitto_free(payload);
 	switch(qos){
 		case 0:
