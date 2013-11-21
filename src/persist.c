@@ -67,6 +67,8 @@ static struct mosquitto *_db_find_or_add_context(struct mosquitto_db *db, const 
 	}
 	if(!context){
 		context = mqtt3_context_init(-1);
+		if(!context) return NULL;
+
 		context->clean_session = false;
 
 		for(i=0; i<db->context_count; i++){
@@ -82,6 +84,7 @@ static struct mosquitto *_db_find_or_add_context(struct mosquitto_db *db, const 
 				db->contexts = tmp_contexts;
 				db->contexts[db->context_count-1] = context;
 			}else{
+				mqtt3_context_cleanup(db, context, true);
 				return NULL;
 			}
 		}
