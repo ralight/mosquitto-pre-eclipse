@@ -663,7 +663,7 @@ int mosquitto_tls_set(struct mosquitto *mosq, const char *cafile, const char *ca
 			}
 			if(mosq->tls_certfile){
 				_mosquitto_free(mosq->tls_certfile);
-				mosq->tls_capath = NULL;
+				mosq->tls_certfile = NULL;
 			}
 			return MOSQ_ERR_INVAL;
 		}
