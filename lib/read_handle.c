@@ -161,8 +161,8 @@ int _mosquitto_handle_publish(struct mosquitto *mosq)
 			return rc;
 		case 2:
 			rc = _mosquitto_send_pubrec(mosq, message->msg.mid);
-			message->state = mosq_ms_wait_for_pubrel;
 			pthread_mutex_lock(&mosq->message_mutex);
+			message->state = mosq_ms_wait_for_pubrel;
 			_mosquitto_message_queue(mosq, message, true);
 			pthread_mutex_unlock(&mosq->message_mutex);
 			return rc;
