@@ -185,10 +185,13 @@ int load_file(const char *filename)
 		fclose(fptr);
 		if(!quiet) fprintf(stderr, "Error: File \"%s\" is too large (>268,435,455 bytes).\n", filename);
 		return 1;
-	}
-	if(msglen == 0){
+	}else if(msglen == 0){
 		fclose(fptr);
 		if(!quiet) fprintf(stderr, "Error: File \"%s\" is empty.\n", filename);
+		return 1;
+	}else if(msglen < 0){
+		fclose(fptr);
+		if(!quiet) fprintf(stderr, "Error: Unable to determine size of file \"%s\".\n", filename);
 		return 1;
 	}
 	fseek(fptr, 0, SEEK_SET);
