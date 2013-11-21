@@ -544,7 +544,10 @@ static int _aclfile_parse(struct mosquitto_db *db)
 				}else{
 					rc = _add_acl_pattern(db, topic, access);
 				}
-				if(rc) return rc;
+				if(rc){
+					fclose(aclfile);
+					return rc;
+				}
 			}else if(!strcmp(token, "user")){
 				token = strtok_r(NULL, " ", &saveptr);
 				if(token){

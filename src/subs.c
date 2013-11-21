@@ -266,7 +266,10 @@ static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos,
 	branch = _mosquitto_calloc(1, sizeof(struct _mosquitto_subhier));
 	if(!branch) return MOSQ_ERR_NOMEM;
 	branch->topic = _mosquitto_strdup(tokens->topic);
-	if(!branch->topic) return MOSQ_ERR_NOMEM;
+	if(!branch->topic){
+		_mosquitto_free(branch);
+		return MOSQ_ERR_NOMEM;
+	}
 	if(!last){
 		subhier->children = branch;
 	}else{
