@@ -142,6 +142,9 @@ void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, b
 		context->address = NULL;
 	}
 	if(context->id){
+		assert(db); /* db can only be NULL here if the client hasn't sent a
+					   CONNECT and hence wouldn't have an id. */
+
 		// Remove the context's ID from the DB hash
 		struct _clientid_index_hash *find_cih;
 		HASH_FIND_STR(db->clientid_index_hash, context->id, find_cih);
