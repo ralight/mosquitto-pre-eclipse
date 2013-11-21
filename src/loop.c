@@ -98,7 +98,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 		mqtt3_db_sys_update(db, db->config->sys_interval, start_time);
 #endif
 
-		if(listensock_count + db->context_count > pollfd_count){
+		if(listensock_count + db->context_count > pollfd_count || !pollfds){
 			pollfd_count = listensock_count + db->context_count;
 			pollfds = _mosquitto_realloc(pollfds, sizeof(struct pollfd)*pollfd_count);
 			if(!pollfds){

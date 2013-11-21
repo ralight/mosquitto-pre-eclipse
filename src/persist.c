@@ -514,9 +514,11 @@ static int _db_client_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	}
 
 	context = _db_find_or_add_context(db, client_id, last_mid);
-	if(!context) rc = 1;
-
-	context->disconnect_t = disconnect_t;
+	if(context){
+		context->disconnect_t = disconnect_t;
+	}else{
+		rc = 1;
+	}
 
 	_mosquitto_free(client_id);
 
