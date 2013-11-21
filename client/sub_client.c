@@ -591,8 +591,8 @@ int main(int argc, char *argv[])
 				fprintf(stderr, "Unable to connect (%d).\n", rc);
 			}
 		}
-		return rc;
 		mosquitto_lib_cleanup();
+		return rc;
 	}
 
 	rc = mosquitto_loop_forever(mosq, -1, 1);
