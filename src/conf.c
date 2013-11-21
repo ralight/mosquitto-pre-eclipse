@@ -398,7 +398,7 @@ int mqtt3_config_parse_args(struct mqtt3_config *config, int argc, char *argv[])
 			config->listeners[config->listener_count-1].host = NULL;
 		}
 		if(config->default_listener.mount_point){
-			config->listeners[config->listener_count-1].mount_point = config->default_listener.host;
+			config->listeners[config->listener_count-1].mount_point = config->default_listener.mount_point;
 		}else{
 			config->listeners[config->listener_count-1].mount_point = NULL;
 		}
@@ -870,7 +870,7 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
 						if(cur_bridge->tls_certfile){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate bridge_tls_version value in bridge configuration.");
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate bridge_tls_certfile value in bridge configuration.");
 							return MOSQ_ERR_INVAL;
 						}
 						cur_bridge->tls_version = _mosquitto_strdup(token);
