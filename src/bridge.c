@@ -95,7 +95,7 @@ int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge)
 				break;
 			}
 		}else if(db->contexts[i] == NULL && null_index == -1){
-			i = null_index;
+			null_index = i;
 			break;
 		}
 	}

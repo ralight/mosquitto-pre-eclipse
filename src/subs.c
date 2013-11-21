@@ -162,6 +162,8 @@ static int _sub_topic_tokenise(const char *subtopic, struct _sub_token **topics)
 	assert(subtopic);
 	assert(topics);
 
+	if(strlen(subtopic) == 0) return 1;
+
 	local_subtopic = _mosquitto_strdup(subtopic);
 	if(!local_subtopic) return MOSQ_ERR_NOMEM;
 	real_subtopic = local_subtopic;
