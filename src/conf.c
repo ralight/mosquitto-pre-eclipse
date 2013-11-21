@@ -1025,6 +1025,9 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 					if(level == 0){
 						/* Only process include_dir from the main config file. */
 						token = strtok_r(NULL, " ", &saveptr);
+						if(!token){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty include_dir value in configuration.");
+						}
 #ifdef WIN32
 						snprintf(dirpath, MAX_PATH, "%s\\*.conf", token);
 						fh = FindFirstFile(dirpath, &find_data);
