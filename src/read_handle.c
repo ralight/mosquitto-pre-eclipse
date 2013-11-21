@@ -204,6 +204,7 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 		payload = _mosquitto_calloc(payloadlen+1, sizeof(uint8_t));
 		if(_mosquitto_read_bytes(&context->in_packet, payload, payloadlen)){
 			_mosquitto_free(topic);
+			_mosquitto_free(payload);
 			return 1;
 		}
 	}
