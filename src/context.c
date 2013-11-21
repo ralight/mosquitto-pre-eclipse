@@ -70,13 +70,15 @@ struct mosquitto *mqtt3_context_init(int sock)
 	context->current_out_packet = NULL;
 
 	context->address = NULL;
-	if(!_mosquitto_socket_get_address(sock, address, 1024)){
-		context->address = _mosquitto_strdup(address);
-	}
-	if(!context->address && sock != -1){
-		/* getpeername and inet_ntop failed and not a bridge */
-		_mosquitto_free(context);
-		return NULL;
+	if(sock != -1){
+		if(!_mosquitto_socket_get_address(sock, address, 1024)){
+			context->address = _mosquitto_strdup(address);
+		}
+		if(!context->address){
+			/* getpeername and inet_ntop failed and not a bridge */
+			_mosquitto_free(context);
+			return NULL;
+		}
 	}
 	context->bridge = NULL;
 	context->msgs = NULL;
