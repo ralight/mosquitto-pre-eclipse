@@ -1118,10 +1118,10 @@ class Mosquitto:
                 # in multi threaded mode when loop_stop() has been called and
                 # so no other threads can access _current_out_packet,
                 # _out_packet or _messages.
-                if self._thread_terminate
+                if (self._thread_terminate
                         and self._current_out_packet == None
                         and len(self._out_packet) == 0
-                        and len(self._messages) == 0:
+                        and len(self._messages) == 0):
 
                     rc = 1
                     run = False
