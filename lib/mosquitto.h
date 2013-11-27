@@ -666,7 +666,8 @@ libmosq_EXPORT void mosquitto_message_free(struct mosquitto_message **message);
  *	timeout -     Maximum number of milliseconds to wait for network activity
  *	              in the select() call before timing out. Set to 0 for instant
  *	              return.  Set negative to use the default of 1000ms.
- *	max_packets - this parameter is currently unused.
+ *	max_packets - this parameter is currently unused and should be set to 1 for
+ *	              future compatibility.
  * 
  * Returns:
  *	MOSQ_ERR_SUCCESS -   on success.
@@ -700,7 +701,8 @@ libmosq_EXPORT int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_p
  *	timeout -     Maximum number of milliseconds to wait for network activity
  *	              in the select() call before timing out. Set to 0 for instant
  *	              return.  Set negative to use the default of 1000ms.
- *	max_packets - this parameter is currently unused.
+ *	max_packets - this parameter is currently unused and should be set to 1 for
+ *	              future compatibility.
  *
  * Returns:
  *	MOSQ_ERR_SUCCESS -   on success.
@@ -787,7 +789,8 @@ libmosq_EXPORT int mosquitto_socket(struct mosquitto *mosq);
  *
  * Parameters:
  *	mosq -        a valid mosquitto instance.
- *	max_packets - this parameter is currently unused.
+ *	max_packets - this parameter is currently unused and should be set to 1 for
+ *	              future compatibility.
  *
  * Returns:
  *	MOSQ_ERR_SUCCESS -   on success.
@@ -816,7 +819,8 @@ libmosq_EXPORT int mosquitto_loop_read(struct mosquitto *mosq, int max_packets);
  *
  * Parameters:
  *	mosq -        a valid mosquitto instance.
- *	max_packets - this parameter is currently unused.
+ *	max_packets - this parameter is currently unused and should be set to 1 for
+ *	              future compatibility.
  *
  * Returns:
  *	MOSQ_ERR_SUCCESS -   on success.
