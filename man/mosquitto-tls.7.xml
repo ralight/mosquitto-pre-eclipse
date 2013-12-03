@@ -19,6 +19,11 @@
 		<para><command>mosquitto</command> provides SSL support for encrypted
 			network connections and authentication. This manual describes how
 			to create the files needed.</para>
+		<note><para>It is important to use different certificate parameters for
+				your CA, server and clients. If the certificates appear
+				identical, even though generated separately, the broker/client
+				will not be able to distinguish between them and you will
+				experience difficult to diagnose errors.</para></note>
 	</refsect1>
 
 	<refsect1>

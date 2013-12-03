@@ -40,6 +40,70 @@ Clients:
 - Add --ciphers to allow specifying which TLS ciphers to support.
 - Add support for SRV lookups.
 
+1.2.3 - 20131202
+================
+
+Broker:
+- Don't always attempt to call read() for SSL clients, irrespective of whether
+  they were ready to read or not. Reduces syscalls significantly.
+- Possible memory leak fixes. 
+- Further fix for bug #1226040: multiple retained messages being delivered for
+  subscriptions ending in #.
+- Fix bridge reconnections when using multiple bridge addresses.
+
+Client library:
+- Fix possible memory leak in C/C++ library when communicating with
+  a broker that doesn't follow the spec.
+- Block in Python loop_stop() until all messages are sent, as the
+  documentation states should happen.
+- Fix for asynchronous connections on Windows. Closes bug #1249202.
+- Module version is now available in mosquitto.py.
+
+Clients:
+- mosquitto_sub now uses fwrite() instead of printf() to output messages, so
+  messages with NULL characters aren't truncated.
+
+1.2.2 - 20131021
+================
+
+Broker:
+- Fix compliance with max_inflight_messages when a non-clean session client
+  reconnects. Closes one of the issues on bug #1237389.
+
+Client library:
+- Fix incorrect inflight message accounting, which caused messages to go
+  unsent. Partial fix for bug #1237351.
+- Fix potential memory corruption when sending QoS>0 messages at a high rate
+  using the threaded interface. Further fix for #1237351.
+- Fix incorrect delay scaling when exponential_backoff=true in
+  mosquitto_reconnect_delay_set().
+- Some pep8 fixes for Python.
+
+1.2.1 - 20130918
+================
+
+Broker:
+- The broker no longer ignores the auth_plugin_init() return value. Closes
+  bug #1215084.
+- Use RTLD_GLOBAL when opening authentication plugins on posix systems. Fixes
+  resolving of symbols in libraries used by authentication plugins.
+- Add/fix some config documentation.
+- Fix ACLs for topics with $SYS.
+- Clients loaded from the persistence file on startup were not being added to
+  the client hash, causing subtle problems when the client reconnected,
+  including ACLs failing. This has been fixed.
+- Add note to mosquitto-tls man page stating that certificates need to be
+  unique. Closes bug #1221285.
+- Fix incorrect retained message delivery when using wildcard subs in some
+  circumstances. Fixes bug #1226040.
+
+Client library:
+- Fix support for Python 2.6, 3.0, 3.1.
+- Fix TLS subjectAltName verification and segfaults.
+- Handle EAGAIN in Python on Windows. Closes bug #1220004.
+- Fix compilation when using WITH_TLS=no.
+- Don't fail reconnecting in Python when broker is temporarily unavailable.
+
 1.2 - 20130708
 ==============
 
@@ -111,7 +175,6 @@ Broker:
 
 - mosquitto_passwd utility now reports errors more clearly.
 - Fix "mosquitto_passwd -U".
-
 
 Client library:
 - Add support for TLSv1.2 and TLSv1.1, except for on the Python module.

@@ -35,6 +35,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <time.h>
 
 #include <mosquitto_broker.h>
 #include <memory_mosq.h>
@@ -42,7 +43,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 static uint32_t db_version;
 
-static int _db_client_chunk_restore(mosquitto_db *db, FILE *db_fd)
+static int _db_client_chunk_restore(struct mosquitto_db *db, FILE *db_fd)
 {
 	uint16_t i16temp, slen, last_mid;
 	char *client_id = NULL;
@@ -86,7 +87,7 @@ error:
 	return 1;
 }
 
-static int _db_client_msg_chunk_restore(mosquitto_db *db, FILE *db_fd)
+static int _db_client_msg_chunk_restore(struct mosquitto_db *db, FILE *db_fd)
 {
 	dbid_t i64temp, store_id;
 	uint16_t i16temp, slen, mid;
@@ -138,7 +139,7 @@ error:
 	return 1;
 }
 
-static int _db_msg_store_chunk_restore(mosquitto_db *db, FILE *db_fd)
+static int _db_msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fd)
 {
 	dbid_t i64temp, store_id;
 	uint32_t i32temp, payloadlen;
@@ -251,7 +252,7 @@ error:
 	return 1;
 }
 
-static int _db_retain_chunk_restore(mosquitto_db *db, FILE *db_fd)
+static int _db_retain_chunk_restore(struct mosquitto_db *db, FILE *db_fd)
 {
 	dbid_t i64temp, store_id;
 
@@ -265,7 +266,7 @@ static int _db_retain_chunk_restore(mosquitto_db *db, FILE *db_fd)
 	return 0;
 }
 
-static int _db_sub_chunk_restore(mosquitto_db *db, FILE *db_fd)
+static int _db_sub_chunk_restore(struct mosquitto_db *db, FILE *db_fd)
 {
 	uint16_t i16temp, slen;
 	uint8_t qos;
@@ -317,13 +318,13 @@ int main(int argc, char *argv[])
 	uint16_t i16temp, chunk;
 	uint8_t i8temp;
 	ssize_t rlen;
-	mosquitto_db db;
+	struct mosquitto_db db;
 
 	if(argc != 2){
 		fprintf(stderr, "Usage: db_dump <mosquitto db filename>\n");
 		return 1;
 	}
-	memset(&db, 0, sizeof(mosquitto_db));
+	memset(&db, 0, sizeof(struct mosquitto_db));
 	fd = fopen(argv[1], "rb");
 	if(!fd) return 0;
 	read_e(fd, &header, 15);
@@ -349,7 +350,7 @@ int main(int argc, char *argv[])
 					read_e(fd, &i8temp, sizeof(uint8_t)); // sizeof(dbid_t)
 					printf("\tDB ID size: %d\n", i8temp);
 					if(i8temp != sizeof(dbid_t)){
-						fprintf(stderr, "Error: Incompatible database configuration (dbid size is %d bytes, expected %d)",
+						fprintf(stderr, "Error: Incompatible database configuration (dbid size is %d bytes, expected %ld)",
 								i8temp, sizeof(dbid_t));
 						fclose(fd);
 						return 1;

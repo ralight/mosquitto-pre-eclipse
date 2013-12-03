@@ -31,6 +31,9 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef WIN32
 #  include <winsock2.h>
+#  include <ws2tcpip.h>
+#else
+#  include <arpa/inet.h>
 #endif
 
 #include <string.h>
@@ -84,39 +87,52 @@ int _mosquitto_server_certificate_verify(int preverify_ok, X509_STORE_CTX *ctx)
  */
 int _mosquitto_verify_certificate_hostname(X509 *cert, const char *hostname)
 {
-	int san_index;
 	int i;
 	char name[256];
 	X509_NAME *subj;
-	CONF_VALUE *nval;
-	const unsigned char *data;
-	X509_EXTENSION *ext;
-	const X509V3_EXT_METHOD *meth;
-	STACK_OF(CONF_VALUE) *val;
 	bool have_san_dns = false;
+	STACK_OF(GENERAL_NAME) *san;
+	const GENERAL_NAME *nval;
+	const unsigned char *data;
+	unsigned char ipv6_addr[16];
+	unsigned char ipv4_addr[4];
+	int ipv6_ok;
+	int ipv4_ok;
 
-	san_index = X509_get_ext_by_NID(cert, NID_subject_alt_name, -1);
-	ext = X509_get_ext(cert, san_index);
-	if(ext){
-		meth = X509V3_EXT_get(ext);
-		if(meth){
-			data = ext->value->data;
-				
-			val = meth->i2v(meth, meth->d2i(0, &data, ext->value->length), 0);
-			for(i=0; i<sk_CONF_VALUE_num(val); i++){
-				nval = sk_CONF_VALUE_value(val, i);
-				if(!strcasecmp(nval->name, "DNS")){
-					if(!strcasecmp(nval->value, hostname)){
+#ifdef WIN32
+	ipv6_ok = InetPton(AF_INET6, hostname, &ipv6_addr);
+	ipv4_ok = InetPton(AF_INET, hostname, &ipv4_addr);
+#else
+	ipv6_ok = inet_pton(AF_INET6, hostname, &ipv6_addr);
+	ipv4_ok = inet_pton(AF_INET, hostname, &ipv4_addr);
+#endif
+
+	san = X509_get_ext_d2i(cert, NID_subject_alt_name, NULL, NULL);
+	if(san){
+		for(i=0; i<sk_GENERAL_NAME_num(san); i++){
+			nval = sk_GENERAL_NAME_value(san, i);
+			if(nval->type == GEN_DNS){
+				data = ASN1_STRING_data(nval->d.dNSName);
+				if(data && !strcasecmp((char *)data, hostname)){
+					return 1;
+				}
+				have_san_dns = true;
+			}else if(nval->type == GEN_IPADD){
+				data = ASN1_STRING_data(nval->d.iPAddress);
+				if(nval->d.iPAddress->length == 4 && ipv4_ok){
+					if(!memcmp(ipv4_addr, data, 4)){
 						return 1;
-					}else{
-						have_san_dns = true;
+					}
+				}else if(nval->d.iPAddress->length == 16 && ipv6_ok){
+					if(!memcmp(ipv6_addr, data, 16)){
+						return 1;
 					}
 				}
 			}
-			if(have_san_dns){
-				/* Only check CN if subjectAltName DNS entry does not exist. */
-				return 0;
-			}
+		}
+		if(have_san_dns){
+			/* Only check CN if subjectAltName DNS entry does not exist. */
+			return 0;
 		}
 	}
 	subj = X509_get_subject_name(cert);

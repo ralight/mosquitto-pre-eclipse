@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <mosquitto.h>
 
 void print_error(const char *topic, char **topics, int topic_count)

@@ -100,7 +100,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 		}
 #endif
 
-		if(listensock_count + db->context_count > pollfd_count){
+		if(listensock_count + db->context_count > pollfd_count || !pollfds){
 			pollfd_count = listensock_count + db->context_count;
 			pollfds = _mosquitto_realloc(pollfds, sizeof(struct pollfd)*pollfd_count);
 			if(!pollfds){
@@ -187,7 +187,13 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 							}
 						}else{
 							if(db->contexts[i]->bridge->start_type == bst_lazy && db->contexts[i]->bridge->lazy_reconnect){
-								mqtt3_bridge_connect(db, db->contexts[i]);
+								rc = mqtt3_bridge_connect(db, db->contexts[i]);
+								if(rc){
+									db->contexts[i]->bridge->cur_address++;
+									if(db->contexts[i]->bridge->cur_address == db->contexts[i]->bridge->address_count){
+										db->contexts[i]->bridge->cur_address = 0;
+									}
+								}
 							}
 							if(db->contexts[i]->bridge->start_type == bst_automatic && now > db->contexts[i]->bridge->restart_t){
 								db->contexts[i]->bridge->restart_t = 0;
@@ -204,6 +210,11 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 								}else{
 									/* Retry later. */
 									db->contexts[i]->bridge->restart_t = now+db->contexts[i]->bridge->restart_timeout;
+
+									db->contexts[i]->bridge->cur_address++;
+									if(db->contexts[i]->bridge->cur_address == db->contexts[i]->bridge->address_count){
+										db->contexts[i]->bridge->cur_address = 0;
+									}
 								}
 							}
 						}

@@ -67,6 +67,8 @@ static struct mosquitto *_db_find_or_add_context(struct mosquitto_db *db, const 
 	}
 	if(!context){
 		context = mqtt3_context_init(-1);
+		if(!context) return NULL;
+
 		context->clean_session = false;
 
 		for(i=0; i<db->context_count; i++){
@@ -82,10 +84,12 @@ static struct mosquitto *_db_find_or_add_context(struct mosquitto_db *db, const 
 				db->contexts = tmp_contexts;
 				db->contexts[db->context_count-1] = context;
 			}else{
+				mqtt3_context_cleanup(db, context, true);
 				return NULL;
 			}
 		}
 		context->id = _mosquitto_strdup(client_id);
+		context->db_index = i;
 	}
 	if(last_mid){
 		context->last_mid = last_mid;
@@ -483,6 +487,7 @@ static int _db_client_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	int rc = 0;
 	struct mosquitto *context;
 	time_t disconnect_t;
+	struct _clientid_index_hash *new_cih;
 
 	read_e(db_fptr, &i16temp, sizeof(uint16_t));
 	slen = ntohs(i16temp);
@@ -509,16 +514,28 @@ static int _db_client_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	}
 
 	context = _db_find_or_add_context(db, client_id, last_mid);
-	if(!context) rc = 1;
-
-	context->disconnect_t = disconnect_t;
+	if(context){
+		context->disconnect_t = disconnect_t;
+	}else{
+		rc = 1;
+	}
 
 	_mosquitto_free(client_id);
 
+	if(!rc){
+		new_cih = _mosquitto_malloc(sizeof(struct _clientid_index_hash));
+		if(!new_cih){
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+			return MOSQ_ERR_NOMEM;
+		}
+		new_cih->id = context->id;
+		new_cih->db_context_index = context->db_index;
+		HASH_ADD_KEYPTR(hh, db->clientid_index_hash, context->id, strlen(context->id), new_cih);
+	}
 	return rc;
 error:
 	_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
-	if(db_fptr) fclose(db_fptr);
+	fclose(db_fptr);
 	if(client_id) _mosquitto_free(client_id);
 	return 1;
 }
@@ -566,7 +583,7 @@ static int _db_client_msg_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 error:
 	strerror_r(errno, err, 256);
 	_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
-	if(db_fptr) fclose(db_fptr);
+	fclose(db_fptr);
 	if(client_id) _mosquitto_free(client_id);
 	return 1;
 }
@@ -647,7 +664,7 @@ static int _db_msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 error:
 	strerror_r(errno, err, 256);
 	_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
-	if(db_fptr) fclose(db_fptr);
+	fclose(db_fptr);
 	if(source_id) _mosquitto_free(source_id);
 	if(topic) _mosquitto_free(topic);
 	if(payload) _mosquitto_free(payload);
@@ -717,7 +734,7 @@ static int _db_sub_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 error:
 	strerror_r(errno, err, 256);
 	_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
-	if(db_fptr) fclose(db_fptr);
+	fclose(db_fptr);
 	return 1;
 }
 

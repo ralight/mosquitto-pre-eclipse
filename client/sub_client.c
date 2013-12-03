@@ -67,14 +67,17 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 
 	if(ud->verbose){
 		if(message->payloadlen){
-			printf("%s %s\n", message->topic, (const char *)message->payload);
+			printf("%s ", message->topic);
+			fwrite(message->payload, 1, message->payloadlen, stdout);
+			printf("\n");
 		}else{
 			printf("%s (null)\n", message->topic);
 		}
 		fflush(stdout);
 	}else{
 		if(message->payloadlen){
-			printf("%s\n", (const char *)message->payload);
+			fwrite(message->payload, 1, message->payloadlen, stdout);
+			printf("\n");
 			fflush(stdout);
 		}
 	}
@@ -610,8 +613,8 @@ int main(int argc, char *argv[])
 				fprintf(stderr, "Unable to connect (%d).\n", rc);
 			}
 		}
-		return rc;
 		mosquitto_lib_cleanup();
+		return rc;
 	}
 
 	rc = mosquitto_loop_forever(mosq, -1, 1);

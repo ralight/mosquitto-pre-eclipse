@@ -200,8 +200,13 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 			goto process_bad_message;
 		}
 		payload = _mosquitto_calloc(payloadlen+1, sizeof(uint8_t));
+		if(!payload){
+			_mosquitto_free(topic);
+			return 1;
+		}
 		if(_mosquitto_read_bytes(&context->in_packet, payload, payloadlen)){
 			_mosquitto_free(topic);
+			_mosquitto_free(payload);
 			return 1;
 		}
 	}
@@ -259,7 +264,7 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 
 	return rc;
 process_bad_message:
-	if(topic) _mosquitto_free(topic);
+	_mosquitto_free(topic);
 	if(payload) _mosquitto_free(payload);
 	switch(qos){
 		case 0:
