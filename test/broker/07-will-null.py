@@ -21,10 +21,10 @@ keepalive = 60
 connect_packet = mosq_test.gen_connect("will-qos0-test", keepalive=keepalive)
 connack_packet = mosq_test.gen_connack(rc=0)
 
-subscribe_packet = mosq_test.gen_subscribe(mid, "will/qos0/test", 0)
+subscribe_packet = mosq_test.gen_subscribe(mid, "will/null/test", 0)
 suback_packet = mosq_test.gen_suback(mid, 0)
 
-publish_packet = mosq_test.gen_publish("will/qos0/test", qos=0, payload=struct.pack("!4sB7s", "will", 0, "message"))
+publish_packet = mosq_test.gen_publish("will/null/test", qos=0)
 
 broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'], stderr=subprocess.PIPE)
 

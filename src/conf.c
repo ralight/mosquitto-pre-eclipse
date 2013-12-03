@@ -401,7 +401,7 @@ int mqtt3_config_parse_args(struct mqtt3_config *config, int argc, char *argv[])
 			config->listeners[config->listener_count-1].host = NULL;
 		}
 		if(config->default_listener.mount_point){
-			config->listeners[config->listener_count-1].mount_point = config->default_listener.host;
+			config->listeners[config->listener_count-1].mount_point = config->default_listener.mount_point;
 		}else{
 			config->listeners[config->listener_count-1].mount_point = NULL;
 		}
@@ -872,7 +872,7 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 					}
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
-						if(cur_bridge->tls_certfile){
+						if(cur_bridge->tls_version){
 							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate bridge_tls_version value in bridge configuration.");
 							return MOSQ_ERR_INVAL;
 						}
@@ -1028,6 +1028,9 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 					if(level == 0){
 						/* Only process include_dir from the main config file. */
 						token = strtok_r(NULL, " ", &saveptr);
+						if(!token){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty include_dir value in configuration.");
+						}
 #ifdef WIN32
 						snprintf(dirpath, MAX_PATH, "%s\\*.conf", token);
 						fh = FindFirstFile(dirpath, &find_data);
@@ -1162,7 +1165,7 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 							while(token[0] == ' '){
 								token++;
 							}
-							if(token){
+							if(token[0]){
 								config->log_file = _mosquitto_strdup(token);
 								if(!config->log_file){
 									_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");

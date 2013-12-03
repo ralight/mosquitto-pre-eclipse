@@ -555,9 +555,10 @@ int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int p
 		message->msg.retain = retain;
 		message->dup = false;
 
-		_mosquitto_message_queue(mosq, message);
 		pthread_mutex_lock(&mosq->message_mutex);
+		_mosquitto_message_queue(mosq, message, false);
 		if(mosq->max_inflight_messages == 0 || mosq->inflight_messages < mosq->max_inflight_messages){
+			mosq->inflight_messages++;
 			if(qos == 1){
 				message->state = mosq_ms_wait_for_puback;
 			}else if(qos == 2){
@@ -662,7 +663,7 @@ int mosquitto_tls_set(struct mosquitto *mosq, const char *cafile, const char *ca
 			}
 			if(mosq->tls_certfile){
 				_mosquitto_free(mosq->tls_certfile);
-				mosq->tls_capath = NULL;
+				mosq->tls_certfile = NULL;
 			}
 			return MOSQ_ERR_INVAL;
 		}
@@ -736,9 +737,13 @@ int mosquitto_tls_opts_set(struct mosquitto *mosq, int cert_reqs, const char *tl
 
 int mosquitto_tls_insecure_set(struct mosquitto *mosq, bool value)
 {
+#ifdef WITH_TLS
 	if(!mosq) return MOSQ_ERR_INVAL;
 	mosq->tls_insecure = value;
 	return MOSQ_ERR_SUCCESS;
+#else
+	return MOSQ_ERR_NOT_SUPPORTED;
+#endif
 }
 
 
@@ -901,9 +906,10 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 		}else{
 			pthread_mutex_unlock(&mosq->state_mutex);
 
-			reconnect_delay = mosq->reconnect_delay;
-			if(reconnect_delay > 0 && mosq->reconnect_exponential_backoff){
-				reconnect_delay *= mosq->reconnect_delay*reconnects*reconnects;
+			if(mosq->reconnect_delay > 0 && mosq->reconnect_exponential_backoff){
+				reconnect_delay = mosq->reconnect_delay*reconnects*reconnects;
+			}else{
+				reconnect_delay = mosq->reconnect_delay;
 			}
 
 			if(reconnect_delay > mosq->reconnect_delay_max){

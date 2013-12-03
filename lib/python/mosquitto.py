@@ -37,6 +37,7 @@ This is an MQTT v3.1 client module. MQTT is a lightweight pub/sub messaging
 protocol that is easy to implement and suitable for low powered devices.
 """
 import errno
+import platform
 import random
 import select
 import socket
@@ -50,6 +51,11 @@ MOSQUITTO_MAJOR=1
 MOSQUITTO_MINOR=2
 MOSQUITTO_REVISION=90
 MOSQUITTO_VERSION_NUMBER=(MOSQUITTO_MAJOR*1000000+MOSQUITTO_MINOR*1000+MOSQUITTO_REVISION)
+
+if platform.system() == 'Windows':
+    EAGAIN = errno.WSAEWOULDBLOCK
+else:
+    EAGAIN = errno.EAGAIN
 
 if sys.version_info[0] < 3:
     PROTOCOL_NAME = "MQIsdp"
@@ -325,13 +331,13 @@ class Mosquitto:
 
     All of the callbacks as described below have a "mosq" and an "userdata"
     argument. "mosq" is the Mosquitto instance that is calling the callback.
-    "userdata" is user data of any type and can be set when creating a new client
-    instance or with user_data_set(userdata).
+    "userdata" is user data of any type and can be set when creating a new
+    client instance or with user_data_set(userdata).
 
     The callbacks:
 
-    on_connect(mosq, userdata, rc): called when the broker responds to our connection
-      request. The value of rc determines success or not:
+    on_connect(mosq, userdata, rc): called when the broker responds to our
+      connection request. The value of rc determines success or not:
       0: Connection successful
       1: Connection refused - incorrect protocol version
       2: Connection refused - invalid client identifier
@@ -340,39 +346,40 @@ class Mosquitto:
       5: Connection refused - not authorised
       6-255: Currently unused.
 
-    on_disconnect(mosq, userdata, rc): called when the client disconnects from the broker.
-      The rc parameter indicates the disconnection state. If MOSQ_ERR_SUCCESS
-      (0), the callback was called in response to a disconnect() call. If any
-      other value the disconnection was unexpected, such as might be caused by
-      a network error.
+    on_disconnect(mosq, userdata, rc): called when the client disconnects from
+      the broker. The rc parameter indicates the disconnection state. If
+      MOSQ_ERR_SUCCESS (0), the callback was called in response to a
+      disconnect() call. If any other value the disconnection was unexpected,
+      such as might be caused by a network error.
 
-    on_message(mosq, userdata, message): called when a message has been received on a
-      topic that the client subscribes to. The message variable is a
-      MosquittoMessage that describes all of the message parameters.
+    on_message(mosq, userdata, message): called when a message has been
+      received on a topic that the client subscribes to. The message variable
+      is a MosquittoMessage that describes all of the message parameters.
 
-    on_publish(mosq, userdata, mid): called when a message that was to be sent using the
-      publish() call has completed transmission to the broker. For messages
-      with QoS levels 1 and 2, this means that the appropriate handshakes have
-      completed. For QoS 0, this simply means that the message has left the
-      client. The mid variable matches the mid variable returned from the
-      corresponding publish() call, to allow outgoing messages to be tracked.
-      This callback is important because even if the publish() call returns
-      success, it does not always mean that the message has been sent.
+    on_publish(mosq, userdata, mid): called when a message that was to be sent
+      using the publish() call has completed transmission to the broker. For
+      messages with QoS levels 1 and 2, this means that the appropriate
+      handshakes have completed. For QoS 0, this simply means that the message
+      has left the client. The mid variable matches the mid variable returned
+      from the corresponding publish() call, to allow outgoing messages to be
+      tracked.  This callback is important because even if the publish() call
+      returns success, it does not always mean that the message has been sent.
 
-    on_subscribe(mosq, userdata, mid, granted_qos): called when the broker responds to a
-      subscribe request. The mid variable matches the mid variable returned
-      from the corresponding subscribe() call. The granted_qos variable is a
-      list of integers that give the QoS level the broker has granted for each
-      of the different subscription requests.
+    on_subscribe(mosq, userdata, mid, granted_qos): called when the broker
+      responds to a subscribe request. The mid variable matches the mid
+      variable returned from the corresponding subscribe() call. The
+      granted_qos variable is a list of integers that give the QoS level the
+      broker has granted for each of the different subscription requests.
 
-    on_unsubscribe(mosq, userdata, mid): called when the broker responds to an unsubscribe
-      request. The mid variable matches the mid variable returned from the
-      corresponding unsubscribe() call.
+    on_unsubscribe(mosq, userdata, mid): called when the broker responds to an
+      unsubscribe request. The mid variable matches the mid variable returned
+      from the corresponding unsubscribe() call.
 
-    on_log(mosq, userdata, level, buf): called when the client has log information. Define
-      to allow debugging. The level variable gives the severity of the message
-      and will be one of MOSQ_LOG_INFO, MOSQ_LOG_NOTICE, MOSQ_LOG_WARNING,
-      MOSQ_LOG_ERR, and MOSQ_LOG_DEBUG. The message itself is in buf.
+    on_log(mosq, userdata, level, buf): called when the client has log
+      information. Define to allow debugging. The level variable gives the
+      severity of the message and will be one of MOSQ_LOG_INFO,
+      MOSQ_LOG_NOTICE, MOSQ_LOG_WARNING, MOSQ_LOG_ERR, and MOSQ_LOG_DEBUG. The
+      message itself is in buf.
 
     """
     def __init__(self, client_id="", clean_session=True, userdata=None):
@@ -390,9 +397,9 @@ class Mosquitto:
         disconnect. Calling connect() or reconnect() will cause the messages to
         be resent.  Use reinitialise() to reset a client to its original state.
 
-        userdata is user defined data of any type that is passed as the "userdata"
-        parameter to callbacks. It may be updated at a later point with the
-        user_data_set() function.
+        userdata is user defined data of any type that is passed as the
+        "userdata" parameter to callbacks. It may be updated at a later point
+        with the user_data_set() function.
         """
         if not clean_session and (client_id == "" or client_id is None):
             raise ValueError('A client id must be provided if clean session is False.')
@@ -559,8 +566,8 @@ class Mosquitto:
 
         host is the hostname or IP address of the remote broker.
         port is the network port of the server host to connect to. Defaults to
-        1883. Note that the default port for MQTT over SSL/TLS is 8883 so if you
-        are using tls_set() the port may need providing.
+        1883. Note that the default port for MQTT over SSL/TLS is 8883 so if
+        you are using tls_set() the port may need providing.
         keepalive: Maximum period in seconds between communications with the
         broker. If no other messages are being exchanged, this controls the
         rate at which the client will send ping messages to the broker.
@@ -575,8 +582,8 @@ class Mosquitto:
 
         host is the hostname or IP address of the remote broker.
         port is the network port of the server host to connect to. Defaults to
-        1883. Note that the default port for MQTT over SSL/TLS is 8883 so if you
-        are using tls_set() the port may need providing.
+        1883. Note that the default port for MQTT over SSL/TLS is 8883 so if
+        you are using tls_set() the port may need providing.
         keepalive: Maximum period in seconds between communications with the
         broker. If no other messages are being exchanged, this controls the
         rate at which the client will send ping messages to the broker.
@@ -807,8 +814,10 @@ class Mosquitto:
         Must be called before connect() to have any effect.
         Requires a broker that supports MQTT v3.1.
 
-        username: The username to authenticate with. Need have no relationship to the client id.
-        password: The password to authenticate with. Optional, set to None if not required.
+        username: The username to authenticate with. Need have no relationship
+                  to the client id.
+        password: The password to authenticate with. Optional, set to None if
+                  not required.
         """
         self._username = username
         self._password = password
@@ -903,7 +912,8 @@ class Mosquitto:
                topics to unsubscribe from.
 
         Returns a tuple (result, mid), where result is MOSQ_ERR_SUCCESS
-        to indicate success or MOSQ_ERR_NO_CONN if the client is not currently connected.
+        to indicate success or MOSQ_ERR_NO_CONN if the client is not currently
+        connected.
         mid is the message ID for the unsubscribe request. The mid value can be
         used to track the unsubscribe request by checking against the mid
         argument in the on_unsubscribe() callback if it is defined.
@@ -990,8 +1000,8 @@ class Mosquitto:
             return False
 
     def loop_misc(self):
-        """Process miscellaneous network events. Use in place of calling loop() if you
-        wish to call select() or equivalent on.
+        """Process miscellaneous network events. Use in place of calling loop()
+        if you wish to call select() or equivalent on.
 
         Do not use if you are using the threaded interface loop_start()."""
         if self._sock is None and self._ssl is None:
@@ -1006,7 +1016,8 @@ class Mosquitto:
 
         if self._ping_t > 0 and now - self._ping_t >= self._keepalive:
             # mosq->ping_t != 0 means we are waiting for a pingresp.
-            # This hasn't happened in the keepalive time so we should disconnect.
+            # This hasn't happened in the keepalive time so we should
+            # disconnect.
             if self._ssl:
                 self._ssl.close()
                 self._ssl = None
@@ -1044,6 +1055,36 @@ class Mosquitto:
         self._message_retry = retry
 
     def reconnect_delay_set(self, delay, delay_max, exponential_backoff):
+        """Set the amount of time that the client will wait before reconnecting
+        after losing its connection to the broker.
+
+        delay is the number of seconds to wait between successive reconnect
+        attempts. By default this is set to 1.
+
+        delay_max is the maximum number of seconds to wait between reconnection
+        attempts and is also set to 1 by default. This means that the default
+        behaviour is to attempt to reconnect every second.
+
+        If exponential_backoff is False and delay_max is greater than delay,
+        then on each successive reconnect failure the delay will increase
+        linearly in the form delay*failure_count.
+
+        If exponential_backoff is True and delay_max is greater than delay,
+        then on each successive reconnect failure the delay will increase
+        exponentially in the form delay*failure_count^2.
+
+        In both cases, the maximum delay ever used is set by delay_max.
+
+        Example 1:
+            delay=2, delay_max=10, exponential_backoff=False
+
+            Delays would be: 2, 4, 6, 8, 10, 10, ...
+
+        Example 2:
+            delay=3, delay_max=30, exponential_backoff=True
+
+            Delays would be: 3, 6, 12, 24, 30, 30, ...
+        """
         if not isinstance(delay, int) or delay <= 0:
             ValueError("delay must be a positive integer.")
         if not isinstance(delay_max, int) or delay_max < delay:
@@ -1056,11 +1097,13 @@ class Mosquitto:
         self._reconnect_exponential_backoff = exponential_backoff
 
     def user_data_set(self, userdata):
-        """Set the user data variable passed to callbacks. May be any data type."""
+        """Set the user data variable passed to callbacks. May be any data
+        type."""
         self._userdata = userdata
 
     def will_set(self, topic, payload=None, qos=0, retain=False):
-        """Set a Will to be sent by the broker in case the client disconnects unexpectedly.
+        """Set a Will to be sent by the broker in case the client disconnects
+        unexpectedly.
 
         This must be called before connect() to have any effect.
 
@@ -1129,7 +1172,16 @@ class Mosquitto:
             rc = MOSQ_ERR_SUCCESS
             while rc == MOSQ_ERR_SUCCESS:
                 rc = self.loop(timeout, max_packets)
-                if self._thread_terminate:
+                # We don't need to worry about locking here, because we've
+                # either called loop_forever() when in single threaded mode, or
+                # in multi threaded mode when loop_stop() has been called and
+                # so no other threads can access _current_out_packet,
+                # _out_packet or _messages.
+                if (self._thread_terminate
+                        and self._current_out_packet == None
+                        and len(self._out_packet) == 0
+                        and len(self._messages) == 0):
+
                     rc = 1
                     run = False
                 if rc == MOSQ_ERR_SUCCESS:
@@ -1141,9 +1193,10 @@ class Mosquitto:
                 self._state_mutex.release()
             else:
                 self._state_mutex.release()
-                reconnect_delay = self._reconnect_delay
-                if reconnect_delay > 0 and self._reconnect_exponential_backoff:
-                    reconnect_delay = reconnect_delay * self._reconnect_delay*reconnects*reconnects
+                if self._reconnect_delay > 0 and self._reconnect_exponential_backoff:
+                    reconnect_delay = self._reconnect_delay*reconnects*reconnects
+                else:
+                    reconnect_delay = self._reconnect_delay
 
                 if reconnect_delay > self._reconnect_delay_max:
                     reconnect_delay = self._reconnect_delay_max
@@ -1158,7 +1211,10 @@ class Mosquitto:
                     self._state_mutex.release()
                 else:
                     self._state_mutex.release()
-                    self.reconnect()
+                    try:
+                        self.reconnect()
+                    except socket.error as err:
+                        pass
         return rc
 
     def loop_start(self):
@@ -1215,18 +1271,19 @@ class Mosquitto:
 
     def _packet_read(self):
         # This gets called if pselect() indicates that there is network data
-        # available - ie. at least one byte.  What we do depends on what data we
-        # already have.
-        # If we've not got a command, attempt to read one and save it. This should
-        # always work because it's only a single byte.
-        # Then try to read the remaining length. This may fail because it is may
-        # be more than one byte - will need to save data pending next read if it
-        # does fail.
-        # Then try to read the remaining payload, where 'payload' here means the
-        # combined variable header and actual payload. This is the most likely to
-        # fail due to longer length, so save current data and current position.
-        # After all data is read, send to _mosquitto_handle_packet() to deal with.
-        # Finally, free the memory and reset everything to starting conditions.
+        # available - ie. at least one byte.  What we do depends on what data
+        # we already have.
+        # If we've not got a command, attempt to read one and save it. This
+        # should always work because it's only a single byte.
+        # Then try to read the remaining length. This may fail because it is
+        # may be more than one byte - will need to save data pending next read
+        # if it does fail.
+        # Then try to read the remaining payload, where 'payload' here means
+        # the combined variable header and actual payload. This is the most
+        # likely to fail due to longer length, so save current data and current
+        # position.  After all data is read, send to _mosquitto_handle_packet()
+        # to deal with.  Finally, free the memory and reset everything to
+        # starting conditions.
         if self._in_packet.command == 0:
             try:
                 if self._ssl:
@@ -1237,7 +1294,7 @@ class Mosquitto:
                 (msg) = err
                 if self._ssl and (msg.errno == ssl.SSL_ERROR_WANT_READ or msg.errno == ssl.SSL_ERROR_WANT_WRITE):
                     return MOSQ_ERR_AGAIN
-                if msg.errno == errno.EAGAIN:
+                if msg.errno == EAGAIN:
                     return MOSQ_ERR_AGAIN
                 raise
             else:
@@ -1248,8 +1305,7 @@ class Mosquitto:
 
         if self._in_packet.have_remaining == 0:
             # Read remaining
-            # Algorithm for decoding taken from pseudo code at
-            # http://publib.boulder.ibm.com/infocenter/wmbhelp/v6r0m0/topic/com.ibm.etools.mft.doc/ac10870_.htm
+            # Algorithm for decoding taken from pseudo code in the spec.
             while True:
                 try:
                     if self._ssl:
@@ -1260,15 +1316,16 @@ class Mosquitto:
                     (msg) = err
                     if self._ssl and (msg.errno == ssl.SSL_ERROR_WANT_READ or msg.errno == ssl.SSL_ERROR_WANT_WRITE):
                         return MOSQ_ERR_AGAIN
-                    if msg.errno == errno.EAGAIN:
+                    if msg.errno == EAGAIN:
                         return MOSQ_ERR_AGAIN
                     raise
                 else:
                     byte = struct.unpack("!B", byte)
                     byte = byte[0]
                     self._in_packet.remaining_count.append(byte)
-                    # Max 4 bytes length for remaining length as defined by protocol.
-                     # Anything more likely means a broken/malicious client.
+                    # Max 4 bytes length for remaining length as defined by
+                    # protocol.  Anything more likely means a broken/malicious
+                    # client.
                     if len(self._in_packet.remaining_count) > 4:
                         return MOSQ_ERR_PROTOCOL
 
@@ -1291,7 +1348,7 @@ class Mosquitto:
                 (msg) = err
                 if self._ssl and (msg.errno == ssl.SSL_ERROR_WANT_READ or msg.errno == ssl.SSL_ERROR_WANT_WRITE):
                     return MOSQ_ERR_AGAIN
-                if msg.errno == errno.EAGAIN:
+                if msg.errno == EAGAIN:
                     return MOSQ_ERR_AGAIN
                 raise
             else:
@@ -1329,7 +1386,7 @@ class Mosquitto:
                 (msg) = err
                 if self._ssl and (msg.errno == ssl.SSL_ERROR_WANT_READ or msg.errno == ssl.SSL_ERROR_WANT_WRITE):
                     return MOSQ_ERR_AGAIN
-                if msg.errno == errno.EAGAIN:
+                if msg.errno == EAGAIN:
                     return MOSQ_ERR_AGAIN
                 raise
 
@@ -1817,7 +1874,8 @@ class Mosquitto:
         message.payload = packet
 
         self._easy_log(
-            MOSQ_LOG_DEBUG, "Received PUBLISH (d"+str(message.dup)+
+            MOSQ_LOG_DEBUG,
+            "Received PUBLISH (d"+str(message.dup)+
             ", q"+str(message.qos)+", r"+str(message.retain)+
             ", m"+str(message.mid)+", '"+message.topic+
             "', ...  ("+str(len(message.payload))+" bytes)")
@@ -1997,10 +2055,14 @@ class Mosquitto:
         san = cert.get('subjectAltName')
         if san:
             have_san_dns = False
-            for ((key, value),) in san:
+            for ((key, value)) in san:
                 if key == 'DNS':
                     have_san_dns = True
                     if value == self._host:
+                        return
+                if key == 'IP Address':
+                    have_san_dns = True
+                    if value.lower() == self._host.lower():
                         return
 
             if have_san_dns:
@@ -2008,9 +2070,9 @@ class Mosquitto:
                 raise ssl.SSLError('Certificate subject does not match remote hostname.')
         subject = cert.get('subject')
         if subject:
-            for ((key, value),) in subject:
+            for ((key, value)) in subject:
                 if key == 'commonName':
-                    if value == self._host:
+                    if value.lower() == self._host.lower():
                         return
 
         raise ssl.SSLError('Certificate subject does not match remote hostname.')

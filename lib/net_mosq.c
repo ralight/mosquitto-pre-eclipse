@@ -302,7 +302,7 @@ int _mosquitto_try_connect(const char *host, uint16_t port, int *sock, const cha
 #ifdef WIN32
 		errno = WSAGetLastError();
 #endif
-		if(rc == 0 || errno == EINPROGRESS){
+		if(rc == 0 || errno == EINPROGRESS || errno == COMPAT_EWOULDBLOCK){
 			if(blocking){
 			/* Set non-blocking */
 #ifndef WIN32
