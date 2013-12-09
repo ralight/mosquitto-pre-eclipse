@@ -110,9 +110,6 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		mqtt3_context_disconnect(db, context);
 		return MOSQ_ERR_PROTOCOL;
 	}
-	if((protocol_version&0x80) == 0x80){
-		context->is_bridge = true;
-	}
 
 	if(_mosquitto_read_byte(&context->in_packet, &connect_flags)){
 		mqtt3_context_disconnect(db, context);
@@ -344,6 +341,9 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	context->clean_session = clean_session;
 	context->ping_t = 0;
 	context->is_dropping = false;
+	if((protocol_version&0x80) == 0x80){
+		context->is_bridge = true;
+	}
 
 	// Add the client ID to the DB hash table here
 	new_cih = _mosquitto_malloc(sizeof(struct _clientid_index_hash));
