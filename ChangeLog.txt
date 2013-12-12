@@ -13,8 +13,6 @@ Broker:
   easier parsing.
 - Change "$SYS/broker/heap/maximum size" to "$SYS/broker/heap/maximum" for
   easier parsing.
-- Don't always attempt to call read() for SSL clients, irrespective of whether
-  they were ready to read or not. Reduces syscalls significantly.
 - Topics are no longer normalised from e.g a///topic to a/topic. This matches
   the behaviour as clarified by the Oasis MQTT spec. This will lead to
   unexpected behaviour if you were using topics of this form.
