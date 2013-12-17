@@ -117,7 +117,8 @@ struct mosquitto;
 
 /*
  * Topic: Threads
- *	libmosquitto provides thread safe operation. 
+ *	libmosquitto provides thread safe operation, with the exception of
+ *	<mosquitto_lib_init> which is not thread safe.
  */
 /***************************************************
  * Important note
@@ -167,6 +168,8 @@ libmosq_EXPORT int mosquitto_lib_version(int *major, int *minor, int *revision);
  * Function: mosquitto_lib_init
  *
  * Must be called before any other mosquitto functions.
+ *
+ * This function is *not* thread safe.
  *
  * Returns:
  * 	MOSQ_ERR_SUCCESS - always
