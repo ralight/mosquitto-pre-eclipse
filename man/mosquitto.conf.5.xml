@@ -723,6 +723,17 @@
 					</listitem>
 				</varlistentry>
 				<varlistentry>
+					<term><option>tls_version</option> <replaceable>version</replaceable></term>
+					<listitem>
+						<para>Configure the version of the TLS protocol to be
+							used for this listener. Possible values are
+							<replaceable>tlsv1.2</replaceable>,
+							<replaceable>tlsv1.1</replaceable> and
+							<replaceable>tlsv1</replaceable>. Defaults to
+							<replaceable>tlsv1.2</replaceable>.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
 					<term><option>use_identity_as_username</option> [ true | false ]</term>
 					<listitem>
 						<para>If <option>require_certificate</option> is
@@ -768,6 +779,17 @@
 							<option>psk_file</option> to define the pre-shared
 							keys to be used or create a security plugin to
 							handle them.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>tls_version</option> <replaceable>version</replaceable></term>
+					<listitem>
+						<para>Configure the version of the TLS protocol to be
+							used for this listener. Possible values are
+							<replaceable>tlsv1.2</replaceable>,
+							<replaceable>tlsv1.1</replaceable> and
+							<replaceable>tlsv1</replaceable>. Defaults to
+							<replaceable>tlsv1.2</replaceable>.</para>
 					</listitem>
 				</varlistentry>
 				<varlistentry>
