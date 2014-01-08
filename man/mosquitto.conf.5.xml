@@ -692,17 +692,28 @@
 					</listitem>
 				</varlistentry>
 				<varlistentry>
-					<term><option>keyfile</option> <replaceable>file path</replaceable></term>
-					<listitem>
-						<para>Path to the PEM encoded keyfile.</para>
-					</listitem>
-				</varlistentry>
-				<varlistentry>
 					<term><option>ciphers</option> <replaceable>cipher:list</replaceable></term>
 					<listitem>
 						<para>The list of allowed ciphers, each separated with
 							a colon. Available ciphers can be obtained using
 							the "openssl ciphers" command.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>crlfile</option> <replaceable>file path</replaceable></term>
+					<listitem>
+						<para>If you have <option>require_certificate</option>
+							set to <replaceable>true</replaceable>, you can
+							create a certificate revocation list file to revoke
+							access to particular client certificates. If you
+							have done this, use crlfile to point to the PEM
+							encoded revocation file.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>keyfile</option> <replaceable>file path</replaceable></term>
+					<listitem>
+						<para>Path to the PEM encoded keyfile.</para>
 					</listitem>
 				</varlistentry>
 				<varlistentry>
@@ -746,17 +757,6 @@
 							used for this listener.</para>
 					</listitem>
 				</varlistentry>
-				<varlistentry>
-					<term><option>crlfile</option> <replaceable>file path</replaceable></term>
-					<listitem>
-						<para>If you have <option>require_certificate</option>
-							set to <replaceable>true</replaceable>, you can
-							create a certificate revocation list file to revoke
-							access to particular client certificates. If you
-							have done this, use crlfile to point to the PEM
-							encoded revocation file.</para>
-					</listitem>
-				</varlistentry>
 			</variablelist>
 		</refsect2>
 		<refsect2>
@@ -765,6 +765,18 @@
 				configure pre-shared-key based SSL support. See also
 				"Certificate based SSL/TLS support".</para>
 			<variablelist>
+				<varlistentry>
+					<term><option>ciphers</option> <replaceable>cipher:list</replaceable></term>
+					<listitem>
+						<para>When using PSK, the encryption ciphers used will
+							be chosen from the list of available PSK ciphers.
+							If you want to control which ciphers are available,
+							use this option.  The list of available ciphers can
+							be optained using the "openssl ciphers" command and
+							should be provided in the same format as the output
+							of that command.</para>
+					</listitem>
+				</varlistentry>
 				<varlistentry>
 					<term><option>psk_hint</option> <replaceable>hint</replaceable></term>
 					<listitem>
@@ -801,18 +813,6 @@
 							normal, so <option>password_file</option> or
 							another means of authentication checking must be
 							used. No password will be used.</para>
-					</listitem>
-				</varlistentry>
-				<varlistentry>
-					<term><option>ciphers</option> <replaceable>cipher:list</replaceable></term>
-					<listitem>
-						<para>When using PSK, the encryption ciphers used will
-							be chosen from the list of available PSK ciphers.
-							If you want to control which ciphers are available,
-							use this option.  The list of available ciphers can
-							be optained using the "openssl ciphers" command and
-							should be provided in the same format as the output
-							of that command.</para>
 					</listitem>
 				</varlistentry>
 			</variablelist>
