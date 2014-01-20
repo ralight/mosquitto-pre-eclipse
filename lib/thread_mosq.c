@@ -82,7 +82,7 @@ void *_mosquitto_thread_main(void *obj)
 		pthread_mutex_unlock(&mosq->state_mutex);
 	}
 
-	mosquitto_loop_forever(mosq, -1, 1);
+	mosquitto_loop_forever(mosq, 10000, 1);
 
 	mosq->threaded = false;
 	return obj;
