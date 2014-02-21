@@ -28,6 +28,7 @@
 			<arg><option>-q</option> <replaceable>message QoS</replaceable></arg>
 			<arg><option>-R</option></arg>
 			<arg><option>-S</option></arg>
+			<arg><option>-N</option></arg>
 			<arg><option>--quiet</option></arg>
 			<arg><option>-v</option></arg>
 			<arg>
@@ -211,6 +212,16 @@
 						private key for this client, if required by the
 						server.</para>
 					<para>See also <option>--cert</option>.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-N</option></term>
+				<listitem>
+					<para>Do not append an end of line character to the payload
+						when printing. This allows streaming of payload data
+						from multiple messages directly to another application
+						unmodified. Only really makes sense when not using
+						<option>-v</option>.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

@@ -54,6 +54,7 @@ struct userdata {
 	int verbose;
 	bool quiet;
 	bool no_retain;
+	bool eol;
 };
 
 void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
@@ -69,15 +70,21 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 		if(message->payloadlen){
 			printf("%s ", message->topic);
 			fwrite(message->payload, 1, message->payloadlen, stdout);
-			printf("\n");
+			if(ud->eol){
+				printf("\n");
+			}
 		}else{
-			printf("%s (null)\n", message->topic);
+			if(ud->eol){
+				printf("%s (null)\n", message->topic);
+			}
 		}
 		fflush(stdout);
 	}else{
 		if(message->payloadlen){
 			fwrite(message->payload, 1, message->payloadlen, stdout);
-			printf("\n");
+			if(ud->eol){
+				printf("\n");
+			}
 			fflush(stdout);
 		}
 	}
@@ -129,10 +136,10 @@ void print_usage(void)
 	mosquitto_lib_version(&major, &minor, &revision);
 	printf("mosquitto_sub is a simple mqtt client that will subscribe to a single topic and print all messages it receives.\n");
 	printf("mosquitto_sub version %s running on libmosquitto %d.%d.%d.\n\n", VERSION, major, minor, revision);
-	printf("Usage: mosquitto_sub [-c] [-h host] [-k keepalive] [-p port] [-q qos] [-R] [-v] -t topic ...\n");
+	printf("Usage: mosquitto_sub [-c] [-h host] [-k keepalive] [-p port] [-q qos] [-R] -t topic ...\n");
 	printf("                     [-A bind_address] [-S]\n");
 	printf("                     [-i id] [-I id_prefix]\n");
-	printf("                     [-d] [--quiet]\n");
+	printf("                     [-d] [-N] [--quiet] [-v]\n");
 	printf("                     [-u username [-P password]]\n");
 	printf("                     [--will-topic [--will-payload payload] [--will-qos qos] [--will-retain]]\n");
 #ifdef WITH_TLS
@@ -152,6 +159,7 @@ void print_usage(void)
 	printf(" -I : define the client id as id_prefix appended with the process id. Useful for when the\n");
 	printf("      broker is using the clientid_prefixes option.\n");
 	printf(" -k : keep alive in seconds for this client. Defaults to 60.\n");
+	printf(" -N : do not add an end of line character when printing the payload.\n");
 	printf(" -p : network port to connect to. Defaults to 1883.\n");
 	printf(" -q : quality of service level to use for the subscription. Defaults to 0.\n");
 	printf(" -R : do not print stale messages (those with retain set).\n");
@@ -229,6 +237,7 @@ int main(int argc, char *argv[])
 	bool use_srv = false;
 
 	memset(&ud, 0, sizeof(struct userdata));
+	ud.eol = true;
 
 	for(i=1; i<argc; i++){
 		if(!strcmp(argv[i], "-p") || !strcmp(argv[i], "--port")){
@@ -359,6 +368,8 @@ int main(int argc, char *argv[])
 				keyfile = argv[i+1];
 			}
 			i++;
+		}else if(!strcmp(argv[i], "-N")){
+			ud.eol = false;
 		}else if(!strcmp(argv[i], "--psk")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: --psk argument given but no key specified.\n\n");
