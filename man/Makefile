@@ -39,8 +39,8 @@ uninstall :
 mosquitto.8 : mosquitto.8.xml
 	$(XSLTPROC) $^
 
-mosquitto.conf.5 : mosquitto.conf.5.xml
-	$(XSLTPROC) $^
+mosquitto.conf.5 : mosquitto.conf.5.xml manpage.xsl
+	$(XSLTPROC) $<
 
 mosquitto_passwd.1 : mosquitto_passwd.1.xml
 	$(XSLTPROC) $^

@@ -410,28 +410,38 @@
 
 	<refsect1>
 		<title>See Also</title>
-		<para>
-			<citerefentry>
-				<refentrytitle><link xlink:href="mqtt-7.html">mqtt</link></refentrytitle>
-				<manvolnum>7</manvolnum>
-			</citerefentry>
-			<citerefentry>
-				<refentrytitle><link xlink:href="mosquitto_pub-1.html">mosquitto_pub</link></refentrytitle>
-				<manvolnum>1</manvolnum>
-			</citerefentry>
-			<citerefentry>
-				<refentrytitle><link xlink:href="mosquitto-8.html">mosquitto</link></refentrytitle>
-				<manvolnum>8</manvolnum>
-			</citerefentry>
-			<citerefentry>
-				<refentrytitle><link xlink:href="libmosquitto-3.html">libmosquitto</link></refentrytitle>
-				<manvolnum>3</manvolnum>
-			</citerefentry>
-			<citerefentry>
-				<refentrytitle><link xlink:href="mosquitto-tls-7.html">mosquitto-tls</link></refentrytitle>
-				<manvolnum>7</manvolnum>
-			</citerefentry>
-		</para>
+		<simplelist type="inline">
+			<member>
+				<citerefentry>
+					<refentrytitle><link xlink:href="mqtt-7.html">mqtt</link></refentrytitle>
+					<manvolnum>7</manvolnum>
+				</citerefentry>
+			</member>
+			<member>
+				<citerefentry>
+					<refentrytitle><link xlink:href="mosquitto_pub-1.html">mosquitto_pub</link></refentrytitle>
+					<manvolnum>1</manvolnum>
+				</citerefentry>
+			</member>
+			<member>
+				<citerefentry>
+					<refentrytitle><link xlink:href="mosquitto-8.html">mosquitto</link></refentrytitle>
+					<manvolnum>8</manvolnum>
+				</citerefentry>
+			</member>
+			<member>
+				<citerefentry>
+					<refentrytitle><link xlink:href="libmosquitto-3.html">libmosquitto</link></refentrytitle>
+					<manvolnum>3</manvolnum>
+				</citerefentry>
+			</member>
+			<member>
+				<citerefentry>
+					<refentrytitle><link xlink:href="mosquitto-tls-7.html">mosquitto-tls</link></refentrytitle>
+					<manvolnum>7</manvolnum>
+				</citerefentry>
+			</member>
+		</simplelist>
 	</refsect1>
 
 	<refsect1>
