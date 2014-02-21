@@ -58,6 +58,7 @@
 					<arg><option>--tls-version</option> <replaceable>version</replaceable></arg>
 				</arg>
 			</group>
+			<arg choice='opt' rep='repeat'><option>-T</option> <replaceable>filter-out</replaceable></arg>
 			<arg choice='plain' rep='repeat'><option>-t</option> <replaceable>message-topic</replaceable></arg>
 		</cmdsynopsis>
 		<cmdsynopsis>
@@ -311,6 +312,24 @@
 					<citerefentry><refentrytitle>mqtt</refentrytitle><manvolnum>7</manvolnum></citerefentry>
 					for more information on MQTT topics.</para>
 					<para>This option may be repeated to subscribe to multiple topics.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-T</option></term>
+				<term><option>--filter-out</option></term>
+				<listitem>
+					<para>Suppress printing of topics that match the filter.
+						This allows subscribing to a wildcard topic and only
+						printing a partial set of the wildcard
+						hierarchy.</para>
+					<para>For example, subscribe to the BBC tree, but suppress output from Radio 3:</para>
+					<itemizedlist mark="circle">
+						<listitem><para>mosquitto_sub <literal>-t</literal>
+								bbc/# <literal>-T</literal>
+								bbc/radio3</para></listitem>
+					</itemizedlist>
+					<para>This option may be repeated to filter out multiple
+						topics or topic trees.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

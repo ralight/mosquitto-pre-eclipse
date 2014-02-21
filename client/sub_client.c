@@ -49,6 +49,8 @@ struct userdata {
 	char **topics;
 	int topic_count;
 	int topic_qos;
+	char **filter_outs;
+	int filter_out_count;
 	char *username;
 	char *password;
 	int verbose;
@@ -60,11 +62,19 @@ struct userdata {
 void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
 {
 	struct userdata *ud;
+	int i;
+	bool res;
 
 	assert(obj);
 	ud = (struct userdata *)obj;
 
 	if(message->retain && ud->no_retain) return;
+	if(ud->filter_outs){
+		for(i=0; i<ud->filter_out_count; i++){
+			mosquitto_topic_matches_sub(ud->filter_outs[i], message->topic, &res);
+			if(res) return;
+		}
+	}
 
 	if(ud->verbose){
 		if(message->payloadlen){
@@ -137,6 +147,7 @@ void print_usage(void)
 	printf("mosquitto_sub is a simple mqtt client that will subscribe to a single topic and print all messages it receives.\n");
 	printf("mosquitto_sub version %s running on libmosquitto %d.%d.%d.\n\n", VERSION, major, minor, revision);
 	printf("Usage: mosquitto_sub [-c] [-h host] [-k keepalive] [-p port] [-q qos] [-R] -t topic ...\n");
+	printf("                     [-T filter_out]\n");
 	printf("                     [-A bind_address] [-S]\n");
 	printf("                     [-i id] [-I id_prefix]\n");
 	printf("                     [-d] [-N] [--quiet] [-v]\n");
@@ -417,6 +428,17 @@ int main(int argc, char *argv[])
 				ud.topic_count++;
 				ud.topics = realloc(ud.topics, ud.topic_count*sizeof(char *));
 				ud.topics[ud.topic_count-1] = argv[i+1];
+			}
+			i++;
+		}else if(!strcmp(argv[i], "-T") || !strcmp(argv[i], "--filter-out")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: -T argument given but no topic filter specified.\n\n");
+				print_usage();
+				return 1;
+			}else{
+				ud.filter_out_count++;
+				ud.filter_outs = realloc(ud.filter_outs, ud.filter_out_count*sizeof(char *));
+				ud.filter_outs[ud.filter_out_count-1] = argv[i+1];
 			}
 			i++;
 		}else if(!strcmp(argv[i], "--tls-version")){
