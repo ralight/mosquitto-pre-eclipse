@@ -39,6 +39,7 @@ Client library:
 Clients:
 - Add --ciphers to allow specifying which TLS ciphers to support.
 - Add support for SRV lookups.
+- Add -N to sub client to suppress printing of EOL after the payload.
 
 1.2.3 - 20131202
 ================
