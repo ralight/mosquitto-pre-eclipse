@@ -1265,6 +1265,12 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 						return MOSQ_ERR_INVAL;
 					}
 					if(_conf_parse_string(&token, "mount_point", &cur_listener->mount_point, saveptr)) return MOSQ_ERR_INVAL;
+					if(_mosquitto_topic_wildcard_len_check(cur_listener->mount_point) != MOSQ_ERR_SUCCESS){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR,
+								"Error: Invalid mount_point '%s'. Does it contain a wildcard character?",
+								cur_listener->mount_point);
+						return MOSQ_ERR_INVAL;
+					}
 				}else if(!strcmp(token, "notifications")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
