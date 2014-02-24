@@ -99,6 +99,20 @@ enum mosquitto_client_state {
 	mosq_cs_connect_srv = 5
 };
 
+enum _mosquitto_protocol {
+	mosq_p_invalid = 0,
+	mosq_p_mqtt31 = 1,
+	mosq_p_mqtt311 = 2,
+	mosq_p_mqtts = 3
+};
+
+enum _mosquitto_transport {
+	mosq_t_invalid = 0,
+	mosq_t_tcp = 1,
+	mosq_t_ws = 2,
+	mosq_t_sctp = 3
+};
+
 struct _mosquitto_packet{
 	uint8_t command;
 	uint8_t have_remaining;
@@ -170,6 +184,7 @@ struct mosquitto {
 	pthread_t thread_id;
 #endif
 #ifdef WITH_BROKER
+	enum _mosquitto_protocol protocol;
 	bool is_bridge;
 	struct _mqtt3_bridge *bridge;
 	struct mosquitto_client_msg *msgs;
