@@ -32,8 +32,11 @@ POSSIBILITY OF SUCH DAMAGE.
 
 /* For version 3 of the MQTT protocol */
 
-#define PROTOCOL_NAME "MQIsdp"
-#define PROTOCOL_VERSION 3
+#define PROTOCOL_NAME_v31 "MQIsdp"
+#define PROTOCOL_VERSION_v31 3
+
+#define PROTOCOL_NAME_v311 "MQTT"
+#define PROTOCOL_VERSION_v311 4
 
 /* Message types */
 #define CONNECT 0x10

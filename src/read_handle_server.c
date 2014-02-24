@@ -86,7 +86,35 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		mqtt3_context_disconnect(db, context);
 		return 3;
 	}
-	if(strcmp(protocol_name, PROTOCOL_NAME)){
+	if(_mosquitto_read_byte(&context->in_packet, &protocol_version)){
+		mqtt3_context_disconnect(db, context);
+		return 1;
+	}
+	if(!strcmp(protocol_name, PROTOCOL_NAME_v31)){
+		if((protocol_version&0x7F) != PROTOCOL_VERSION_v31){
+			if(db->config->connection_messages == true){
+				_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Invalid protocol version %d in CONNECT from %s.",
+						protocol_version, context->address);
+			}
+			_mosquitto_send_connack(context, CONNACK_REFUSED_PROTOCOL_VERSION);
+			mqtt3_context_disconnect(db, context);
+			_mosquitto_free(protocol_name);
+			return MOSQ_ERR_PROTOCOL;
+		}
+		context->protocol = mosq_p_mqtt31;
+	}else if(!strcmp(protocol_name, PROTOCOL_NAME_v311)){
+		if((protocol_version&0x7F) != PROTOCOL_VERSION_v311){
+			if(db->config->connection_messages == true){
+				_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Invalid protocol version %d in CONNECT from %s.",
+						protocol_version, context->address);
+			}
+			_mosquitto_send_connack(context, CONNACK_REFUSED_PROTOCOL_VERSION);
+			mqtt3_context_disconnect(db, context);
+			_mosquitto_free(protocol_name);
+			return MOSQ_ERR_PROTOCOL;
+		}
+		context->protocol = mosq_p_mqtt311;
+	}else{
 		if(db->config->connection_messages == true){
 			_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Invalid protocol \"%s\" in CONNECT from %s.",
 					protocol_name, context->address);
@@ -96,20 +124,6 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		return MOSQ_ERR_PROTOCOL;
 	}
 	_mosquitto_free(protocol_name);
-
-	if(_mosquitto_read_byte(&context->in_packet, &protocol_version)){
-		mqtt3_context_disconnect(db, context);
-		return 1;
-	}
-	if((protocol_version&0x7F) != PROTOCOL_VERSION){
-		if(db->config->connection_messages == true){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Invalid protocol version %d in CONNECT from %s.",
-					protocol_version, context->address);
-		}
-		_mosquitto_send_connack(context, CONNACK_REFUSED_PROTOCOL_VERSION);
-		mqtt3_context_disconnect(db, context);
-		return MOSQ_ERR_PROTOCOL;
-	}
 
 	if(_mosquitto_read_byte(&context->in_packet, &connect_flags)){
 		mqtt3_context_disconnect(db, context);
@@ -499,13 +513,22 @@ int mqtt3_handle_subscribe(struct mosquitto_db *db, struct mosquitto *context)
 			}
 			_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "\t%s (QoS %d)", sub, qos);
 
-			rc2 = mqtt3_sub_add(db, context, sub, qos, &db->subs);
-			if(rc2 == MOSQ_ERR_SUCCESS){
-				if(mqtt3_retain_queue(db, context, sub, qos)) rc = 1;
-			}else if(rc2 != -1){
-				rc = rc2;
+			if(context->protocol == mosq_p_mqtt311){
+				rc = mosquitto_acl_check(db, context, sub, MOSQ_ACL_READ);
+				if(rc == MOSQ_ERR_ACL_DENIED){
+					qos = 0x80;
+				}
 			}
-			_mosquitto_log_printf(NULL, MOSQ_LOG_SUBSCRIBE, "%s %d %s", context->id, qos, sub);
+
+			if(qos != 0x80){
+				rc2 = mqtt3_sub_add(db, context, sub, qos, &db->subs);
+				if(rc2 == MOSQ_ERR_SUCCESS){
+					if(mqtt3_retain_queue(db, context, sub, qos)) rc = 1;
+				}else if(rc2 != -1){
+					rc = rc2;
+				}
+				_mosquitto_log_printf(NULL, MOSQ_LOG_SUBSCRIBE, "%s %d %s", context->id, qos, sub);
+			}
 			_mosquitto_free(sub);
 
 			tmp_payload = _mosquitto_realloc(payload, payloadlen + 1);
