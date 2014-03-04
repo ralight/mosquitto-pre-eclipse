@@ -21,6 +21,7 @@ Broker:
 - Bridge clients are recognised as bridges even after reloading from
   persistence.
 - Basic support for MQTT v3.1.1.
+- Username is displayed in log if present when a client connects.
 
 Client library:
 - Fix support for Python 2.6, 3.0, 3.1.
