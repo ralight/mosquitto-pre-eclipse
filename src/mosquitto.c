@@ -95,7 +95,7 @@ int drop_privileges(struct mqtt3_config *config)
 	char err[256];
 
 	if(geteuid() == 0){
-		if(config->user){
+		if(config->user && strcmp(config->user, "root")){
 			pwd = getpwnam(config->user);
 			if(!pwd){
 				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid user '%s'.", config->user);
