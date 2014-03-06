@@ -198,6 +198,12 @@ void mqtt3_context_disconnect(struct mosquitto_db *db, struct mosquitto *ctxt)
 		/* Unexpected disconnect, queue the client will. */
 		mqtt3_db_messages_easy_queue(db, ctxt, ctxt->will->topic, ctxt->will->qos, ctxt->will->payloadlen, ctxt->will->payload, ctxt->will->retain);
 	}
+	if(ctxt->will){
+		if(ctxt->will->topic) _mosquitto_free(ctxt->will->topic);
+		if(ctxt->will->payload) _mosquitto_free(ctxt->will->payload);
+		_mosquitto_free(ctxt->will);
+		ctxt->will = NULL;
+	}
 	if(ctxt->listener){
 		ctxt->listener->client_count--;
 		assert(ctxt->listener->client_count >= 0);
