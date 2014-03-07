@@ -236,16 +236,37 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 					rc = MOSQ_ERR_NOMEM;
 					goto handle_connect_error;
 				}else if(rc == MOSQ_ERR_PROTOCOL){
-					/* Password flag given, but no password. Ignore. */
-					password_flag = 0;
+					if(context->protocol == mosq_p_mqtt31){
+						/* Password flag given, but no password. Ignore. */
+						password_flag = 0;
+					}else if(context->protocol == mosq_p_mqtt311){
+						mqtt3_context_disconnect(db, context);
+						rc = MOSQ_ERR_PROTOCOL;
+						goto handle_connect_error;
+					}
 				}
 			}
 		}else if(rc == MOSQ_ERR_NOMEM){
 			rc = MOSQ_ERR_NOMEM;
 			goto handle_connect_error;
 		}else{
-			/* Username flag given, but no username. Ignore. */
-			username_flag = 0;
+			if(context->protocol == mosq_p_mqtt31){
+				/* Username flag given, but no username. Ignore. */
+				username_flag = 0;
+			}else if(context->protocol == mosq_p_mqtt311){
+				mqtt3_context_disconnect(db, context);
+				rc = MOSQ_ERR_PROTOCOL;
+				goto handle_connect_error;
+			}
+		}
+	}else{
+		if(context->protocol == mosq_p_mqtt311){
+			if(password_flag){
+				/* username_flag == 0 && password_flag == 1 is forbidden */
+				mqtt3_context_disconnect(db, context);
+				rc = MOSQ_ERR_PROTOCOL;
+				goto handle_connect_error;
+			}
 		}
 	}
 
