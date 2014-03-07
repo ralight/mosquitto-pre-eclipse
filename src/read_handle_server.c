@@ -113,6 +113,12 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			_mosquitto_free(protocol_name);
 			return MOSQ_ERR_PROTOCOL;
 		}
+		if((context->in_packet.command&0x0F) != 0x00){
+			/* Reserved flags not set to 0, must disconnect. */ 
+			mqtt3_context_disconnect(db, context);
+			_mosquitto_free(protocol_name);
+			return MOSQ_ERR_PROTOCOL;
+		}
 		context->protocol = mosq_p_mqtt311;
 	}else{
 		if(db->config->connection_messages == true){
