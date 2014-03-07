@@ -158,6 +158,11 @@ int _mosquitto_handle_pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 		return MOSQ_ERR_PROTOCOL;
 	}
 #endif
+	if(mosq->protocol == mosq_p_mqtt311){
+		if((mosq->in_packet.command&0x0F) != 0x02){
+			return MOSQ_ERR_PROTOCOL;
+		}
+	}
 	rc = _mosquitto_read_uint16(&mosq->in_packet, &mid);
 	if(rc) return rc;
 #ifdef WITH_BROKER
