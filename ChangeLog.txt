@@ -22,6 +22,10 @@ Broker:
   persistence.
 - Basic support for MQTT v3.1.1.
 - Username is displayed in log if present when a client connects.
+- Support for 0 length client ids (v3.1.1 only) that result in automatically
+  generated client ids on the broker (see option allow_zero_length_clientid).
+- Ability to set the prefix of automatically generated client ids (see option
+  auto_id_prefix).
 
 Client library:
 - Fix support for Python 2.6, 3.0, 3.1.

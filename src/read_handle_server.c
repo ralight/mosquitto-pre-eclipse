@@ -162,10 +162,36 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 #else
 	if(slen == 0){
 #endif
-		_mosquitto_free(client_id);
-		_mosquitto_send_connack(context, CONNACK_REFUSED_IDENTIFIER_REJECTED);
-		mqtt3_context_disconnect(db, context);
-		return 1;
+		if(context->protocol == mosq_p_mqtt31){
+			_mosquitto_free(client_id);
+			_mosquitto_send_connack(context, CONNACK_REFUSED_IDENTIFIER_REJECTED);
+			mqtt3_context_disconnect(db, context);
+			return MOSQ_ERR_PROTOCOL;
+		}else{ /* mqtt311 */
+			_mosquitto_free(client_id);
+
+			if(clean_session == 0){
+				_mosquitto_send_connack(context, CONNACK_REFUSED_IDENTIFIER_REJECTED);
+				mqtt3_context_disconnect(db, context);
+				return MOSQ_ERR_PROTOCOL;
+			}
+			if(db->config->allow_zero_length_clientid == true){
+				client_id = (char *)_mosquitto_calloc(65 + db->config->auto_id_prefix_len, sizeof(char));
+				if(!client_id){
+					mqtt3_context_disconnect(db, context);
+					return MOSQ_ERR_NOMEM;
+				}
+				memcpy(client_id, db->config->auto_id_prefix, db->config->auto_id_prefix_len);
+				for(i=0; i<64; i++){
+					client_id[i+db->config->auto_id_prefix_len] = (rand()%73)+48;
+				}
+				client_id[i] = '\0';
+			}else{
+				_mosquitto_send_connack(context, CONNACK_REFUSED_IDENTIFIER_REJECTED);
+				mqtt3_context_disconnect(db, context);
+				return MOSQ_ERR_PROTOCOL;
+			}
+		}
 	}
 
 	/* clientid_prefixes check */

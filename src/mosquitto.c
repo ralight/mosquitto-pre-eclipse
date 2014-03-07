@@ -165,6 +165,11 @@ int main(int argc, char *argv[])
 	int listener_max;
 	int rc;
 	char err[256];
+#ifdef WIN32
+	SYSTEMTIME st;
+#else
+	struct timeval tv;
+#endif
 
 #if defined(WIN32) || defined(__CYGWIN__)
 	if(argc == 2){
@@ -179,6 +184,15 @@ int main(int argc, char *argv[])
 			return 0;
 		}
 	}
+#endif
+
+
+#ifdef WIN32
+	GetSystemTime(&st);
+	srand(st.wSecond + st.wMilliseconds);
+#else
+	gettimeofday(&tv, NULL);
+	srand(tv.tv_sec + tv.tv_usec);
 #endif
 
 	memset(&int_db, 0, sizeof(struct mosquitto_db));

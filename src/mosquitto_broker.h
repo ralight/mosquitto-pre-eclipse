@@ -83,6 +83,9 @@ struct mqtt3_config {
 	char *acl_file;
 	bool allow_anonymous;
 	bool allow_duplicate_messages;
+	bool allow_zero_length_clientid;
+	char *auto_id_prefix;
+	int auto_id_prefix_len;
 	int autosave_interval;
 	bool autosave_on_changes;
 	char *clientid_prefixes;
