@@ -520,6 +520,12 @@ int mqtt3_handle_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 		return MOSQ_ERR_PROTOCOL;
 	}
 	_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Received DISCONNECT from %s", context->id);
+	if(context->protocol == mosq_p_mqtt311){
+		if((context->in_packet.command&0x0F) != 0x00){
+			mqtt3_context_disconnect(db, context);
+			return MOSQ_ERR_PROTOCOL;
+		}
+	}
 	context->state = mosq_cs_disconnecting;
 	mqtt3_context_disconnect(db, context);
 	return MOSQ_ERR_SUCCESS;
@@ -542,6 +548,11 @@ int mqtt3_handle_subscribe(struct mosquitto_db *db, struct mosquitto *context)
 	_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Received SUBSCRIBE from %s", context->id);
 	/* FIXME - plenty of potential for memory leaks here */
 
+	if(context->protocol == mosq_p_mqtt311){
+		if((context->in_packet.command&0x0F) != 0x02){
+			return MOSQ_ERR_PROTOCOL;
+		}
+	}
 	if(_mosquitto_read_uint16(&context->in_packet, &mid)) return 1;
 
 	while(context->in_packet.pos < context->in_packet.remaining_length){
@@ -617,6 +628,12 @@ int mqtt3_handle_subscribe(struct mosquitto_db *db, struct mosquitto *context)
 		}
 	}
 
+	if(context->protocol == mosq_p_mqtt311){
+		if(payloadlen == 0){
+			/* No subscriptions specified, protocol error. */
+			return MOSQ_ERR_PROTOCOL;
+		}
+	}
 	if(_mosquitto_send_suback(context, mid, payloadlen, payload)) rc = 1;
 	_mosquitto_free(payload);
 	
@@ -635,6 +652,11 @@ int mqtt3_handle_unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 	if(!context) return MOSQ_ERR_INVAL;
 	_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Received UNSUBSCRIBE from %s", context->id);
 
+	if(context->protocol == mosq_p_mqtt311){
+		if((context->in_packet.command&0x0F) != 0x02){
+			return MOSQ_ERR_PROTOCOL;
+		}
+	}
 	if(_mosquitto_read_uint16(&context->in_packet, &mid)) return 1;
 
 	while(context->in_packet.pos < context->in_packet.remaining_length){
