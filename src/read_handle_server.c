@@ -138,6 +138,10 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	clean_session = connect_flags & 0x02;
 	will = connect_flags & 0x04;
 	will_qos = (connect_flags & 0x18) >> 3;
+	if(will_qos == 3){
+		mqtt3_context_disconnect(db, context);
+		return MOSQ_ERR_PROTOCOL;
+	}
 	will_retain = connect_flags & 0x20;
 	password_flag = connect_flags & 0x40;
 	username_flag = connect_flags & 0x80;
@@ -210,6 +214,14 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			if(rc){
 				mqtt3_context_disconnect(db, context);
 				rc = 1;
+				goto handle_connect_error;
+			}
+		}
+	}else{
+		if(context->protocol == mosq_p_mqtt311){
+			if(will_qos != 0 || will_retain != 0){
+				mqtt3_context_disconnect(db, context);
+				rc = MOSQ_ERR_PROTOCOL;
 				goto handle_connect_error;
 			}
 		}
