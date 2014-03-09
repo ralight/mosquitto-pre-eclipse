@@ -142,6 +142,7 @@ struct mosquitto {
 #else
 	SOCKET sock;
 #endif
+	enum _mosquitto_protocol protocol;
 	char *address;
 	char *id;
 	char *username;
@@ -184,7 +185,6 @@ struct mosquitto {
 	pthread_t thread_id;
 #endif
 #ifdef WITH_BROKER
-	enum _mosquitto_protocol protocol;
 	bool is_bridge;
 	struct _mqtt3_bridge *bridge;
 	struct mosquitto_client_msg *msgs;
