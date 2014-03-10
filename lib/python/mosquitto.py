@@ -2055,7 +2055,7 @@ class Mosquitto:
         san = cert.get('subjectAltName')
         if san:
             have_san_dns = False
-            for ((key, value)) in san:
+            for ((key, value),) in san:
                 if key == 'DNS':
                     have_san_dns = True
                     if value == self._host:
@@ -2070,7 +2070,7 @@ class Mosquitto:
                 raise ssl.SSLError('Certificate subject does not match remote hostname.')
         subject = cert.get('subject')
         if subject:
-            for ((key, value)) in subject:
+            for ((key, value),) in subject:
                 if key == 'commonName':
                     if value.lower() == self._host.lower():
                         return
