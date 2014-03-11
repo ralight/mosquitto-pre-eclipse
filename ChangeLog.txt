@@ -43,6 +43,7 @@ Client library:
 - Add support for SRV lookups.
 - Break out of select() on publish(), subscribe() etc. when using the threaded
   interface. Fixes bug #1270062.
+- Handle incoming and outgoing messages separately. Fixes bug #1263172.
 
 Clients:
 - Add --ciphers to allow specifying which TLS ciphers to support.
