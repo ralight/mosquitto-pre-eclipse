@@ -130,7 +130,7 @@ struct _mosquitto_packet{
 struct mosquitto_message_all{
 	struct mosquitto_message_all *next;
 	time_t timestamp;
-	enum mosquitto_msg_direction direction;
+	//enum mosquitto_msg_direction direction;
 	enum mosquitto_msg_state state;
 	bool dup;
 	struct mosquitto_message msg;
@@ -187,7 +187,8 @@ struct mosquitto {
 	pthread_mutex_t out_packet_mutex;
 	pthread_mutex_t current_out_packet_mutex;
 	pthread_mutex_t state_mutex;
-	pthread_mutex_t message_mutex;
+	pthread_mutex_t in_message_mutex;
+	pthread_mutex_t out_message_mutex;
 	pthread_t thread_id;
 #endif
 #ifdef WITH_BROKER
@@ -209,7 +210,10 @@ struct mosquitto {
 	bool in_callback;
 	unsigned int message_retry;
 	time_t last_retry_check;
-	struct mosquitto_message_all *messages;
+	struct mosquitto_message_all *in_messages;
+	struct mosquitto_message_all *in_messages_last;
+	struct mosquitto_message_all *out_messages;
+	struct mosquitto_message_all *out_messages_last;
 	void (*on_connect)(struct mosquitto *, void *userdata, int rc);
 	void (*on_disconnect)(struct mosquitto *, void *userdata, int rc);
 	void (*on_publish)(struct mosquitto *, void *userdata, int mid);
@@ -220,14 +224,14 @@ struct mosquitto {
 	//void (*on_error)();
 	char *host;
 	int port;
-	int queue_len;
+	int in_queue_len;
+	int out_queue_len;
 	char *bind_address;
 	unsigned int reconnect_delay;
 	unsigned int reconnect_delay_max;
 	bool reconnect_exponential_backoff;
 	bool threaded;
 	struct _mosquitto_packet *out_packet_last;
-	struct mosquitto_message_all *messages_last;
 	int inflight_messages;
 	int max_inflight_messages;
 #  ifdef WITH_SRV

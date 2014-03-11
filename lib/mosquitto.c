@@ -187,7 +187,10 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 	mosq->ping_t = 0;
 	mosq->last_mid = 0;
 	mosq->state = mosq_cs_new;
-	mosq->messages = NULL;
+	mosq->in_messages = NULL;
+	mosq->in_messages_last = NULL;
+	mosq->out_messages = NULL;
+	mosq->out_messages_last = NULL;
 	mosq->max_inflight_messages = 20;
 	mosq->will = NULL;
 	mosq->on_connect = NULL;
@@ -198,7 +201,8 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 	mosq->host = NULL;
 	mosq->port = 1883;
 	mosq->in_callback = false;
-	mosq->queue_len = 0;
+	mosq->in_queue_len = 0;
+	mosq->out_queue_len = 0;
 	mosq->reconnect_delay = 1;
 	mosq->reconnect_delay_max = 1;
 	mosq->reconnect_exponential_backoff = false;
@@ -215,7 +219,8 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 	pthread_mutex_init(&mosq->out_packet_mutex, NULL);
 	pthread_mutex_init(&mosq->current_out_packet_mutex, NULL);
 	pthread_mutex_init(&mosq->msgtime_mutex, NULL);
-	pthread_mutex_init(&mosq->message_mutex, NULL);
+	pthread_mutex_init(&mosq->in_message_mutex, NULL);
+	pthread_mutex_init(&mosq->out_message_mutex, NULL);
 	mosq->thread_id = pthread_self();
 #endif
 
@@ -295,7 +300,8 @@ void _mosquitto_destroy(struct mosquitto *mosq)
 		pthread_mutex_destroy(&mosq->out_packet_mutex);
 		pthread_mutex_destroy(&mosq->current_out_packet_mutex);
 		pthread_mutex_destroy(&mosq->msgtime_mutex);
-		pthread_mutex_destroy(&mosq->message_mutex);
+		pthread_mutex_destroy(&mosq->in_message_mutex);
+		pthread_mutex_destroy(&mosq->out_message_mutex);
 	}
 #endif
 	if(mosq->sock != INVALID_SOCKET){
@@ -546,7 +552,6 @@ int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int p
 
 		message->next = NULL;
 		message->timestamp = mosquitto_time();
-		message->direction = mosq_md_out;
 		message->msg.mid = local_mid;
 		message->msg.topic = _mosquitto_strdup(topic);
 		if(!message->msg.topic){
@@ -569,8 +574,8 @@ int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int p
 		message->msg.retain = retain;
 		message->dup = false;
 
-		pthread_mutex_lock(&mosq->message_mutex);
-		_mosquitto_message_queue(mosq, message, false);
+		pthread_mutex_lock(&mosq->out_message_mutex);
+		_mosquitto_message_queue(mosq, message, mosq_md_out);
 		if(mosq->max_inflight_messages == 0 || mosq->inflight_messages < mosq->max_inflight_messages){
 			mosq->inflight_messages++;
 			if(qos == 1){
@@ -578,11 +583,11 @@ int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int p
 			}else if(qos == 2){
 				message->state = mosq_ms_wait_for_pubrec;
 			}
-			pthread_mutex_unlock(&mosq->message_mutex);
+			pthread_mutex_unlock(&mosq->out_message_mutex);
 			return _mosquitto_send_publish(mosq, message->msg.mid, message->msg.topic, message->msg.payloadlen, message->msg.payload, message->msg.qos, message->msg.retain, message->dup);
 		}else{
 			message->state = mosq_ms_invalid;
-			pthread_mutex_unlock(&mosq->message_mutex);
+			pthread_mutex_unlock(&mosq->out_message_mutex);
 			return MOSQ_ERR_SUCCESS;
 		}
 	}
@@ -1043,9 +1048,14 @@ int mosquitto_loop_read(struct mosquitto *mosq, int max_packets)
 	int i;
 	if(max_packets < 1) return MOSQ_ERR_INVAL;
 
-	pthread_mutex_lock(&mosq->message_mutex);
-	max_packets = mosq->queue_len;
-	pthread_mutex_unlock(&mosq->message_mutex);
+	pthread_mutex_lock(&mosq->out_message_mutex);
+	max_packets = mosq->out_queue_len;
+	pthread_mutex_unlock(&mosq->out_message_mutex);
+
+	pthread_mutex_lock(&mosq->in_message_mutex);
+	max_packets += mosq->in_queue_len;
+	pthread_mutex_unlock(&mosq->in_message_mutex);
+
 	if(max_packets < 1) max_packets = 1;
 	/* Queue len here tells us how many messages are awaiting processing and
 	 * have QoS > 0. We should try to deal with that many in this loop in order
@@ -1065,9 +1075,14 @@ int mosquitto_loop_write(struct mosquitto *mosq, int max_packets)
 	int i;
 	if(max_packets < 1) return MOSQ_ERR_INVAL;
 
-	pthread_mutex_lock(&mosq->message_mutex);
-	max_packets = mosq->queue_len;
-	pthread_mutex_unlock(&mosq->message_mutex);
+	pthread_mutex_lock(&mosq->out_message_mutex);
+	max_packets = mosq->out_queue_len;
+	pthread_mutex_unlock(&mosq->out_message_mutex);
+
+	pthread_mutex_lock(&mosq->in_message_mutex);
+	max_packets += mosq->in_queue_len;
+	pthread_mutex_unlock(&mosq->in_message_mutex);
+
 	if(max_packets < 1) max_packets = 1;
 	/* Queue len here tells us how many messages are awaiting processing and
 	 * have QoS > 0. We should try to deal with that many in this loop in order

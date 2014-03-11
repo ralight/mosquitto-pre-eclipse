@@ -135,7 +135,7 @@ int _mosquitto_handle_pubrec(struct mosquitto *mosq)
 #else
 	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s received PUBREC (Mid: %d)", mosq->id, mid);
 
-	rc = _mosquitto_message_update(mosq, mid, mosq_md_out, mosq_ms_wait_for_pubcomp);
+	rc = _mosquitto_message_out_update(mosq, mid, mosq_ms_wait_for_pubcomp);
 #endif
 	if(rc) return rc;
 	rc = _mosquitto_send_pubrel(mosq, mid, false);
