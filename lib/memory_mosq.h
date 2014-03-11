@@ -30,6 +30,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef _MEMORY_MOSQ_H_
 #define _MEMORY_MOSQ_H_
 
+#include <stdio.h>
 #include <sys/types.h>
 
 #if defined(WITH_MEMORY_TRACKING) && defined(WITH_BROKER) && !defined(WIN32) && !defined(__SYMBIAN32__) && !defined(__ANDROID__)

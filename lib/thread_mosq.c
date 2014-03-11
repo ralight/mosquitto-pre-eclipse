@@ -82,7 +82,13 @@ void *_mosquitto_thread_main(void *obj)
 		pthread_mutex_unlock(&mosq->state_mutex);
 	}
 
-	mosquitto_loop_forever(mosq, 10000, 1);
+	if(!mosq->keepalive){
+		/* Sleep for a day if keepalive disabled. */
+		mosquitto_loop_forever(mosq, mosq->keepalive*1000*86400, 1);
+	}else{
+		/* Sleep for our keepalive value. publish() etc. will wake us up. */
+		mosquitto_loop_forever(mosq, mosq->keepalive*1000, 1);
+	}
 
 	mosq->threaded = false;
 	return obj;

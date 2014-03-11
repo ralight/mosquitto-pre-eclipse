@@ -112,6 +112,8 @@ struct mosquitto *mosquitto_new(const char *id, bool clean_session, void *userda
 	mosq = (struct mosquitto *)_mosquitto_calloc(1, sizeof(struct mosquitto));
 	if(mosq){
 		mosq->sock = INVALID_SOCKET;
+		mosq->sockpairR = INVALID_SOCKET;
+		mosq->sockpairW = INVALID_SOCKET;
 #ifdef WITH_THREADING
 		mosq->thread_id = pthread_self();
 #endif
@@ -150,6 +152,8 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 		mosq->userdata = mosq;
 	}
 	mosq->sock = INVALID_SOCKET;
+	mosq->sockpairR = INVALID_SOCKET;
+	mosq->sockpairW = INVALID_SOCKET;
 	mosq->keepalive = 60;
 	mosq->message_retry = 20;
 	mosq->last_retry_check = 0;
@@ -360,6 +364,14 @@ void _mosquitto_destroy(struct mosquitto *mosq)
 	}
 
 	_mosquitto_packet_cleanup(&mosq->in_packet);
+	if(mosq->sockpairR != INVALID_SOCKET){
+		COMPAT_CLOSE(mosq->sockpairR);
+		mosq->sockpairR = INVALID_SOCKET;
+	}
+	if(mosq->sockpairW != INVALID_SOCKET){
+		COMPAT_CLOSE(mosq->sockpairW);
+		mosq->sockpairW = INVALID_SOCKET;
+	}
 }
 
 void mosquitto_destroy(struct mosquitto *mosq)
@@ -393,6 +405,8 @@ static int _mosquitto_connect_init(struct mosquitto *mosq, const char *host, int
 	}
 
 	mosq->keepalive = keepalive;
+
+	_mosquitto_socketpair(&mosq->sockpairR, &mosq->sockpairW);
 
 	return MOSQ_ERR_SUCCESS;
 }
@@ -788,12 +802,15 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 	fd_set readfds, writefds;
 	int fdcount;
 	int rc;
+	char pairbuf;
+	int maxfd = 0;
 
 	if(!mosq || max_packets < 1) return MOSQ_ERR_INVAL;
 
 	FD_ZERO(&readfds);
 	FD_ZERO(&writefds);
 	if(mosq->sock != INVALID_SOCKET){
+		maxfd = mosq->sock;
 		FD_SET(mosq->sock, &readfds);
 		pthread_mutex_lock(&mosq->current_out_packet_mutex);
 		pthread_mutex_lock(&mosq->out_packet_mutex);
@@ -811,7 +828,10 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 		if(mosq->achan){
 			pthread_mutex_lock(&mosq->state_mutex);
 			if(mosq->state == mosq_cs_connect_srv){
-				ares_fds(mosq->achan, &readfds, &writefds);
+				rc = ares_fds(mosq->achan, &readfds, &writefds);
+				if(rc > maxfd){
+					maxfd = rc;
+				}
 			}else{
 				return MOSQ_ERR_NO_CONN;
 			}
@@ -820,6 +840,14 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 #else
 		return MOSQ_ERR_NO_CONN;
 #endif
+	}
+	if(mosq->sockpairR != INVALID_SOCKET){
+		/* sockpairR is used to break out of select() before the timeout, on a
+		 * call to publish() etc. */
+		FD_SET(mosq->sockpairR, &readfds);
+		if(mosq->sockpairR > maxfd){
+			maxfd = mosq->sockpairR;
+		}
 	}
 
 	if(timeout >= 0){
@@ -839,9 +867,9 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 	}
 
 #ifdef HAVE_PSELECT
-	fdcount = pselect(mosq->sock+1, &readfds, &writefds, NULL, &local_timeout, NULL);
+	fdcount = pselect(maxfd+1, &readfds, &writefds, NULL, &local_timeout, NULL);
 #else
-	fdcount = select(mosq->sock+1, &readfds, &writefds, NULL, &local_timeout);
+	fdcount = select(maxfd+1, &readfds, &writefds, NULL, &local_timeout);
 #endif
 	if(fdcount == -1){
 #ifdef WIN32
@@ -859,6 +887,18 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 				if(rc || mosq->sock == INVALID_SOCKET){
 					return rc;
 				}
+			}
+			if(mosq->sockpairR >= 0 && FD_ISSET(mosq->sockpairR, &readfds)){
+#ifndef WIN32
+				if(read(mosq->sockpairR, &pairbuf, 1) == 0){
+				}
+#else
+				recv(mosq->sockpairR, &pairbuf, 1, 0);
+#endif
+				/* Fake write possible, to stimulate output write even though
+				 * we didn't ask for it, because at that point the publish or
+				 * other command wasn't present. */
+				FD_SET(mosq->sock, &writefds);
 			}
 			if(FD_ISSET(mosq->sock, &writefds)){
 				rc = mosquitto_loop_write(mosq, max_packets);

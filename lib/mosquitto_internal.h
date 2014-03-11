@@ -139,8 +139,14 @@ struct mosquitto_message_all{
 struct mosquitto {
 #ifndef WIN32
 	int sock;
+#  ifndef WITH_BROKER
+	int sockpairR, sockpairW;
+#  endif
 #else
 	SOCKET sock;
+#  ifndef WITH_BROKER
+	SOCKET sockpairR, sockpairW;
+#  endif
 #endif
 	enum _mosquitto_protocol protocol;
 	char *address;

@@ -102,20 +102,9 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 	g_socket_connections++;
 #endif
 
-#ifndef WIN32
-	/* Set non-blocking */
-	opt = fcntl(new_sock, F_GETFL, 0);
-	if(opt == -1 || fcntl(new_sock, F_SETFL, opt | O_NONBLOCK) == -1){
-		/* If either fcntl fails, don't want to allow this client to connect. */
-		close(new_sock);
-		return -1;
-	}
-#else
-	if(ioctlsocket(new_sock, FIONBIO, &opt)){
-		closesocket(new_sock);
+	if(_mosquitto_socket_nonblock(new_sock)){
 		return INVALID_SOCKET;
 	}
-#endif
 
 #ifdef WITH_WRAP
 	/* Use tcpd / libwrap to determine whether a connection is allowed. */
@@ -285,7 +274,6 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 	struct addrinfo hints;
 	struct addrinfo *ainfo, *rp;
 	char service[10];
-	int opt = 1;
 #ifndef WIN32
 	int ss_opt = 1;
 #else
@@ -341,21 +329,9 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 		ss_opt = 1;
 		setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, &ss_opt, sizeof(ss_opt));
 
-
-#ifndef WIN32
-		/* Set non-blocking */
-		opt = fcntl(sock, F_GETFL, 0);
-		if(opt == -1 || fcntl(sock, F_SETFL, opt | O_NONBLOCK) == -1){
-			/* If either fcntl fails, don't want to allow this client to connect. */
-			COMPAT_CLOSE(sock);
+		if(_mosquitto_socket_nonblock(sock)){
 			return 1;
 		}
-#else
-		if(ioctlsocket(sock, FIONBIO, &opt)){
-			COMPAT_CLOSE(sock);
-			return 1;
-		}
-#endif
 
 		if(bind(sock, rp->ai_addr, rp->ai_addrlen) == -1){
 			strerror_r(errno, err, 256);
