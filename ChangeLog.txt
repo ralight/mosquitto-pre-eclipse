@@ -41,6 +41,8 @@ Client library:
   the behaviour as clarified by the Oasis MQTT spec. This will lead to
   unexpected behaviour if you were using topics of this form.
 - Add support for SRV lookups.
+- Break out of select() on publish(), subscribe() etc. when using the threaded
+  interface. Fixes bug #1270062.
 
 Clients:
 - Add --ciphers to allow specifying which TLS ciphers to support.

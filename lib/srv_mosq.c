@@ -29,11 +29,11 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef WITH_SRV
 #  include <ares.h>
-#endif
 
-#include <arpa/nameser.h>
-#include <stdio.h>
-#include <string.h>
+#  include <arpa/nameser.h>
+#  include <stdio.h>
+#  include <string.h>
+#endif
 
 #include "logging_mosq.h"
 #include "memory_mosq.h"
