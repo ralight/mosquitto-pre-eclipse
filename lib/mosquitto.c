@@ -285,9 +285,10 @@ void _mosquitto_destroy(struct mosquitto *mosq)
 	if(!mosq) return;
 
 #ifdef WITH_THREADING
-	if(!pthread_equal(mosq->thread_id, pthread_self())){
+	if(mosq->threaded && !pthread_equal(mosq->thread_id, pthread_self())){
 		pthread_cancel(mosq->thread_id);
 		pthread_join(mosq->thread_id, NULL);
+		mosq->threaded = false;
 	}
 
 	if(mosq->id){

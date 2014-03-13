@@ -40,8 +40,9 @@ void *_mosquitto_thread_main(void *obj);
 int mosquitto_loop_start(struct mosquitto *mosq)
 {
 #ifdef WITH_THREADING
-	if(!mosq) return MOSQ_ERR_INVAL;
+	if(!mosq || mosq->threaded) return MOSQ_ERR_INVAL;
 
+	mosq->threaded = true;
 	pthread_create(&mosq->thread_id, NULL, _mosquitto_thread_main, mosq);
 	return MOSQ_ERR_SUCCESS;
 #else
@@ -52,13 +53,14 @@ int mosquitto_loop_start(struct mosquitto *mosq)
 int mosquitto_loop_stop(struct mosquitto *mosq, bool force)
 {
 #ifdef WITH_THREADING
-	if(!mosq) return MOSQ_ERR_INVAL;
+	if(!mosq || !mosq->threaded) return MOSQ_ERR_INVAL;
 	
 	if(force){
 		pthread_cancel(mosq->thread_id);
 	}
 	pthread_join(mosq->thread_id, NULL);
 	mosq->thread_id = pthread_self();
+	mosq->threaded = false;
 
 	return MOSQ_ERR_SUCCESS;
 #else
@@ -73,7 +75,6 @@ void *_mosquitto_thread_main(void *obj)
 
 	if(!mosq) return NULL;
 
-	mosq->threaded = true;
 	pthread_mutex_lock(&mosq->state_mutex);
 	if(mosq->state == mosq_cs_connect_async){
 		pthread_mutex_unlock(&mosq->state_mutex);
@@ -90,7 +91,6 @@ void *_mosquitto_thread_main(void *obj)
 		mosquitto_loop_forever(mosq, mosq->keepalive*1000, 1);
 	}
 
-	mosq->threaded = false;
 	return obj;
 }
 #endif
