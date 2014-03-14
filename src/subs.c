@@ -178,7 +178,7 @@ static int _sub_topic_tokenise(const char *subtopic, struct _sub_token **topics)
 		new_topic = _mosquitto_malloc(sizeof(struct _sub_token));
 		if(!new_topic) goto cleanup;
 		new_topic->next = NULL;
-		new_topic->topic = _mosquitto_strdup("/");
+		new_topic->topic = _mosquitto_strdup("");
 		if(!new_topic->topic) goto cleanup;
 
 		*topics = new_topic;
@@ -204,7 +204,7 @@ static int _sub_topic_tokenise(const char *subtopic, struct _sub_token **topics)
 				if(!new_topic->topic) goto cleanup;
 				memcpy(new_topic->topic, &subtopic[start], tlen-1);
 			}else{
-				new_topic->topic = _mosquitto_strdup("/");
+				new_topic->topic = _mosquitto_strdup("");
 				if(!new_topic->topic) goto cleanup;
 			}
 			if(tail){
