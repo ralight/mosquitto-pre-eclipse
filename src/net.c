@@ -83,7 +83,6 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 	int new_sock = -1;
 	struct mosquitto **tmp_contexts = NULL;
 	struct mosquitto *new_context;
-	int opt = 1;
 #ifdef WITH_TLS
 	BIO *bio;
 	int rc;
