@@ -161,6 +161,17 @@ static int _sub_topic_tokenise(const char *subtopic, struct _sub_token **topics)
 	assert(subtopic);
 	assert(topics);
 
+	if(subtopic[0] != '$'){
+		new_topic = _mosquitto_malloc(sizeof(struct _sub_token));
+		if(!new_topic) goto cleanup;
+		new_topic->next = NULL;
+		new_topic->topic = _mosquitto_strdup("");
+		if(!new_topic->topic) goto cleanup;
+
+		*topics = new_topic;
+		tail = new_topic;
+	}
+
 	len = strlen(subtopic);
 
 	if(subtopic[0] == '/'){
@@ -363,34 +374,41 @@ static void _sub_search(struct mosquitto_db *db, struct _mosquitto_subhier *subh
 
 int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int qos, struct _mosquitto_subhier *root)
 {
-	int tree;
 	int rc = 0;
-	struct _mosquitto_subhier *subhier;
+	struct _mosquitto_subhier *subhier, *child;
 	struct _sub_token *tokens = NULL, *tail;
 
 	assert(root);
 	assert(sub);
 
-	if(!strncmp(sub, "$SYS/", 5)){
-		tree = 2;
-		if(strlen(sub+5) == 0) return MOSQ_ERR_SUCCESS;
-		if(_sub_topic_tokenise(sub+5, &tokens)) return 1;
-	}else{
-		tree = 0;
-		if(strlen(sub) == 0) return MOSQ_ERR_SUCCESS;
-		if(_sub_topic_tokenise(sub, &tokens)) return 1;
-	}
+	if(_sub_topic_tokenise(sub, &tokens)) return 1;
 
 	subhier = root->children;
 	while(subhier){
-		if(!strcmp(subhier->topic, "") && tree == 0){
-			rc = _sub_add(db, context, qos, subhier, tokens);
-			break;
-		}else if(!strcmp(subhier->topic, "$SYS") && tree == 2){
+		if(!strcmp(subhier->topic, tokens->topic)){
 			rc = _sub_add(db, context, qos, subhier, tokens);
 			break;
 		}
 		subhier = subhier->next;
+	}
+	if(!subhier){
+		child = _mosquitto_malloc(sizeof(struct _mosquitto_subhier));
+		if(!child){
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+			return MOSQ_ERR_NOMEM;
+		}
+		child->next = NULL;
+		child->topic = _mosquitto_strdup(tokens->topic);
+		if(!child->topic){
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+			return MOSQ_ERR_NOMEM;
+		}
+		child->subs = NULL;
+		child->children = NULL;
+		child->retained = NULL;
+		db->subs.children = child;
+
+		rc = _sub_add(db, context, qos, child, tokens);
 	}
 
 	while(tokens){
@@ -407,27 +425,17 @@ int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char
 int mqtt3_sub_remove(struct mosquitto_db *db, struct mosquitto *context, const char *sub, struct _mosquitto_subhier *root)
 {
 	int rc = 0;
-	int tree;
 	struct _mosquitto_subhier *subhier;
 	struct _sub_token *tokens = NULL, *tail;
 
 	assert(root);
 	assert(sub);
 
-	if(!strncmp(sub, "$SYS/", 5)){
-		tree = 2;
-		if(_sub_topic_tokenise(sub+5, &tokens)) return 1;
-	}else{
-		tree = 0;
-		if(_sub_topic_tokenise(sub, &tokens)) return 1;
-	}
+	if(_sub_topic_tokenise(sub, &tokens)) return 1;
 
 	subhier = root->children;
 	while(subhier){
-		if(!strcmp(subhier->topic, "") && tree == 0){
-			rc = _sub_remove(db, context, subhier, tokens);
-			break;
-		}else if(!strcmp(subhier->topic, "$SYS") && tree == 2){
+		if(!strcmp(subhier->topic, tokens->topic)){
 			rc = _sub_remove(db, context, subhier, tokens);
 			break;
 		}
@@ -447,32 +455,17 @@ int mqtt3_sub_remove(struct mosquitto_db *db, struct mosquitto *context, const c
 int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored)
 {
 	int rc = 0;
-	int tree;
 	struct _mosquitto_subhier *subhier;
 	struct _sub_token *tokens = NULL, *tail;
 
 	assert(db);
 	assert(topic);
 
-	if(!strncmp(topic, "$SYS/", 5)){
-		tree = 2;
-		if(_sub_topic_tokenise(topic+5, &tokens)) return 1;
-	}else{
-		tree = 0;
-		if(_sub_topic_tokenise(topic, &tokens)) return 1;
-	}
+	if(_sub_topic_tokenise(topic, &tokens)) return 1;
 
 	subhier = db->subs.children;
 	while(subhier){
-		if(!strcmp(subhier->topic, "") && tree == 0){
-			if(retain){
-				/* We have a message that needs to be retained, so ensure that the subscription
-				 * tree for its topic exists.
-				 */
-				_sub_add(db, NULL, 0, subhier, tokens);
-			}
-			_sub_search(db, subhier, tokens, source_id, topic, qos, retain, stored, true);
-		}else if(!strcmp(subhier->topic, "$SYS") && tree == 2){
+		if(!strcmp(subhier->topic, tokens->topic)){
 			if(retain){
 				/* We have a message that needs to be retained, so ensure that the subscription
 				 * tree for its topic exists.
@@ -660,7 +653,6 @@ static int _retain_search(struct mosquitto_db *db, struct _mosquitto_subhier *su
 
 int mqtt3_retain_queue(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int sub_qos)
 {
-	int tree;
 	struct _mosquitto_subhier *subhier;
 	struct _sub_token *tokens = NULL, *tail;
 
@@ -668,20 +660,11 @@ int mqtt3_retain_queue(struct mosquitto_db *db, struct mosquitto *context, const
 	assert(context);
 	assert(sub);
 
-	if(!strncmp(sub, "$SYS/", 5)){
-		tree = 2;
-		if(_sub_topic_tokenise(sub+5, &tokens)) return 1;
-	}else{
-		tree = 0;
-		if(_sub_topic_tokenise(sub, &tokens)) return 1;
-	}
+	if(_sub_topic_tokenise(sub, &tokens)) return 1;
 
 	subhier = db->subs.children;
 	while(subhier){
-		if(!strcmp(subhier->topic, "") && tree == 0){
-			_retain_search(db, subhier, tokens, context, sub, sub_qos, 0);
-			break;
-		}else if(!strcmp(subhier->topic, "$SYS") && tree == 2){
+		if(!strcmp(subhier->topic, tokens->topic)){
 			_retain_search(db, subhier, tokens, context, sub, sub_qos, 0);
 			break;
 		}
