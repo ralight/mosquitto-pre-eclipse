@@ -26,6 +26,7 @@ Broker:
   generated client ids on the broker (see option allow_zero_length_clientid).
 - Ability to set the prefix of automatically generated client ids (see option
   auto_id_prefix).
+- Add support for TLS session resumption.
 
 Client library:
 - Fix support for Python 2.6, 3.0, 3.1.

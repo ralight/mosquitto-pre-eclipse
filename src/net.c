@@ -283,7 +283,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 	X509_STORE *store;
 	X509_LOOKUP *lookup;
 #endif
-	char err[256];
+	char buf[256];
 
 	if(!listener) return MOSQ_ERR_INVAL;
 
@@ -309,8 +309,8 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 
 		sock = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
 		if(sock == -1){
-			strerror_r(errno, err, 256);
-			_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: %s", err);
+			strerror_r(errno, buf, 256);
+			_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: %s", buf);
 			continue;
 		}
 		listener->sock_count++;
@@ -333,15 +333,15 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 		}
 
 		if(bind(sock, rp->ai_addr, rp->ai_addrlen) == -1){
-			strerror_r(errno, err, 256);
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s", err);
+			strerror_r(errno, buf, 256);
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s", buf);
 			COMPAT_CLOSE(sock);
 			return 1;
 		}
 
 		if(listen(sock, 100) == -1){
-			strerror_r(errno, err, 256);
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s", err);
+			strerror_r(errno, buf, 256);
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s", buf);
 			COMPAT_CLOSE(sock);
 			return 1;
 		}
@@ -381,6 +381,9 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 			/* Use even less memory per SSL connection. */
 			SSL_CTX_set_mode(listener->ssl_ctx, SSL_MODE_RELEASE_BUFFERS);
 #endif
+			snprintf(buf, 256, "mosquitto-%d", listener->port);
+			SSL_CTX_set_session_id_context(listener->ssl_ctx, (unsigned char *)buf, strlen(buf));
+
 			if(listener->ciphers){
 				rc = SSL_CTX_set_cipher_list(listener->ssl_ctx, listener->ciphers);
 				if(rc == 0){
