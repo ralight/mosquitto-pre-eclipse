@@ -30,6 +30,7 @@ Broker:
 - Add support for TLS session resumption.
 - When using TLS, the server now chooses the cipher to use when negotiating
   with the client.
+- Weak TLS ciphers are now disabled by default.
 
 Client library:
 - Fix support for Python 2.6, 3.0, 3.1.
