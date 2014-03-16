@@ -20,13 +20,16 @@ Broker:
   queue.
 - Bridge clients are recognised as bridges even after reloading from
   persistence.
-- Basic support for MQTT v3.1.1.
+- Basic support for MQTT v3.1.1. This does not include being able to bridge to
+  an MQTT v3.1.1 broker.
 - Username is displayed in log if present when a client connects.
 - Support for 0 length client ids (v3.1.1 only) that result in automatically
   generated client ids on the broker (see option allow_zero_length_clientid).
 - Ability to set the prefix of automatically generated client ids (see option
   auto_id_prefix).
 - Add support for TLS session resumption.
+- When using TLS, the server now chooses the cipher to use when negotiating
+  with the client.
 
 Client library:
 - Fix support for Python 2.6, 3.0, 3.1.

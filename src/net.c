@@ -282,6 +282,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 	int rc;
 	X509_STORE *store;
 	X509_LOOKUP *lookup;
+	int ssl_options = 0;
 #endif
 	char buf[256];
 
@@ -370,13 +371,19 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 				COMPAT_CLOSE(sock);
 				return 1;
 			}
+
+			/* Don't accept SSLv2 or SSLv3 */
+			ssl_options = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3;
 #ifdef SSL_OP_NO_COMPRESSION
-			/* Disable compression
-			 * Don't accept SSLv2 or SSLv3 */
-			SSL_CTX_set_options(listener->ssl_ctx, SSL_OP_NO_COMPRESSION | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
-#else
-			SSL_CTX_set_options(listener->ssl_ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
+			/* Disable compression */
+			ssl_options |= SSL_OP_NO_COMPRESSION;
 #endif
+#ifdef SSL_OP_CIPHER_SERVER_PREFERENCE
+			/* Server chooses cipher */
+			ssl_options |= SSL_OP_CIPHER_SERVER_PREFERENCE;
+#endif
+			SSL_CTX_set_options(listener->ssl_ctx, ssl_options);
+
 #ifdef SSL_MODE_RELEASE_BUFFERS
 			/* Use even less memory per SSL connection. */
 			SSL_CTX_set_mode(listener->ssl_ctx, SSL_MODE_RELEASE_BUFFERS);
