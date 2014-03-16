@@ -230,8 +230,8 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 	while(acl_root){
 		/* Loop through the topic looking for matches to this ACL. */
 
-		/* If subscription starts with $SYS, acl_root->topic must also start with $SYS. */
-		if(!strncmp(topic, "$SYS", 4) && strncmp(acl_root->topic, "$SYS", 4)){
+		/* If subscription starts with $, acl_root->topic must also start with $. */
+		if(topic[0] == '$' && acl_root->topic[0] != '$'){
 			acl_root = acl_root->next;
 			continue;
 		}
