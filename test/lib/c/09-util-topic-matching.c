@@ -39,6 +39,10 @@ int main(int argc, char *argv[])
 	do_check("foo/+/+/baz", "foo///baz", false);
 	do_check("foo/bar/+", "foo/bar/", false);
 
+	do_check("$SYS/bar", "$SYS/bar", false);
+	do_check("#", "$SYS/bar", true);
+	do_check("$BOB/bar", "$SYS/bar", true);
+
 	return 0;
 }
 

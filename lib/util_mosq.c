@@ -187,6 +187,15 @@ int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result
 	slen = strlen(sub);
 	tlen = strlen(topic);
 
+	if(slen && tlen){
+		if((sub[0] == '$' && topic[0] != '$')
+				|| (topic[0] == '$' && sub[0] != '$')){
+
+			*result = false;
+			return MOSQ_ERR_SUCCESS;
+		}
+	}
+
 	spos = 0;
 	tpos = 0;
 
