@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2010-2013 Roger Light <roger@atchoo.org>
+Copyright (c) 2010-2014 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -64,8 +64,8 @@ extern "C" {
 #endif
 
 #define LIBMOSQUITTO_MAJOR 1
-#define LIBMOSQUITTO_MINOR 2
-#define LIBMOSQUITTO_REVISION 90
+#define LIBMOSQUITTO_MINOR 3
+#define LIBMOSQUITTO_REVISION 0
 /* LIBMOSQUITTO_VERSION_NUMBER looks like 1002001 for e.g. version 1.2.1. */
 #define LIBMOSQUITTO_VERSION_NUMBER (LIBMOSQUITTO_MAJOR*1000000+LIBMOSQUITTO_MINOR*1000+LIBMOSQUITTO_REVISION)
 
