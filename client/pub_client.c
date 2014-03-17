@@ -290,7 +290,7 @@ int main(int argc, char *argv[])
 	char *host = "localhost";
 	int port = 1883;
 	char *bind_address = NULL;
-	int keepalive = 1;
+	int keepalive = 60;
 	char buf[1024];
 	bool debug = false;
 	struct mosquitto *mosq = NULL;
