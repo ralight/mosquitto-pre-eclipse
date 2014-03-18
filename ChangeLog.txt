@@ -1,6 +1,10 @@
 1.3.1 - 201403xx
 ================
 
+Broker:
+- Prevent possible crash on client reconnect. Closes bug #1294108.
+
+Clients:
 - Fix keepalive value on mosquitto_pub.
 
 1.3 - 20140316
