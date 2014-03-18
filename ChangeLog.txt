@@ -3,6 +3,7 @@
 
 Broker:
 - Prevent possible crash on client reconnect. Closes bug #1294108.
+- Don't accept zero length unsubscription strings.
 
 Clients:
 - Fix keepalive value on mosquitto_pub.
