@@ -6,6 +6,9 @@ Broker:
 - Don't accept zero length unsubscription strings (MQTT v3.1.1 fix)
 - Don't accept QoS 3 (MQTT v3.1.1 fix)
 
+Client library:
+- Fix socketpair code on the Mac.
+
 Clients:
 - Fix keepalive value on mosquitto_pub.
 

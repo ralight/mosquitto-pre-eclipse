@@ -413,7 +413,10 @@ static int _mosquitto_connect_init(struct mosquitto *mosq, const char *host, int
 
 	mosq->keepalive = keepalive;
 
-	_mosquitto_socketpair(&mosq->sockpairR, &mosq->sockpairW);
+	if(_mosquitto_socketpair(&mosq->sockpairR, &mosq->sockpairW)){
+		_mosquitto_log_printf(mosq, MOSQ_LOG_WARNING,
+				"Warning: Unable to open socket pair, outgoing publish commands may be delayed.");
+	}
 
 	return MOSQ_ERR_SUCCESS;
 }
