@@ -245,9 +245,6 @@ int _mosquitto_try_connect(const char *host, uint16_t port, int *sock, const cha
 	struct addrinfo *ainfo_bind, *rp_bind;
 	int s;
 	int rc;
-#ifndef WIN32
-	int opt;
-#endif
 #ifdef WIN32
 	uint32_t val = 1;
 #endif
@@ -299,18 +296,10 @@ int _mosquitto_try_connect(const char *host, uint16_t port, int *sock, const cha
 
 		if(!blocking){
 			/* Set non-blocking */
-#ifndef WIN32
-			opt = fcntl(*sock, F_GETFL, 0);
-			if(opt == -1 || fcntl(*sock, F_SETFL, opt | O_NONBLOCK) == -1){
+			if(_mosquitto_socket_nonblock(*sock, 1)){
 				COMPAT_CLOSE(*sock);
 				continue;
 			}
-#else
-			if(ioctlsocket(*sock, FIONBIO, &val)){
-				COMPAT_CLOSE(*sock);
-				continue;
-			}
-#endif
 		}
 
 		rc = connect(*sock, rp->ai_addr, rp->ai_addrlen);
@@ -319,19 +308,11 @@ int _mosquitto_try_connect(const char *host, uint16_t port, int *sock, const cha
 #endif
 		if(rc == 0 || errno == EINPROGRESS || errno == COMPAT_EWOULDBLOCK){
 			if(blocking){
-			/* Set non-blocking */
-#ifndef WIN32
-				opt = fcntl(*sock, F_GETFL, 0);
-				if(opt == -1 || fcntl(*sock, F_SETFL, opt | O_NONBLOCK) == -1){
+				/* Set non-blocking */
+				if(_mosquitto_socket_nonblock(*sock, 1)){
 					COMPAT_CLOSE(*sock);
 					continue;
 				}
-#else
-				if(ioctlsocket(*sock, FIONBIO, &val)){
-					COMPAT_CLOSE(*sock);
-					continue;
-				}
-#endif
 			}
 			break;
 		}
@@ -981,20 +962,18 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 	return rc;
 }
 
-int _mosquitto_socket_nonblock(int sock)
+int _mosquitto_socket_nonblock(int sock, int nonblock)
 {
-	int opt = 1;
-
 #ifndef WIN32
 	/* Set non-blocking */
-	opt = fcntl(sock, F_GETFL, 0);
-	if(opt == -1 || fcntl(sock, F_SETFL, opt | O_NONBLOCK) == -1){
+	nonblock = fcntl(sock, F_GETFL, 0);
+	if(nonblock == -1 || fcntl(sock, F_SETFL, nonblock | O_NONBLOCK) == -1){
 		/* If either fcntl fails, don't want to allow this client to connect. */
 		COMPAT_CLOSE(sock);
 		return 1;
 	}
 #else
-	if(ioctlsocket(sock, FIONBIO, &opt)){
+	if(ioctlsocket(sock, FIONBIO, &nonblock)){
 		COMPAT_CLOSE(sock);
 		return 1;
 	}
@@ -1057,7 +1036,7 @@ int _mosquitto_socketpair(int *pairR, int *pairW)
 			continue;
 		}
 
-		if(_mosquitto_socket_nonblock(listensock)){
+		if(_mosquitto_socket_nonblock(listensock, 1)){
 			continue;
 		}
 
@@ -1076,7 +1055,7 @@ int _mosquitto_socketpair(int *pairR, int *pairW)
 			COMPAT_CLOSE(listensock);
 			continue;
 		}
-		if(_mosquitto_socket_nonblock(spR)){
+		if(_mosquitto_socket_nonblock(spR, 1)){
 			COMPAT_CLOSE(listensock);
 			continue;
 		}
@@ -1102,7 +1081,7 @@ int _mosquitto_socketpair(int *pairR, int *pairW)
 			}
 		}
 
-		if(_mosquitto_socket_nonblock(spW)){
+		if(_mosquitto_socket_nonblock(spW, 1)){
 			COMPAT_CLOSE(spR);
 			COMPAT_CLOSE(listensock);
 			continue;
@@ -1120,12 +1099,12 @@ int _mosquitto_socketpair(int *pairR, int *pairW)
 	if(socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == -1){
 		return MOSQ_ERR_ERRNO;
 	}
-	if(_mosquitto_socket_nonblock(sv[0])){
+	if(_mosquitto_socket_nonblock(sv[0], 1)){
 		COMPAT_CLOSE(sv[0]);
 		COMPAT_CLOSE(sv[1]);
 		return MOSQ_ERR_ERRNO;
 	}
-	if(_mosquitto_socket_nonblock(sv[1])){
+	if(_mosquitto_socket_nonblock(sv[1], 1)){
 		COMPAT_CLOSE(sv[0]);
 		COMPAT_CLOSE(sv[1]);
 		return MOSQ_ERR_ERRNO;
