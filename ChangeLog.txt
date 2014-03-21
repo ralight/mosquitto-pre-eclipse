@@ -3,7 +3,8 @@
 
 Broker:
 - Prevent possible crash on client reconnect. Closes bug #1294108.
-- Don't accept zero length unsubscription strings.
+- Don't accept zero length unsubscription strings (MQTT v3.1.1 fix)
+- Don't accept QoS 3 (MQTT v3.1.1 fix)
 
 Clients:
 - Fix keepalive value on mosquitto_pub.

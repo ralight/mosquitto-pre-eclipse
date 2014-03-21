@@ -139,6 +139,8 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	will = connect_flags & 0x04;
 	will_qos = (connect_flags & 0x18) >> 3;
 	if(will_qos == 3){
+		_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Invalid Will QoS in CONNECT from %s.",
+				context->address);
 		mqtt3_context_disconnect(db, context);
 		return MOSQ_ERR_PROTOCOL;
 	}

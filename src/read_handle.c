@@ -107,6 +107,11 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 
 	dup = (header & 0x08)>>3;
 	qos = (header & 0x06)>>1;
+	if(qos == 3){
+		_mosquitto_log_printf(NULL, MOSQ_LOG_INFO,
+				"Invalid QoS in PUBLISH from %s, disconnecting.", context->id);
+		return 1;
+	}
 	retain = (header & 0x01);
 
 	if(_mosquitto_read_string(&context->in_packet, &topic)) return 1;
