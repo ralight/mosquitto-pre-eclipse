@@ -1006,48 +1006,42 @@ int _mosquitto_socket_nonblock(int sock)
 #ifndef WITH_BROKER
 int _mosquitto_socketpair(int *pairR, int *pairW)
 {
-	int family;
+#ifdef WIN32
+	int family[2] = {AF_INET, AF_INET6};
+	int i;
 	struct sockaddr_storage ss;
 	struct sockaddr_in *sa = (struct sockaddr_in *)&ss;
 	struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)&ss;
 	socklen_t ss_len;
 	int spR, spW;
 
-#ifdef WIN32
-	char ss_opt;
-#else
-	int ss_opt;
-#endif
 	int listensock;
 
 	*pairR = -1;
 	*pairW = -1;
 
-	for(family=AF_INET; ; family=AF_INET6){
+	for(i=0; i<2; i++){
 		memset(&ss, 0, sizeof(ss));
-		if(family == AF_INET){
-			sa->sin_family = family;
+		if(family[i] == AF_INET){
+			sa->sin_family = family[i];
 			sa->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 			sa->sin_port = 0;
-		}else{
-			sa6->sin6_family = family;
+			ss_len = sizeof(struct sockaddr_in);
+		}else if(family[i] == AF_INET6){
+			sa6->sin6_family = family[i];
 			sa6->sin6_addr = in6addr_loopback;
 			sa6->sin6_port = 0;
+			ss_len = sizeof(struct sockaddr_in6);
+		}else{
+			return MOSQ_ERR_INVAL;
 		}
 
-		listensock = socket(family, SOCK_STREAM, IPPROTO_IP);
+		listensock = socket(family[i], SOCK_STREAM, IPPROTO_TCP);
 		if(listensock == -1){
 			continue;
 		}
 
-#ifndef WIN32
-		ss_opt = 1;
-		setsockopt(listensock, SOL_SOCKET, SO_REUSEADDR, &ss_opt, sizeof(ss_opt));
-#endif
-		ss_opt = 1;
-		setsockopt(listensock, IPPROTO_IPV6, IPV6_V6ONLY, &ss_opt, sizeof(ss_opt));
-
-		if(bind(listensock, (struct sockaddr *)&ss, sizeof(ss)) == -1){
+		if(bind(listensock, (struct sockaddr *)&ss, ss_len) == -1){
 			COMPAT_CLOSE(listensock);
 			continue;
 		}
@@ -1062,20 +1056,22 @@ int _mosquitto_socketpair(int *pairR, int *pairW)
 			COMPAT_CLOSE(listensock);
 			continue;
 		}
-		
+
 		if(_mosquitto_socket_nonblock(listensock)){
 			continue;
 		}
 
-		if(family == AF_INET){
-			sa->sin_family = family;
+		if(family[i] == AF_INET){
+			sa->sin_family = family[i];
 			sa->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-		}else{
-			sa6->sin6_family = family;
+			ss_len = sizeof(struct sockaddr_in);
+		}else if(family[i] == AF_INET6){
+			sa6->sin6_family = family[i];
 			sa6->sin6_addr = in6addr_loopback;
+			ss_len = sizeof(struct sockaddr_in6);
 		}
 
-		spR = socket(family, SOCK_STREAM, IPPROTO_TCP);
+		spR = socket(family[i], SOCK_STREAM, IPPROTO_TCP);
 		if(spR == -1){
 			COMPAT_CLOSE(listensock);
 			continue;
@@ -1084,7 +1080,7 @@ int _mosquitto_socketpair(int *pairR, int *pairW)
 			COMPAT_CLOSE(listensock);
 			continue;
 		}
-		if(connect(spR, (struct sockaddr *)&ss, sizeof(ss)) < 0){
+		if(connect(spR, (struct sockaddr *)&ss, ss_len) < 0){
 #ifdef WIN32
 			errno = WSAGetLastError();
 #endif
@@ -1115,8 +1111,28 @@ int _mosquitto_socketpair(int *pairR, int *pairW)
 
 		*pairR = spR;
 		*pairW = spW;
-		return 0;
+		return MOSQ_ERR_SUCCESS;
 	}
-	return 1;
+	return MOSQ_ERR_UNKNOWN;
+#else
+	int sv[2];
+
+	if(socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == -1){
+		return MOSQ_ERR_ERRNO;
+	}
+	if(_mosquitto_socket_nonblock(sv[0])){
+		COMPAT_CLOSE(sv[0]);
+		COMPAT_CLOSE(sv[1]);
+		return MOSQ_ERR_ERRNO;
+	}
+	if(_mosquitto_socket_nonblock(sv[1])){
+		COMPAT_CLOSE(sv[0]);
+		COMPAT_CLOSE(sv[1]);
+		return MOSQ_ERR_ERRNO;
+	}
+	*pairR = sv[0];
+	*pairW = sv[1];
+	return MOSQ_ERR_SUCCESS;
+#endif
 }
 #endif
