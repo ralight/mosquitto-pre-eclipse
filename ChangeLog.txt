@@ -5,6 +5,8 @@ Broker:
 - Prevent possible crash on client reconnect. Closes bug #1294108.
 - Don't accept zero length unsubscription strings (MQTT v3.1.1 fix)
 - Don't accept QoS 3 (MQTT v3.1.1 fix)
+- Don't disconnect clients immediately on HUP to give chance for all data to
+  be read.
 
 Client library:
 - Fix socketpair code on the Mac.

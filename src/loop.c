@@ -50,11 +50,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <time_mosq.h>
 #include <util_mosq.h>
 
-#ifndef POLLRDHUP
-/* Ignore POLLRDHUP flag on systems where it doesn't exist. */
-#define POLLRDHUP 0
-#endif
-
 extern bool flag_reload;
 #ifdef WITH_PERSISTENCE
 extern bool flag_db_backup;
@@ -155,7 +150,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 
 						if(mqtt3_db_message_write(db->contexts[i]) == MOSQ_ERR_SUCCESS){
 							pollfds[pollfd_index].fd = db->contexts[i]->sock;
-							pollfds[pollfd_index].events = POLLIN | POLLRDHUP;
+							pollfds[pollfd_index].events = POLLIN;
 							pollfds[pollfd_index].revents = 0;
 							if(db->contexts[i]->current_out_packet){
 								pollfds[pollfd_index].events |= POLLOUT;
@@ -200,7 +195,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 								rc = mqtt3_bridge_connect(db, db->contexts[i]);
 								if(rc == MOSQ_ERR_SUCCESS){
 									pollfds[pollfd_index].fd = db->contexts[i]->sock;
-									pollfds[pollfd_index].events = POLLIN | POLLRDHUP;
+									pollfds[pollfd_index].events = POLLIN;
 									pollfds[pollfd_index].revents = 0;
 									if(db->contexts[i]->current_out_packet){
 										pollfds[pollfd_index].events |= POLLOUT;
@@ -332,7 +327,7 @@ static void loop_handle_errors(struct mosquitto_db *db, struct pollfd *pollfds)
 
 	for(i=0; i<db->context_count; i++){
 		if(db->contexts[i] && db->contexts[i]->sock != INVALID_SOCKET){
-			if(pollfds[db->contexts[i]->pollfd_index].revents & (POLLHUP | POLLRDHUP | POLLERR | POLLNVAL)){
+			if(pollfds[db->contexts[i]->pollfd_index].revents & (POLLERR | POLLNVAL)){
 				do_disconnect(db, i);
 			}
 		}
@@ -372,7 +367,7 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 			}
 		}
 		if(db->contexts[i] && db->contexts[i]->sock != INVALID_SOCKET){
-			if(pollfds[db->contexts[i]->pollfd_index].revents & (POLLHUP | POLLRDHUP | POLLERR | POLLNVAL)){
+			if(pollfds[db->contexts[i]->pollfd_index].revents & (POLLERR | POLLNVAL)){
 				do_disconnect(db, i);
 			}
 		}
