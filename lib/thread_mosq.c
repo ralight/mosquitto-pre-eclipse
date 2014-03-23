@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2011-2013 Roger Light <roger@atchoo.org>
+Copyright (c) 2011-2014 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #include "mosquitto_internal.h"
+#include "net_mosq.h"
 
 void *_mosquitto_thread_main(void *obj);
 
@@ -53,7 +54,23 @@ int mosquitto_loop_start(struct mosquitto *mosq)
 int mosquitto_loop_stop(struct mosquitto *mosq, bool force)
 {
 #ifdef WITH_THREADING
+#  ifndef WITH_BROKER
+	char sockpair_data = 0;
+#  endif
+
 	if(!mosq || !mosq->threaded) return MOSQ_ERR_INVAL;
+
+
+	/* Write a single byte to sockpairW (connected to sockpairR) to break out
+	 * of select() if in threaded mode. */
+	if(mosq->sockpairW != INVALID_SOCKET){
+#ifndef WIN32
+		if(write(mosq->sockpairW, &sockpair_data, 1)){
+		}
+#else
+		send(mosq->sockpairW, &sockpair_data, 1, 0);
+#endif
+	}
 	
 	if(force){
 		pthread_cancel(mosq->thread_id);

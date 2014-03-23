@@ -9,6 +9,7 @@ Broker:
 Client library:
 - Fix socketpair code on the Mac.
 - Fix compilation for WITH_THREADING=no.
+- Break out of select() when calling mosquitto_loop_stop().
 
 Clients:
 - Fix keepalive value on mosquitto_pub.
