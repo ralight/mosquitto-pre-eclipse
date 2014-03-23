@@ -296,7 +296,7 @@ int _mosquitto_try_connect(const char *host, uint16_t port, int *sock, const cha
 
 		if(!blocking){
 			/* Set non-blocking */
-			if(_mosquitto_socket_nonblock(*sock, 1)){
+			if(_mosquitto_socket_nonblock(*sock)){
 				COMPAT_CLOSE(*sock);
 				continue;
 			}
@@ -309,7 +309,7 @@ int _mosquitto_try_connect(const char *host, uint16_t port, int *sock, const cha
 		if(rc == 0 || errno == EINPROGRESS || errno == COMPAT_EWOULDBLOCK){
 			if(blocking){
 				/* Set non-blocking */
-				if(_mosquitto_socket_nonblock(*sock, 1)){
+				if(_mosquitto_socket_nonblock(*sock)){
 					COMPAT_CLOSE(*sock);
 					continue;
 				}
@@ -962,18 +962,24 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 	return rc;
 }
 
-int _mosquitto_socket_nonblock(int sock, int nonblock)
+int _mosquitto_socket_nonblock(int sock)
 {
 #ifndef WIN32
+	int opt;
 	/* Set non-blocking */
-	nonblock = fcntl(sock, F_GETFL, 0);
-	if(nonblock == -1 || fcntl(sock, F_SETFL, nonblock | O_NONBLOCK) == -1){
+	opt = fcntl(sock, F_GETFL, 0);
+	if(opt == -1){
+		COMPAT_CLOSE(sock);
+		return 1;
+	}
+	if(fcntl(sock, F_SETFL, opt | O_NONBLOCK) == -1){
 		/* If either fcntl fails, don't want to allow this client to connect. */
 		COMPAT_CLOSE(sock);
 		return 1;
 	}
 #else
-	if(ioctlsocket(sock, FIONBIO, &nonblock)){
+	opt = 1;
+	if(ioctlsocket(sock, FIONBIO, &opt)){
 		COMPAT_CLOSE(sock);
 		return 1;
 	}
@@ -1036,7 +1042,7 @@ int _mosquitto_socketpair(int *pairR, int *pairW)
 			continue;
 		}
 
-		if(_mosquitto_socket_nonblock(listensock, 1)){
+		if(_mosquitto_socket_nonblock(listensock)){
 			continue;
 		}
 
@@ -1055,7 +1061,7 @@ int _mosquitto_socketpair(int *pairR, int *pairW)
 			COMPAT_CLOSE(listensock);
 			continue;
 		}
-		if(_mosquitto_socket_nonblock(spR, 1)){
+		if(_mosquitto_socket_nonblock(spR)){
 			COMPAT_CLOSE(listensock);
 			continue;
 		}
@@ -1081,7 +1087,7 @@ int _mosquitto_socketpair(int *pairR, int *pairW)
 			}
 		}
 
-		if(_mosquitto_socket_nonblock(spW, 1)){
+		if(_mosquitto_socket_nonblock(spW)){
 			COMPAT_CLOSE(spR);
 			COMPAT_CLOSE(listensock);
 			continue;
@@ -1099,12 +1105,12 @@ int _mosquitto_socketpair(int *pairR, int *pairW)
 	if(socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == -1){
 		return MOSQ_ERR_ERRNO;
 	}
-	if(_mosquitto_socket_nonblock(sv[0], 1)){
+	if(_mosquitto_socket_nonblock(sv[0])){
 		COMPAT_CLOSE(sv[0]);
 		COMPAT_CLOSE(sv[1]);
 		return MOSQ_ERR_ERRNO;
 	}
-	if(_mosquitto_socket_nonblock(sv[1], 1)){
+	if(_mosquitto_socket_nonblock(sv[1])){
 		COMPAT_CLOSE(sv[0]);
 		COMPAT_CLOSE(sv[1]);
 		return MOSQ_ERR_ERRNO;
