@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2013 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2014 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -65,6 +65,7 @@ static int mode = MSGMODE_NONE;
 static int status = STATUS_CONNECTING;
 static int mid_sent = 0;
 static int last_mid = -1;
+static int last_mid_sent = -1;
 static bool connected = true;
 static char *username = NULL;
 static char *password = NULL;
@@ -125,6 +126,7 @@ void my_disconnect_callback(struct mosquitto *mosq, void *obj, int rc)
 
 void my_publish_callback(struct mosquitto *mosq, void *obj, int mid)
 {
+	last_mid_sent = mid;
 	if(mode == MSGMODE_STDIN_LINE){
 		if(mid == last_mid){
 			mosquitto_disconnect(mosq);
@@ -763,10 +765,14 @@ int main(int argc, char *argv[])
 					status = STATUS_WAITING;
 				}
 			}else if(status == STATUS_WAITING){
+				if(last_mid_sent == last_mid && disconnect_sent == false){
+					mosquitto_disconnect(mosq);
+					disconnect_sent = true;
+				}
 #ifdef WIN32
-				Sleep(1000);
+				Sleep(100);
 #else
-				usleep(1000000);
+				usleep(100000);
 #endif
 			}
 			rc = MOSQ_ERR_SUCCESS;

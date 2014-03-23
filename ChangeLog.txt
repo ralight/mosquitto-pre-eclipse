@@ -12,6 +12,8 @@ Client library:
 
 Clients:
 - Fix keepalive value on mosquitto_pub.
+- Fix possibility of mosquitto_pub not exiting after sending messages when
+  using -l.
 
 1.3 - 20140316
 ==============
