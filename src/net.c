@@ -101,7 +101,7 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 	g_socket_connections++;
 #endif
 
-	if(_mosquitto_socket_nonblock(new_sock, 1)){
+	if(_mosquitto_socket_nonblock(new_sock)){
 		return INVALID_SOCKET;
 	}
 
@@ -329,7 +329,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 		ss_opt = 1;
 		setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, &ss_opt, sizeof(ss_opt));
 
-		if(_mosquitto_socket_nonblock(sock, 1)){
+		if(_mosquitto_socket_nonblock(sock)){
 			return 1;
 		}
 
