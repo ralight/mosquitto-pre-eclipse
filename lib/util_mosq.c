@@ -184,7 +184,6 @@ int _mosquitto_topic_wildcard_pos_check(const char *str)
 {
 	char c = '\0';
 	int len = 0;
-	printf("%s", str);
 	while(str && str[0]){
 		if(str[0] == '+'){
 			if((c != '\0' && c != '/') || (str[1] != '\0' && str[1] != '/')){
