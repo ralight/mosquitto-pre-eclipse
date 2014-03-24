@@ -602,6 +602,8 @@ int mosquitto_subscribe(struct mosquitto *mosq, int *mid, const char *sub, int q
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
 
+	if(_mosquitto_topic_wildcard_pos_check(sub)) return MOSQ_ERR_INVAL;
+
 	return _mosquitto_send_subscribe(mosq, mid, false, sub, qos);
 }
 
@@ -609,6 +611,8 @@ int mosquitto_unsubscribe(struct mosquitto *mosq, int *mid, const char *sub)
 {
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
+
+	if(_mosquitto_topic_wildcard_pos_check(sub)) return MOSQ_ERR_INVAL;
 
 	return _mosquitto_send_unsubscribe(mosq, mid, false, sub);
 }
