@@ -871,10 +871,6 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 		}
 	}
 	if(!mosq->in_packet.have_remaining){
-		/* Read remaining
-		 * Algorithm for decoding taken from pseudo code at
-		 * http://publib.boulder.ibm.com/infocenter/wmbhelp/v6r0m0/topic/com.ibm.etools.mft.doc/ac10870_.htm
-		 */
 		do{
 			read_length = _mosquitto_net_read(mosq, &byte, 1);
 			if(read_length == 1){
