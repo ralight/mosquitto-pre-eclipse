@@ -7,11 +7,13 @@ Broker:
 - Don't accept QoS 3 (MQTT v3.1.1 fix)
 - Don't disconnect clients immediately on HUP to give chance for all data to
   be read.
+- Reject invalid un/subscriptions e.g. foo/+bar #/bar.
 
 Client library:
 - Fix socketpair code on the Mac.
 - Fix compilation for WITH_THREADING=no.
 - Break out of select() when calling mosquitto_loop_stop().
+- Reject invalid un/subscriptions e.g. foo/+bar #/bar.
 
 Clients:
 - Fix keepalive value on mosquitto_pub.
