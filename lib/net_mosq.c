@@ -923,6 +923,16 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 			errno = WSAGetLastError();
 #endif
 			if(errno == EAGAIN || errno == COMPAT_EWOULDBLOCK){
+				if(mosq->in_packet.to_process > 1000){
+					/* Update last_msg_in time if more than 1000 bytes left to
+					 * receive. Helps when receiving large messages.
+					 * This is an arbitrary limit, but with some consideration.
+					 * If a client can't send 1000 bytes in a second it
+					 * probably shouldn't be using a 1 second keep alive. */
+					pthread_mutex_lock(&mosq->msgtime_mutex);
+					mosq->last_msg_in = mosquitto_time();
+					pthread_mutex_unlock(&mosq->msgtime_mutex);
+				}
 				return MOSQ_ERR_SUCCESS;
 			}else{
 				switch(errno){
