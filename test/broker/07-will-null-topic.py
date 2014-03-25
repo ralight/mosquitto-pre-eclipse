@@ -23,7 +23,7 @@ broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'], stderr=subproce
 try:
     time.sleep(0.5)
 
-    sock = mosq_test.do_client_connect(connect_packet, connack_packet, timeout=30)
+    sock = mosq_test.do_client_connect(connect_packet, "", timeout=30)
     rc = 0
     sock.close()
 finally:

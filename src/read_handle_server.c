@@ -139,6 +139,8 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	will = connect_flags & 0x04;
 	will_qos = (connect_flags & 0x18) >> 3;
 	if(will_qos == 3){
+		_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Invalid Will QoS in CONNECT from %s.",
+				context->address);
 		mqtt3_context_disconnect(db, context);
 		return MOSQ_ERR_PROTOCOL;
 	}
@@ -217,12 +219,16 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			goto handle_connect_error;
 		}
 		if(strlen(will_topic) == 0){
-			/* FIXME - CONNACK_REFUSED_IDENTIFIER_REJECTED not really appropriate here. */
-			_mosquitto_send_connack(context, CONNACK_REFUSED_IDENTIFIER_REJECTED);
 			mqtt3_context_disconnect(db, context);
 			rc = 1;
 			goto handle_connect_error;
 		}
+		if(_mosquitto_topic_wildcard_pos_check(will_topic)){
+			mqtt3_context_disconnect(db, context);
+			rc = 1;
+			goto handle_connect_error;
+		}
+
 		if(_mosquitto_read_uint16(&context->in_packet, &will_payloadlen)){
 			mqtt3_context_disconnect(db, context);
 			rc = 1;
@@ -563,6 +569,21 @@ int mqtt3_handle_subscribe(struct mosquitto_db *db, struct mosquitto *context)
 		}
 
 		if(sub){
+			if(!strlen(sub)){
+				_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Empty subscription string from %s, disconnecting.",
+					context->address);
+				_mosquitto_free(sub);
+				if(payload) _mosquitto_free(payload);
+				return 1;
+			}
+			if(_mosquitto_topic_wildcard_pos_check(sub)){
+				_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Invalid subscription string from %s, disconnecting.",
+					context->address);
+				_mosquitto_free(sub);
+				if(payload) _mosquitto_free(payload);
+				return 1;
+			}
+
 			if(_mosquitto_read_byte(&context->in_packet, &qos)){
 				_mosquitto_free(sub);
 				if(payload) _mosquitto_free(payload);
@@ -570,13 +591,6 @@ int mqtt3_handle_subscribe(struct mosquitto_db *db, struct mosquitto *context)
 			}
 			if(qos > 2){
 				_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Invalid QoS in subscription command from %s, disconnecting.",
-					context->address);
-				_mosquitto_free(sub);
-				if(payload) _mosquitto_free(payload);
-				return 1;
-			}
-			if(!strlen(sub)){
-				_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Empty subscription string from %s, disconnecting.",
 					context->address);
 				_mosquitto_free(sub);
 				if(payload) _mosquitto_free(payload);
@@ -666,6 +680,19 @@ int mqtt3_handle_unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 		}
 
 		if(sub){
+			if(!strlen(sub)){
+				_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Empty unsubscription string from %s, disconnecting.",
+					context->id);
+				_mosquitto_free(sub);
+				return 1;
+			}
+			if(_mosquitto_topic_wildcard_pos_check(sub)){
+				_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Invalid unsubscription string from %s, disconnecting.",
+					context->id);
+				_mosquitto_free(sub);
+				return 1;
+			}
+
 			_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "\t%s", sub);
 			mqtt3_sub_remove(db, context, sub, &db->subs);
 			_mosquitto_log_printf(NULL, MOSQ_LOG_UNSUBSCRIBE, "%s %s", context->id, sub);
