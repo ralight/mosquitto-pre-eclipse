@@ -21,8 +21,8 @@ sub_client.o : sub_client.c ../lib/libmosquitto.so.${SOVERSION}
 
 install : all
 	$(INSTALL) -d ${DESTDIR}$(prefix)/bin
-	$(INSTALL) -s mosquitto_pub ${DESTDIR}${prefix}/bin/mosquitto_pub
-	$(INSTALL) -s mosquitto_sub ${DESTDIR}${prefix}/bin/mosquitto_sub
+	$(INSTALL) -s --strip-program=$(STRIP) mosquitto_pub ${DESTDIR}${prefix}/bin/mosquitto_pub
+	$(INSTALL) -s --strip-program=$(STRIP) mosquitto_sub ${DESTDIR}${prefix}/bin/mosquitto_sub
 
 uninstall :
 	-rm -f ${DESTDIR}${prefix}/bin/mosquitto_pub
