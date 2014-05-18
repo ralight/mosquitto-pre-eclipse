@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2013 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2014 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -52,6 +52,12 @@ POSSIBILITY OF SUCH DAMAGE.
 #define MQTT3_LOG_TOPIC 0x10
 #define MQTT3_LOG_ALL 0xFF
 
+enum mosquitto_protocol {
+	mp_mqtt,
+	mp_mqttsn,
+	mp_websockets
+};
+
 typedef uint64_t dbid_t;
 
 struct _mqtt3_listener {
@@ -63,6 +69,7 @@ struct _mqtt3_listener {
 	int *socks;
 	int sock_count;
 	int client_count;
+	enum mosquitto_protocol protocol;
 #ifdef WITH_TLS
 	char *cafile;
 	char *capath;
@@ -75,6 +82,9 @@ struct _mqtt3_listener {
 	char *crlfile;
 	bool use_identity_as_username;
 	char *tls_version;
+#endif
+#ifdef WITH_WEBSOCKETS
+	struct libwebsocket_context *ws_context;
 #endif
 };
 
