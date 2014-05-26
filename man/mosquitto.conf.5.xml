@@ -651,6 +651,19 @@
 						<para>Not reloaded on reload signal.</para>
 					</listitem>
 				</varlistentry>
+				<varlistentry>
+					<term><option>protocol</option> <replaceable>value</replaceable></term>
+					<listitem>
+						<para>Set the protocol to accept for this listener. Can
+							be <option>mqtt</option>, the default, or
+							<option>websockets</option> if available.</para>
+						<para>Websockets support is currently disabled by
+							default at compile time, is extremely experimental
+							and may only work with unreleased versions of
+							libwebsockets. It does not support TLS.</para>
+						<para>Not reloaded on reload signal.</para>
+					</listitem>
+				</varlistentry>
 			</variablelist>
 		</refsect2>
 		<refsect2>
