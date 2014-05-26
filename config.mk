@@ -71,7 +71,7 @@ WITH_PYTHON:=yes
 WITH_SRV:=yes
 
 # Build with websockets support on the broker.
-WITH_WEBSOCKETS:=yes
+WITH_WEBSOCKETS:=no
 
 # =============================================================================
 # End of user configuration
