@@ -221,6 +221,7 @@ endif
 
 
 INSTALL?=install
+STRIP?=strip
 prefix=/usr/local
 mandir=${prefix}/share/man
 localedir=${prefix}/share/locale
