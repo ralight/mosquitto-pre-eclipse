@@ -418,8 +418,10 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 			}else{ 
 				cfg->pub_mode = MSGMODE_STDIN_FILE;
 			}
+#ifdef WITH_SRV
 		}else if(!strcmp(argv[i], "-S")){
 			cfg->use_srv = true;
+#endif
 		}else if(!strcmp(argv[i], "-t") || !strcmp(argv[i], "--topic")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: -t argument given but no topic specified.\n\n");
@@ -619,11 +621,15 @@ int client_connect(struct mosquitto *mosq, struct mosq_config *cfg)
 	char err[1024];
 	int rc;
 
+#ifdef WITH_SRV
 	if(cfg->use_srv){
 		rc = mosquitto_connect_srv(mosq, cfg->host, cfg->keepalive, cfg->bind_address);
 	}else{
 		rc = mosquitto_connect_bind(mosq, cfg->host, cfg->port, cfg->keepalive, cfg->bind_address);
 	}
+#else
+	rc = mosquitto_connect_bind(mosq, cfg->host, cfg->port, cfg->keepalive, cfg->bind_address);
+#endif
 	if(rc){
 		if(!cfg->quiet){
 			if(rc == MOSQ_ERR_ERRNO){

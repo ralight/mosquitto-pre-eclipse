@@ -5,10 +5,26 @@ Broker:
 - Add local_username, local_password for bridge connections to authenticate to
   the local broker.
 - Default TLS mode now accepts TLS v1.2, v1.1 and v1.0.
+- Ensure that bridges verify certificates by default when using TLS.
+- Fix possible crash when using pattern ACLs that do not include a %u and
+  clients that connect without a username.
+- Fix subscriptions being deleted when clients subscribed to a topic beginning
+  with a $ but that is not $SYS.
 
 Clients:
 - Both clients can now load default configuration options from a file.
 - Add -1 (oneshot) option to mosquitto_sub.
+
+Client library:
+- Fix topic matching edge case.
+- Fix callback deadlocks after calling mosquitto_disconnect(), when using the
+  threaded interfaces. Closes bug #1313725.
+- Fix SRV support when building with CMake.
+
+General:
+- Use $(STRIP) for stripping binaries when installing, to allow easier cross
+  compilation.
+- Support cross compilation more easily.
 
 1.3.1 - 20140324
 ================

@@ -2,6 +2,10 @@ include_directories(${mosquitto_SOURCE_DIR}/lib
 			${STDBOOL_H_PATH} ${STDINT_H_PATH})
 link_directories(${mosquitto_BINARY_DIR}/lib)
 
+if (${WITH_SRV} STREQUAL ON)
+	add_definitions("-DWITH_SRV")
+endif (${WITH_SRV} STREQUAL ON)
+
 set(shared_src client_shared.c client_shared.h)
 
 add_executable(mosquitto_pub pub_client.c ${shared_src})
