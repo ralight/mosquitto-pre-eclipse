@@ -10,7 +10,8 @@ Broker:
   clients that connect without a username.
 - Fix subscriptions being deleted when clients subscribed to a topic beginning
   with a $ but that is not $SYS.
-- Experimental websockets support. Disabled by default at runtime.
+- Experimental websockets support. Disabled by default at runtime. Requires
+  unreleased libwebsockets.
 
 Clients:
 - Both clients can now load default configuration options from a file.
