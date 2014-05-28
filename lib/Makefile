@@ -21,7 +21,6 @@ MOSQ_OBJS=mosquitto.o \
 
 all : libmosquitto.so.${SOVERSION} libmosquitto.a
 	$(MAKE) -C cpp
-	$(MAKE) -C python
 
 install : all
 	$(INSTALL) -d ${DESTDIR}$(prefix)/lib${LIB_SUFFIX}/
@@ -30,7 +29,6 @@ install : all
 	$(INSTALL) -d ${DESTDIR}${prefix}/include/
 	$(INSTALL) mosquitto.h ${DESTDIR}${prefix}/include/mosquitto.h
 	$(MAKE) -C cpp install
-	$(MAKE) -C python install
 
 uninstall :
 	-rm -f ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.so.${SOVERSION}
@@ -42,7 +40,6 @@ reallyclean : clean
 clean :
 	-rm -f *.o libmosquitto.so.${SOVERSION} libmosquitto.so libmosquitto.a
 	$(MAKE) -C cpp clean
-	$(MAKE) -C python clean
 
 libmosquitto.so.${SOVERSION} : ${MOSQ_OBJS}
 	${CROSS_COMPILE}$(CC) -shared $(LIB_LDFLAGS) $^ -o $@ ${LIB_LIBS}

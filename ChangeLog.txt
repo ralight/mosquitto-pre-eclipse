@@ -22,6 +22,7 @@ Client library:
 - Fix callback deadlocks after calling mosquitto_disconnect(), when using the
   threaded interfaces. Closes bug #1313725.
 - Fix SRV support when building with CMake.
+- Remove Python library (use Paho Python client instead).
 
 General:
 - Use $(STRIP) for stripping binaries when installing, to allow easier cross
