@@ -12,6 +12,8 @@ Broker:
   with a $ but that is not $SYS.
 - Experimental websockets support. Disabled by default at runtime. Requires
   unreleased libwebsockets.
+- Fix bug #1324411, which could have had unexpected consequences for delayed
+  messages in rare circumstances.
 
 Clients:
 - Both clients can now load default configuration options from a file.
