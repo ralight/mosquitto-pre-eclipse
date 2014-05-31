@@ -34,16 +34,16 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <memory_mosq.h>
 #include <util_mosq.h>
 
-int _mosquitto_send_connack(struct mosquitto *context, int result)
+int _mosquitto_send_connack(struct mosquitto *context, int ack, int result)
 {
 	struct _mosquitto_packet *packet = NULL;
 	int rc;
 
 	if(context){
 		if(context->id){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Sending CONNACK to %s (%d)", context->id, result);
+			_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Sending CONNACK to %s (%d, %d)", context->id, ack, result);
 		}else{
-			_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Sending CONNACK to %s (%d)", context->address, result);
+			_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Sending CONNACK to %s (%d, %d)", context->address, ack, result);
 		}
 	}
 
@@ -57,7 +57,7 @@ int _mosquitto_send_connack(struct mosquitto *context, int result)
 		_mosquitto_free(packet);
 		return rc;
 	}
-	packet->payload[packet->pos+0] = 0;
+	packet->payload[packet->pos+0] = ack;
 	packet->payload[packet->pos+1] = result;
 
 	return _mosquitto_packet_queue(context, packet);
