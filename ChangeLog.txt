@@ -15,6 +15,7 @@ Broker:
 - Fix bug #1324411, which could have had unexpected consequences for delayed
   messages in rare circumstances.
 - Add support for "session present" in CONNACK messages for MQTT v3.1.1.
+- Remove strict protocol #ifdefs.
 
 Clients:
 - Both clients can now load default configuration options from a file.
@@ -26,6 +27,7 @@ Client library:
   threaded interfaces. Closes bug #1313725.
 - Fix SRV support when building with CMake.
 - Remove Python library (use Paho Python client instead).
+- Remove strict protocol #ifdefs.
 
 General:
 - Use $(STRIP) for stripping binaries when installing, to allow easier cross
