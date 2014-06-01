@@ -7,7 +7,11 @@ def expect_packet(sock, name, expected):
     else:
         rlen = 1
 
-    packet_recvd = sock.recv(rlen)
+    try:
+        packet_recvd = sock.recv(rlen)
+    except socket.timeout as err:
+        return 0
+
     return packet_matches(name, packet_recvd, expected)
 
 def packet_matches(name, recvd, expected):
