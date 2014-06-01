@@ -168,8 +168,13 @@ static int _sub_topic_tokenise(const char *subtopic, struct _sub_token **topics)
 		new_topic->topic = _mosquitto_strdup("");
 		if(!new_topic->topic) goto cleanup;
 
-		*topics = new_topic;
-		tail = new_topic;
+		if(tail){
+			tail->next = new_topic;
+			tail = tail->next;
+		}else{
+			*topics = new_topic;
+			tail = new_topic;
+		}
 	}
 
 	len = strlen(subtopic);
@@ -181,8 +186,13 @@ static int _sub_topic_tokenise(const char *subtopic, struct _sub_token **topics)
 		new_topic->topic = _mosquitto_strdup("");
 		if(!new_topic->topic) goto cleanup;
 
-		*topics = new_topic;
-		tail = new_topic;
+		if(tail){
+			tail->next = new_topic;
+			tail = tail->next;
+		}else{
+			*topics = new_topic;
+			tail = new_topic;
+		}
 
 		start = 1;
 	}else{
@@ -247,7 +257,7 @@ static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos,
 					 * need to update QoS. Return -1 to indicate this to the
 					 * calling function. */
 					leaf->qos = qos;
-					if(context->protocol == mosq_p_mqttv31){
+					if(context->protocol == mosq_p_mqtt31){
 						return -1;
 					}else{
 						/* mqttv311 requires retained messages are resent on

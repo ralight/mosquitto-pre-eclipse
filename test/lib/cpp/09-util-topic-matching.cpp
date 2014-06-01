@@ -42,6 +42,8 @@ int main(int argc, char *argv[])
 	do_check("#", "$SYS/bar", true);
 	do_check("$BOB/bar", "$SYS/bar", true);
 
+	do_check("/foo/#", "foo/bar", true);
+
 	return 0;
 }
 

@@ -12,7 +12,7 @@ if cmd_subfolder not in sys.path:
 
 import mosq_test
 
-def pattern_test(sub_topic, pub_topic):
+def pattern_test(sub_topic, pub_topic, should_they_match=True):
     rc = 1
     keepalive = 60
     connect_packet = mosq_test.gen_connect("pattern-sub-test", keepalive=keepalive)
@@ -34,14 +34,15 @@ def pattern_test(sub_topic, pub_topic):
     try:
         time.sleep(0.5)
 
-        sock = mosq_test.do_client_connect(connect_packet, connack_packet, timeout=20)
+        sock = mosq_test.do_client_connect(connect_packet, connack_packet, timeout=2)
         sock.send(subscribe_packet)
 
         if mosq_test.expect_packet(sock, "suback", suback_packet):
             pub = subprocess.Popen(['./03-pattern-matching-helper.py', pub_topic])
             pub.wait()
 
-            if mosq_test.expect_packet(sock, "publish", publish_packet):
+            r = mosq_test.expect_packet(sock, "publish", publish_packet)
+            if r == 1:
                 sock.send(unsubscribe_packet)
 
                 if mosq_test.expect_packet(sock, "unsuback", unsuback_packet):
@@ -49,7 +50,11 @@ def pattern_test(sub_topic, pub_topic):
 
                     if mosq_test.expect_packet(sock, "suback", suback_packet):
                         if mosq_test.expect_packet(sock, "publish retained", publish_retained_packet):
-                            rc = 0
+                            if should_they_match == True:
+                                rc = 0
+            else:
+                if should_they_match == False:
+                    rc = 0
 
         sock.close()
     finally:
@@ -58,7 +63,7 @@ def pattern_test(sub_topic, pub_topic):
         if rc:
             (stdo, stde) = broker.communicate()
             print(stde)
-            raise
+            raise ValueError
 
     return rc
 
@@ -85,6 +90,16 @@ pattern_test("foo/+/baz/#", "foo//baz/bar")
 pattern_test("foo//baz/#", "foo//baz/bar")
 pattern_test("foo/foo/baz/#", "foo/foo/baz/bar")
 pattern_test("/#", "////foo///bar")
+
+pattern_test("/foo/#", "foo/bar", False)
+pattern_test("#", "$SYS/foo", False)
+pattern_test("#", "$FOO/foo", False)
+pattern_test("+/foo", "$SYS/foo", False)
+pattern_test("$SYS/foo/#", "$SYS/foo/bar", True)
+pattern_test("$SYS/foo/#", "$SYS/foo", True)
+pattern_test("$SYS/foo/#", "$FOO/foo", False)
+pattern_test("$FOO/#", "$FOO/foo", True)
+
 
 exit(0)
 
