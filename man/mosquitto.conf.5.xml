@@ -660,7 +660,12 @@
 						<para>Websockets support is currently disabled by
 							default at compile time, is extremely experimental
 							and may only work with unreleased versions of
-							libwebsockets. It does not support TLS.</para>
+							libwebsockets. Certificate based TLS may be used
+							with websockets, except that only the
+							<option>cafile</option>, <option>certfile</option>,
+							<option>keyfile</option> and
+							<option>ciphers</option> options are
+							supported.</para>
 						<para>Not reloaded on reload signal.</para>
 					</listitem>
 				</varlistentry>
