@@ -29,6 +29,7 @@ Broker:
 - Remove strict protocol #ifdefs.
 - Change $SYS/broker/clients/active -> $SYS/broker/clients/connected
 - Change $SYS/broker/clients/inactive -> $SYS/broker/clients/disconnected
+- Support for ECDHE-ECDSA family ciphers.
 
 Clients:
 - Both clients can now load default configuration options from a file.
