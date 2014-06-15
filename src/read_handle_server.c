@@ -40,6 +40,10 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <tls_mosq.h>
 #include <util_mosq.h>
 
+#ifdef WITH_UUID
+#  include <uuid/uuid.h>
+#endif
+
 #ifdef WITH_SYS_TREE
 extern unsigned int g_connection_count;
 #endif
@@ -47,17 +51,35 @@ extern unsigned int g_connection_count;
 static char *client_id_gen(struct mosquitto_db *db)
 {
 	char *client_id;
+#ifdef WITH_UUID
+	uuid_t uuid;
+#else
 	int i;
+#endif
 
+#ifdef WITH_UUID
+	client_id = (char *)_mosquitto_calloc(37 + db->config->auto_id_prefix_len, sizeof(char));
+	if(!client_id){
+		return NULL;
+	}
+	if(db->config->auto_id_prefix){
+		memcpy(client_id, db->config->auto_id_prefix, db->config->auto_id_prefix_len);
+	}
+	uuid_generate_random(uuid);
+	uuid_unparse_lower(uuid, &client_id[db->config->auto_id_prefix_len]);
+#else
 	client_id = (char *)_mosquitto_calloc(65 + db->config->auto_id_prefix_len, sizeof(char));
 	if(!client_id){
 		return NULL;
 	}
-	memcpy(client_id, db->config->auto_id_prefix, db->config->auto_id_prefix_len);
+	if(db->config->auto_id_prefix){
+		memcpy(client_id, db->config->auto_id_prefix, db->config->auto_id_prefix_len);
+	}
 	for(i=0; i<64; i++){
 		client_id[i+db->config->auto_id_prefix_len] = (rand()%73)+48;
 	}
 	client_id[i] = '\0';
+#endif
 	return client_id;
 }
 
