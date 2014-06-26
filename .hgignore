@@ -6,6 +6,7 @@ syntax: glob
 c/*.test
 cpp/*.test
 *.pyc
+*.vglog
 
 client/mosquitto_pub
 client/mosquitto_sub
