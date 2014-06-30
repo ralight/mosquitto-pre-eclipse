@@ -55,6 +55,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifdef WITH_WRAP
 #include <tcpd.h>
 #endif
+#ifdef WITH_WEBSOCKETS
+#  include <libwebsockets.h>
+#endif
 
 #include <mosquitto_broker.h>
 #include <memory_mosq.h>
@@ -175,6 +178,9 @@ int main(int argc, char *argv[])
 	struct timeval tv;
 #endif
 	struct mosquitto *ctxt, *ctxt_tmp;
+#ifdef WITH_WEBSOCKETS
+	struct libws_mqtt_hack *hack_head, *hack;
+#endif
 
 #if defined(WIN32) || defined(__CYGWIN__)
 	if(argc == 2){
@@ -344,7 +350,13 @@ int main(int argc, char *argv[])
 #endif
 
 	HASH_ITER(hh_id, int_db.contexts_by_id, ctxt, ctxt_tmp){
+#ifdef WITH_WEBSOCKETS
+		if(!ctxt->wsi){
+			mqtt3_context_cleanup(&int_db, ctxt, true);
+		}
+#else
 		mqtt3_context_cleanup(&int_db, ctxt, true);
+#endif
 	}
 	HASH_ITER(hh_sock, int_db.contexts_by_sock, ctxt, ctxt_tmp){
 		mqtt3_context_cleanup(&int_db, ctxt, true);
@@ -356,6 +368,22 @@ int main(int argc, char *argv[])
 		HASH_DELETE(hh_for_free, int_db.contexts_for_free, ctxt);
 		mqtt3_context_cleanup(&int_db, ctxt, true);
 	}
+#ifdef WITH_WEBSOCKETS
+	for(i=0; i<int_db.config->listener_count; i++){
+		if(int_db.config->listeners[i].ws_context){
+			hack_head = libwebsocket_context_user(int_db.config->listeners[i].ws_context);
+			libwebsocket_context_destroy(int_db.config->listeners[i].ws_context);
+			if(hack_head){
+				while(hack_head){
+					hack = hack_head->next;
+					_mosquitto_free(hack_head);
+					hack_head = hack;
+				}
+			}
+		}
+	}
+#endif
+
 	mqtt3_db_close(&int_db);
 
 	if(listensock){
