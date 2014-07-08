@@ -252,7 +252,7 @@ static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos,
 			leaf = subhier->subs;
 			last_leaf = NULL;
 			while(leaf){
-				if(!strcmp(leaf->context->id, context->id)){
+				if(leaf->context && leaf->context->id && !strcmp(leaf->context->id, context->id)){
 					/* Client making a second subscription to same topic. Only
 					 * need to update QoS. Return -1 to indicate this to the
 					 * calling function. */
