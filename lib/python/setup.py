@@ -2,7 +2,7 @@ from sys import version
 
 from distutils.core import setup
 setup(name='mosquitto',
-	version='1.3.1',
+	version='1.3.2',
 	description='MQTT version 3.1 client class',
 	author='Roger Light',
 	author_email='roger@atchoo.org',
