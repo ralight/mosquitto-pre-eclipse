@@ -12,6 +12,8 @@ Broker:
   connected.
 - Anonymous clients are no longer accidently disconnected from the broker
   after a SIGHUP.
+- Fix bug #1324411, which could have had unexpected consequences for delayed
+  messages in rare circumstances.
 
 Client library:
 - Fix topic matching edge case.
