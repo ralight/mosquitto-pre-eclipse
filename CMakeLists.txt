@@ -6,7 +6,7 @@ project(mosquitto)
 
 cmake_minimum_required(VERSION 2.6)
 
-set (VERSION 1.3.1)
+set (VERSION 1.3.2)
 
 if (WIN32)
 	execute_process(COMMAND cmd /c echo %DATE% %TIME% OUTPUT_VARIABLE TIMESTAMP
@@ -57,6 +57,8 @@ if (${WITH_TLS} STREQUAL ON)
 else (${WITH_TLS} STREQUAL ON)
 	set (OPENSSL_INCLUDE_DIR "")
 endif (${WITH_TLS} STREQUAL ON)
+
+option(WITH_SRV "Include SRV lookup support?" ON)
 
 # ========================================
 # Include projects

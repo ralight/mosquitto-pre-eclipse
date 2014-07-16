@@ -135,6 +135,7 @@ int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge)
 	new_context->tls_capath = new_context->bridge->tls_capath;
 	new_context->tls_certfile = new_context->bridge->tls_certfile;
 	new_context->tls_keyfile = new_context->bridge->tls_keyfile;
+	new_context->tls_cert_reqs = SSL_VERIFY_PEER;
 	new_context->tls_version = new_context->bridge->tls_version;
 	new_context->tls_insecure = new_context->bridge->tls_insecure;
 #ifdef REAL_WITH_TLS_PSK
@@ -172,6 +173,21 @@ int mqtt3_bridge_connect(struct mosquitto_db *db, struct mosquitto *context)
 
 	if(context->clean_session){
 		mqtt3_db_messages_delete(context);
+	}
+
+	rc = mosquitto_unpwd_check(db, context->bridge->local_username, context->bridge->local_password);
+	switch(rc){
+		case MOSQ_ERR_SUCCESS:
+			break;
+		case MOSQ_ERR_AUTH:
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Bridge %s failed authentication on local broker.", context->id);
+			return rc;
+		case MOSQ_ERR_UNKNOWN:
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Bridge %s returned application error in authorisation.", context->id);
+			return rc;
+		default:
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Unknown error in authentication for bridge %s.", context->id);
+			return rc;
 	}
 
 	/* Delete all local subscriptions even for clean_session==false. We don't

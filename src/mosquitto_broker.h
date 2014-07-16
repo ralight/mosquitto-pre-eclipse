@@ -177,6 +177,8 @@ struct _mosquitto_acl{
 	struct _mosquitto_acl *next;
 	char *topic;
 	int access;
+	int ucount;
+	int ccount;
 };
 
 struct _mosquitto_acl_user{
@@ -269,6 +271,8 @@ struct _mqtt3_bridge{
 	time_t restart_t;
 	char *username;
 	char *password;
+	char *local_username;
+	char *local_password;
 	bool notifications;
 	char *notification_topic;
 	enum mosquitto_bridge_start_type start_type;

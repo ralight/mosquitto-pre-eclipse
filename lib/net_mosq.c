@@ -789,6 +789,7 @@ int _mosquitto_packet_write(struct mosquitto *mosq)
 				mosq->on_disconnect(mosq, mosq->userdata, 0);
 				mosq->in_callback = false;
 			}
+			pthread_mutex_unlock(&mosq->callback_mutex);
 			pthread_mutex_unlock(&mosq->current_out_packet_mutex);
 			return MOSQ_ERR_SUCCESS;
 		}
@@ -984,7 +985,7 @@ int _mosquitto_socket_nonblock(int sock)
 		return 1;
 	}
 #else
-	opt = 1;
+	unsigned long opt = 1;
 	if(ioctlsocket(sock, FIONBIO, &opt)){
 		COMPAT_CLOSE(sock);
 		return 1;
