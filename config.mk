@@ -72,7 +72,7 @@ WITH_DOCS:=yes
 WITH_UUID:=yes
 
 # Build with websockets support on the broker.
-WITH_WEBSOCKETS:=yes
+WITH_WEBSOCKETS:=no
 
 # =============================================================================
 # End of user configuration
