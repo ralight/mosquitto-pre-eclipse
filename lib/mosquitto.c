@@ -855,6 +855,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 		return MOSQ_ERR_NO_CONN;
 #endif
 	}
+	printf("spR %d\n", mosq->sockpairR);
 	if(mosq->sockpairR != INVALID_SOCKET){
 		/* sockpairR is used to break out of select() before the timeout, on a
 		 * call to publish() etc. */
@@ -880,11 +881,13 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 #endif
 	}
 
+	printf("preselect\n");
 #ifdef HAVE_PSELECT
 	fdcount = pselect(maxfd+1, &readfds, &writefds, NULL, &local_timeout, NULL);
 #else
 	fdcount = select(maxfd+1, &readfds, &writefds, NULL, &local_timeout);
 #endif
+	printf("postselect %d\n", fdcount);
 	if(fdcount == -1){
 #ifdef WIN32
 		errno = WSAGetLastError();
@@ -946,6 +949,7 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 	while(run){
 		do{
 			rc = mosquitto_loop(mosq, timeout, max_packets);
+			printf("lrc: %d\n", rc);
 			if (reconnects !=0 && rc == MOSQ_ERR_SUCCESS){
 				reconnects = 0;
 			}
@@ -953,40 +957,43 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 		if(errno == EPROTO){
 			return rc;
 		}
-		pthread_mutex_lock(&mosq->state_mutex);
-		if(mosq->state == mosq_cs_disconnecting){
-			run = 0;
-			pthread_mutex_unlock(&mosq->state_mutex);
-		}else{
-			pthread_mutex_unlock(&mosq->state_mutex);
-
-			if(mosq->reconnect_delay > 0 && mosq->reconnect_exponential_backoff){
-				reconnect_delay = mosq->reconnect_delay*reconnects*reconnects;
-			}else{
-				reconnect_delay = mosq->reconnect_delay;
-			}
-
-			if(reconnect_delay > mosq->reconnect_delay_max){
-				reconnect_delay = mosq->reconnect_delay_max;
-			}else{
-				reconnects++;
-			}
-				
-#ifdef WIN32
-			Sleep(reconnect_delay*1000);
-#else
-			sleep(reconnect_delay);
-#endif
-
+		do{
+			rc = MOSQ_ERR_SUCCESS;
 			pthread_mutex_lock(&mosq->state_mutex);
 			if(mosq->state == mosq_cs_disconnecting){
 				run = 0;
 				pthread_mutex_unlock(&mosq->state_mutex);
 			}else{
 				pthread_mutex_unlock(&mosq->state_mutex);
-				mosquitto_reconnect(mosq);
+	
+				if(mosq->reconnect_delay > 0 && mosq->reconnect_exponential_backoff){
+					reconnect_delay = mosq->reconnect_delay*reconnects*reconnects;
+				}else{
+					reconnect_delay = mosq->reconnect_delay;
+				}
+
+				if(reconnect_delay > mosq->reconnect_delay_max){
+					reconnect_delay = mosq->reconnect_delay_max;
+				}else{
+					reconnects++;
+				}
+				
+#ifdef WIN32
+				Sleep(reconnect_delay*1000);
+#else
+				sleep(reconnect_delay);
+#endif
+
+				pthread_mutex_lock(&mosq->state_mutex);
+				if(mosq->state == mosq_cs_disconnecting){
+					run = 0;
+					pthread_mutex_unlock(&mosq->state_mutex);
+				}else{
+					pthread_mutex_unlock(&mosq->state_mutex);
+					rc = mosquitto_reconnect(mosq);
+				}
 			}
-		}
+		}while(run && rc != MOSQ_ERR_SUCCESS);
 	}
 	return rc;
 }
