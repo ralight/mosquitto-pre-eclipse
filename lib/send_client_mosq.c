@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2013 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2014 Roger Light <roger@atchoo.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -50,19 +50,25 @@ int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 	uint8_t byte;
 	int rc;
 	uint8_t version = PROTOCOL_VERSION_v31;
-	char *clientid;
+	char *clientid, *username, *password;
 
 	assert(mosq);
 	assert(mosq->id);
 
 #if defined(WITH_BROKER) && defined(WITH_BRIDGE)
 	if(mosq->bridge){
-		clientid = mosq->bridge->clientid;
+		clientid = mosq->bridge->remote_clientid;
+		username = mosq->bridge->remote_username;
+		password = mosq->bridge->remote_password;
 	}else{
 		clientid = mosq->id;
+		username = mosq->username;
+		password = mosq->password;
 	}
 #else
 	clientid = mosq->id;
+	username = mosq->username;
+	password = mosq->password;
 #endif
 
 	packet = _mosquitto_calloc(1, sizeof(struct _mosquitto_packet));
@@ -75,10 +81,10 @@ int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 
 		payloadlen += 2+strlen(mosq->will->topic) + 2+mosq->will->payloadlen;
 	}
-	if(mosq->username){
-		payloadlen += 2+strlen(mosq->username);
-		if(mosq->password){
-			payloadlen += 2+strlen(mosq->password);
+	if(username){
+		payloadlen += 2+strlen(username);
+		if(password){
+			payloadlen += 2+strlen(password);
 		}
 	}
 
@@ -103,7 +109,7 @@ int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 	if(will){
 		byte = byte | ((mosq->will->retain&0x1)<<5) | ((mosq->will->qos&0x3)<<3) | ((will&0x1)<<2);
 	}
-	if(mosq->username){
+	if(username){
 		byte = byte | 0x1<<7;
 		if(mosq->password){
 			byte = byte | 0x1<<6;
@@ -118,10 +124,10 @@ int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 		_mosquitto_write_string(packet, mosq->will->topic, strlen(mosq->will->topic));
 		_mosquitto_write_string(packet, (const char *)mosq->will->payload, mosq->will->payloadlen);
 	}
-	if(mosq->username){
-		_mosquitto_write_string(packet, mosq->username, strlen(mosq->username));
-		if(mosq->password){
-			_mosquitto_write_string(packet, mosq->password, strlen(mosq->password));
+	if(username){
+		_mosquitto_write_string(packet, username, strlen(username));
+		if(password){
+			_mosquitto_write_string(packet, password, strlen(password));
 		}
 	}
 

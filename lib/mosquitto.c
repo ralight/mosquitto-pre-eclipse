@@ -855,7 +855,6 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 		return MOSQ_ERR_NO_CONN;
 #endif
 	}
-	printf("spR %d\n", mosq->sockpairR);
 	if(mosq->sockpairR != INVALID_SOCKET){
 		/* sockpairR is used to break out of select() before the timeout, on a
 		 * call to publish() etc. */
@@ -881,13 +880,11 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 #endif
 	}
 
-	printf("preselect\n");
 #ifdef HAVE_PSELECT
 	fdcount = pselect(maxfd+1, &readfds, &writefds, NULL, &local_timeout, NULL);
 #else
 	fdcount = select(maxfd+1, &readfds, &writefds, NULL, &local_timeout);
 #endif
-	printf("postselect %d\n", fdcount);
 	if(fdcount == -1){
 #ifdef WIN32
 		errno = WSAGetLastError();
@@ -949,7 +946,6 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 	while(run){
 		do{
 			rc = mosquitto_loop(mosq, timeout, max_packets);
-			printf("lrc: %d\n", rc);
 			if (reconnects !=0 && rc == MOSQ_ERR_SUCCESS){
 				reconnects = 0;
 			}
