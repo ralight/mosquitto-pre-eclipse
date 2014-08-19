@@ -97,7 +97,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 #endif
 
 	if(db->config->persistent_client_expiration > 0){
-		expiration_check_time = time(NULL) + db->config->persistent_client_expiration;
+		expiration_check_time = time(NULL) + 3600;
 	}
 
 	while(run){
@@ -263,7 +263,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 					}
 				}
 			}
-			expiration_check_time = time(NULL) + db->config->persistent_client_expiration;
+			expiration_check_time = time(NULL) + 3600;
 		}
 
 		mqtt3_db_message_timeout_check(db, db->config->retry_interval);
