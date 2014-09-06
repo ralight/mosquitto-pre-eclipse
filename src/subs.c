@@ -242,6 +242,20 @@ cleanup:
 	return 1;
 }
 
+static void _sub_topic_tokens_free(struct _sub_token *tokens)
+{
+	struct _sub_token *tail;
+
+	while(tokens){
+		tail = tokens->next;
+		if(tokens->topic){
+			_mosquitto_free(tokens->topic);
+		}
+		_mosquitto_free(tokens);
+		tokens = tail;
+	}
+}
+
 static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos, struct _mosquitto_subhier *subhier, struct _sub_token *tokens)
 {
 	struct _mosquitto_subhier *branch, *last = NULL;
@@ -392,7 +406,7 @@ int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char
 {
 	int rc = 0;
 	struct _mosquitto_subhier *subhier, *child;
-	struct _sub_token *tokens = NULL, *tail;
+	struct _sub_token *tokens = NULL;
 
 	assert(root);
 	assert(sub);
@@ -410,11 +424,13 @@ int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char
 	if(!subhier){
 		child = _mosquitto_malloc(sizeof(struct _mosquitto_subhier));
 		if(!child){
+			_sub_topic_tokens_free(tokens);
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
 		child->topic = _mosquitto_strdup(tokens->topic);
 		if(!child->topic){
+			_sub_topic_tokens_free(tokens);
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
@@ -431,12 +447,8 @@ int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char
 		rc = _sub_add(db, context, qos, child, tokens);
 	}
 
-	while(tokens){
-		tail = tokens->next;
-		_mosquitto_free(tokens->topic);
-		_mosquitto_free(tokens);
-		tokens = tail;
-	}
+	_sub_topic_tokens_free(tokens);
+
 	/* We aren't worried about -1 (already subscribed) return codes. */
 	if(rc == -1) rc = MOSQ_ERR_SUCCESS;
 	return rc;
@@ -446,7 +458,7 @@ int mqtt3_sub_remove(struct mosquitto_db *db, struct mosquitto *context, const c
 {
 	int rc = 0;
 	struct _mosquitto_subhier *subhier;
-	struct _sub_token *tokens = NULL, *tail;
+	struct _sub_token *tokens = NULL;
 
 	assert(root);
 	assert(sub);
@@ -462,12 +474,7 @@ int mqtt3_sub_remove(struct mosquitto_db *db, struct mosquitto *context, const c
 		subhier = subhier->next;
 	}
 
-	while(tokens){
-		tail = tokens->next;
-		_mosquitto_free(tokens->topic);
-		_mosquitto_free(tokens);
-		tokens = tail;
-	}
+	_sub_topic_tokens_free(tokens);
 
 	return rc;
 }
@@ -476,7 +483,7 @@ int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, cons
 {
 	int rc = 0;
 	struct _mosquitto_subhier *subhier;
-	struct _sub_token *tokens = NULL, *tail;
+	struct _sub_token *tokens = NULL;
 
 	assert(db);
 	assert(topic);
@@ -496,12 +503,7 @@ int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, cons
 		}
 		subhier = subhier->next;
 	}
-	while(tokens){
-		tail = tokens->next;
-		_mosquitto_free(tokens->topic);
-		_mosquitto_free(tokens);
-		tokens = tail;
-	}
+	_sub_topic_tokens_free(tokens);
 
 	return rc;
 }
