@@ -88,6 +88,7 @@ struct _mqtt3_listener {
 #endif
 #ifdef WITH_WEBSOCKETS
 	struct libwebsocket_context *ws_context;
+	char *http_dir;
 #endif
 };
 
@@ -310,6 +311,7 @@ struct _mqtt3_bridge{
 
 #ifdef WITH_WEBSOCKETS
 struct libws_mqtt_hack {
+	char *http_dir;
 	struct mosquitto *old_mosq;
 	struct mosquitto *new_mosq;
 	struct libws_mqtt_hack *next;
