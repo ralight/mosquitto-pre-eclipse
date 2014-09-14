@@ -28,6 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <assert.h>
+#include <time.h>
 
 #include <config.h>
 
