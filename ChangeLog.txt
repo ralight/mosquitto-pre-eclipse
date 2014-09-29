@@ -61,6 +61,8 @@ Client library:
 - Fix SRV support when building with CMake.
 - Remove Python library (use Paho Python client instead).
 - Remove strict protocol #ifdefs.
+- mosquitto_loop_forever now quits after a fatal error, rather than blindly
+  retrying.
 
 General:
 - Use $(STRIP) for stripping binaries when installing, to allow easier cross
