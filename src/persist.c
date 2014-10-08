@@ -419,7 +419,6 @@ int mqtt3_db_backup(struct mosquitto_db *db, bool cleanup, bool shutdown)
 	if(remove(db->config->persistence_filepath) != 0){
 		goto error;
 	}
-}
 #endif
 	if(rename(outfile, db->config->persistence_filepath) != 0){
 		goto error;
