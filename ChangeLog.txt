@@ -70,6 +70,7 @@ Client library:
 - Add experimental SOCKS5 support.
 - mosquitto_loop_forever now quits after a fatal error, rather than blindly
   retrying.
+- SRV support is now not compiled in by default.
 
 General:
 - Use $(STRIP) for stripping binaries when installing, to allow easier cross
