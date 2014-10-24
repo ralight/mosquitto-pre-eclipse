@@ -44,7 +44,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/socket.h>
+#ifndef WIN32
+#  include <sys/socket.h>
+#endif
 #include <time.h>
 
 #ifdef WITH_WEBSOCKETS
