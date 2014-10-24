@@ -287,7 +287,7 @@ int _mosquitto_try_connect(const char *host, uint16_t port, int *sock, const cha
 	struct addrinfo *ainfo, *rp;
 	struct addrinfo *ainfo_bind, *rp_bind;
 	int s;
-	int rc;
+	int rc = MOSQ_ERR_SUCCESS;
 #ifdef WIN32
 	uint32_t val = 1;
 #endif
@@ -351,6 +351,10 @@ int _mosquitto_try_connect(const char *host, uint16_t port, int *sock, const cha
 		errno = WSAGetLastError();
 #endif
 		if(rc == 0 || errno == EINPROGRESS || errno == COMPAT_EWOULDBLOCK){
+			if(rc < 0 && (errno == EINPROGRESS || errno == COMPAT_EWOULDBLOCK)){
+				rc = MOSQ_ERR_CONN_PENDING;
+			}
+
 			if(blocking){
 				/* Set non-blocking */
 				if(_mosquitto_socket_nonblock(*sock)){
@@ -371,7 +375,7 @@ int _mosquitto_try_connect(const char *host, uint16_t port, int *sock, const cha
 	if(!rp){
 		return MOSQ_ERR_ERRNO;
 	}
-	return MOSQ_ERR_SUCCESS;
+	return rc;
 }
 
 /* Create a socket and connect it to 'ip' on port 'port'.
@@ -396,7 +400,7 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 #endif
 
 	rc = _mosquitto_try_connect(host, port, &sock, bind_address, blocking);
-	if(rc != MOSQ_ERR_SUCCESS) return rc;
+	if(rc > 0) return rc;
 
 #ifdef WITH_TLS
 	if(mosq->tls_cafile || mosq->tls_capath || mosq->tls_psk){
@@ -544,7 +548,7 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 
 	mosq->sock = sock;
 
-	return MOSQ_ERR_SUCCESS;
+	return rc;
 }
 
 int _mosquitto_read_byte(struct _mosquitto_packet *packet, uint8_t *byte)
@@ -754,6 +758,10 @@ int _mosquitto_packet_write(struct mosquitto *mosq)
 	}
 	pthread_mutex_unlock(&mosq->out_packet_mutex);
 
+	if(mosq->state == mosq_cs_connect_pending){
+		return MOSQ_ERR_SUCCESS;
+	}
+
 	while(mosq->current_out_packet){
 		packet = mosq->current_out_packet;
 
@@ -873,6 +881,10 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
+	if(mosq->state == mosq_cs_connect_pending){
+		return MOSQ_ERR_SUCCESS;
+	}
+
 	/* This gets called if pselect() indicates that there is network data
 	 * available - ie. at least one byte.  What we do depends on what data we
 	 * already have.
